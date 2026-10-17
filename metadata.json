@@ -1,0 +1,8 @@
+{
+  "name": "Abdulrhman Creative Studio",
+  "description": "Next-generation AI video and cinematic media creation studio for creators, featuring prompt engineering, camera controls, storyboard builder, and Pexafy visual exploration.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
