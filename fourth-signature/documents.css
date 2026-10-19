@@ -68,6 +68,32 @@
 .comparison-paper.document-inventory .document-entry{grid-template-columns:26px minmax(0,1fr);gap:0}
 .comparison-paper.document-sheet p.document-paragraph{font-size:15px}
 
+/* Short excerpts are the first reading; the unabridged source stays one tap away. */
+.document-paper.document-sheet.document-focused{margin:12px 12px 14px}
+.document-focused.document-sheet{padding:18px 18px 14px}
+.document-focused .document-heading{display:flex;align-items:center;gap:14px;padding:0 0 12px;margin:0 0 14px;border:0;border-bottom:1px solid #78654a44;text-align:start}
+.document-focused .document-masthead{order:1;flex:none;padding:0;margin:0;gap:0;border:0;background:none}
+.document-focused .document-emblem,.document-focused .document-register-label,.document-focused .document-file-number,.document-focused.document-sheet p.document-reference,.document-focused.document-sheet p.document-focus-label{display:none}
+.document-focused .document-code{font-size:15px;line-height:1.5;letter-spacing:0;color:var(--document-accent);white-space:nowrap}
+.document-focused.document-sheet .document-title{flex:1;min-width:0;font-size:clamp(20px,3vw,25px);line-height:1.55;margin:0}
+.document-sheet p.document-focus-label{margin:0 0 8px;padding:0;color:var(--document-accent);font-size:13px;line-height:1.7;font-weight:600}
+.document-focus-lines{display:grid;gap:0;border-inline-start:3px solid var(--document-accent);padding-inline-start:16px}
+.document-paper.document-sheet p.document-focus-line,.comparison-paper.document-sheet p.document-focus-line{font-size:16px;line-height:1.95;letter-spacing:0;white-space:pre-line;color:#292c27;margin:0;padding:11px 0;border-bottom:1px solid #78654a29}
+.document-sheet p.document-focus-line:first-child{padding-top:3px}
+.document-sheet p.document-focus-line:last-child{padding-bottom:3px;border:0}
+.document-inline-code{white-space:nowrap}
+.document-full-text{margin-top:22px;border-top:1px dashed #78654a66}
+.document-full-text>summary{min-height:48px;padding:13px 2px;color:#495445;font-size:15px;line-height:1.7;cursor:pointer;touch-action:manipulation}
+.document-full-text>summary::marker{color:var(--document-accent)}
+.document-full-text>summary:focus-visible{outline:2px solid var(--document-accent);outline-offset:3px;border-radius:2px}
+.document-full-text[open]>summary{border-bottom:1px solid #78654a33;margin-bottom:12px}
+.document-full-content{min-width:0}
+.document-full-content .document-footer{margin-top:22px}
+.document-full-content .document-signature-block{margin-top:20px}
+.comparison-paper.document-focused .document-emblem{flex-basis:32px;width:32px;height:32px;font-size:12px}
+.comparison-paper.document-focused .document-focus-lines{padding-inline-start:12px}
+.comparison-paper.document-sheet p.document-focus-line{font-size:15px}
+
 /* Compact document facsimiles on the evidence board; hidden from screen readers. */
 .document-preview{--preview-accent:#7d554a;--preview-stock:#e7ddc9;width:100%;height:100%;position:relative;overflow:hidden;display:grid;place-items:start center;padding:26px 22px 0;background:radial-gradient(ellipse at 50% 110%,#60514288,transparent 75%),#22261f}
 .document-preview-tab{position:absolute;top:11px;left:14px;color:#c5b18e;font:10px/1.8 ui-monospace,"Courier New",monospace;letter-spacing:2px}
@@ -115,6 +141,12 @@
   .document-sheet p.document-signature{font-size:21px}
   .document-audit .document-masthead{padding:12px 10px}
   .document-audit .document-emblem{flex-basis:29px;width:29px;height:29px;font-size:10px}
+  .document-focused .document-heading{gap:12px;padding:0 0 10px;margin-bottom:12px}
+  .document-focused .document-masthead{margin:0;padding:0}
+  .document-focused.document-sheet .document-title{font-size:20px}
+  .document-focused .document-focus-lines{padding-inline-start:12px}
+  .document-paper.document-sheet p.document-focus-line,.comparison-paper.document-sheet p.document-focus-line{font-size:15px;line-height:1.95;padding-block:9px}
+  .document-full-text{margin-top:18px}
 }
 @media(max-width:360px){
   .document-paper.document-sheet,.comparison-paper.document-sheet{padding:20px 14px}
@@ -123,6 +155,8 @@
   .document-masthead{gap:10px}
   .document-preview-sheet{width:86%;padding-inline:15px}
   .document-preview-audit .document-preview-masthead{margin-inline:-15px}
+  .document-focused.document-sheet{padding:16px 14px 12px}
+  .document-focused .document-heading{gap:9px}
 }
 @media print{
   .document-paper.document-sheet,.comparison-paper.document-sheet{box-shadow:none;background:#fff;color:#111;break-inside:avoid}

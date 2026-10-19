@@ -1,0 +1,83 @@
+/* The investigation is the main path; the archive opens when requested. */
+.deductions-section{padding:40px 0}
+.desk-intro{max-width:700px;margin-bottom:24px}
+.desk-intro h2{font-family:"Times New Roman",Tahoma,serif;font-size:36px;margin:10px 0}
+.desk-intro>p:last-child{font-size:15px;line-height:1.95;color:#c5cbbd;max-width:570px}
+.deduction-layout{grid-template-columns:180px minmax(0,1fr)}
+.deduction-sidebar{padding:24px 20px}
+.question-panel{scroll-margin-top:86px}
+.step-evidence{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:20px}
+.step-evidence:has(>button:last-child:nth-child(2)){grid-template-columns:repeat(2,minmax(0,1fr))}
+.step-evidence-button{display:flex;flex-direction:column;min-width:0;padding:0;background:#21291f;border:1px solid var(--line);text-align:right;overflow:hidden}
+.step-evidence-button:hover{border-color:var(--gold);background:#2a3024}
+.step-evidence-art{height:84px;width:100%;overflow:hidden;flex:none}
+.step-evidence-art .document-preview{padding:12px 6px 0}
+.step-evidence-art .document-preview-sheet{min-height:130px;padding:10px;width:80%;max-width:160px}
+.step-evidence-art .document-preview-tab{display:none}
+.step-evidence-art .document-preview-masthead{margin:0 0 4px;padding-bottom:4px;gap:4px}
+.step-evidence-art .document-preview-mark{width:20px;height:20px;font-size:8px}
+.step-evidence-art .document-preview-code{font-size:9px;letter-spacing:0}
+.step-evidence-art .document-preview-type{font-size:9px}
+.step-evidence-art .document-preview-title{font-size:10px}
+.step-evidence-title{font-size:14px;line-height:1.7;padding:10px 12px 3px;flex:1;overflow-wrap:anywhere}
+.step-evidence-status{font-size:12px;color:var(--gold);padding:4px 12px 10px}
+.question-options{margin-top:22px}
+.answer-feedback>strong{font-weight:500}
+.answer-reasoning{margin-top:6px}
+.answer-reasoning summary{cursor:pointer;font-size:13px;min-height:44px;padding:10px 0;color:var(--gold)}
+.answer-reasoning p{margin-top:8px;line-height:2}
+.document-return{display:flex;justify-content:flex-end;margin:16px 30px}
+.document-return .button{font-size:13px;min-height:44px}
+.case-library{margin-bottom:30px;border-top:1px solid var(--line)}
+.case-drawer{border-bottom:1px solid var(--line);scroll-margin-top:85px}
+.case-drawer>summary{display:flex;align-items:center;gap:14px;list-style:none;cursor:pointer;min-height:78px;padding:20px 5px;font-size:17px}
+.case-drawer>summary::-webkit-details-marker{display:none}
+.case-drawer>summary::before{content:"+";font:23px Georgia,serif;color:var(--gold);width:20px;flex:none;text-align:center}
+.case-drawer[open]>summary::before{content:"−"}
+.case-drawer>summary small{font-size:12px;color:var(--muted);margin-inline-start:auto;text-align:left}
+.case-drawer>.section-block{padding:24px 0 40px;border:0}
+.case-drawer .person-action{margin-top:14px}
+.case-drawer .evidence-card-footer{margin-top:14px}
+@media(max-width:760px){
+  .hero{min-height:540px;height:auto;max-height:none}
+  .hero-content{padding-top:32px;padding-bottom:98px}
+  .hero-overline{margin-top:26px}
+  .hero h1{font-size:82px}
+  .hero h1 em{margin-top:10px}
+  .hero-subtitle{margin-top:20px;font-size:14px;max-width:280px}
+  .hero-actions{margin-top:22px;gap:12px}
+  .hero-meta{display:none}
+  .hero-stamp{display:none}
+  .hero-footer{bottom:22px}
+  .deductions-section{padding:28px 0}
+  .desk-intro{margin-bottom:20px}
+  .desk-intro h2{font-size:30px;margin-block:7px}
+  .desk-intro>p:last-child{font-size:14px}
+  .deduction-layout{grid-template-columns:1fr}
+  .deduction-sidebar{padding:14px 18px}
+  .question-steps{margin-top:12px}
+  .question-panel{padding:22px 16px}
+  .question-kicker{margin-bottom:8px;font-size:11px}
+  .question-panel h3{font-size:19px;line-height:1.8}
+  .step-evidence{gap:8px;margin-top:16px}
+  .step-evidence-art{height:66px}
+  .step-evidence-title{padding:8px 7px 2px;font-size:12px;line-height:1.8}
+  .step-evidence-status{padding:5px 7px 8px;font-size:11px}
+  .question-option{font-size:14px;padding:12px 10px}
+  .question-actions>.button{font-size:12px;min-height:44px}
+  .question-actions .text-button{font-size:12px;min-height:44px}
+  .document-return{margin-inline:16px}
+  .document-return .button{width:100%}
+  .case-drawer>summary{min-height:74px;font-size:15px;gap:8px;padding-inline:0}
+  .case-drawer>summary small{font-size:11px;max-width:120px}
+}
+@media(max-width:380px){
+  .hero{min-height:510px}
+  .hero-content{padding-top:26px;padding-bottom:92px}
+  .hero h1{font-size:72px}
+  .hero-overline{margin-top:22px}
+  .hero-subtitle{margin-top:16px;font-size:13px}
+  .hero-actions{margin-top:18px}
+  .step-evidence-art .document-preview-mark{display:none}
+  .step-evidence-art .document-preview-sheet{width:90%}
+}

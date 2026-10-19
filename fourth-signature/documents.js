@@ -1,6 +1,7 @@
 import { node, arabic } from './dom.js?v=dossier-1';
+import { EVIDENCE_FOCUS } from './evidence-focus.js?v=play-1';
 
-// The typography is presentation only. All evidence text comes from case-data.
+// The paper styling carries no clues. The full original remains available below its excerpts.
 const templates = {
   E01: { kind: 'administrative', label: 'محضر إداري', mark: 'ADM' },
   E02: { kind: 'receipt', label: 'محضر تسليم', mark: 'LC' },
@@ -20,10 +21,33 @@ function documentDetails(item) {
   };
 }
 
+function excerptContent(line) {
+  return line.split(/([A-Z]{2,3}-\d{2}(?:\.pdf)?|7A41)/g).map((part, index) =>
+    index % 2 ? node('bdi', { class: 'document-inline-code', dir: 'ltr', text: part }) : part
+  );
+}
+
 export function createDocument(item, { comparison = false, titleId } = {}) {
   const details = documentDetails(item);
+  const focus = EVIDENCE_FOCUS[item.id];
+  const original = [
+    node('div', { class: 'document-body' }, item.body.map((paragraph, index) =>
+      node('div', { class: 'document-entry' }, [
+        node('span', { class: 'document-line-number', 'aria-hidden': 'true', text: arabic(index + 1) }),
+        node('p', { class: 'document-paragraph', text: paragraph }),
+      ])
+    )),
+    item.signature ? node('div', { class: 'document-signature-block' }, [
+      node('span', { class: 'document-signature-label', text: 'خانة التوقيع' }),
+      node('p', { class: 'document-signature', text: item.signature }),
+    ]) : null,
+    node('footer', { class: 'document-footer' }, [
+      node('p', { class: 'document-source', text: item.sourceLabel || item.reference }),
+      node('span', { class: 'document-footer-code', dir: 'ltr', 'aria-hidden': 'true', text: `${item.id} / ${details.code}` }),
+    ]),
+  ];
   return node('article', {
-    class: `${comparison ? 'comparison-paper' : 'document-paper'} document-sheet document-${details.kind}`,
+    class: `${comparison ? 'comparison-paper' : 'document-paper'} document-sheet document-${details.kind}${focus ? ' document-focused' : ''}`,
     'data-document': item.id,
     dir: 'rtl',
   }, [
@@ -39,20 +63,16 @@ export function createDocument(item, { comparison = false, titleId } = {}) {
       node(comparison ? 'h3' : 'h2', { id: titleId, class: 'document-title', text: item.title }),
       node('p', { class: 'document-reference', text: item.reference }),
     ]),
-    node('div', { class: 'document-body' }, item.body.map((paragraph, index) =>
-      node('div', { class: 'document-entry' }, [
-        node('span', { class: 'document-line-number', 'aria-hidden': 'true', text: arabic(index + 1) }),
-        node('p', { class: 'document-paragraph', text: paragraph }),
-      ])
-    )),
-    item.signature ? node('div', { class: 'document-signature-block' }, [
-      node('span', { class: 'document-signature-label', text: 'خانة التوقيع' }),
-      node('p', { class: 'document-signature', text: item.signature }),
+    focus ? node('section', { class: 'document-focus', 'aria-label': focus.label }, [
+      node('p', { class: 'document-focus-label', text: focus.label }),
+      node('div', { class: 'document-focus-lines' }, focus.lines.map(line =>
+        node('p', { class: 'document-focus-line' }, excerptContent(line))
+      )),
     ]) : null,
-    node('footer', { class: 'document-footer' }, [
-      node('p', { class: 'document-source', text: item.sourceLabel || item.reference }),
-      node('span', { class: 'document-footer-code', dir: 'ltr', 'aria-hidden': 'true', text: `${item.id} / ${details.code}` }),
-    ]),
+    focus ? node('details', { class: 'document-full-text' }, [
+      node('summary', { text: 'اقرأ الوثيقة كاملة' }),
+      node('div', { class: 'document-full-content' }, original),
+    ]) : node('div', { class: 'document-full-content' }, original),
   ]);
 }
 

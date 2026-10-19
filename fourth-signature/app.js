@@ -1,9 +1,9 @@
-import { CASE_DATA } from './case-data.js?v=dossier-1';
+import { CASE_DATA } from './case-data.js?v=play-1';
 import { createScene, initializeScenes, pauseScenes, disposeScenes, refreshScenes } from './media.js?v=cinema-2';
 
 const $ = (selector, scope = document) => scope.querySelector(selector);
 import { node, arabic } from './dom.js?v=dossier-1';
-import { createDocument, createDocumentPreview } from './documents.js?v=dossier-1';
+import { createDocument, createDocumentPreview } from './documents.js?v=play-1';
 import { createSupportPicker, requiresSupport, evaluateSupport } from './deduction-support.js?v=dossier-1';
 import { createEnding } from './ending.js?v=seal-1';
 const questions = CASE_DATA.questions;
@@ -15,6 +15,13 @@ let selectedAnswers = {};
 let wrongAnswers = {};
 let supportErrors = {};
 let hintQuestions = new Set();
+
+const stepEvidence = {
+  Q01: ['E06', 'E02', 'E03'],
+  Q02: ['E01', 'E05', 'E07'],
+  Q03: ['E01', 'E07', 'E08'],
+  Q04: ['E01', 'E07', 'E08'],
+};
 
 
 function freshState() {
@@ -61,7 +68,7 @@ function saveState() {
 function updateSaveIndicator() {
   const indicator = $('#saved-indicator');
   indicator.replaceChildren(node('span', { 'aria-hidden': 'true', text: '●' }), document.createTextNode(storageAvailable ? ' يُحفظ تقدّمك على هذا الجهاز' : ' الحفظ غير متاح؛ أبقِ الصفحة مفتوحة'));
-  $('#start-link').replaceChildren(document.createTextNode(state.solvedIds.length || state.viewedIds.length ? 'واصل التحقيق' : 'افتح ملف القضية'), node('span', { 'aria-hidden': 'true', text: '←' }));
+  $('#start-link').replaceChildren(document.createTextNode(state.solvedIds.length || state.viewedIds.length ? 'واصل التحقيق' : 'ابدأ بأول دليل'), node('span', { 'aria-hidden': 'true', text: '←' }));
 }
 
 function showToast(message) {
@@ -90,7 +97,6 @@ function initializeStory() {
         node('p', { class: 'person-file-ref', text: `ملف ${String(index + 1).padStart(2, '0')} / ${person.id.toUpperCase()}` }),
         node('h3', { text: person.name }),
         node('p', { class: 'person-role', text: person.role }),
-        node('p', { class: 'person-description', text: person.description }),
         node('span', { class: 'person-action', 'aria-hidden': 'true' }, [node('span', { text: 'افتح ملف الشخصية' }), node('span', { text: '←' })]),
       ]),
     ]),
@@ -109,12 +115,15 @@ function renderEvidence() {
       node('div', { class: 'evidence-content' }, [
         node('p', { class: 'evidence-type', text: item.type }),
         node('h3', { text: item.title }),
-        node('p', { class: 'evidence-summary', text: item.summary }),
         node('span', { class: 'evidence-card-footer' }, [node('span', { text: item.reference }), node('span', { text: 'اقرأ الدليل  ←' })]),
       ]),
     ]);
   }));
   $('#reviewed-count').textContent = `${arabic(state.viewedIds.length)} / ${arabic(evidence.length)} أدلة مفحوصة`;
+  for (const button of document.querySelectorAll('.step-evidence-button')) {
+    const reviewed = state.viewedIds.includes(button.dataset.evidenceId);
+    $('.step-evidence-status', button).textContent = reviewed ? '✓ فُحصت' : 'افتح الورقة ←';
+  }
 }
 
 const dialogTriggers = new WeakMap();
@@ -147,23 +156,29 @@ function openPerson(id) {
   $('#person-dialog').scrollTop = 0;
 }
 
-function openEvidence(id, { replace = false } = {}) {
+function openEvidence(id, { replace = false, trigger } = {}) {
   const item = evidence.find((entry) => entry.id === id);
   if (!item) return;
   const index = evidence.indexOf(item);
-  $('#document-kicker').textContent = `${item.type} / ${item.reference}`;
+  $('#document-kicker').textContent = 'من ملف القضية';
   const content = [
     node('div', { class: 'document-tools' }, [
-      node('p', { text: `الوثيقة ${arabic(index + 1)} من ${arabic(evidence.length)}` }),
+      node('p', { text: 'مقتطف من الأصل' }),
       node('button', { class: 'button button-outline', type: 'button', text: 'قارن هذه الوثيقة', onClick: () => {
         $('#compare-first').value = id;
         if ($('#compare-second').value === id) $('#compare-second').value = evidence.find(entry => entry.id !== id).id;
         activeComparisonTab = 0;
+        const returnTarget = dialogTriggers.get($('#evidence-dialog')) || $('#active-question-title');
         $('#evidence-dialog').close();
-        queueMicrotask(() => openComparison($('#open-compare')));
+        queueMicrotask(() => openComparison(returnTarget));
       } }),
     ]),
     createDocument(item, { titleId: 'document-title' }),
+    node('div', { class: 'document-return' }, [node('button', { type: 'button', class: 'button button-gold', text: 'عُد إلى الاستنتاج ←', onClick: () => {
+      dialogTriggers.set($('#evidence-dialog'), $('#active-question-title'));
+      $('#evidence-dialog').close();
+      focusQuestion();
+    } })]),
   ];
   if (item.image) {
     const sceneId = item.image.includes('padlock') ? 'padlock' : item.image.includes('documents') ? 'documents' : item.image.includes('archive') ? 'archive' : /(?:fire|hero)/.test(item.image) ? 'hero' : null;
@@ -189,7 +204,7 @@ function openEvidence(id, { replace = false } = {}) {
     renderEvidence();
     if (activeCardIndex >= 0) $('#evidence-grid').children[activeCardIndex].focus({ preventScroll: true });
   }
-  if (!replace) openDialog($('#evidence-dialog'));
+  if (!replace) openDialog($('#evidence-dialog'), trigger || document.activeElement);
   $('#evidence-dialog').scrollTop = 0;
   if (replace) { $('#document-title').tabIndex = -1; $('#document-title').focus({ preventScroll: true }); }
 }
@@ -317,10 +332,11 @@ function renderQuestion(moveFocus = false) {
       node('p', { text: 'أنهيت الاستنتاجات المرتبطة بالملف. يمكنك العودة إلى أي دليل، أو فتح خلاصة القضية لترى ما تثبته الأوراق وما يظلّ خارج حدودها.' }),
       node('button', { class: 'button button-gold', type: 'button', onClick: revealEnding, text: state.revealed ? 'عد إلى خلاصة القضية  ←' : 'افتح خلاصة القضية  ←' }),
     ]));
-    if (moveFocus) $('#active-question-title').focus({ preventScroll: true });
+    if (moveFocus) focusQuestion();
     return;
   }
   const solved = state.solvedIds.includes(question.id);
+  const leads = stepEvidence[question.id].map(id => evidence.find(item => item.id === id));
   const selected = solved ? question.correctId : selectedAnswers[question.id];
   const wrong = wrongAnswers[question.id];
   const options = node('fieldset', { class: 'question-options', 'aria-labelledby': 'active-question-title' });
@@ -378,7 +394,11 @@ function renderQuestion(moveFocus = false) {
       wrongAnswers[question.id] = selectedAnswers[question.id];
       delete supportErrors[question.id];
     }
-    renderQuestion(true);
+    renderQuestion();
+    const feedback = $('.answer-feedback', panel);
+    feedback.tabIndex = -1;
+    feedback.scrollIntoView({ behavior: 'instant', block: 'center' });
+    feedback.focus({ preventScroll: true });
   } });
   const supportPicker = !solved ? createSupportPicker(question, {
     selectedIds: state.supportByQuestion[question.id] || [],
@@ -392,23 +412,58 @@ function renderQuestion(moveFocus = false) {
   const content = [
     node('p', { class: 'question-kicker', text: `الاستنتاج ${arabic(state.activeIndex + 1)} من ${arabic(questions.length)}` }),
     node('h3', { id: 'active-question-title', tabindex: '-1', text: question.prompt }),
+    node('div', { class: 'step-evidence', role: 'group', 'aria-label': 'أوراق هذه الخطوة' }, leads.map((item, index) => node('button', {
+      type: 'button', class: 'step-evidence-button', 'data-evidence-id': item.id,
+      'aria-label': `${item.title} — افتح الدليل`, onClick: () => openEvidence(item.id),
+    }, [
+      node('div', { class: 'step-evidence-art', 'aria-hidden': 'true' }, [createDocumentPreview(item, index)]),
+      node('span', { class: 'step-evidence-title', text: item.title }),
+      node('span', { class: 'step-evidence-status', text: state.viewedIds.includes(item.id) ? '✓ فُحصت' : 'افتح الورقة ←' }),
+    ]))),
     options,
     supportPicker,
     node('div', { class: 'question-actions' }, [submitButton, hintButton]),
     node('div', { class: 'hint-box', id: 'question-hint', hidden: !hintVisible, text: question.hint }),
   ];
-  if (solved) content.push(node('div', { class: 'answer-feedback', role: 'status' }, [node('strong', { text: 'استنتاج تؤيده الأدلة.' }), document.createTextNode(question.explanation)]));
+  if (solved) content.push(node('div', { class: 'answer-feedback', role: 'status' }, [node('strong', { text: '✓ الاستنتاج ثابت. انتقل للخطوة التالية.' }), node('details', { class: 'answer-reasoning' }, [node('summary', { text: 'كيف تثبته الأوراق؟' }), node('p', { text: question.explanation })])]));
   else if (supportErrors[question.id]) content.push(node('div', { class: 'answer-feedback error', role: 'status' }, [node('strong', { text: 'أكمل سند الاستنتاج.' }), document.createTextNode(supportErrors[question.id])]));
-  else if (wrong) content.push(node('div', { class: 'answer-feedback error', role: 'status' }, [node('strong', { text: 'هذا الاستنتاج لا تدعمه الأدلة بما يكفي.' }), document.createTextNode('راجع المستندات المرتبطة بالسؤال، أو افتح التلميح، ثم جرّب مرة أخرى.')]));
-  const linked = (requiresSupport(question) && !solved ? evidence : (question.evidenceIds || []).map((id) => evidence.find((item) => item.id === id))).filter(Boolean);
+  else if (wrong) content.push(node('div', { class: 'answer-feedback error', role: 'status' }, [node('strong', { text: 'الأوراق لا تثبت ذلك.' }), document.createTextNode('راجع الدليل أو اطلب تلميحًا.')]));
+  const linked = evidence;
   if (linked.length) {
     const library = node('div', { class: 'linked-evidence' }, [node('span', { text: 'افحص المستندات:' }), ...linked.map((item) => node('button', { type: 'button', class: 'evidence-chip', text: `${item.id} · ${item.title}`, onClick: () => openEvidence(item.id) }))]);
-    content.push(requiresSupport(question) && !solved ? node('details', { class: 'support-library' }, [node('summary', { text: 'افتح مستندًا للمراجعة' }), library]) : library);
+    content.push(node('details', { class: 'support-library' }, [node('summary', { text: 'بقية أوراق الملف' }), library]));
   }
-  content.push(node('button', { type: 'button', class: 'text-button question-compare', text: 'افتح طاولة المقارنة', onClick: () => openComparison() }));
+  content.push(node('button', { type: 'button', class: 'text-button question-compare', text: 'قارن ورقتين', onClick: () => {
+    $('#compare-first').value = leads[0].id;
+    $('#compare-second').value = leads[1].id;
+    activeComparisonTab = 0;
+    openComparison();
+  } }));
   panel.replaceChildren(...content.filter(Boolean));
-  if (moveFocus) $('#active-question-title').focus({ preventScroll: true });
+  if (moveFocus) focusQuestion();
 }
+
+function focusQuestion() {
+  $('#question-panel').scrollIntoView({ behavior: 'instant', block: 'start' });
+  $('#active-question-title').focus({ preventScroll: true });
+}
+
+$('#start-link').addEventListener('click', event => {
+  event.preventDefault();
+  $('#deductions').scrollIntoView({ behavior: 'instant', block: 'start' });
+  if (!state.viewedIds.length && !state.solvedIds.length) {
+    openEvidence('E06', { trigger: $('.step-evidence-button[data-evidence-id="E06"]') });
+  } else focusQuestion();
+});
+
+function openCaseDrawer(hash) {
+  const drawer = ['#evidence', '#people', '#briefing'].includes(hash) ? $(hash) : null;
+  if (drawer) { drawer.open = true; drawer.scrollIntoView({ behavior: 'instant', block: 'start' }); }
+}
+for (const link of document.querySelectorAll('.section-links a')) {
+  link.addEventListener('click', () => openCaseDrawer(link.getAttribute('href')));
+}
+window.addEventListener('hashchange', () => openCaseDrawer(location.hash));
 
 function renderEnding() {
   const ending = $('#ending');
@@ -455,3 +510,4 @@ initializeComparison();
 renderQuestion();
 renderEnding();
 updateSaveIndicator();
+openCaseDrawer(location.hash);
