@@ -5,7 +5,7 @@ const $ = (selector, scope = document) => scope.querySelector(selector);
 import { node, arabic } from './dom.js?v=dossier-1';
 import { createDocument, createDocumentPreview } from './documents.js?v=copy-1';
 import { createSupportPicker, requiresSupport, evaluateSupport } from './deduction-support.js?v=copy-1';
-import { createEnding } from './ending.js?v=seal-1';
+import { createEnding } from './ending.js?v=closure-1';
 const questions = CASE_DATA.questions;
 const evidence = CASE_DATA.evidence;
 const storageKey = `raven-case:${CASE_DATA.id}`;
@@ -160,6 +160,8 @@ function openEvidence(id, { replace = false, trigger } = {}) {
   const item = evidence.find((entry) => entry.id === id);
   if (!item) return;
   const index = evidence.indexOf(item);
+  const origin = replace ? dialogTriggers.get($('#evidence-dialog')) : trigger || document.activeElement;
+  const fromEnding = state.revealed && origin?.closest('#ending');
   $('#document-kicker').textContent = 'من ملف القضية';
   const content = [
     node('div', { class: 'document-tools' }, [
@@ -174,10 +176,10 @@ function openEvidence(id, { replace = false, trigger } = {}) {
       } }),
     ]),
     createDocument(item, { titleId: 'document-title' }),
-    node('div', { class: 'document-return' }, [node('button', { type: 'button', class: 'button button-gold', text: 'عُد إلى الاستنتاج ←', onClick: () => {
-      dialogTriggers.set($('#evidence-dialog'), $('#active-question-title'));
+    node('div', { class: 'document-return' }, [node('button', { type: 'button', class: 'button button-gold', text: fromEnding ? 'عُد إلى الخلاصة ←' : 'عُد إلى الاستنتاج ←', onClick: () => {
+      dialogTriggers.set($('#evidence-dialog'), fromEnding ? origin : $('#active-question-title'));
       $('#evidence-dialog').close();
-      focusQuestion();
+      if (!fromEnding) focusQuestion();
     } })]),
   ];
   if (item.image) {
@@ -473,7 +475,12 @@ function renderEnding() {
     ending.replaceChildren();
     return;
   }
-  ending.replaceChildren(createEnding(CASE_DATA, { hintCount: state.hintHistoryComplete ? state.hintIds.length : null }));
+  ending.replaceChildren(createEnding(CASE_DATA, {
+    hintCount: state.hintHistoryComplete ? state.hintIds.length : null,
+    onOpenEvidence: (id, trigger) => openEvidence(id, { trigger }),
+    onRestart: trigger => openDialog($('#reset-dialog'), trigger),
+  }));
+  ending.querySelector('a[href="#evidence"]')?.addEventListener('click', () => openCaseDrawer('#evidence'));
   ending.hidden = false;
 }
 

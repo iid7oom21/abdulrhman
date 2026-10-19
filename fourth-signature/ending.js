@@ -2,32 +2,47 @@ import { node, arabic } from './dom.js?v=dossier-1';
 import { createScene } from './media.js?v=cinema-2';
 import { createCaseSeal } from './case-seal.js?v=seal-1';
 
-const trace = [
+const signatures = [
+  { person: 'lucian', evidence: 'E02', reference: 'LC-14', purpose: 'تسليم نصفي قفل EXT-02 والأداة.' },
+  { person: 'elias', evidence: 'E03', reference: 'MA-22', purpose: 'فحص المخرج وإجراء صيانة.' },
+  { person: 'elena', evidence: 'E04', reference: 'AR-09', purpose: 'إعداد الجرد الأولي للخسائر.' },
+  { person: 'nora', evidence: 'E05', reference: 'RC-31', purpose: 'استلام الأوراق وإحالتها.' },
+];
+
+const checks = [
   {
-    references: 'PH-06 · LC-14 · MA-22',
-    title: 'القفل يعود إلى مكانه',
-    detail: 'قفص المعدات EXT-02. الصورة لا تثبت أن لوسيان أغلق مخرج الأرشيف AR-01.',
+    title: 'والصورة؟',
+    detail: 'بطاقة PH-06 تصف الأصل عند قفص المعدات EXT-02. قصاصة المحضر حذفت سياق الموقع، وأضافت «قفل المخرج بيد الحارس». حمل القفل لا يثبت إغلاق AR-01.',
+    sources: [{ id: 'E06', label: 'افتح بطاقة الصورة' }],
   },
   {
-    references: 'LC-14 · MA-22 · AR-09 · RC-31',
-    title: 'كل توقيع يعود إلى ورقته',
-    detail: 'تسليم، وفحص، وجرد، واستلام. أربعة أغراض مختلفة صارت اتهامًا لم يوقّعوا عليه.',
+    title: 'لماذا أدريان؟',
+    detail: 'يسجل AUD-07 قص التوقيعات وإضافة الاتهام وتصدير ADM-04.pdf في جلسة حساب أدريان، بمفتاح AV-02 المسلّم إليه وحده. بصمة الناتج 7A41 تطابق المحضر المعتمد للفصل.',
+    sources: [{ id: 'E07', label: 'سجل التنفيذ' }, { id: 'E01', label: 'المحضر ذو البصمة نفسها' }],
   },
   {
-    references: 'AUD-07 · REV-08',
-    title: 'النسخة تعود إلى صانعها',
-    detail: 'سجل التدقيق يثبت تركيب أدريان للمحضر. المراسلة وقرار تأجيل الصيانة يفسّران دافعه.',
+    title: 'ما دافعه؟',
+    detail: 'وقّع أدريان تأجيل إصلاح المزلاج في MA-22. مراسلته في REV-08 تطلب إغلاق الملف تأديبيًا كي لا تعود مساءلة التأجيل إلى مكتبه. هذا يكمل دليل التنفيذ، ولا يحل محله.',
+    sources: [{ id: 'E03', label: 'قرار تأجيل الإصلاح' }, { id: 'E08', label: 'المراسلة المحفوظة' }],
   },
 ];
 
 /** The caller gates access and disposes existing scenes before replacing this view. */
-export function createEnding(data, { hintCount = null } = {}) {
+export function createEnding(data, { hintCount = null, onOpenEvidence, onRestart } = {}) {
   const { ending } = data;
   const lucian = data.people.find((person) => person.id === 'lucian');
   const report = node('div', { class: 'ending-report' });
+  const evidenceLink = (id, label) => typeof onOpenEvidence === 'function'
+    ? node('button', {
+      type: 'button', class: 'ending-evidence-link', 'data-evidence-id': id,
+      onClick: (event) => onOpenEvidence(id, event.currentTarget),
+    }, node('span', {}, label.split(/([A-Z]{2,3}-\d{2})/g).map((part, index) =>
+      index % 2 ? node('bdi', { class: 'ending-inline-code', dir: 'ltr', text: part }) : part
+    )))
+    : node('span', { class: 'ending-source-label', text: label });
   const verdict = node('div', { class: 'ending-verdict-copy' }, [
     node('h2', { id: 'ending-title', tabindex: '-1', text: ending.title }),
-    node('p', { class: 'ending-summary', text: ending.summary }),
+    node('p', { class: 'ending-summary', text: 'جمع أدريان ڤوس توقيعات حقيقية من أربعة مستندات، ووضعها تحت اتهام جديد استُخدم لفصل لوسيان. لم يوقّع أصحابها على ذلك الاتهام.' }),
   ]);
 
   const portrait = lucian ? node('figure', { class: 'ending-person' }, [
@@ -44,18 +59,32 @@ export function createEnding(data, { hintCount = null } = {}) {
       node('span', { class: 'ending-seal', text: 'اكتمل فحص المحضر' }),
     ]),
     node('div', { class: 'ending-verdict' }, [verdict, portrait]),
-    node('div', { class: 'ending-resolution' }, [
-      node('span', { class: 'ending-resolution-label', text: 'ما يترتب على التحقيق' }),
-      node('p', { text: 'سحب الاعتماد على المحضر، وإعادة النظر في فصل لوسيان، ومساءلة أدريان عن تركيب الرواية التأديبية.' }),
-    ]),
     node('section', { class: 'ending-trace', 'aria-label': 'من الدليل إلى الخلاصة' }, [
-      node('h3', { text: 'كيف انقلب معنى الأوراق' }),
-      node('ol', { class: 'ending-trace-list' }, trace.map((step, index) => node('li', {}, [
-        node('span', { class: 'ending-trace-number', 'aria-hidden': 'true', text: arabic(index + 1) }),
-        node('p', { class: 'ending-trace-ref', dir: 'ltr', text: step.references }),
-        node('h4', { text: step.title }),
-        node('p', { class: 'ending-trace-detail', text: step.detail }),
+      node('h3', { text: 'أربعة توقيعات. أربعة أغراض.' }),
+      node('ol', { class: 'ending-trace-list ending-signatures' }, signatures.map((signature, index) => node('li', {
+        'data-ending-signature': signature.person,
+      }, [
+        node('div', { class: 'ending-signature-heading' }, [
+          node('span', { class: 'ending-trace-number', 'aria-hidden': 'true', text: arabic(index + 1) }),
+          node('h4', { text: data.people.find((person) => person.id === signature.person)?.name || signature.person }),
+        ]),
+        node('p', { class: 'ending-trace-detail', text: signature.purpose }),
+        evidenceLink(signature.evidence, `افتح الأصل ${signature.reference}`),
       ]))),
+      node('p', { class: 'ending-residue' }, [
+        node('span', { text: 'الأثر الذي بقي تحت التوقيع الرابع: ' }),
+        node('strong', { text: '«توقيع المستلم»' }),
+        node('span', { text: ' — عبارة إيصال نورا نفسها.' }),
+      ]),
+    ]),
+    node('div', { class: 'ending-checks', 'aria-label': 'الصورة وإثبات الفاعل والدافع' }, checks.map((check) => node('details', { class: 'ending-check' }, [
+      node('summary', { text: check.title }),
+      node('p', { text: check.detail }),
+      node('div', { class: 'ending-source-links' }, check.sources.map((source) => evidenceLink(source.id, source.label))),
+    ]))),
+    node('div', { class: 'ending-resolution' }, [
+      node('span', { class: 'ending-resolution-label', text: 'النتيجة التي يسندها الملف' }),
+      node('p', { text: 'سحب الاعتماد على المحضر، وإعادة النظر في فصل لوسيان، ومساءلة أدريان عن تركيب الرواية التأديبية.' }),
     ]),
     node('details', { class: 'ending-proof' }, [
       node('summary', {}, [
@@ -66,7 +95,19 @@ export function createEnding(data, { hintCount = null } = {}) {
     ]),
     node('div', { class: 'ending-limits' }, [
       node('h3', { text: 'حدود ما نعرفه' }),
-      ...ending.limits.map((limit) => node('p', { text: limit })),
+      node('p', { text: ending.limits[0] }),
+      node('details', { class: 'ending-limits-more' }, [
+        node('summary', { text: 'حدود أخرى للنتيجة' }),
+        ...ending.limits.slice(1).map((limit) => node('p', { text: limit })),
+      ]),
+    ]),
+    node('p', { class: 'ending-human-line', text: 'خسر لوسيان عمله بورقة تحمل توقيعه. لكن الورقة التي وقّعها كانت تقول شيئًا آخر.' }),
+    node('div', { class: 'ending-final-actions' }, [
+      node('a', { href: '#evidence', class: 'ending-action', text: 'راجع الأدلة' }),
+      typeof onRestart === 'function' ? node('button', {
+        type: 'button', class: 'ending-action ending-action-secondary', text: 'ابدأ تحقيقًا جديدًا',
+        onClick: (event) => onRestart(event.currentTarget),
+      }) : null,
     ]),
     createCaseSeal({ title: data.title, hintCount }),
     node('div', { class: 'ending-afterword' }, [
