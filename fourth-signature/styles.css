@@ -218,6 +218,42 @@ dialog::backdrop{background:rgba(5,8,5,.85);backdrop-filter:blur(5px)}
 .toast{position:fixed;bottom:25px;left:50%;transform:translateX(-50%);z-index:30;border:1px solid var(--gold);background:#242a20;box-shadow:0 10px 30px #0008;padding:12px 22px;max-width:calc(100vw - 30px);font-size:12px;line-height:1.7;text-align:center}
 .noscript-message{padding:25px;color:var(--gold);text-align:center}
 .image-unavailable{opacity:0}
+/* The original image stays beneath every silent, once-only scene. */
+.scene-player{position:relative;min-width:0;background:#10130f}
+.scene-frame{position:relative;overflow:hidden;min-width:0;background:#10130f}
+.scene-poster{display:block;width:100%;height:100%;object-fit:contain}
+.scene-video{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain;opacity:0;pointer-events:none;transition:opacity .25s ease}
+.scene-show-video .scene-video{opacity:1}
+.scene-controls{position:relative;display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:12px;border-top:1px solid var(--line);background:#1d211a}
+.scene-toggle,.scene-still-toggle{display:inline-flex;align-items:center;justify-content:center;gap:10px;min-height:44px;max-width:100%;padding:8px 14px;border:1px solid rgba(198,164,117,.65);border-radius:2px;background:#20271e;color:#e9d7b7;font-size:11px;line-height:1.7;text-align:center}
+.scene-toggle:hover,.scene-still-toggle:hover{border-color:var(--gold-bright);background:#30382a;color:#fff1d4}
+.scene-toggle:focus-visible,.scene-still-toggle:focus-visible{outline-offset:3px}
+.scene-button-icon{font-family:Arial,sans-serif;font-size:13px;line-height:1;width:13px;flex-shrink:0}
+.scene-button-icon svg{display:block;width:14px;height:14px}
+.scene-still-toggle{border-color:var(--line);color:#d1d5c8;background:transparent;font-size:10px}
+.scene-status{font-size:11px;line-height:1.8;color:#e9ce9f;padding:0 14px 12px;background:#1d211a}
+.scene-status:empty{display:none}
+.hero-scene{position:absolute;inset:0;background:none;pointer-events:none}
+.hero-scene .scene-frame{position:absolute;inset:0;z-index:-3}
+.hero-scene .scene-poster,.hero-scene .scene-video{object-fit:cover;object-position:35% center}
+.hero-scene .scene-controls{position:absolute;z-index:2;left:5.5%;top:27px;padding:0;border:0;background:none;pointer-events:auto}
+.hero-scene .scene-toggle{background:rgba(16,22,17,.9);box-shadow:0 3px 20px #0004;font-size:11px}
+.hero-scene .scene-status{position:absolute;z-index:2;top:81px;left:5.5%;max-width:260px;padding:10px 13px;border:1px solid var(--line);pointer-events:auto}
+.archive-scene{position:absolute;inset:0;background:none}
+.archive-scene .scene-frame{position:absolute;inset:0}
+.archive-scene .scene-poster,.archive-scene .scene-video{object-fit:cover;object-position:50% 51%;filter:brightness(.8)}
+.archive-scene .scene-controls{position:absolute;z-index:2;top:13px;left:16px;padding:0;border:0;background:none}
+.archive-scene .scene-toggle{background:rgba(16,22,17,.92)}
+.archive-scene .scene-status{position:absolute;z-index:2;top:66px;left:16px;max-width:250px;padding:8px 12px}
+.person-dossier-media{align-self:start;border-left:1px solid var(--line)}
+.person-dossier-media .scene-frame{aspect-ratio:3/4}
+.person-dossier-media .person-dossier-portrait{height:100%;width:100%;min-height:0;max-height:none;object-fit:contain;object-position:center;border:0}
+.person-dossier-media .scene-controls{justify-content:center}
+.document-scene{margin:0 30px;background:#11150f}
+.document-scene .scene-frame{height:300px}
+.document-scene .scene-poster,.document-scene .scene-video{object-fit:contain;filter:none}
+.document-scene .scene-controls{justify-content:center;border-bottom:1px solid var(--line)}
+.document-scene .scene-status{text-align:center}
 @media(min-width:1600px){.hero-content{padding-top:90px}
 .hero h1{font-size:145px}
 .hero-overline{margin-top:50px}
@@ -424,6 +460,25 @@ dialog::backdrop{background:rgba(5,8,5,.85);backdrop-filter:blur(5px)}
 .person-dossier-note{font-size:12px}
 .person-dossier-copy>.button{width:100%;margin-top:0}
 .person-dossier-copy>.eyebrow{font-size:10px}
+}
+@media(max-width:760px){
+.hero-scene .scene-controls{top:23px;left:6%}
+.hero-scene .scene-toggle{min-height:44px;font-size:10px;padding:8px 11px}
+.hero-scene .scene-status{top:76px;left:6%;max-width:220px}
+.hero-content>.eyebrow{max-width:calc(100% - 120px);font-size:9px;line-height:1.8}
+.document-scene{margin-inline:20px}
+.document-scene .scene-frame{height:260px}
+}
+@media(max-width:560px){
+.person-dossier-media{border-left:0;border-bottom:1px solid var(--line)}
+.person-dossier-media .scene-frame{height:45svh;max-height:430px;min-height:250px;aspect-ratio:auto}
+.person-dossier-media .scene-controls{padding:10px}
+.scene-toggle,.scene-still-toggle{padding:8px 11px}
+.document-scene{margin-inline:12px}
+.document-scene .scene-frame{height:230px}
+.document-scene .scene-controls{padding:10px 8px;gap:7px}
+.archive-scene .scene-controls{left:12px;top:10px}
+.archive-scene .scene-status{left:12px;right:12px;top:64px;max-width:none}
 }
 @media(prefers-reduced-motion:reduce){:root{scroll-behavior:auto}
 *,*::before,*::after{animation:none!important;transition:none!important}

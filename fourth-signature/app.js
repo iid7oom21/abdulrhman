@@ -1,4 +1,5 @@
 import { CASE_DATA } from './case-data.js';
+import { createScene, initializeScenes, pauseScenes, disposeScenes, refreshScenes } from './media.js?v=cinema-1';
 
 const $ = (selector, scope = document) => scope.querySelector(selector);
 const arabic = (value) => new Intl.NumberFormat('ar-SA', { useGrouping: false }).format(value);
@@ -123,6 +124,7 @@ function renderEvidence() {
 
 let dialogTrigger = null;
 function openDialog(dialog) {
+  pauseScenes();
   dialogTrigger = document.activeElement;
   dialog.showModal();
   document.body.style.overflow = 'hidden';
@@ -134,8 +136,9 @@ function openPerson(id) {
   const person = CASE_DATA.people[index];
   $('#person-kicker').textContent = `أطراف الملف / ${arabic(index + 1)} من ${arabic(CASE_DATA.people.length)}`;
   const description = person.description.startsWith(`${person.name}. `) ? person.description.slice(person.name.length + 2) : person.description;
+  disposeScenes($('#person-content'));
   $('#person-content').replaceChildren(node('article', { class: 'person-dossier' }, [
-    image(person.image, `صورة تخيّلية لشخصية ${person.name}`, { class: 'person-dossier-portrait', loading: 'eager', width: 1086, height: 1448 }),
+    createScene({ id: person.id, poster: person.image, alt: `صورة تخيّلية لشخصية ${person.name}`, label: person.name, className: 'person-dossier-media', imageClass: 'person-dossier-portrait' }),
     node('div', { class: 'person-dossier-copy' }, [
       node('p', { class: 'eyebrow', text: 'التوقيع الرابع / ملف شخصية' }),
       node('h2', { id: 'person-title', text: person.name }),
@@ -155,7 +158,10 @@ function openEvidence(id) {
   $('#document-kicker').textContent = `${item.type} / ${item.reference}`;
   const source = item.sourceLabel || 'مادة من ملف القضية';
   const content = [];
-  if (item.image) content.push(node('div', { class: 'document-visual' }, image(item.image, `مشهد تخيّلي مرتبط بدليل ${item.title}`)));
+  if (item.image) {
+    const sceneId = item.image.includes('padlock') ? 'padlock' : item.image.includes('documents') ? 'documents' : item.image.includes('archive') ? 'archive' : /(?:fire|hero)/.test(item.image) ? 'hero' : null;
+    content.push(sceneId ? createScene({ id: sceneId, poster: item.image, alt: `مشهد تخيّلي مرتبط بدليل ${item.title}`, label: item.title, className: 'document-scene' }) : node('div', { class: 'document-visual' }, image(item.image, `مشهد تخيّلي مرتبط بدليل ${item.title}`)));
+  }
   content.push(node('article', { class: `document-paper${item.image ? '' : ' no-image'}` }, [
     node('div', { class: 'paper-kicker' }, [node('span', { text: item.reference }), node('span', { text: item.type })]),
     node('h2', { id: 'document-title', text: item.title }),
@@ -163,6 +169,7 @@ function openEvidence(id) {
     item.signature ? node('p', { class: 'document-signature', text: item.signature }) : null,
     node('p', { class: 'document-source', text: source }),
   ]));
+  disposeScenes($('#document-content'));
   $('#document-content').replaceChildren(...content);
   const activeCardIndex = [...$('#evidence-grid').children].indexOf(document.activeElement);
   if (!state.viewedIds.includes(id)) {
@@ -184,9 +191,11 @@ for (const dialog of document.querySelectorAll('dialog')) {
     }
   });
   dialog.addEventListener('close', () => {
+    disposeScenes(dialog);
     document.body.style.overflow = '';
     if (dialogTrigger?.isConnected) dialogTrigger.focus({ preventScroll: true });
     dialogTrigger = null;
+    refreshScenes();
   });
 }
 
@@ -363,6 +372,7 @@ $('#confirm-reset').addEventListener('click', () => {
 });
 
 initializeStory();
+initializeScenes();
 renderEvidence();
 initializeComparison();
 renderQuestion();
