@@ -1,5 +1,6 @@
 import { node, arabic } from './dom.js?v=dossier-1';
 import { createScene } from './media.js?v=cinema-2';
+import { createCaseSeal } from './case-seal.js?v=seal-1';
 
 const trace = [
   {
@@ -20,7 +21,7 @@ const trace = [
 ];
 
 /** The caller gates access and disposes existing scenes before replacing this view. */
-export function createEnding(data) {
+export function createEnding(data, { hintCount = null } = {}) {
   const { ending } = data;
   const lucian = data.people.find((person) => person.id === 'lucian');
   const report = node('div', { class: 'ending-report' });
@@ -67,6 +68,7 @@ export function createEnding(data) {
       node('h3', { text: 'حدود ما نعرفه' }),
       ...ending.limits.map((limit) => node('p', { text: limit })),
     ]),
+    createCaseSeal({ title: data.title, hintCount }),
     node('div', { class: 'ending-afterword' }, [
       node('figure', { class: 'ending-scene-wrap' }, [
         createScene({

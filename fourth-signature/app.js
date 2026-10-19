@@ -5,7 +5,7 @@ const $ = (selector, scope = document) => scope.querySelector(selector);
 import { node, arabic } from './dom.js?v=dossier-1';
 import { createDocument, createDocumentPreview } from './documents.js?v=dossier-1';
 import { createSupportPicker, requiresSupport, evaluateSupport } from './deduction-support.js?v=dossier-1';
-import { createEnding } from './ending.js?v=dossier-1';
+import { createEnding } from './ending.js?v=seal-1';
 const questions = CASE_DATA.questions;
 const evidence = CASE_DATA.evidence;
 const storageKey = `raven-case:${CASE_DATA.id}`;
@@ -18,7 +18,7 @@ let hintQuestions = new Set();
 
 
 function freshState() {
-  return { viewedIds: [], solvedIds: [], activeIndex: 0, revealed: false, supportByQuestion: {} };
+  return { viewedIds: [], solvedIds: [], activeIndex: 0, revealed: false, supportByQuestion: {}, hintIds: [], hintHistoryComplete: true };
 }
 
 function readState() {
@@ -35,6 +35,8 @@ function readState() {
       solvedIds,
       activeIndex: Number.isInteger(saved.activeIndex) ? Math.max(0, Math.min(saved.activeIndex, solvedIds.length, questions.length)) : solvedIds.length,
       revealed: saved.revealed === true && solvedIds.length === questions.length,
+      hintIds: Array.isArray(saved.hintIds) ? [...new Set(saved.hintIds.filter(id => questions.some(question => question.id === id)))] : [],
+      hintHistoryComplete: saved.hintHistoryComplete === true && Array.isArray(saved.hintIds),
       supportByQuestion: Object.fromEntries(questions.filter(requiresSupport).map(question => [question.id,
         Array.isArray(saved.supportByQuestion?.[question.id]) ? [...new Set(saved.supportByQuestion[question.id].filter(id => evidence.some(item => item.id === id)))].slice(0, 2) : [],
       ])),
@@ -137,7 +139,7 @@ function openPerson(id) {
       node('h2', { id: 'person-title', text: person.name }),
       node('p', { class: 'person-dossier-role', text: person.role }),
       node('p', { class: 'person-dossier-description', text: description }),
-      node('p', { class: 'person-dossier-note', text: 'هذا ما نعرفه عند فتح الملف. راجع المستندات قبل أن تحكم على أصحابها.' }),
+      node('p', { class: 'person-dossier-note', text: 'الصفة الوظيفية والوقائع المسجّلة عند إعادة فتح القضية.' }),
       node('button', { class: 'button button-outline', type: 'button', 'data-close-dialog': true, text: 'عُد إلى أطراف الملف  ←' }),
     ]),
   ]));
@@ -350,7 +352,11 @@ function renderQuestion(moveFocus = false) {
     box.hidden = !box.hidden;
     hintButton.textContent = box.hidden ? 'أحتاج تلميحًا' : 'أخفِ التلميح';
     hintButton.setAttribute('aria-expanded', String(!box.hidden));
-    if (box.hidden) hintQuestions.delete(question.id); else hintQuestions.add(question.id);
+    if (box.hidden) hintQuestions.delete(question.id);
+    else {
+      hintQuestions.add(question.id);
+      if (!solved && !state.revealed && !state.hintIds.includes(question.id)) { state.hintIds.push(question.id); saveState(); }
+    }
   } });
   const submitButton = node('button', { id: 'submit-answer', class: 'button button-gold', type: 'button', disabled: !solved && !selected, text: solved ? (state.activeIndex === questions.length - 1 ? 'أكمل التحقيق  ←' : 'الاستنتاج التالي  ←') : 'ثبّت الاستنتاج  ←', onClick: () => {
     if (solved) {
@@ -412,7 +418,7 @@ function renderEnding() {
     ending.replaceChildren();
     return;
   }
-  ending.replaceChildren(createEnding(CASE_DATA));
+  ending.replaceChildren(createEnding(CASE_DATA, { hintCount: state.hintHistoryComplete ? state.hintIds.length : null }));
   ending.hidden = false;
 }
 

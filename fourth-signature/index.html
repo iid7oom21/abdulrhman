@@ -18,8 +18,9 @@
   <link rel="stylesheet" href="./documents.css?v=dossier-1">
   <link rel="stylesheet" href="./deduction-support.css?v=dossier-1">
   <link rel="stylesheet" href="./ending.css?v=dossier-1">
+  <link rel="stylesheet" href="./case-seal.css?v=seal-1">
   <link rel="stylesheet" href="./investigation.css?v=dossier-1">
-  <script type="module" src="./app.js?v=dossier-1"></script>
+  <script type="module" src="./app.js?v=seal-1"></script>
 </head>
 <body>
   <a class="skip-link" href="#investigation">انتقل إلى ملف التحقيق</a>
@@ -52,7 +53,7 @@
     <div class="content-shell" id="investigation">
       <section class="briefing section-block" id="briefing" aria-labelledby="briefing-title">
         <div class="section-heading"><p class="eyebrow">٠١ / خلفية القضية</p><h2 id="briefing-title">ما تركه <em>الحريق.</em></h2></div>
-        <div class="briefing-copy"><p class="lead" id="backstory"></p><div class="mission-note"><span class="note-label">مهمّتك</span><p>لا تبحث عن أكثر الأشخاص إثارة للريبة. ابحث عمّا تثبته الأوراق. افحص الأدلة، قارن السجلات، ثم أكمل الاستنتاجات لتفتح خلاصة القضية.</p></div></div>
+        <div class="briefing-copy"><p class="lead" id="backstory">عام 2019 احترق أرشيف بيلمار. انتشرت صورة للحارس لوسيان ڤيل وهو يحمل قفلًا مكسورًا، ثم فُصل بناءً على محضر بأربعة توقيعات ينسب إليه احتجاز زملائه داخل الأرشيف. بعد سبع سنوات، أعاد فريق وثائقي فتح الصندوق الأصلي. التوقيعات الأربعة حقيقية؛ المطلوب معرفة ما الذي وقّع عليه أصحابها فعلًا، ومن صنع الرواية التي أدانت الحارس. مدة التحقيق المتوقعة: 8–12 دقيقة.</p><div class="mission-note"><span class="note-label">تكليف التحقيق</span><p>ثمانية مستندات أُخرجت من صندوق الأصول. افحصها وقدّم محضرًا بما تثبته.</p></div></div>
         <figure class="archive-photo"><img src="./assets/archive.webp" alt="خزائن الأرشيف والممر المؤدي إلى غرفة حفظ السجلات" loading="lazy"><figcaption><span>أرشيف بيلمار / ممر الحفظ</span><span>الأرشيف</span></figcaption></figure>
       </section>
 
@@ -64,10 +65,10 @@
         <div class="evidence-grid" id="evidence-grid"></div>
       </section>
 
-      <aside class="interlude" aria-label="ملاحظة للمحقق"><img src="./assets/fire.webp" alt="الحارس أمام الأرشيف المحترق، في تصوّر للمشهد" loading="lazy"><div><p class="eyebrow">ملاحظة على هامش الملف</p><p>التوقيع صحيح.<br><em>لكن على أيّ رواية؟</em></p><span>ارجع إلى المصدر قبل أن تثق بالاستنتاج.</span></div></aside>
+      <aside class="interlude" aria-label="صندوق الأصول"><img src="./assets/documents.webp" alt="وثائق القضية على طاولة الأرشيف" loading="lazy"><div><p class="eyebrow">صندوق الأصول / ٠١٧</p><p>سبع سنوات من الصمت.<br><em>والملف أمامك الآن.</em></p><span>بيلمار · ٢٠١٩ — ٢٠٢٦</span></div></aside>
 
       <section class="section-block deductions-section" id="deductions" aria-labelledby="deductions-title"><div class="section-head-row"><div class="section-heading"><p class="eyebrow">٠٤ / ابنِ استنتاجك</p><h2 id="deductions-title">ما الذي تستطيع <em>إثباته؟</em></h2></div><p class="section-aside">كل إجابة تفتح الخطوة التالية.<br>الأدلة متاحة لك في أي وقت.</p></div>
-        <div class="deduction-layout"><aside class="deduction-sidebar"><div class="progress-header"><span>تقدّم التحقيق</span><strong id="progress-label">٠ / ٤</strong></div><div class="progress-track"><span id="progress-fill"></span></div><nav class="question-steps" id="question-steps" aria-label="خطوات الاستنتاج"></nav><p class="sidebar-note">لا حاجة للتخمين. إذا تعثّرت، افتح التلميح أو عد إلى الأوراق المرتبطة بالسؤال.</p></aside><div class="question-panel" id="question-panel" aria-live="polite"></div></div>
+        <div class="deduction-layout"><aside class="deduction-sidebar"><div class="progress-header"><span>تقدّم التحقيق</span><strong id="progress-label">٠ / ٤</strong></div><div class="progress-track"><span id="progress-fill"></span></div><nav class="question-steps" id="question-steps" aria-label="خطوات الاستنتاج"></nav><p class="sidebar-note">أربع خلاصات تُثبت في محضر التحقيق. يبقى ملف الأدلة مفتوحًا طوال المراجعة.</p></aside><div class="question-panel" id="question-panel" aria-live="polite"></div></div>
       </section>
       <section class="ending-section" id="ending" hidden aria-labelledby="ending-title"></section>
       <footer class="case-footer"><div><span class="footer-wordmark" lang="en" dir="ltr">RAVEN</span><p>لكل أثر رواية. ولكل رواية ما ينقصها.</p></div><button type="button" id="reset-progress" class="text-button">إعادة التحقيق من البداية <span aria-hidden="true">↻</span></button></footer>
