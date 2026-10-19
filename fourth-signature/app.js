@@ -89,10 +89,15 @@ function initializeStory() {
   $('#hero-subtitle').textContent = CASE_DATA.subtitle;
   $('#backstory').textContent = Array.isArray(CASE_DATA.backstory) ? CASE_DATA.backstory.join('\n\n') : CASE_DATA.backstory;
   $('#people-grid').replaceChildren(...CASE_DATA.people.map((person, index) => node('article', { class: 'person-card' }, [
-    node('div', { class: 'portrait-wrap' }, [image(person.image, `صورة تخيّلية لشخصية ${person.name}`), node('span', { class: 'person-index', 'aria-hidden': 'true', text: String(index + 1).padStart(2, '0') })]),
-    node('h3', { text: person.name }),
-    node('p', { class: 'person-role', text: person.role }),
-    node('p', { class: 'person-description', text: person.description }),
+    node('button', { class: 'person-open', type: 'button', 'aria-label': `افتح ملف ${person.name}`, 'aria-haspopup': 'dialog', onClick: () => openPerson(person.id) }, [
+      node('div', { class: 'portrait-wrap' }, [image(person.image, `صورة تخيّلية لشخصية ${person.name}`, { width: 1086, height: 1448 }), node('span', { class: 'person-index', 'aria-hidden': 'true', text: String(index + 1).padStart(2, '0') })]),
+      node('div', { class: 'person-copy' }, [
+        node('h3', { text: person.name }),
+        node('p', { class: 'person-role', text: person.role }),
+        node('p', { class: 'person-description', text: person.description }),
+        node('span', { class: 'person-action', 'aria-hidden': 'true' }, [node('span', { text: 'افتح ملف الشخصية' }), node('span', { text: '←' })]),
+      ]),
+    ]),
   ])));
 }
 
@@ -121,6 +126,27 @@ function openDialog(dialog) {
   dialogTrigger = document.activeElement;
   dialog.showModal();
   document.body.style.overflow = 'hidden';
+}
+
+function openPerson(id) {
+  const index = CASE_DATA.people.findIndex((person) => person.id === id);
+  if (index < 0) return;
+  const person = CASE_DATA.people[index];
+  $('#person-kicker').textContent = `أطراف الملف / ${arabic(index + 1)} من ${arabic(CASE_DATA.people.length)}`;
+  const description = person.description.startsWith(`${person.name}. `) ? person.description.slice(person.name.length + 2) : person.description;
+  $('#person-content').replaceChildren(node('article', { class: 'person-dossier' }, [
+    image(person.image, `صورة تخيّلية لشخصية ${person.name}`, { class: 'person-dossier-portrait', loading: 'eager', width: 1086, height: 1448 }),
+    node('div', { class: 'person-dossier-copy' }, [
+      node('p', { class: 'eyebrow', text: 'التوقيع الرابع / ملف شخصية' }),
+      node('h2', { id: 'person-title', text: person.name }),
+      node('p', { class: 'person-dossier-role', text: person.role }),
+      node('p', { class: 'person-dossier-description', text: description }),
+      node('p', { class: 'person-dossier-note', text: 'هذا ما نعرفه عند فتح الملف. راجع المستندات قبل أن تحكم على أصحابها.' }),
+      node('button', { class: 'button button-outline', type: 'button', 'data-close-dialog': true, text: 'عُد إلى أطراف الملف  ←' }),
+    ]),
+  ]));
+  openDialog($('#person-dialog'));
+  $('#person-dialog').scrollTop = 0;
 }
 
 function openEvidence(id) {
