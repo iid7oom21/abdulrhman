@@ -6,6 +6,7 @@
   const valid = value => value === 'en' || value === 'ar';
   const pages = new Set(['/', '/case', '/watch', '/privacy', '/404']);
   const homepage = new URL('../', document.currentScript.src).pathname;
+  const casePath = new URL('../fourth-signature/', new URL(homepage, location.origin)).pathname;
   const originalOrigin = 'https://project25762.websitepublisher.ai';
   function pagePath(path) {
     let value = path.replace(/\/+$/, '') || '/';
@@ -18,11 +19,16 @@
   }
   function route(path, locale) {
     const chosen = valid(locale) ? locale : current;
-    const url = new URL(path, location.origin);
+    const url = new URL(path, new URL(homepage, location.origin));
     if (url.origin !== location.origin && url.origin !== originalOrigin) return path;
     // Forms stay on their original host, including when their link is translated.
     if (url.origin === originalOrigin && url.hash === '#raven-collaborate') return path;
     const page = pagePath(url.pathname);
+    if (page === '/case' || url.pathname === casePath || url.pathname === casePath + 'index.html' || url.pathname === casePath.slice(0, -1)) {
+      url.pathname = casePath;
+      url.searchParams.delete('lang');
+      return url.pathname + url.search + url.hash;
+    }
     if (page === '/' || url.pathname === homepage || url.pathname === homepage + 'index.html' || url.pathname === homepage.slice(0, -1)) {
       url.pathname = homepage;
       if (chosen === 'en') url.searchParams.set('lang', 'en');
