@@ -1,10 +1,10 @@
-import { CASE_DATA } from './case-data.js?v=play-1';
+import { CASE_DATA } from './case-data.js?v=copy-1';
 import { createScene, initializeScenes, pauseScenes, disposeScenes, refreshScenes } from './media.js?v=cinema-2';
 
 const $ = (selector, scope = document) => scope.querySelector(selector);
 import { node, arabic } from './dom.js?v=dossier-1';
-import { createDocument, createDocumentPreview } from './documents.js?v=play-1';
-import { createSupportPicker, requiresSupport, evaluateSupport } from './deduction-support.js?v=dossier-1';
+import { createDocument, createDocumentPreview } from './documents.js?v=copy-1';
+import { createSupportPicker, requiresSupport, evaluateSupport } from './deduction-support.js?v=copy-1';
 import { createEnding } from './ending.js?v=seal-1';
 const questions = CASE_DATA.questions;
 const evidence = CASE_DATA.evidence;
