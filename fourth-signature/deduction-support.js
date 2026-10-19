@@ -1,4 +1,4 @@
-import { CASE_DATA } from './case-data.js?v=copy-1';
+import { CASE_DATA } from './case-data.js?v=questions-1';
 import { node, arabic } from './dom.js?v=dossier-1';
 
 // These pairs have distinct jobs: the record of an action and the document

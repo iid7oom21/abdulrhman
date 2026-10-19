@@ -1,10 +1,10 @@
-import { CASE_DATA } from './case-data.js?v=copy-1';
+import { CASE_DATA } from './case-data.js?v=questions-1';
 import { createScene, initializeScenes, pauseScenes, disposeScenes, refreshScenes } from './media.js?v=cinema-2';
 
 const $ = (selector, scope = document) => scope.querySelector(selector);
 import { node, arabic } from './dom.js?v=dossier-1';
 import { createDocument, createDocumentPreview } from './documents.js?v=copy-1';
-import { createSupportPicker, requiresSupport, evaluateSupport } from './deduction-support.js?v=copy-1';
+import { createSupportPicker, requiresSupport, evaluateSupport } from './deduction-support.js?v=questions-1';
 import { createEnding } from './ending.js?v=closure-1';
 const questions = CASE_DATA.questions;
 const evidence = CASE_DATA.evidence;
@@ -330,8 +330,8 @@ function renderQuestion(moveFocus = false) {
     panel.replaceChildren(node('div', { class: 'completed-panel' }, [
       node('span', { class: 'completed-symbol', 'aria-hidden': 'true', text: '✓' }),
       node('p', { class: 'question-kicker', text: 'اكتملت سلسلة الاستنتاجات' }),
-      node('h3', { id: 'active-question-title', tabindex: '-1', text: 'صار للأدلة صوت واحد.' }),
-      node('p', { text: 'أنهيت الاستنتاجات المرتبطة بالملف. يمكنك العودة إلى أي دليل، أو فتح خلاصة القضية لترى ما تثبته الأوراق وما يظلّ خارج حدودها.' }),
+      node('h3', { id: 'active-question-title', tabindex: '-1', text: 'اكتملت استنتاجاتك.' }),
+      node('p', { text: 'راجع في الخلاصة ما أثبتته الأوراق وما بقي غير محسوم.' }),
       node('button', { class: 'button button-gold', type: 'button', onClick: revealEnding, text: state.revealed ? 'عد إلى خلاصة القضية  ←' : 'افتح خلاصة القضية  ←' }),
     ]));
     if (moveFocus) focusQuestion();
@@ -427,9 +427,9 @@ function renderQuestion(moveFocus = false) {
     node('div', { class: 'question-actions' }, [submitButton, hintButton]),
     node('div', { class: 'hint-box', id: 'question-hint', hidden: !hintVisible, text: question.hint }),
   ];
-  if (solved) content.push(node('div', { class: 'answer-feedback', role: 'status' }, [node('strong', { text: '✓ الاستنتاج ثابت. انتقل للخطوة التالية.' }), node('details', { class: 'answer-reasoning' }, [node('summary', { text: 'كيف تثبته الأوراق؟' }), node('p', { text: question.explanation })])]));
+  if (solved) content.push(node('div', { class: 'answer-feedback', role: 'status' }, [node('strong', { text: '✓ استنتاج تسنده الأدلة.' }), node('details', { class: 'answer-reasoning' }, [node('summary', { text: 'كيف تثبته الأوراق؟' }), node('p', { text: question.explanation })])]));
   else if (supportErrors[question.id]) content.push(node('div', { class: 'answer-feedback error', role: 'status' }, [node('strong', { text: 'أكمل سند الاستنتاج.' }), document.createTextNode(supportErrors[question.id])]));
-  else if (wrong) content.push(node('div', { class: 'answer-feedback error', role: 'status' }, [node('strong', { text: 'الأوراق لا تثبت ذلك.' }), document.createTextNode('راجع الدليل أو اطلب تلميحًا.')]));
+  else if (wrong) content.push(node('div', { class: 'answer-feedback error', role: 'status' }, [node('strong', { text: 'هذا الاختيار لا تسنده الأوراق.' }), document.createTextNode('راجع مستندات الخطوة، ثم حاول مرة أخرى.')]));
   const linked = evidence;
   if (linked.length) {
     const library = node('div', { class: 'linked-evidence' }, [node('span', { text: 'افحص المستندات:' }), ...linked.map((item) => node('button', { type: 'button', class: 'evidence-chip', text: `${item.id} · ${item.title}`, onClick: () => openEvidence(item.id) }))]);
