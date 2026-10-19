@@ -1,0 +1,77 @@
+/* Reading tools and the investigation desk. Document content stays selectable. */
+.person-file-ref{font-size:9px;letter-spacing:.05em;color:var(--gold);margin-bottom:10px;direction:rtl}
+.portrait-wrap{border:1px solid #a58f6555;box-shadow:inset 0 0 0 7px #252a23}
+.portrait-wrap::after{content:"سجل أفراد / ٠١٧";position:absolute;inset:auto 10px 10px auto;padding:4px 8px;background:#151b16e8;border:1px solid #b3986755;color:#d8c8a7;font-size:8px;letter-spacing:.04em}
+.person-index{background:#d4c5a5;color:#34392f;font:14px Georgia,serif;padding:7px}
+.person-copy{border-inline:1px solid var(--line);border-bottom:1px solid var(--line);background:linear-gradient(140deg,#262b23,#1c221b)}
+.evidence-card:focus-visible{outline-offset:5px}
+.document-tools{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 30px;background:#20261f;border-bottom:1px solid var(--line)}
+.document-tools>p{font-size:11px;color:var(--muted)}
+.document-tools .button{min-height:44px;font-size:12px;padding:8px 14px}
+.document-dialog .document-sheet{margin-top:26px}
+.document-attachment{margin:20px 30px;border:1px solid var(--line);background:#20271f}
+.document-attachment>summary,.support-library>summary,.comparison-suggestions>summary,.comparison-note>summary{cursor:pointer;min-height:44px;padding:12px 16px;font-size:12px;line-height:1.7;color:var(--gold)}
+.document-attachment .document-scene{margin:0}
+.attachment-caption{font-size:11px;line-height:1.9;color:var(--muted);padding:0 16px 14px}
+.document-pagination{display:flex;justify-content:space-between;gap:16px;margin:22px 30px 30px}
+.document-pagination button{min-height:44px;padding:10px 16px;background:#252d22;border:1px solid var(--line);color:var(--text);font-size:12px}
+.document-pagination button:disabled{opacity:.4;cursor:default}
+.document-pagination button:not(:disabled):hover{border-color:var(--gold)}
+.compare-dialog[open]{display:flex;flex-direction:column;height:min(850px,92svh);max-height:92svh}
+.compare-dialog>.dialog-topbar{flex:none;position:relative}
+.compare-dialog .compare-body{display:flex;flex-direction:column;min-height:0;overflow:hidden;padding:22px 26px}
+.compare-body>h2{font-size:28px;flex:none;margin:0 0 5px}
+.compare-body>.eyebrow{margin-bottom:4px}
+.compare-instructions{font-size:12px;flex:none}
+.comparison-suggestions{flex:none;max-height:130px;overflow:auto;border-bottom:1px solid var(--line)}
+.comparison-suggestions>summary{padding-inline:0}
+.comparison-presets{margin:0 0 10px}
+.comparison-presets button{min-height:44px}
+.compare-selectors{flex:none;margin-top:10px;gap:14px}
+.compare-selectors select{min-height:44px;font-size:13px}
+.comparison-documents{flex:1;min-height:120px;overflow:auto;overscroll-behavior:contain;margin-top:14px;padding:2px 3px 20px;scrollbar-color:#9c906d #222a20;align-items:start}
+.comparison-documents>.document-sheet{margin:0}
+.comparison-documents>.document-sheet:focus-visible{outline-offset:-3px}
+.comparison-tabs{display:flex;flex:none;gap:8px;padding-top:12px}
+.comparison-tabs button{flex:1;min-width:0;min-height:44px;padding:7px 9px;font-size:12px;border:1px solid var(--line);background:#20271f;color:var(--muted)}
+.comparison-tabs button[aria-selected="true"]{border-color:var(--gold);background:#37392b;color:#f3e2be}
+.comparison-note{flex:none;border-top:1px solid var(--line);max-height:150px;overflow:auto}
+.comparison-note>summary{padding-inline:0}
+.comparison-note .compare-observation{margin:0 0 12px;font-size:13px;padding:8px 12px}
+.support-library{border:1px solid var(--line);margin-top:20px}
+.support-library .linked-evidence{margin:0;padding:10px 14px 16px;border:0}
+.linked-evidence .evidence-chip{min-height:44px;font-size:11px;padding:7px 10px}
+.question-compare{min-height:44px;margin-top:10px;color:var(--gold);font-size:12px}
+@media(max-width:700px){
+  .document-tools{padding:12px 16px;gap:8px}
+  .document-tools .button{font-size:11px;padding:8px 10px}
+  .document-dialog .document-sheet{margin-top:18px}
+  .document-attachment{margin:18px 16px}
+  .document-pagination{margin:18px 16px 24px;gap:10px}
+  .document-pagination button{flex:1;font-size:11px;padding:9px 10px}
+  .compare-dialog[open]{height:94svh;max-height:94svh;max-width:calc(100vw - 16px)}
+  .compare-dialog .dialog-topbar{padding:8px 14px}
+  .compare-dialog .compare-body{padding:12px 14px 8px;flex:1}
+  .compare-body>.eyebrow{display:none}
+  .compare-body>h2{font-size:23px;margin-bottom:3px}
+  .compare-instructions{font-size:11px;line-height:1.8}
+  .comparison-suggestions{max-height:100px}
+  .comparison-suggestions>summary{font-size:11px;padding:10px 0;min-height:40px}
+  .compare-selectors{gap:8px;margin-top:6px;grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .compare-selectors label{gap:5px;font-size:10px}
+  .compare-selectors select{font-size:12px;padding:8px 4px}
+  .comparison-documents{display:block;margin-top:10px;min-height:90px;padding:0 1px 12px}
+  .comparison-documents>.document-sheet[hidden]{display:none}
+  .comparison-note{max-height:120px}
+  .comparison-note>summary{font-size:11px;padding-block:10px}
+  .comparison-note .compare-observation{font-size:12px}
+  .person-file-ref{font-size:8px;overflow-wrap:anywhere}
+}
+@media(prefers-reduced-motion:reduce){.comparison-documents{scroll-behavior:auto}}
+@media(max-height:700px){
+  .compare-dialog[open]{display:block;height:auto;overflow:auto}
+  .compare-dialog>.dialog-topbar{position:sticky;top:0}
+  .compare-dialog .compare-body{display:block;overflow:visible}
+  .comparison-documents{min-height:0;overflow:visible}
+  .comparison-note{max-height:none;overflow:visible}
+}

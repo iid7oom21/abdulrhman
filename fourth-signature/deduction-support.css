@@ -1,0 +1,18 @@
+.deduction-support{min-width:0;margin:24px 0;padding:18px;border:1px solid var(--line);background:rgba(8,12,9,.18)}
+.deduction-support legend{padding:0 9px;color:var(--gold-bright);font-size:14px;font-weight:500}
+.support-instruction{margin:0;font-size:13px;line-height:1.95;color:var(--text)}
+.support-count{min-height:1.8em;margin:9px 0 14px;color:var(--muted);font-size:11px;line-height:1.8}
+.support-choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+.support-choice{display:flex;align-items:center;gap:11px;min-width:0;min-height:62px;padding:10px 12px;border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer}
+.support-choice:hover{border-color:var(--gold)}
+.support-choice.is-selected{border-color:var(--gold);background:rgba(198,164,117,.09)}
+.support-choice:focus-within{outline:2px solid var(--gold-bright);outline-offset:3px}
+.support-choice input{width:18px;height:18px;margin:0;flex:0 0 18px;accent-color:var(--gold)}
+.support-choice-copy{display:flex;flex-direction:column;gap:3px;min-width:0}
+.support-code{align-self:flex-start;color:var(--muted);font:10px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.3px}
+.support-title{font-size:12px;line-height:1.7;overflow-wrap:anywhere}
+.deduction-support:disabled .support-choice{cursor:default}
+.deduction-support:disabled .support-choice:not(.is-selected){opacity:.6}
+.deduction-support:disabled .support-choice:hover{border-color:var(--line)}
+.deduction-support:disabled .support-choice.is-selected:hover{border-color:var(--gold)}
+@media(max-width:520px){.deduction-support{padding:14px 11px}.support-choices{grid-template-columns:1fr}.support-choice{min-height:58px}.support-title{font-size:13px}}
