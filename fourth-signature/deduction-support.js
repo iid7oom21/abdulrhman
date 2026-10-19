@@ -1,16 +1,18 @@
-import { CASE_DATA } from './case-data.js?v=questions-1';
-import { node, arabic } from './dom.js?v=dossier-1';
+import { CASE_DATA } from './case-data.js?v=inspect-1';
+import { node } from './dom.js?v=dossier-1';
 
-// These pairs have distinct jobs: the record of an action and the document
-// establishing its consequence (Q03), then proof and the file's limits (Q04).
+// Q03 pairs the execution record with the approved report. For Q04, AUD-07
+// already matches its output to that report; citing the report too is valid.
 const supportRules = {
   Q03: {
+    legend: 'أسند استنتاجك بدليلين',
     instruction: 'أرفق مصدرًا يوثّق التنفيذ، ونسخة تربط الناتج بقرار الفصل. اختر دليلين من الملف.',
-    pairs: [['E01', 'E07']],
+    sets: [['E01', 'E07']],
   },
   Q04: {
-    instruction: 'اختر دليلين يجمعان ما ثبت عن المحضر وما لا تسمح الأصول بحسمه عن الحريق.',
-    pairs: [['E07', 'E08']],
+    legend: 'أسند الخلاصة',
+    instruction: 'اختر دليلين أو ثلاثة تغطي إنتاج المحضر وأساس الفصل وحدود ما نعرفه عن الحريق.',
+    sets: [['E07', 'E08'], ['E01', 'E07', 'E08']],
   },
 };
 
@@ -22,28 +24,36 @@ export function requiresSupport(question) {
 }
 
 export function correctEvidenceSets(question) {
-  return (supportRules[questionId(question)]?.pairs || []).map((pair) => [...pair]);
+  return (supportRules[questionId(question)]?.sets || []).map((set) => [...set]);
+}
+
+export function maxEvidenceCount(question) {
+  return Math.max(0, ...correctEvidenceSets(question).map((set) => set.length));
 }
 
 export function evaluateSupport(question, ids) {
   if (!requiresSupport(question)) return { valid: true, message: '' };
-  if (!Array.isArray(ids) || ids.length !== 2 || new Set(ids).size !== 2 || ids.some((id) => !evidenceIds.has(id))) {
-    return { valid: false, message: 'اختر دليلين مختلفين لإسناد استنتاجك، ثم ثبّته.' };
+  const validSets = correctEvidenceSets(question);
+  if (!Array.isArray(ids) || !validSets.some((set) => set.length === ids.length) || new Set(ids).size !== ids.length || ids.some((id) => !evidenceIds.has(id))) {
+    return { valid: false, message: maxEvidenceCount(question) === 3
+      ? 'اختر دليلين أو ثلاثة من أدلة الملف، دون تكرار، ثم ثبّت الاستنتاج.'
+      : 'اختر دليلين مختلفين لإسناد استنتاجك، ثم ثبّته.' };
   }
-  const valid = correctEvidenceSets(question).some((pair) => pair.every((id) => ids.includes(id)));
+  const valid = validSets.some((set) => set.length === ids.length && set.every((id) => ids.includes(id)));
   return {
     valid,
     message: valid
-      ? 'ربطت الاستنتاج بدليلين متكاملين.'
-      : 'الدليلان المختاران لا يكملان البرهان المطلوب. قارن مصدر كل معلومة وما يثبته فعلًا، ثم راجع اختيارك.',
+      ? 'أرفقت سندًا متكاملًا لاستنتاجك.'
+      : 'الأدلة المختارة لا تكمل البرهان المطلوب. قارن مصدر كل معلومة وما يثبته فعلًا، ثم راجع اختيارك.',
   };
 }
 
 export function createSupportPicker(question, { selectedIds = [], onChange } = {}) {
   if (!requiresSupport(question)) return null;
   const id = questionId(question);
+  const maximum = maxEvidenceCount(question);
   const validSelections = [...new Set((Array.isArray(selectedIds) ? selectedIds : []).filter((value) => evidenceIds.has(value)))];
-  const selected = new Set(validSelections.slice(0, 2));
+  const selected = new Set(validSelections.slice(0, maximum));
   const instructionId = `support-instruction-${id}`;
   const statusId = `support-status-${id}`;
   const count = node('p', {
@@ -52,15 +62,27 @@ export function createSupportPicker(question, { selectedIds = [], onChange } = {
   const fieldset = node('fieldset', {
     class: 'deduction-support', 'data-support-question': id, 'aria-describedby': `${instructionId} ${statusId}`,
   }, [
-    node('legend', { text: 'أسند استنتاجك بدليلين' }),
+    node('legend', { text: supportRules[id].legend }),
     node('p', { id: instructionId, class: 'support-instruction', text: supportRules[id].instruction }),
     count,
   ]);
   const choices = node('div', { class: 'support-choices' });
   const updateCount = (limitReached = false) => {
-    count.textContent = limitReached
-      ? `اخترت ${arabic(2)} من ${arabic(2)}. أزل أحد الاختيارين قبل إضافة دليل آخر.`
-      : `${arabic(selected.size)} من ${arabic(2)} أدلة مختارة${selected.size === 2 ? ' — يمكنك تثبيت الاستنتاج أو تبديل أحدهما.' : '.'}`;
+    if (limitReached) {
+      count.textContent = maximum === 3
+        ? 'يمكن اختيار ثلاثة أدلة كحد أقصى؛ أزل أحدها قبل إضافة دليل آخر.'
+        : 'يمكن اختيار دليلين فقط؛ أزل أحدهما قبل إضافة دليل آخر.';
+    } else if (selected.size === 0) {
+      count.textContent = maximum === 3 ? 'لم تختر دليلًا بعد؛ اختر دليلين أو ثلاثة.' : 'لم تختر دليلًا بعد؛ اختر دليلين.';
+    } else if (selected.size === 1) {
+      count.textContent = 'اخترت دليلًا واحدًا؛ أضف دليلًا آخر.';
+    } else if (selected.size === 2) {
+      count.textContent = maximum === 3
+        ? 'اخترت دليلين. يمكنك تثبيت الاستنتاج أو إرفاق دليل ثالث.'
+        : 'اخترت دليلين. يمكنك تثبيت الاستنتاج أو تبديل أحدهما.';
+    } else {
+      count.textContent = 'اخترت ثلاثة أدلة. يمكنك تثبيت الاستنتاج أو تبديل أحدها.';
+    }
   };
 
   for (const item of CASE_DATA.evidence) {
@@ -77,7 +99,7 @@ export function createSupportPicker(question, { selectedIds = [], onChange } = {
       ]),
     ]);
     input.addEventListener('change', () => {
-      if (input.checked && selected.size === 2) {
+      if (input.checked && selected.size >= maximum) {
         input.checked = false;
         updateCount(true);
         return;

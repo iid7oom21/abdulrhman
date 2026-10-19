@@ -1,10 +1,10 @@
-import { CASE_DATA } from './case-data.js?v=questions-1';
+import { CASE_DATA } from './case-data.js?v=inspect-1';
 import { createScene, initializeScenes, pauseScenes, disposeScenes, refreshScenes } from './media.js?v=cinema-2';
 
 const $ = (selector, scope = document) => scope.querySelector(selector);
 import { node, arabic } from './dom.js?v=dossier-1';
-import { createDocument, createDocumentPreview } from './documents.js?v=copy-1';
-import { createSupportPicker, requiresSupport, evaluateSupport } from './deduction-support.js?v=questions-1';
+import { createDocument, createDocumentPreview } from './documents.js?v=inspect-1';
+import { createSupportPicker, requiresSupport, evaluateSupport, maxEvidenceCount } from './deduction-support.js?v=inspect-1';
 import { createEnding } from './ending.js?v=closure-1';
 const questions = CASE_DATA.questions;
 const evidence = CASE_DATA.evidence;
@@ -45,7 +45,7 @@ function readState() {
       hintIds: Array.isArray(saved.hintIds) ? [...new Set(saved.hintIds.filter(id => questions.some(question => question.id === id)))] : [],
       hintHistoryComplete: saved.hintHistoryComplete === true && Array.isArray(saved.hintIds),
       supportByQuestion: Object.fromEntries(questions.filter(requiresSupport).map(question => [question.id,
-        Array.isArray(saved.supportByQuestion?.[question.id]) ? [...new Set(saved.supportByQuestion[question.id].filter(id => evidence.some(item => item.id === id)))].slice(0, 2) : [],
+        Array.isArray(saved.supportByQuestion?.[question.id]) ? [...new Set(saved.supportByQuestion[question.id].filter(id => evidence.some(item => item.id === id)))].slice(0, maxEvidenceCount(question)) : [],
       ])),
     };
   } catch {
@@ -165,7 +165,7 @@ function openEvidence(id, { replace = false, trigger } = {}) {
   $('#document-kicker').textContent = 'من ملف القضية';
   const content = [
     node('div', { class: 'document-tools' }, [
-      node('p', { text: 'مقتطف من الأصل' }),
+      node('p', { text: id === 'E06' ? 'افحص القصاصة والإطار الكامل' : 'مقتطف من الأصل' }),
       node('button', { class: 'button button-outline', type: 'button', text: 'قارن هذه الوثيقة', onClick: () => {
         $('#compare-first').value = id;
         if ($('#compare-second').value === id) $('#compare-second').value = evidence.find(entry => entry.id !== id).id;
@@ -182,13 +182,14 @@ function openEvidence(id, { replace = false, trigger } = {}) {
       if (!fromEnding) focusQuestion();
     } })]),
   ];
-  if (item.image) {
-    const sceneId = item.image.includes('padlock') ? 'padlock' : item.image.includes('documents') ? 'documents' : item.image.includes('archive') ? 'archive' : /(?:fire|hero)/.test(item.image) ? 'hero' : null;
-    const attachment = node('details', { class: 'document-attachment' }, [node('summary', { text: 'افتح المرفق البصري' })]);
+  const attachmentImage = id === 'E06' ? 'assets/padlock.webp' : item.image;
+  if (attachmentImage) {
+    const sceneId = attachmentImage.includes('padlock') ? 'padlock' : attachmentImage.includes('documents') ? 'documents' : attachmentImage.includes('archive') ? 'archive' : /(?:fire|hero)/.test(attachmentImage) ? 'hero' : null;
+    const attachment = node('details', { class: 'document-attachment' }, [node('summary', { text: id === 'E06' ? 'مشهد القفل · توضيحي' : 'افتح المرفق البصري' })]);
     attachment.append(node('p', { class: 'attachment-caption', text: 'تصوّر للمشهد؛ افحص نص الوثيقة للاستدلال.' }));
     attachment.addEventListener('toggle', () => {
       if (attachment.open && !attachment.querySelector('.scene-player,.document-visual')) {
-        attachment.append(sceneId ? createScene({ id: sceneId, poster: item.image, alt: `مرفق بصري: ${item.title}`, label: item.title, className: 'document-scene' }) : node('div', { class: 'document-visual' }, image(item.image, item.title)));
+        attachment.append(sceneId ? createScene({ id: sceneId, poster: attachmentImage, alt: `مرفق بصري: ${item.title}`, label: item.title, className: 'document-scene' }) : node('div', { class: 'document-visual' }, image(attachmentImage, item.title)));
       } else if (!attachment.open) pauseScenes();
     });
     content.push(attachment);

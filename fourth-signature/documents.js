@@ -1,5 +1,6 @@
 import { node, arabic } from './dom.js?v=dossier-1';
 import { EVIDENCE_FOCUS } from './evidence-focus.js?v=copy-1';
+import { createPhotoInspector } from './photo-inspector.js?v=inspect-1';
 
 // The paper styling carries no clues. The full original remains available below its excerpts.
 const templates = {
@@ -63,7 +64,7 @@ export function createDocument(item, { comparison = false, titleId } = {}) {
       node(comparison ? 'h3' : 'h2', { id: titleId, class: 'document-title', text: item.title }),
       node('p', { class: 'document-reference', text: item.reference }),
     ]),
-    focus ? node('section', { class: 'document-focus', 'aria-label': focus.label }, [
+    item.id === 'E06' ? createPhotoInspector() : focus ? node('section', { class: 'document-focus', 'aria-label': focus.label }, [
       node('p', { class: 'document-focus-label', text: focus.label }),
       node('div', { class: 'document-focus-lines' }, focus.lines.map(line =>
         node('p', { class: 'document-focus-line' }, excerptContent(line))
