@@ -1,5 +1,5 @@
 /* Both views use one source photograph. The narrow clipping window preserves its geometry. */
-.photo-inspector{margin:0 0 15px;min-width:0;color:#303a30}
+.photo-inspector{--photo-frame-ratio:2;margin:0 0 10px;min-width:0;color:#303a30}
 .document-sheet p.photo-inspector-heading{font-size:13px;line-height:1.6;margin:0 0 5px;color:#5c6255}
 .photo-inspector-controls{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:5px;align-items:stretch;margin-bottom:6px}
 .photo-inspector-controls button{appearance:none;min-width:0;min-height:44px;padding:6px 7px;font-family:inherit;font-size:14px;line-height:1.5;font-weight:600;border:1px solid #73776377;border-radius:2px;background:#fff3;color:#354234;cursor:pointer;touch-action:manipulation}
@@ -8,12 +8,17 @@
 .photo-inspector-controls .photo-inspector-frame-toggle[aria-pressed="true"]{background:#d6d8c5;border-style:dashed}
 .photo-inspector-controls button:focus-visible{outline:3px solid #647f91;outline-offset:3px}
 .photo-inspector-figure{margin:0}
-.photo-inspector-frame{position:relative;width:100%;aspect-ratio:2;overflow:hidden;background:#1c211c;border:1px solid #5e6458;isolation:isolate}
+.photo-inspector-frame{position:relative;width:100%;aspect-ratio:var(--photo-frame-ratio);overflow:hidden;background:#1c211c;border:1px solid #5e6458;isolation:isolate}
 .photo-inspector-window{position:absolute;top:50%;left:50%;width:auto;transform:translate(-50%,-50%);overflow:hidden;background:#181d18;box-shadow:0 0 0 1px #f5efe533}
 .photo-inspector-frame img.photo-inspector-image{position:absolute;display:block;max-width:none;max-height:none;object-fit:fill;margin:0;padding:0;border:0;border-radius:0;user-select:none;pointer-events:none}
 .photo-inspector-crop-outline{position:absolute;box-sizing:border-box;border:2px dashed #fff3b3;box-shadow:0 0 0 1px #142015;pointer-events:none}
 .photo-inspector-caption{font-size:15px;line-height:1.65;color:#485141;padding-top:6px;min-height:calc(2 * 1.65em + 6px);overflow-wrap:anywhere}
 .document-sheet.photo-inspector-unavailable p,.document-sheet .photo-inspector-unavailable p{font-size:14px;line-height:1.8;margin:0;padding:10px;border:1px dashed #7c806c77}
+@media(max-width:700px){
+  .photo-inspector{--photo-frame-ratio:1.5}
+  .photo-inspector-controls{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+  .photo-inspector-controls .photo-inspector-frame-toggle{grid-column:1/-1}
+}
 @media(max-width:360px){
   .photo-inspector-controls{gap:4px}
   .photo-inspector-controls button{padding-inline:4px}

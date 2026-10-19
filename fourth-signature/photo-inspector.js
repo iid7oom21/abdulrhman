@@ -1,6 +1,5 @@
 import { node } from './dom.js?v=dossier-1';
 
-const FRAME_RATIO = 2;
 const DEFAULT_CROP = { x: 0, y: 0, width: .55, height: 1 };
 
 export function createPhotoInspector({ imageSrc = './assets/photo-ph06.webp', crop = DEFAULT_CROP } = {}) {
@@ -63,17 +62,17 @@ export function createPhotoInspector({ imageSrc = './assets/photo-ph06.webp', cr
     frameButton.style.visibility = isFull ? 'visible' : 'hidden';
     frameOutline.hidden = !(isFull && showFrame);
     pictureWindow.style.aspectRatio = String(viewRatio);
-    pictureWindow.style.height = `${Math.min(1, FRAME_RATIO / viewRatio) * 100}%`;
+    pictureWindow.style.height = `min(100%, calc(100% * var(--photo-frame-ratio, 2) / ${viewRatio}))`;
     photo.style.width = `${100 / visible.width}%`;
     photo.style.height = `${100 / visible.height}%`;
     photo.style.left = `${-visible.x / visible.width * 100}%`;
     photo.style.top = `${-visible.y / visible.height * 100}%`;
     photo.alt = isFull
-      ? 'الإطار الكامل: لوسيان يحمل القفل المزال قرب سياج قفص المعدات ولافتة EXT-02.'
-      : 'قصاصة من الصورة: لوسيان يحمل قفلًا أمام مبنى يتصاعد منه الدخان.';
+      ? 'الإطار الكامل: لوسيان يحمل جزأي قفل أمام مبنى يتصاعد منه الدخان؛ يظهر سياج ولافتة مكتوب عليها EXT-02.'
+      : 'قصاصة من الصورة: لوسيان يحمل جزأي قفل أمام مبنى يتصاعد منه الدخان.';
     caption.textContent = isFull
-      ? 'ساحة معدات الصيانة EXT-02؛ الحارس يحمل القفل المزال.'
-      : 'قفل المخرج بيد الحارس';
+      ? 'الإطار الأوسع. قارن العناصر الظاهرة بنص البطاقة.'
+      : 'التعليق المثبت أسفل القصاصة: «قفل المخرج بيد الحارس».';
     Object.assign(frameOutline.style, {
       left: `${region.x * 100}%`, top: `${region.y * 100}%`,
       width: `${region.width * 100}%`, height: `${region.height * 100}%`,

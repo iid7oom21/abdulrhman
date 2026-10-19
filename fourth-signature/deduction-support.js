@@ -1,12 +1,12 @@
-import { CASE_DATA } from './case-data.js?v=inspect-1';
+import { CASE_DATA } from './case-data.js?v=desk-2';
 import { node } from './dom.js?v=dossier-1';
 
 // Q03 pairs the execution record with the approved report. For Q04, AUD-07
 // already matches its output to that report; citing the report too is valid.
 const supportRules = {
   Q03: {
-    legend: 'أسند استنتاجك بدليلين',
-    instruction: 'أرفق مصدرًا يوثّق التنفيذ، ونسخة تربط الناتج بقرار الفصل. اختر دليلين من الملف.',
+    legend: 'أرفق سند اختيارك',
+    instruction: 'اختر دليلين يسندان اختيارك.',
     sets: [['E01', 'E07']],
   },
   Q04: {

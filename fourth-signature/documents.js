@@ -1,6 +1,6 @@
 import { node, arabic } from './dom.js?v=dossier-1';
 import { EVIDENCE_FOCUS } from './evidence-focus.js?v=copy-1';
-import { createPhotoInspector } from './photo-inspector.js?v=inspect-1';
+import { createPhotoInspector } from './photo-inspector.js?v=desk-2';
 
 // The paper styling carries no clues. The full original remains available below its excerpts.
 const templates = {

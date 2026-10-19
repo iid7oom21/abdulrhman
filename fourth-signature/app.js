@@ -1,10 +1,10 @@
-import { CASE_DATA } from './case-data.js?v=inspect-1';
+import { CASE_DATA } from './case-data.js?v=desk-2';
 import { createScene, initializeScenes, pauseScenes, disposeScenes, refreshScenes } from './media.js?v=cinema-2';
 
 const $ = (selector, scope = document) => scope.querySelector(selector);
 import { node, arabic } from './dom.js?v=dossier-1';
-import { createDocument, createDocumentPreview } from './documents.js?v=inspect-1';
-import { createSupportPicker, requiresSupport, evaluateSupport, maxEvidenceCount } from './deduction-support.js?v=inspect-1';
+import { createDocument, createDocumentPreview } from './documents.js?v=desk-2';
+import { createSupportPicker, requiresSupport, evaluateSupport, maxEvidenceCount } from './deduction-support.js?v=desk-2';
 import { createEnding } from './ending.js?v=closure-1';
 const questions = CASE_DATA.questions;
 const evidence = CASE_DATA.evidence;
@@ -18,7 +18,7 @@ let hintQuestions = new Set();
 
 const stepEvidence = {
   Q01: ['E06', 'E02', 'E03'],
-  Q02: ['E01', 'E05', 'E07'],
+  Q02: ['E01', 'E02', 'E05'],
   Q03: ['E01', 'E07', 'E08'],
   Q04: ['E01', 'E07', 'E08'],
 };
@@ -68,7 +68,7 @@ function saveState() {
 function updateSaveIndicator() {
   const indicator = $('#saved-indicator');
   indicator.replaceChildren(node('span', { 'aria-hidden': 'true', text: '●' }), document.createTextNode(storageAvailable ? ' يُحفظ تقدّمك على هذا الجهاز' : ' الحفظ غير متاح؛ أبقِ الصفحة مفتوحة'));
-  $('#start-link').replaceChildren(document.createTextNode(state.solvedIds.length || state.viewedIds.length ? 'واصل التحقيق' : 'ابدأ بأول دليل'), node('span', { 'aria-hidden': 'true', text: '←' }));
+  $('#start-link').replaceChildren(document.createTextNode(state.solvedIds.length || state.viewedIds.length ? 'واصل التحقيق' : 'ابدأ بفحص الصورة'), node('span', { 'aria-hidden': 'true', text: '←' }));
 }
 
 function showToast(message) {
@@ -97,7 +97,7 @@ function initializeStory() {
         node('p', { class: 'person-file-ref', text: `ملف ${String(index + 1).padStart(2, '0')} / ${person.id.toUpperCase()}` }),
         node('h3', { text: person.name }),
         node('p', { class: 'person-role', text: person.role }),
-        node('span', { class: 'person-action', 'aria-hidden': 'true' }, [node('span', { text: 'افتح ملف الشخصية' }), node('span', { text: '←' })]),
+        node('span', { class: 'person-action', 'aria-hidden': 'true' }, [node('span', { text: 'عرض الصفة' }), node('span', { text: '←' })]),
       ]),
     ]),
   ])));
@@ -106,11 +106,11 @@ function initializeStory() {
 function renderEvidence() {
   $('#evidence-grid').replaceChildren(...evidence.map((item, index) => {
     const reviewed = state.viewedIds.includes(item.id);
-    return node('button', { class: 'evidence-card', type: 'button', 'data-evidence-id': item.id, 'aria-label': `${item.title} — ${reviewed ? 'سبق فحصه، افتح الدليل' : 'افتح الدليل'}`, onClick: () => openEvidence(item.id) }, [
+    return node('button', { class: 'evidence-card', type: 'button', 'data-evidence-id': item.id, 'aria-label': `${item.title} — ${reviewed ? 'سبق فتحه، افتح الدليل' : 'افتح الدليل'}`, onClick: () => openEvidence(item.id) }, [
       node('div', { class: 'evidence-art' }, [
         createDocumentPreview(item, index),
         node('span', { class: 'evidence-num', 'aria-hidden': 'true', text: String(index + 1).padStart(2, '0') }),
-        reviewed ? node('span', { class: 'reviewed-badge', text: '✓ تمّ فحصه' }) : null,
+        reviewed ? node('span', { class: 'reviewed-badge', text: '✓ فُتحت' }) : null,
       ]),
       node('div', { class: 'evidence-content' }, [
         node('p', { class: 'evidence-type', text: item.type }),
@@ -119,10 +119,10 @@ function renderEvidence() {
       ]),
     ]);
   }));
-  $('#reviewed-count').textContent = `${arabic(state.viewedIds.length)} / ${arabic(evidence.length)} أدلة مفحوصة`;
+  $('#reviewed-count').textContent = `${arabic(state.viewedIds.length)} / ${arabic(evidence.length)} أدلة مفتوحة`;
   for (const button of document.querySelectorAll('.step-evidence-button')) {
     const reviewed = state.viewedIds.includes(button.dataset.evidenceId);
-    $('.step-evidence-status', button).textContent = reviewed ? '✓ فُحصت' : 'افتح الورقة ←';
+    $('.step-evidence-status', button).textContent = reviewed ? '✓ فُتحت' : 'افتح الورقة ←';
   }
 }
 
@@ -165,7 +165,7 @@ function openEvidence(id, { replace = false, trigger } = {}) {
   $('#document-kicker').textContent = 'من ملف القضية';
   const content = [
     node('div', { class: 'document-tools' }, [
-      node('p', { text: id === 'E06' ? 'افحص القصاصة والإطار الكامل' : 'مقتطف من الأصل' }),
+      node('p', { text: id === 'E06' ? 'قارن القصاصة بالإطار الكامل' : 'مقتطف من الأصل' }),
       node('button', { class: 'button button-outline', type: 'button', text: 'قارن هذه الوثيقة', onClick: () => {
         $('#compare-first').value = id;
         if ($('#compare-second').value === id) $('#compare-second').value = evidence.find(entry => entry.id !== id).id;
@@ -421,8 +421,14 @@ function renderQuestion(moveFocus = false) {
     }, [
       node('div', { class: 'step-evidence-art', 'aria-hidden': 'true' }, [createDocumentPreview(item, index)]),
       node('span', { class: 'step-evidence-title', text: item.title }),
-      node('span', { class: 'step-evidence-status', text: state.viewedIds.includes(item.id) ? '✓ فُحصت' : 'افتح الورقة ←' }),
+      node('span', { class: 'step-evidence-status', text: state.viewedIds.includes(item.id) ? '✓ فُتحت' : 'افتح الورقة ←' }),
     ]))),
+    node('button', { type: 'button', class: 'text-button question-compare', text: 'قارن ورقتين', onClick: () => {
+      $('#compare-first').value = leads[0].id;
+      $('#compare-second').value = leads[1].id;
+      activeComparisonTab = 0;
+      openComparison();
+    } }),
     options,
     supportPicker,
     node('div', { class: 'question-actions' }, [submitButton, hintButton]),
@@ -436,12 +442,6 @@ function renderQuestion(moveFocus = false) {
     const library = node('div', { class: 'linked-evidence' }, [node('span', { text: 'افحص المستندات:' }), ...linked.map((item) => node('button', { type: 'button', class: 'evidence-chip', text: `${item.id} · ${item.title}`, onClick: () => openEvidence(item.id) }))]);
     content.push(node('details', { class: 'support-library' }, [node('summary', { text: 'بقية أوراق الملف' }), library]));
   }
-  content.push(node('button', { type: 'button', class: 'text-button question-compare', text: 'قارن ورقتين', onClick: () => {
-    $('#compare-first').value = leads[0].id;
-    $('#compare-second').value = leads[1].id;
-    activeComparisonTab = 0;
-    openComparison();
-  } }));
   panel.replaceChildren(...content.filter(Boolean));
   if (moveFocus) focusQuestion();
 }
