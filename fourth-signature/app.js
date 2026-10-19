@@ -1,5 +1,5 @@
 import { CASE_DATA } from './case-data.js';
-import { createScene, initializeScenes, pauseScenes, disposeScenes, refreshScenes } from './media.js?v=cinema-1';
+import { createScene, initializeScenes, pauseScenes, disposeScenes, refreshScenes } from './media.js?v=cinema-2';
 
 const $ = (selector, scope = document) => scope.querySelector(selector);
 const arabic = (value) => new Intl.NumberFormat('ar-SA', { useGrouping: false }).format(value);

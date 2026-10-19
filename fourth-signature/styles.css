@@ -247,6 +247,7 @@ dialog::backdrop{background:rgba(5,8,5,.85);backdrop-filter:blur(5px)}
 .archive-scene .scene-status{position:absolute;z-index:2;top:66px;left:16px;max-width:250px;padding:8px 12px}
 .person-dossier-media{align-self:start;border-left:1px solid var(--line)}
 .person-dossier-media .scene-frame{aspect-ratio:3/4}
+.person-dossier-media .scene-video{transition:none}
 .person-dossier-media .person-dossier-portrait{height:100%;width:100%;min-height:0;max-height:none;object-fit:contain;object-position:center;border:0}
 .person-dossier-media .scene-controls{justify-content:center}
 .document-scene{margin:0 30px;background:#11150f}
