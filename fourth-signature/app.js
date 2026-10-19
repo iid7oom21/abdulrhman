@@ -1,0 +1,344 @@
+import { CASE_DATA } from './case-data.js';
+
+const $ = (selector, scope = document) => scope.querySelector(selector);
+const arabic = (value) => new Intl.NumberFormat('ar-SA', { useGrouping: false }).format(value);
+const questions = CASE_DATA.questions;
+const evidence = CASE_DATA.evidence;
+const storageKey = `raven-case:${CASE_DATA.id}`;
+let storageAvailable = true;
+let toastTimer;
+let selectedAnswers = {};
+let wrongAnswers = {};
+let hintQuestions = new Set();
+
+function node(tag, attributes = {}, children = []) {
+  const element = document.createElement(tag);
+  for (const [key, value] of Object.entries(attributes)) {
+    if (value === undefined || value === null || value === false) continue;
+    if (key === 'class') element.className = value;
+    else if (key === 'text') element.textContent = value;
+    else if (key.startsWith('on')) element.addEventListener(key.slice(2).toLowerCase(), value);
+    else if (value === true) element.setAttribute(key, '');
+    else element.setAttribute(key, String(value));
+  }
+  for (const child of [children].flat()) {
+    if (child !== null && child !== undefined) element.append(child instanceof Node ? child : document.createTextNode(String(child)));
+  }
+  return element;
+}
+
+function freshState() {
+  return { viewedIds: [], solvedIds: [], activeIndex: 0, revealed: false };
+}
+
+function readState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(storageKey));
+    if (!saved || typeof saved !== 'object') return freshState();
+    const solvedIds = [];
+    for (const question of questions) {
+      if (!Array.isArray(saved.solvedIds) || !saved.solvedIds.includes(question.id)) break;
+      solvedIds.push(question.id);
+    }
+    return {
+      viewedIds: Array.isArray(saved.viewedIds) ? [...new Set(saved.viewedIds.filter((id) => evidence.some((item) => item.id === id)))] : [],
+      solvedIds,
+      activeIndex: Number.isInteger(saved.activeIndex) ? Math.max(0, Math.min(saved.activeIndex, solvedIds.length, questions.length)) : solvedIds.length,
+      revealed: saved.revealed === true && solvedIds.length === questions.length,
+    };
+  } catch {
+    storageAvailable = false;
+    return freshState();
+  }
+}
+
+let state = readState();
+
+function saveState() {
+  try {
+    localStorage.setItem(storageKey, JSON.stringify(state));
+  } catch {
+    storageAvailable = false;
+  }
+  updateSaveIndicator();
+}
+
+function updateSaveIndicator() {
+  const indicator = $('#saved-indicator');
+  indicator.replaceChildren(node('span', { 'aria-hidden': 'true', text: '●' }), document.createTextNode(storageAvailable ? ' يُحفظ تقدّمك على هذا الجهاز' : ' الحفظ غير متاح؛ أبقِ الصفحة مفتوحة'));
+  $('#start-link').replaceChildren(document.createTextNode(state.solvedIds.length || state.viewedIds.length ? 'واصل التحقيق' : 'افتح ملف القضية'), node('span', { 'aria-hidden': 'true', text: '←' }));
+}
+
+function showToast(message) {
+  const toast = $('#toast');
+  clearTimeout(toastTimer);
+  toast.textContent = message;
+  toast.hidden = false;
+  toastTimer = setTimeout(() => { toast.hidden = true; }, 3500);
+}
+
+function image(src, alt, attributes = {}) {
+  return node('img', { src, alt, loading: 'lazy', ...attributes, onError: (event) => {
+    event.currentTarget.classList.add('image-unavailable');
+    event.currentTarget.alt = '';
+  } });
+}
+
+function initializeStory() {
+  document.title = `${CASE_DATA.title} — رايفن`;
+  $('#hero-subtitle').textContent = CASE_DATA.subtitle;
+  $('#backstory').textContent = Array.isArray(CASE_DATA.backstory) ? CASE_DATA.backstory.join('\n\n') : CASE_DATA.backstory;
+  $('#people-grid').replaceChildren(...CASE_DATA.people.map((person, index) => node('article', { class: 'person-card' }, [
+    node('div', { class: 'portrait-wrap' }, [image(person.image, `صورة تخيّلية لشخصية ${person.name}`), node('span', { class: 'person-index', 'aria-hidden': 'true', text: String(index + 1).padStart(2, '0') })]),
+    node('h3', { text: person.name }),
+    node('p', { class: 'person-role', text: person.role }),
+    node('p', { class: 'person-description', text: person.description }),
+  ])));
+}
+
+function renderEvidence() {
+  $('#evidence-grid').replaceChildren(...evidence.map((item, index) => {
+    const reviewed = state.viewedIds.includes(item.id);
+    return node('button', { class: 'evidence-card', type: 'button', 'aria-label': `${item.title} — ${reviewed ? 'سبق فحصه، افتح الدليل' : 'افتح الدليل'}`, onClick: () => openEvidence(item.id) }, [
+      node('div', { class: 'evidence-art' }, [
+        image(item.image || './assets/documents.webp', ''),
+        node('span', { class: 'evidence-num', 'aria-hidden': 'true', text: String(index + 1).padStart(2, '0') }),
+        reviewed ? node('span', { class: 'reviewed-badge', text: '✓ تمّ فحصه' }) : null,
+      ]),
+      node('div', { class: 'evidence-content' }, [
+        node('p', { class: 'evidence-type', text: item.type }),
+        node('h3', { text: item.title }),
+        node('p', { class: 'evidence-summary', text: item.summary }),
+        node('span', { class: 'evidence-card-footer' }, [node('span', { text: item.reference }), node('span', { text: 'اقرأ الدليل  ←' })]),
+      ]),
+    ]);
+  }));
+  $('#reviewed-count').textContent = `${arabic(state.viewedIds.length)} / ${arabic(evidence.length)} أدلة مفحوصة`;
+}
+
+let dialogTrigger = null;
+function openDialog(dialog) {
+  dialogTrigger = document.activeElement;
+  dialog.showModal();
+  document.body.style.overflow = 'hidden';
+}
+
+function openEvidence(id) {
+  const item = evidence.find((entry) => entry.id === id);
+  if (!item) return;
+  $('#document-kicker').textContent = `${item.type} / ${item.reference}`;
+  const source = item.sourceLabel || 'مادة من ملف القضية';
+  const content = [];
+  if (item.image) content.push(node('div', { class: 'document-visual' }, image(item.image, `مشهد تخيّلي مرتبط بدليل ${item.title}`)));
+  content.push(node('article', { class: `document-paper${item.image ? '' : ' no-image'}` }, [
+    node('div', { class: 'paper-kicker' }, [node('span', { text: item.reference }), node('span', { text: item.type })]),
+    node('h2', { id: 'document-title', text: item.title }),
+    ...item.body.map((paragraph) => node('p', { class: 'document-paragraph', text: paragraph })),
+    item.signature ? node('p', { class: 'document-signature', text: item.signature }) : null,
+    node('p', { class: 'document-source', text: source }),
+  ]));
+  $('#document-content').replaceChildren(...content);
+  const activeCardIndex = [...$('#evidence-grid').children].indexOf(document.activeElement);
+  if (!state.viewedIds.includes(id)) {
+    state.viewedIds.push(id);
+    saveState();
+    renderEvidence();
+    if (activeCardIndex >= 0) $('#evidence-grid').children[activeCardIndex].focus({ preventScroll: true });
+  }
+  openDialog($('#evidence-dialog'));
+  $('#evidence-dialog').scrollTop = 0;
+}
+
+for (const dialog of document.querySelectorAll('dialog')) {
+  dialog.addEventListener('click', (event) => {
+    if (event.target.closest('[data-close-dialog]')) dialog.close();
+    else if (event.target === dialog) {
+      const bounds = dialog.getBoundingClientRect();
+      if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) dialog.close();
+    }
+  });
+  dialog.addEventListener('close', () => {
+    document.body.style.overflow = '';
+    if (dialogTrigger?.isConnected) dialogTrigger.focus({ preventScroll: true });
+    dialogTrigger = null;
+  });
+}
+
+function initializeComparison() {
+  const first = $('#compare-first');
+  const second = $('#compare-second');
+  for (const select of [first, second]) {
+    select.replaceChildren(...evidence.map((item) => node('option', { value: item.id, text: item.title })));
+    select.addEventListener('change', renderComparison);
+  }
+  if (evidence.length > 1) second.selectedIndex = 1;
+  $('#comparison-presets').replaceChildren(...(CASE_DATA.comparisons || []).map((comparison) => node('button', {
+    type: 'button', text: comparison.title, onClick: () => {
+      first.value = comparison.leftId;
+      second.value = comparison.rightId;
+      renderComparison();
+    },
+  })));
+  $('#open-compare').addEventListener('click', () => {
+    renderComparison();
+    openDialog($('#compare-dialog'));
+  });
+}
+
+function renderComparison() {
+  const firstId = $('#compare-first').value;
+  const secondId = $('#compare-second').value;
+  const items = [firstId, secondId].map((id) => evidence.find((item) => item.id === id));
+  $('#comparison-documents').replaceChildren(...items.filter(Boolean).map((item) => node('article', { class: 'comparison-paper' }, [
+    node('p', { class: 'paper-ref', text: `${item.reference} · ${item.type}` }),
+    node('h3', { text: item.title }),
+    ...item.body.map((paragraph) => node('p', { text: paragraph })),
+    item.signature ? node('p', { class: 'document-signature', text: item.signature }) : null,
+    item.sourceLabel ? node('p', { class: 'paper-ref', text: item.sourceLabel }) : null,
+  ])));
+  const comparison = (CASE_DATA.comparisons || []).find((item) => (item.leftId === firstId && item.rightId === secondId) || (item.rightId === firstId && item.leftId === secondId));
+  $('#compare-observation').textContent = firstId === secondId ? 'اختر دليلين مختلفين لتبدأ المقارنة.' : comparison?.insight || 'قارن التوقيت والمصدر والعبارات المحدّدة. التشابه وحده لا يثبت أن الروايتين متطابقتان.';
+}
+
+function renderProgress() {
+  $('#progress-label').textContent = `${arabic(state.solvedIds.length)} / ${arabic(questions.length)}`;
+  $('#progress-fill').style.width = `${state.solvedIds.length / questions.length * 100}%`;
+  $('#question-steps').replaceChildren(...questions.map((question, index) => {
+    const solved = state.solvedIds.includes(question.id);
+    return node('button', {
+      type: 'button', class: `question-step${solved ? ' completed' : ''}`,
+      disabled: index > state.solvedIds.length,
+      'aria-current': index === state.activeIndex ? 'step' : null,
+      'aria-label': `الاستنتاج ${arabic(index + 1)}${solved ? '، مكتمل' : index > state.solvedIds.length ? '، مغلق' : ''}`,
+      onClick: () => { state.activeIndex = index; saveState(); renderQuestion(true); },
+    }, [node('span', { 'aria-hidden': 'true', text: solved ? '✓' : arabic(index + 1) }), document.createTextNode(`استنتاج ${arabic(index + 1)}`)]);
+  }));
+}
+
+function renderQuestion(moveFocus = false) {
+  renderProgress();
+  const panel = $('#question-panel');
+  const question = questions[state.activeIndex];
+  if (!question) {
+    panel.replaceChildren(node('div', { class: 'completed-panel' }, [
+      node('span', { class: 'completed-symbol', 'aria-hidden': 'true', text: '✓' }),
+      node('p', { class: 'question-kicker', text: 'اكتملت سلسلة الاستنتاجات' }),
+      node('h3', { id: 'active-question-title', tabindex: '-1', text: 'صار للأدلة صوت واحد.' }),
+      node('p', { text: 'أنهيت الاستنتاجات المرتبطة بالملف. يمكنك العودة إلى أي دليل، أو فتح خلاصة القضية لترى ما تثبته الأوراق وما يظلّ خارج حدودها.' }),
+      node('button', { class: 'button button-gold', type: 'button', onClick: revealEnding, text: state.revealed ? 'عد إلى خلاصة القضية  ←' : 'افتح خلاصة القضية  ←' }),
+    ]));
+    if (moveFocus) $('#active-question-title').focus({ preventScroll: true });
+    return;
+  }
+  const solved = state.solvedIds.includes(question.id);
+  const selected = solved ? question.correctId : selectedAnswers[question.id];
+  const wrong = wrongAnswers[question.id];
+  const options = node('fieldset', { class: 'question-options', 'aria-labelledby': 'active-question-title' });
+  for (const option of question.options) {
+    const isSelected = selected === option.id;
+    const isWrong = wrong === option.id && !solved;
+    const classes = ['question-option', isSelected ? 'selected' : '', solved && isSelected ? 'correct' : '', isWrong ? 'incorrect' : ''].filter(Boolean).join(' ');
+    const input = node('input', {
+      type: 'radio', name: `answer-${question.id}`, value: option.id,
+      checked: isSelected, disabled: solved,
+      onChange: () => {
+        selectedAnswers[question.id] = option.id;
+        delete wrongAnswers[question.id];
+        for (const label of options.children) {
+          label.classList.toggle('selected', $('input', label).value === option.id);
+          label.classList.remove('incorrect');
+          $('.option-status.wrong', label)?.remove();
+        }
+        $('#submit-answer').disabled = false;
+        $('.answer-feedback.error', panel)?.remove();
+      },
+    });
+    options.append(node('label', { class: classes }, [input, node('span', { text: option.label }), solved && isSelected ? node('span', { class: 'option-status', text: '✓ صحيح' }) : isWrong ? node('span', { class: 'option-status wrong', text: 'راجع الدليل' }) : null]));
+  }
+  const hintVisible = hintQuestions.has(question.id);
+  const hintButton = node('button', { class: 'text-button', type: 'button', 'aria-expanded': hintVisible ? 'true' : 'false', 'aria-controls': 'question-hint', text: hintVisible ? 'أخفِ التلميح' : 'أحتاج تلميحًا', onClick: () => {
+    const box = $('#question-hint');
+    box.hidden = !box.hidden;
+    hintButton.textContent = box.hidden ? 'أحتاج تلميحًا' : 'أخفِ التلميح';
+    hintButton.setAttribute('aria-expanded', String(!box.hidden));
+    if (box.hidden) hintQuestions.delete(question.id); else hintQuestions.add(question.id);
+  } });
+  const submitButton = node('button', { id: 'submit-answer', class: 'button button-gold', type: 'button', disabled: !solved && !selected, text: solved ? (state.activeIndex === questions.length - 1 ? 'أكمل التحقيق  ←' : 'الاستنتاج التالي  ←') : 'ثبّت الاستنتاج  ←', onClick: () => {
+    if (solved) {
+      state.activeIndex += 1;
+      saveState();
+      renderQuestion(true);
+      return;
+    }
+    if (selectedAnswers[question.id] === question.correctId) {
+      if (!state.solvedIds.includes(question.id)) state.solvedIds.push(question.id);
+      delete wrongAnswers[question.id];
+      saveState();
+    } else {
+      wrongAnswers[question.id] = selectedAnswers[question.id];
+    }
+    renderQuestion(true);
+  } });
+  const content = [
+    node('p', { class: 'question-kicker', text: `الاستنتاج ${arabic(state.activeIndex + 1)} من ${arabic(questions.length)}` }),
+    node('h3', { id: 'active-question-title', tabindex: '-1', text: question.prompt }),
+    options,
+    node('div', { class: 'question-actions' }, [submitButton, hintButton]),
+    node('div', { class: 'hint-box', id: 'question-hint', hidden: !hintVisible, text: question.hint }),
+  ];
+  if (solved) content.push(node('div', { class: 'answer-feedback', role: 'status' }, [node('strong', { text: 'استنتاج تؤيده الأدلة.' }), document.createTextNode(question.explanation)]));
+  else if (wrong) content.push(node('div', { class: 'answer-feedback error', role: 'status' }, [node('strong', { text: 'هذا الاستنتاج لا تدعمه الأدلة بما يكفي.' }), document.createTextNode('راجع المستندات المرتبطة بالسؤال، أو افتح التلميح، ثم جرّب مرة أخرى.')]));
+  const linked = (question.evidenceIds || []).map((id) => evidence.find((item) => item.id === id)).filter(Boolean);
+  if (linked.length) content.push(node('div', { class: 'linked-evidence' }, [node('span', { text: 'ارجع إلى الدليل:' }), ...linked.map((item) => node('button', { type: 'button', class: 'evidence-chip', text: item.title, onClick: () => openEvidence(item.id) }))]));
+  panel.replaceChildren(...content);
+  if (moveFocus) $('#active-question-title').focus({ preventScroll: true });
+}
+
+function renderEnding() {
+  const ending = $('#ending');
+  if (!state.revealed || state.solvedIds.length !== questions.length) {
+    ending.hidden = true;
+    ending.replaceChildren();
+    return;
+  }
+  ending.replaceChildren(
+    node('p', { class: 'eyebrow', text: 'الملف ٠١٧ / خلاصة التحقيق' }),
+    node('h2', { id: 'ending-title', tabindex: '-1', text: CASE_DATA.ending.title }),
+    node('p', { class: 'ending-summary', text: CASE_DATA.ending.summary }),
+    node('ol', { class: 'ending-reasoning' }, CASE_DATA.ending.reasoning.map((reason) => node('li', { text: reason }))),
+    node('div', { class: 'ending-limits' }, [node('h3', { text: 'حدود ما نعرفه' }), ...CASE_DATA.ending.limits.map((limit) => node('p', { text: limit }))]),
+  );
+  ending.hidden = false;
+}
+
+function revealEnding() {
+  if (state.solvedIds.length !== questions.length) return;
+  state.revealed = true;
+  saveState();
+  renderEnding();
+  $('#ending').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
+  $('#ending-title').focus({ preventScroll: true });
+}
+
+$('#reset-progress').addEventListener('click', () => openDialog($('#reset-dialog')));
+$('#confirm-reset').addEventListener('click', () => {
+  state = freshState();
+  selectedAnswers = {};
+  wrongAnswers = {};
+  hintQuestions.clear();
+  saveState();
+  renderEvidence();
+  renderQuestion();
+  renderEnding();
+  $('#reset-dialog').close();
+  showToast('بدأ تحقيق جديد. جميع الأدلة متاحة للفحص.');
+  $('#deductions').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
+  $('#active-question-title').focus({ preventScroll: true });
+});
+
+initializeStory();
+renderEvidence();
+initializeComparison();
+renderQuestion();
+renderEnding();
+updateSaveIndicator();
