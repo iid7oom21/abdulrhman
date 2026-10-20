@@ -59,6 +59,7 @@ let state = readState();
 function saveState() {
   try {
     localStorage.setItem(storageKey, JSON.stringify(state));
+    storageAvailable = true;
   } catch {
     storageAvailable = false;
   }
