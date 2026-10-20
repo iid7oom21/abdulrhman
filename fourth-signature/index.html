@@ -25,15 +25,28 @@
 <meta name="twitter:image:alt" content="حارس أمام أرشيف مشتعل يحمل قفلًا قديمًا — التوقيع الرابع">
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebPage", "@id": "https://iid7oom21.github.io/abdulrhman/fourth-signature/#webpage", "url": "https://iid7oom21.github.io/abdulrhman/fourth-signature/", "name": "التوقيع الرابع — رايفن", "description": "ملف تحقيق تفاعلي من رايفن. افحص الوثائق، قارن الروايات، وابنِ استنتاجك من الأدلة.", "inLanguage": "ar", "isPartOf": {"@type": "WebSite", "@id": "https://iid7oom21.github.io/abdulrhman/raven/#website", "url": "https://iid7oom21.github.io/abdulrhman/raven/", "name": "RAVEN"}}</script>
 <link rel="icon" href="../fourth-signature/favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../site-player.css?v=music-continuous-1">
-<script type="module" src="../site-player.js?v=seo-share-1"></script>
+<link rel="stylesheet" href="../site-player.css?v=player-recovery-1">
+<script type="module" src="../site-player.js?v=player-recovery-1"></script>
 </head>
 <body>
+<div id="site-stage">
 <iframe id="site-content" title="التوقيع الرابع — RAVEN" allow="autoplay; fullscreen; web-share" allowfullscreen></iframe>
+  <div id="site-recovery">
+    <p id="site-load-message" role="status">جارٍ فتح الصفحة…</p>
+    <button id="site-retry" type="button" hidden>أعد المحاولة</button>
+    <a id="site-direct" href="./content.html">افتح الصفحة مباشرة</a>
+  </div>
+</div>
 <div class="site-player" role="region" aria-label="أغنية رايفن">
   <button id="music-toggle" type="button" aria-pressed="false">تشغيل الأغنية</button>
   <div class="music-copy"><p id="music-status" role="status" aria-live="polite">RAVEN</p></div>
-  <label class="music-volume">الصوت <input id="music-volume" aria-label="مستوى صوت الأغنية" type="range" min="0" max="1" step="0.05" value="0.45"></label>
+  <details id="music-settings" class="music-settings">
+    <summary id="music-settings-label">الصوت</summary>
+    <div class="music-settings-panel">
+      <label class="music-volume"><span id="music-volume-label">المستوى</span> <input id="music-volume" aria-label="مستوى صوت الأغنية" type="range" min="0" max="1" step="0.05" value="0.45"></label>
+      <p id="music-volume-hint" hidden></p>
+    </div>
+  </details>
   <a class="music-download" href="../fourth-signature/assets/audio/raven-dark-pop-intimate-revised.mp3" download="RAVEN-Dark-Pop-Intimate-Revised.mp3" aria-label="تنزيل أغنية رايفن">↓</a>
   <audio id="site-soundtrack" preload="auto" loop></audio>
 </div>

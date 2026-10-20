@@ -1,90 +1,105 @@
-// This document owns the audio. Only the content frame changes between pages.
+// The host owns one soundtrack while the content document changes.
+import { createSoundtrack } from './site-audio.js?v=player-recovery-1';
+
 const root = new URL('./', import.meta.url);
-const audio = document.querySelector('#site-soundtrack');
 const frame = document.querySelector('#site-content');
-const toggle = document.querySelector('#music-toggle');
-const status = document.querySelector('#music-status');
-const volume = document.querySelector('#music-volume');
-const preferenceKey = 'raven_music_enabled_v2';
+const recovery = document.querySelector('#site-recovery');
+const loadMessage = document.querySelector('#site-load-message');
+const retry = document.querySelector('#site-retry');
+const direct = document.querySelector('#site-direct');
+const soundtrack = createSoundtrack(root);
 const routes = ['raven/', 'fourth-signature/'].map(path => new URL(path, root).pathname);
 const pageMetadata = [
   'meta[name="description"]', 'meta[property^="og:"]', 'meta[name^="twitter:"]',
   'link[rel="canonical"]', 'link[rel="alternate"][hreflang]',
   'script[type="application/ld+json"]'
 ].join(',');
-let enabled = true;
-let failure = '';
-let attempt = 0;
-let activePath = '';
-try { enabled = sessionStorage.getItem(preferenceKey) !== 'off'; } catch {}
+let destination;
+let loadedDocument = null;
+let departingDocument = null;
+let pendingPath = null;
+let restoring = false;
+let reconciling = false;
+let loadTimer;
+let loadFailed = false;
 
 function route(value) {
-  const url = new URL(value, location.href);
-  if (url.origin !== location.origin) return null;
+  let url;
+  try { url = new URL(value, location.href); } catch { return null; }
+  if (!['http:', 'https:'].includes(url.protocol) || url.origin !== location.origin) return null;
   const path = url.pathname.replace(/(?:index|content)\.html$/, '').replace(/\/?$/, '/');
   if (!routes.includes(path)) return null;
   url.pathname = path;
   return url;
 }
 
-function sync() {
+function currentChild() {
+  try {
+    return !pendingPath && loadedDocument && frame.contentDocument === loadedDocument;
+  } catch { return false; }
+}
+
+function syncLoading() {
   const english = document.documentElement.lang === 'en';
-  const playing = !audio.paused;
-  toggle.textContent = playing ? (english ? 'Pause music' : 'إيقاف الأغنية') :
-    (english ? 'Play music' : 'تشغيل الأغنية');
-  toggle.setAttribute('aria-pressed', String(playing));
-  status.textContent = failure === 'blocked' ?
-    (english ? 'Tap to start the music' : 'اضغط لتبدأ الأغنية') :
-    failure === 'error' ? (english ? 'Could not load. Tap to retry.' : 'تعذّر التحميل. اضغط للمحاولة.') :
-    playing ? (english ? 'RAVEN · Now playing' : 'RAVEN · الأغنية شغّالة') :
-    (english ? 'RAVEN · Music paused' : 'RAVEN · الأغنية متوقفة');
+  loadMessage.textContent = loadFailed
+    ? (english ? 'The page could not finish loading.' : 'تعذّر إكمال تحميل الصفحة.')
+    : (english ? 'Opening the page…' : 'جارٍ فتح الصفحة…');
+  retry.textContent = english ? 'Try again' : 'أعد المحاولة';
+  direct.textContent = english ? 'Open the page directly' : 'افتح الصفحة مباشرة';
 }
 
-function play() {
-  if (!enabled || (!audio.paused && !audio.error)) return;
-  const id = ++attempt;
-  if (audio.error) audio.load();
-  failure = '';
-  const result = audio.play();
-  result?.then(() => {
-    if (id !== attempt) return;
-    if (!enabled) audio.pause();
-    sync();
-  }).catch(error => {
-    if (id !== attempt || error.name === 'AbortError') return;
-    failure = error.name === 'NotAllowedError' ? 'blocked' : 'error';
-    sync();
-  });
+function rememberView(child, view) {
+  if (restoring || !currentChild() || child !== frame.contentWindow || !view) return;
+  const x = Number.isFinite(view.x) ? view.x : 0;
+  const y = Number.isFinite(view.y) ? view.y : 0;
+  const focusId = typeof view.focusId === 'string' ? view.focusId : '';
+  history.replaceState({ ...history.state, view: { x, y, focusId } }, '', location.href);
 }
 
-function gesture(event) {
-  if (!event.isTrusted || event.repeat || event.isComposing) return;
-  if (event.type === 'keydown' && !['Enter', ' '].includes(event.key)) return;
-  if (event.target.closest?.('#music-toggle, #music-volume, [data-music-toggle], audio, video')) return;
-  if (enabled && audio.paused) play();
+function saveView() {
+  if (currentChild()) rememberView(frame.contentWindow, frame.contentWindow.RavenPage?.snapshot());
 }
 
-function toggleMusic() {
-  enabled = audio.paused;
-  try { sessionStorage.setItem(preferenceKey, enabled ? 'on' : 'off'); } catch {}
-  if (enabled) play();
-  else { ++attempt; failure = ''; audio.pause(); sync(); }
+function updateHistory(url, push, childState = null, view = null) {
+  history[push ? 'pushState' : 'replaceState']({ ravenShell: true, childState, view }, '', url);
 }
 
-function updateHistory(url, push, childState = null) {
-  const state = { ravenShell: true, childState };
-  history[push ? 'pushState' : 'replaceState'](state, '', url);
+function restoreChild() {
+  restoring = true;
+  frame.contentWindow.RavenPage.restore(
+    destination.url.href, destination.childState, destination.view
+  );
+  // Let the child restore its scroll/focus before saving its next position.
+  requestAnimationFrame(() => requestAnimationFrame(() => { restoring = false; }));
 }
 
-function show(url, childState = null) {
-  if (activePath === url.pathname && frame.contentWindow.RavenPage) {
-    frame.contentWindow.RavenPage.restore(url.href, childState);
-    return;
-  }
-  activePath = url.pathname;
+function show(url, childState = null, view = null, force = false, focus = false) {
+  destination = { url, childState, view, focus };
   const content = new URL(url);
   content.pathname += 'content.html';
+  direct.href = content.href;
+  if (!force && currentChild() && route(frame.contentWindow.location.href)?.pathname === url.pathname) {
+    restoreChild();
+    return;
+  }
+  // While a document is loading, retain the latest requested hash and query.
+  if (!force && pendingPath === url.pathname) return;
+  departingDocument = frame.contentDocument;
+  loadedDocument = null;
+  pendingPath = url.pathname;
   frame.title = url.pathname === routes[0] ? 'RAVEN — الرئيسية' : 'التوقيع الرابع — ملف التحقيق';
+  loadFailed = false;
+  retry.hidden = true;
+  recovery.hidden = false;
+  recovery.classList.add('is-loading');
+  syncLoading();
+  clearTimeout(loadTimer);
+  loadTimer = setTimeout(() => {
+    loadFailed = true;
+    retry.hidden = false;
+    recovery.classList.remove('is-loading');
+    syncLoading();
+  }, 12000);
   frame.contentWindow.location.replace(content.href);
 }
 
@@ -92,52 +107,66 @@ function navigate(value) {
   const url = route(value);
   if (!url) return false;
   if (url.href === location.href) return true;
+  saveView();
   updateHistory(url, true);
-  show(url);
+  show(url, null, null, false, true);
   return true;
 }
 
 window.RavenSite = {
-  navigate, gesture, toggleMusic,
-  state: () => ({ playing: !audio.paused, enabled }),
+  navigate,
+  gesture: soundtrack.gesture,
+  toggleMusic: soundtrack.toggleMusic,
+  state: soundtrack.state,
+  rememberView,
   childRoute(value, state, push = false) {
     const url = route(value);
-    if (url?.pathname === activePath) updateHistory(url, push, state);
+    if (!currentChild() || url?.pathname !== destination.url.pathname) return;
+    if (push) saveView();
+    updateHistory(url, push, state, push ? null : history.state?.view);
+    destination.url = url;
+    destination.childState = state;
   },
   ready(child) {
-    if (child !== frame.contentWindow || route(child.location.href)?.pathname !== activePath) return;
+    if (reconciling || child !== frame.contentWindow) return;
     const source = child.document;
+    if (source === departingDocument || source.readyState === 'loading' ||
+        route(child.location.href)?.pathname !== destination.url.pathname || !child.RavenPage) return;
+    reconciling = true;
+    const arrived = source !== loadedDocument;
+    loadedDocument = source;
+    pendingPath = null;
+    departingDocument = null;
+    if (arrived && (child.location.href !== destination.url.href || destination.view)) restoreChild();
     document.title = source.title;
     document.documentElement.lang = source.documentElement.lang;
     document.documentElement.dir = source.documentElement.dir;
     frame.title = source.title;
-    // Public entry HTML has its own crawler metadata; keep it aligned with the
-    // displayed page when client-side navigation retains this audio document.
     document.head.querySelectorAll(pageMetadata).forEach(node => node.remove());
-    source.head.querySelectorAll(pageMetadata).forEach(node => {
-      document.head.appendChild(node.cloneNode(true));
-    });
-    sync();
+    source.head.querySelectorAll(pageMetadata).forEach(node => document.head.appendChild(node.cloneNode(true)));
+    clearTimeout(loadTimer);
+    recovery.hidden = true;
+    loadFailed = false;
+    syncLoading();
+    soundtrack.sync();
+    if (arrived && destination.focus && !destination.view &&
+        !document.activeElement?.closest('.site-player')) {
+      const main = source.querySelector('main');
+      if (main) {
+        if (!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
+        main.focus({ preventScroll: true });
+      }
+    }
+    reconciling = false;
   }
 };
 
-toggle.addEventListener('click', toggleMusic);
-volume.addEventListener('input', () => { audio.volume = Number(volume.value); });
-audio.addEventListener('playing', () => { failure = ''; sync(); });
-audio.addEventListener('pause', sync);
-audio.addEventListener('error', () => { failure = 'error'; sync(); });
-document.addEventListener('click', gesture);
-document.addEventListener('keydown', gesture);
+retry.addEventListener('click', () => show(destination.url, destination.childState, destination.view, true));
+history.scrollRestoration = 'manual';
 window.addEventListener('popstate', event => {
   const url = route(location.href);
-  if (url) show(url, event.state?.childState);
+  if (url) show(url, event.state?.childState, event.state?.view, false, true);
 });
-audio.volume = Number(volume.value);
-audio.src = new URL('fourth-signature/assets/audio/raven-dark-pop-intimate-revised.mp3', root).href;
-audio.loop = true;
-audio.muted = false;
 const initial = route(location.href) || new URL('raven/', root);
-updateHistory(initial, false);
-show(initial);
-sync();
-play();
+updateHistory(initial, false, history.state?.childState, history.state?.view);
+show(initial, history.state?.childState, history.state?.view);

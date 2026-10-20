@@ -39,3 +39,16 @@ The home share image is an unchanged local copy of the approved RAVEN 17 artwork
 The home is indexable; inclusion in search results and refreshed social previews
 depend on the crawlers' own schedules. The original WebsitePublisher contact form
 remains an external service. Privacy opens the notice already on this page.
+
+Player recovery:
+
+`site-audio.js` owns playback state and safe volume handling; audible autoplay,
+trusted-interaction retries, the approved recording, and looping remain enabled.
+The sound settings are available on small screens and retain the chosen volume.
+The browser's own autoplay and device-volume policies still apply.
+
+The entry HTML exposes a direct-content link even if the player module fails.
+Content loading has a retry action after 12 seconds. Route requests made during
+loading are reconciled with the document that actually finishes loading. Browser
+Back restores saved scroll and focus for elements with stable IDs. None of these
+actions reconstructs or pauses the soundtrack.
