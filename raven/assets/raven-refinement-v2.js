@@ -32,6 +32,7 @@ const searchEntries=[
 {ar:'الجزء الثالث — RAVEN 17',en:'RAVEN 17 — part 3',keywords:'الحلقة الثالث ثلاثة 3',href:'/?episode=3',episode:3},
 {ar:'زرقاء اليمامة — الإعلان',en:'Zarqa Al-Yamama — teaser',keywords:'زرقاء zarqa trailer teaser اعلان',href:'#next-premiere'},
 {ar:'القضية 017 — التوقيع الرابع',en:'Case 017 — The Fourth Signature',keywords:'قضية شفرة رمز لغز توقيع الرابع case code signature fourth archive',href:'../fourth-signature/'},
+{ar:'الأرشيف السري — على الجانب الآخر',en:'The secret archive — On the Other Side',keywords:'ضوء كشاف بطاقة المحقق نبيل هالة مالك كمال secret archive uv investigator card',href:'#raven-archive'},
 {ar:'كواليس RAVEN وسجل الإنتاج',en:'RAVEN workshop & production log',keywords:'كواليس صناعة اخراج studio behind production',href:'#studio'},
 {ar:'الصور والخلفيات',en:'Images & wallpapers',keywords:'صور خلفيات تحميل wallpaper artwork vault',href:'#vault'},
 {ar:'الملف الإعلامي والتعاون',en:'Press assets & collaboration',keywords:'اعلام تعاون شعار صحافة press logo',href:'#press-creators'}

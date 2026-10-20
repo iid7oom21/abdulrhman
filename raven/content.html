@@ -3,7 +3,7 @@
 <html data-raven-locale="ar" dir="rtl" lang="ar">
 <head>
 <meta charset="utf-8">
-<script src="../site-bridge.js?v=player-recovery-1"></script>
+<script src="../site-bridge.js?v=archive-1"></script>
     <title>RAVEN — قصص سينمائية أصلية</title>
     <link rel="canonical" href="https://iid7oom21.github.io/abdulrhman/raven/" />
     <meta name="description" content="RAVEN مشروع سينمائي مستقل لعبدالرحمن العتيبي. شاهد RAVEN 17 بأجزائه الثلاثة، وافتح لغز التوقيع الرابع، واكتشف زرقاء اليمامة.">
@@ -27,35 +27,13 @@
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Organization", "@id": "https://iid7oom21.github.io/abdulrhman/raven/#raven", "name": "RAVEN", "url": "https://iid7oom21.github.io/abdulrhman/raven/", "description": "مشروع سينمائي مستقل لقصص الغموض والعوالم الأصلية.", "founder": {"@type": "Person", "name": "عبدالرحمن العتيبي", "alternateName": "Abdulrahman Alotaibi", "url": "https://iid7oom21.github.io/abdulrhman/raven/#about", "jobTitle": "كاتب وصانع أفلام مستقل ومؤسس RAVEN"}}</script>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "WebSite", "@id": "https://iid7oom21.github.io/abdulrhman/raven/#website", "name": "RAVEN", "url": "https://iid7oom21.github.io/abdulrhman/raven/", "inLanguage": "ar", "publisher": {"@id": "https://iid7oom21.github.io/abdulrhman/raven/#raven"}, "description": "Original cinematic mystery stories by RAVEN."}</script>
 <script>
-/* The page must recover even when a deferred intro script cannot load. */
-(function(){
-  'use strict';
-  var root=document.documentElement;
-  var seen=false;
-  try{seen=!!sessionStorage.getItem('raven_studio_ident_v1')}catch(_){}
-  var introState=window.ravenIntro={complete:seen,timer:null,finish:function(reason){
-    if(introState.complete)return;
-    introState.complete=true;
-    clearTimeout(introState.timer);
-    root.classList.remove('rvn-intro-pending');
-    var intro=document.getElementById('rvnStudioIntro');
-    if(intro){
-      var video=intro.querySelector('video');
-      if(video){try{video.pause()}catch(_){}}
-      intro.hidden=true;
-      intro.remove();
-    }
-    try{sessionStorage.setItem('raven_studio_ident_v1','1')}catch(_){}
-    document.dispatchEvent(new CustomEvent('raven:intro-complete',{detail:{reason:reason}}));
-  }};
-  if(!seen){
-    root.classList.add('rvn-intro-pending');
-    introState.timer=setTimeout(function(){introState.finish('bootstrap-timeout')},9500);
-  }
-})();
+/* The persistent host presents the welcome; direct content stays usable. */
+window.ravenIntro={complete:true,finish:function(){}};
 </script>
 <style id="raven-critical">html{background:#07090b}body{margin:0;background:#07090b;color:#eee9df}html.rvn-intro-pending,html.rvn-intro-pending body{overflow:hidden!important;background:#000!important}html.rvn-intro-pending body>*:not(#rvnStudioIntro){visibility:hidden!important}.rvnStudioIntro[hidden]{display:none!important}.refHeroBg .rvnMusicToggle{position:absolute;left:12px;bottom:12px;z-index:3;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;max-width:calc(100% - 80px);padding:8px 12px;border:1px solid rgba(197,154,97,.4);border-radius:2px;background:rgba(5,7,9,.9);color:#dec9a9;font:500 12px/1.4 "IBM Plex Sans Arabic",sans-serif;cursor:pointer;touch-action:manipulation}.refHeroBg .rvnMusicToggle:focus-visible{outline:2px solid #dec9a9;outline-offset:3px}.rvnViewing .rvnMusicToggle{visibility:hidden}@media(hover:hover){.refHeroBg .rvnMusicToggle:hover{background:#161a1c;border-color:#d5b17e}}@media(min-width:651px){.refHeroBg .rvnMusicToggle{left:24px;bottom:18px}}</style>
 <link href="./assets/raven-homepage-v6.css" rel="stylesheet"/>
+<link href="./assets/raven-archive.css?v=archive-1" rel="stylesheet"/>
+<script type="module" src="./assets/raven-archive.js?v=archive-1"></script>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="RAVEN">
 <meta property="og:locale" content="ar_SA">
@@ -91,19 +69,13 @@
 </head>
 <body>
 <a class="rvnSkipLink" data-rvn-v2="skipContent" href="#main-content">انتقل إلى المحتوى</a>
-<div aria-label="RAVEN studio intro" aria-modal="true" class="rvnStudioIntro" hidden="" id="rvnStudioIntro" role="dialog">
-<video disablepictureinpicture="" disableremoteplayback="" id="rvnStudioIntroVideo" muted="" playsinline="" poster="https://d2ol7oe51mr4n9.cloudfront.net/user_3INeyBf4CwM9xzf5JJ2W1rZmtIj/37e272b8-901d-4225-8213-0737cae0afc9.jpg" preload="auto" webkit-playsinline="">
-<source src="https://d2ol7oe51mr4n9.cloudfront.net/user_3INeyBf4CwM9xzf5JJ2W1rZmtIj/110ded16-3db4-4007-b669-3f2bf859c788.mp4" type="video/mp4"/>
-</video>
-<div aria-hidden="true" class="rvnIntroMeta">RAVEN · STUDIO IDENT · 2026</div>
-<button aria-label="تخطي الافتتاحية" class="rvnIntroSkip" data-rvn-i18n="introSkip" id="rvnIntroSkip" tabindex="-1" type="button">تخطي الافتتاحية</button>
-</div>
 <div class="orb a"></div><div class="orb b"></div>
 <nav aria-label="التنقل الرئيسي" class="ravenNav" data-rvn-nav="">
 <div class="ravenNavInner">
 <a aria-label="RAVEN" class="brand ravenWordmark" href="#top" translate="no">RAVEN</a>
 <div aria-label="روابط الصفحة" class="ravenNavLinks">
 <a class="active" data-rvn-i18n="home" href="#top">الرئيسية</a>
+<a data-archive-nav href="#raven-archive">الأرشيف السري</a>
 <a data-rvn-i18n="films" href="#films">الأفلام</a>
 <a data-rvn-v2="archive" href="#archive-experience">اللغز التفاعلي</a>
 <a data-rvn-v2="studio" href="#studio">خلف الكادر</a>
@@ -122,6 +94,7 @@
 </div>
 <div class="rvnNavPanel" hidden="" id="ravenNavPanel">
 <a data-rvn-i18n="home" href="#top">الرئيسية</a>
+<a data-archive-nav href="#raven-archive">الأرشيف السري</a>
 <a data-rvn-i18n="films" href="#films">الأفلام</a>
 <a data-rvn-v2="archive" href="#archive-experience">اللغز التفاعلي</a>
 <a data-rvn-v2="studio" href="#studio">خلف الكادر</a>
@@ -152,6 +125,9 @@
 </div>
 </div>
 </header>
+<section id="raven-archive" aria-label="الأرشيف السري">
+  <div class="wrap"><h2>على الجانب الآخر</h2><p>افحص الأثر. اختبر الشهادة. واحتفظ ببطاقتك من الأرشيف.</p><noscript><p>فعّل JavaScript لاستخدام كشاف الأدلة وبطاقة المحقق.</p></noscript></div>
+</section>
 <nav aria-label="RAVEN highlights" class="rvnStudioRail">
 <div class="rvnStudioRailInner">
 <a href="#films"><small data-rvn-i18n="railNow">يُعرض الآن</small><strong>RAVEN 17</strong><span data-rvn-v2="railWatch">شاهد الحلقات</span></a>
@@ -380,7 +356,7 @@
 <script defer="" src="./assets/raven-i18n.js?v=seo-share-1"></script>
 
 <script defer="" src="./assets/raven-enhancements-v1.js?v=music-continuous-1"></script>
-<script defer="" src="./assets/raven-refinement-v2.js?v=fourth-signature-1"></script>
+<script defer="" src="./assets/raven-refinement-v2.js?v=archive-1"></script>
 <script>
     (()=>{
       const video=document.getElementById('ravenHeroMotion');

@@ -52,3 +52,26 @@ Content loading has a retry action after 12 seconds. Route requests made during
 loading are reconciled with the document that actually finishes loading. Browser
 Back restores saved scroll and focus for elements with stable IDs. None of these
 actions reconstructs or pauses the soundtrack.
+
+Archive experience (`archive-1`):
+
+The homepage retains the horizontal film, episodes, and original investigation.
+`site-entry.js` presents a dismissible welcome once per session; case, episode,
+and anchor links open directly. Entering retries music only when the visitor has
+not explicitly paused it.
+
+`raven/assets/raven-archive.js` adds the optional “On the Other Side” mini-case:
+four source records, a pointer/touch UV lens with keyboard and text equivalents,
+a separate insight-code dialog, and a conclusion supported by the door report.
+It establishes a contradiction in an account, not the identity of the thief.
+Only explicitly opened records, the discovered code, and the solved question
+count toward progress. Local progress is versioned separately from Case 017.
+
+`raven/assets/raven-story-card.js` prepares a 1080×1920 PNG on the device, with
+the optional name and actual progress. Names are not submitted or stored. Save
+and Share are separate actions; cancelling a share does not start a download.
+
+The optional cinematic sound setting gently changes the tone with scroll depth
+and adds a brief tonal accent when the code opens. It uses one audio graph,
+retains the chosen volume and playback position, and bypasses processing when
+disabled. If Web Audio cannot start, the original media playback is retained.

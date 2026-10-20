@@ -87,6 +87,16 @@
     remember();
     return host.navigate(target.href);
   };
+  window.RavenArchiveAudio = { pulse: () => host.pulse?.(window) };
+  let depthFrame = 0;
+  const sendDepth = () => {
+    depthFrame = 0;
+    const available = Math.max(1, document.documentElement.scrollHeight - innerHeight);
+    host.setDepth?.(window, Math.max(0, Math.min(1, scrollY / available)));
+  };
+  const scheduleDepth = () => {
+    if (!depthFrame) depthFrame = requestAnimationFrame(sendDepth);
+  };
   document.addEventListener('click', event => {
     host.gesture?.(event);
     const link = event.target.closest?.('a[href]');
@@ -119,7 +129,12 @@
   addEventListener('hashchange', syncRoute);
   addEventListener('popstate', syncRoute);
   addEventListener('scroll', scheduleRemember, { passive: true });
+  addEventListener('scroll', scheduleDepth, { passive: true });
+  addEventListener('resize', scheduleDepth);
   document.addEventListener('focusin', scheduleRemember);
-  document.addEventListener('DOMContentLoaded', () => host.ready(window), { once: true });
+  document.addEventListener('DOMContentLoaded', () => {
+    host.ready(window);
+    scheduleDepth();
+  }, { once: true });
   document.addEventListener('raven:language', () => host.ready(window));
 })();

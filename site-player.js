@@ -1,5 +1,6 @@
 // The host owns one soundtrack while the content document changes.
-import { createSoundtrack } from './site-audio.js?v=sound-menu-1';
+import { createSoundtrack } from './site-audio.js?v=archive-1';
+import { createEntryGate } from './site-entry.js?v=archive-1';
 
 const root = new URL('./', import.meta.url);
 const frame = document.querySelector('#site-content');
@@ -22,6 +23,7 @@ let restoring = false;
 let reconciling = false;
 let loadTimer;
 let loadFailed = false;
+let entryGate = null;
 
 function route(value) {
   let url;
@@ -85,6 +87,7 @@ function show(url, childState = null, view = null, force = false, focus = false)
   // While a document is loading, retain the latest requested hash and query.
   if (!force && pendingPath === url.pathname) return;
   departingDocument = frame.contentDocument;
+  soundtrack.setDepth?.(0, null);
   loadedDocument = null;
   pendingPath = url.pathname;
   frame.title = url.pathname === routes[0] ? 'RAVEN — الرئيسية' : 'التوقيع الرابع — ملف التحقيق';
@@ -118,6 +121,12 @@ window.RavenSite = {
   gesture: soundtrack.gesture,
   toggleMusic: soundtrack.toggleMusic,
   state: soundtrack.state,
+  setDepth(child, value) {
+    if (currentChild() && child === frame.contentWindow) soundtrack.setDepth?.(value, frame.contentDocument);
+  },
+  pulse(child) {
+    if (currentChild() && child === frame.contentWindow) soundtrack.pulse?.();
+  },
   rememberView,
   childRoute(value, state, push = false) {
     const url = route(value);
@@ -149,8 +158,9 @@ window.RavenSite = {
     loadFailed = false;
     syncLoading();
     soundtrack.sync();
+    entryGate?.sync();
     if (arrived && destination.focus && !destination.view &&
-        !document.activeElement?.closest('.site-player')) {
+        !entryGate?.open && !document.activeElement?.closest('.site-player')) {
       const main = source.querySelector('main');
       if (main) {
         if (!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
@@ -170,3 +180,17 @@ window.addEventListener('popstate', event => {
 const initial = route(location.href) || new URL('raven/', root);
 updateHistory(initial, false, history.state?.childState, history.state?.view);
 show(initial, history.state?.childState, history.state?.view);
+entryGate = createEntryGate({
+  root,
+  show: initial.pathname === routes[0] && !initial.hash && !initial.searchParams.has('episode'),
+  onEnter: soundtrack.gesture,
+  onClose() {
+    destination.focus = true;
+    if (!currentChild()) return;
+    const main = frame.contentDocument.querySelector('main');
+    if (main) {
+      if (!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
+      main.focus({ preventScroll: true });
+    }
+  }
+});

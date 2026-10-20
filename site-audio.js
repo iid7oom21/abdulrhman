@@ -10,22 +10,50 @@ export function createSoundtrack(rootURL) {
   const volumeLabel = document.querySelector('#music-volume-label');
   const settingsLabel = document.querySelector('#music-settings-label');
   const volumeHint = document.querySelector('#music-volume-hint');
+  const cinematicControl = document.querySelector('#music-cinematic');
+  const cinematicLabel = document.querySelector('#music-cinematic-label');
+  const cinematicHint = document.querySelector('#music-cinematic-hint');
   const region = document.querySelector('.site-player');
   const download = document.querySelector('.music-download');
   const preferenceKey = 'raven_music_enabled_v2';
   const volumeKey = 'raven_music_volume_v1';
+  const cinematicKey = 'raven_music_cinematic_v1';
   let enabled = true;
   let phase = 'paused';
   let attempt = 0;
   let deviceVolume = false;
+  let cinematic = true;
+  let context = null;
+  let source = null;
+  let filter = null;
+  let output = null;
+  let graphTask = null;
+  let unavailable = false;
+  let resumeBlocked = false;
+  let depth = 0;
+  let depthSource;
+  let pulseUntil = 0;
+  let pulseTimer;
   try { enabled = sessionStorage.getItem(preferenceKey) !== 'off'; } catch {}
+  try { cinematic = localStorage.getItem(cinematicKey) !== 'off'; } catch {}
 
   function active() {
     return enabled && ['starting', 'playing', 'waiting'].includes(phase);
   }
 
   function state() {
-    return { playing: phase === 'playing' && !audio.paused && !audio.error, enabled, phase };
+    return {
+      playing: phase === 'playing' && !audio.paused && !audio.error &&
+        (!source || context.state === 'running'),
+      enabled, phase
+    };
+  }
+
+  function playbackPhase() {
+    if (!enabled || audio.paused) return 'paused';
+    if (audio.error) return 'error';
+    if (source && context.state !== 'running') return 'blocked';
+    return audio.readyState >= 3 ? 'playing' : 'waiting';
   }
 
   function sync() {
@@ -58,6 +86,137 @@ export function createSoundtrack(rootURL) {
       volumeHint.textContent = english ? 'Use your device buttons to adjust the volume.' :
         'استخدم أزرار جهازك للتحكم بمستوى الصوت.';
     }
+    if (cinematicControl) {
+      cinematicControl.checked = cinematic && !unavailable;
+      cinematicControl.disabled = unavailable;
+      cinematicControl.setAttribute('aria-label', english ? 'Cinematic sound' : 'الصوت السينمائي');
+    }
+    if (cinematicLabel) cinematicLabel.textContent = english ? 'Cinematic sound' : 'الصوت السينمائي';
+    if (cinematicHint) {
+      cinematicHint.textContent = unavailable || (resumeBlocked && !source)
+        ? (english ? 'The effect is unavailable here; original audio is retained.' :
+          'المؤثر غير متاح هنا؛ يبقى صوت الأغنية الأصلي.')
+        : source && context.state !== 'running' && enabled && !audio.paused
+          ? (english ? 'Tap Play music to resume the sound.' : 'اضغط تشغيل الأغنية لاستئناف الصوت.')
+          : cinematic
+            ? (english ? 'The tone changes gently as you scroll.' : 'يتغيّر طابع الصوت برفق أثناء التمرير.')
+            : (english ? 'The song plays with its original sound.' : 'الأغنية بصوتها الأصلي.');
+    }
+  }
+
+  function applyDepth() {
+    if (!filter || !context || !cinematic || unavailable) return;
+    const ceiling = Math.min(18000, context.sampleRate * 0.45);
+    const floor = Math.min(5500, ceiling * 0.55);
+    const accent = performance.now() < pulseUntil ? 0.78 : 1;
+    const frequency = ceiling * Math.pow(floor / ceiling, depth) * accent;
+    const now = context.currentTime;
+    try {
+      const current = filter.frequency.value;
+      filter.frequency.cancelScheduledValues(now);
+      filter.frequency.setValueAtTime(current, now);
+      filter.frequency.setTargetAtTime(frequency, now, 0.18);
+    } catch {
+      unavailable = true;
+      bypassFilter();
+      sync();
+    }
+  }
+
+  function bypassFilter() {
+    if (!source) return;
+    // Keep a live destination connected before removing the processing path.
+    // Disconnecting a MediaElementAudioSource does not restore native output.
+    try {
+      source.connect(context.destination);
+      if (output && output !== context.destination) source.disconnect(output);
+      output = context.destination;
+    } catch { /* Keep the previously connected path if rerouting is unavailable. */ }
+  }
+
+  function routeFilter() {
+    if (!source) return;
+    if (!cinematic || unavailable) { bypassFilter(); return; }
+    applyDepth();
+    if (unavailable || output === filter) return;
+    try {
+      source.connect(filter);
+      if (output) source.disconnect(output);
+      output = filter;
+    } catch {
+      unavailable = true;
+      bypassFilter();
+    }
+  }
+
+  // Only called from trusted clicks/keyboard interactions. A failed resume
+  // leaves the media element on its native path until a context is running.
+  function prepareGraph() {
+    if (graphTask || (unavailable && !source) || (!cinematic && !source)) return graphTask;
+    graphTask = (async () => {
+      try {
+        if (!context) {
+          const AudioContext = window.AudioContext || window.webkitAudioContext;
+          if (!AudioContext) { unavailable = true; sync(); return; }
+          context = new AudioContext();
+          context.addEventListener('statechange', () => {
+            if (source && enabled && !audio.paused) phase = playbackPhase();
+            sync();
+          });
+        }
+        if (context.state !== 'running') await context.resume();
+        if (context.state !== 'running') throw new Error('Audio context is not running');
+        resumeBlocked = false;
+      } catch {
+        resumeBlocked = true;
+        if (source && enabled && !audio.paused) phase = 'blocked';
+        sync();
+        return;
+      }
+      if (!source && cinematic) {
+        try {
+          // Prepare the processing path before the irreversible element binding.
+          filter = context.createBiquadFilter();
+          filter.type = 'lowpass';
+          filter.Q.value = Math.SQRT1_2;
+          filter.frequency.value = Math.min(18000, context.sampleRate * 0.45);
+          filter.connect(context.destination);
+          source = context.createMediaElementSource(audio);
+          source.connect(context.destination);
+          output = context.destination;
+        } catch {
+          unavailable = true;
+          bypassFilter();
+          sync();
+          return;
+        }
+      }
+      routeFilter();
+      if (source && enabled && !audio.paused) phase = playbackPhase();
+      sync();
+    })().finally(() => { graphTask = null; });
+    return graphTask;
+  }
+
+  function setDepth(ratio, sourceToken) {
+    const value = Number(ratio);
+    depth = Number.isFinite(value) ? Math.min(1, Math.max(0, value)) : 0;
+    if (sourceToken !== undefined && sourceToken !== depthSource) {
+      depthSource = sourceToken;
+      clearTimeout(pulseTimer);
+      pulseUntil = 0;
+    }
+    applyDepth();
+    return depth;
+  }
+
+  function pulse() {
+    if (!cinematic || unavailable || !source || !state().playing) return false;
+    clearTimeout(pulseTimer);
+    pulseUntil = performance.now() + 650;
+    applyDepth();
+    pulseTimer = setTimeout(() => { pulseUntil = 0; applyDepth(); }, 650);
+    return true;
   }
 
   function setVolume(value, save = false) {
@@ -96,9 +255,7 @@ export function createSoundtrack(rootURL) {
       result?.then(() => {
         if (id !== attempt) return;
         if (!enabled) { audio.pause(); phase = 'paused'; }
-        else if (audio.error) phase = 'error';
-        else if (audio.paused) phase = 'paused';
-        else phase = audio.readyState >= 3 ? 'playing' : 'waiting';
+        else phase = playbackPhase();
         sync();
       }).catch(error => failed(id, error));
     } catch (error) { failed(id, error); }
@@ -107,7 +264,10 @@ export function createSoundtrack(rootURL) {
   function gesture(event) {
     if (!event.isTrusted || event.repeat || event.isComposing) return;
     if (event.type === 'keydown' && !['Enter', ' '].includes(event.key)) return;
-    if (event.target.closest?.('#music-toggle, #music-settings, #music-volume, [data-music-toggle], audio, video')) return;
+    // A checkbox's change handler must read its new value before sync renders it.
+    if (event.target.closest?.('#music-settings, #music-volume, audio, video')) return;
+    prepareGraph();
+    if (event.target.closest?.('#music-toggle, [data-music-toggle]')) return;
     if (enabled && audio.paused) play();
   }
 
@@ -127,6 +287,15 @@ export function createSoundtrack(rootURL) {
 
   toggle.addEventListener('click', toggleMusic);
   volume.addEventListener('input', () => setVolume(volume.value, true));
+  cinematicControl?.addEventListener('change', event => {
+    cinematic = cinematicControl.checked;
+    clearTimeout(pulseTimer);
+    pulseUntil = 0;
+    try { localStorage.setItem(cinematicKey, cinematic ? 'on' : 'off'); } catch {}
+    routeFilter();
+    if (event.isTrusted) prepareGraph();
+    sync();
+  });
   audio.addEventListener('play', () => {
     if (!enabled) { audio.pause(); return; }
     phase = 'starting';
@@ -134,7 +303,7 @@ export function createSoundtrack(rootURL) {
   });
   audio.addEventListener('playing', () => {
     if (!enabled) { audio.pause(); return; }
-    phase = 'playing';
+    phase = playbackPhase();
     sync();
   });
   const waiting = () => {
@@ -143,6 +312,9 @@ export function createSoundtrack(rootURL) {
   audio.addEventListener('waiting', waiting);
   audio.addEventListener('stalled', () => { if (audio.readyState < 3) waiting(); });
   audio.addEventListener('pause', () => {
+    clearTimeout(pulseTimer);
+    pulseUntil = 0;
+    applyDepth();
     if (!enabled || !['blocked', 'error'].includes(phase)) phase = audio.error ? 'error' : 'paused';
     sync();
   });
@@ -160,7 +332,7 @@ export function createSoundtrack(rootURL) {
   audio.src = new URL('fourth-signature/assets/audio/raven-dark-pop-intimate-revised.mp3', rootURL).href;
   audio.loop = true;
   audio.muted = false;
-  soundtrack = { gesture, toggleMusic, state, sync };
+  soundtrack = { gesture, toggleMusic, state, sync, setDepth, pulse };
   sync();
   play();
   return soundtrack;
