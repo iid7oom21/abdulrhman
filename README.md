@@ -53,25 +53,22 @@ loading are reconciled with the document that actually finishes loading. Browser
 Back restores saved scroll and focus for elements with stable IDs. None of these
 actions reconstructs or pauses the soundtrack.
 
-Archive experience (`archive-1`):
+Homepage case entry (`mobile-puzzle-1`):
 
-The homepage retains the horizontal film, episodes, and original investigation.
-`site-entry.js` presents a dismissible welcome once per session; case, episode,
-and anchor links open directly. Entering retries music only when the visitor has
-not explicitly paused it.
+The homepage presents one investigation: The Fourth Signature. The film hero
+starts the film; the highlights rail and menu scroll to the single case section,
+whose button opens the investigation through the persistent soundtrack host.
+The former “On the Other Side” mini-case is no longer mounted or advertised on
+the homepage. Its source files, assets and separately versioned saved progress
+remain intact.
 
-`raven/assets/raven-archive.js` adds the optional “On the Other Side” mini-case:
-four source records, a pointer/touch UV lens with keyboard and text equivalents,
-a separate insight-code dialog, and a conclusion supported by the door report.
-It establishes a contradiction in an account, not the identity of the thief.
-Only explicitly opened records, the discovered code, and the solved question
-count toward progress. Local progress is versioned separately from Case 017.
+`site-entry.js` still presents the dismissible welcome once per session; case,
+episode, and anchor links open directly. Entering retries music only when the
+visitor has not explicitly paused it. The optional cinematic sound setting
+continues to use one audio graph and retains the chosen playback position.
 
-`raven/assets/raven-story-card.js` prepares a 1080×1920 PNG on the device, with
-the optional name and actual progress. Names are not submitted or stored. Save
-and Share are separate actions; cancelling a share does not start a download.
-
-The optional cinematic sound setting gently changes the tone with scroll depth
-and adds a brief tonal accent when the code opens. It uses one audio graph,
-retains the chosen volume and playback position, and bypasses processing when
-disabled. If Web Audio cannot start, the original media playback is retained.
+The investigation uses compact evidence rows on mobile: reference, title,
+opened state and an open action. Full documents remain in the reader, with
+comparison, answers and saved progress unchanged. Larger screens retain their
+document previews. The four-step navigation keeps accessible names and 44px
+mobile touch targets.
