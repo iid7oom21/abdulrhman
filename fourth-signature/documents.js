@@ -1,6 +1,6 @@
 import { node, arabic } from './dom.js?v=dossier-1';
 import { EVIDENCE_FOCUS } from './evidence-focus.js?v=copy-1';
-import { createPhotoInspector } from './photo-inspector.js?v=desk-2';
+import { createPhotoInspector } from './photo-inspector.js?v=discovery-1';
 
 // The paper styling carries no clues. The full original remains available below its excerpts.
 const templates = {
@@ -28,9 +28,36 @@ function excerptContent(line) {
   );
 }
 
-export function createDocument(item, { comparison = false, titleId } = {}) {
+function createSignatureInquiry(item, onOpenEvidence) {
+  const originId = `signature-origin-${item.id}`;
+  const origin = node('div', { class: 'signature-origin', id: originId, hidden: true }, [
+    node('p', { class: 'signature-person', text: 'لوسيان ڤيل — الحارس المفصول.' }),
+    node('p', { text: 'لماذا يظهر توقيعه هنا؟' }),
+    node('button', {
+      class: 'signature-origin-open', type: 'button', text: 'راجع أصل التوقيع ←',
+      onClick: () => onOpenEvidence('E02', 'signature'),
+    }),
+  ]);
+  return node('section', { class: 'signature-inquiry', 'aria-label': 'التوقيعات في المحضر' }, [
+    node('p', { class: 'signature-inquiry-label', text: 'التوقيعات' }),
+    node('ol', { class: 'signature-list' }, item.signature.split(' · ').map((name, index) =>
+      node('li', {}, index === 0 ? node('button', {
+        class: 'signature-inspect', type: 'button', text: name,
+        'aria-expanded': 'false', 'aria-controls': originId,
+        onClick: (event) => {
+          origin.hidden = !origin.hidden;
+          event.currentTarget.setAttribute('aria-expanded', String(!origin.hidden));
+        },
+      }) : node('span', { class: 'signature-person', text: name }))
+    )),
+    origin,
+  ]);
+}
+
+export function createDocument(item, { comparison = false, titleId, onOpenEvidence } = {}) {
   const details = documentDetails(item);
   const focus = EVIDENCE_FOCUS[item.id];
+  const interactive = !comparison && typeof onOpenEvidence === 'function';
   const original = [
     node('div', { class: 'document-body' }, item.body.map((paragraph, index) =>
       node('div', { class: 'document-entry' }, [
@@ -64,12 +91,14 @@ export function createDocument(item, { comparison = false, titleId } = {}) {
       node(comparison ? 'h3' : 'h2', { id: titleId, class: 'document-title', text: item.title }),
       node('p', { class: 'document-reference', text: item.reference }),
     ]),
-    item.id === 'E06' ? createPhotoInspector() : focus ? node('section', { class: 'document-focus', 'aria-label': focus.label }, [
+    item.id === 'E01' && interactive ? node('p', { class: 'signature-case-lead', text: 'بهذه الورقة فُصل لوسيان.' }) : null,
+    item.id === 'E06' ? createPhotoInspector(interactive ? { onInspectSite: () => onOpenEvidence('E02', 'photo') } : {}) : focus ? node('section', { class: 'document-focus', 'aria-label': focus.label }, [
       node('p', { class: 'document-focus-label', text: focus.label }),
       node('div', { class: 'document-focus-lines' }, focus.lines.map(line =>
         node('p', { class: 'document-focus-line' }, excerptContent(line))
       )),
     ]) : null,
+    item.id === 'E01' && interactive ? createSignatureInquiry(item, onOpenEvidence) : null,
     focus ? node('details', { class: 'document-full-text' }, [
       node('summary', { text: 'اقرأ الوثيقة كاملة' }),
       node('div', { class: 'document-full-content' }, original),

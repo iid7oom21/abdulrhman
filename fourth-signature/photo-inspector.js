@@ -2,7 +2,7 @@ import { node } from './dom.js?v=dossier-1';
 
 const DEFAULT_CROP = { x: 0, y: 0, width: .55, height: 1 };
 
-export function createPhotoInspector({ imageSrc = './assets/photo-ph06.webp', crop = DEFAULT_CROP } = {}) {
+export function createPhotoInspector({ imageSrc = './assets/photo-ph06.webp', crop = DEFAULT_CROP, onInspectSite } = {}) {
   const region = {
     x: Math.max(0, Math.min(.95, Number(crop.x) || 0)),
     y: Math.max(0, Math.min(.95, Number(crop.y) || 0)),
@@ -40,6 +40,10 @@ export function createPhotoInspector({ imageSrc = './assets/photo-ph06.webp', cr
     type: 'button', class: 'photo-inspector-frame-toggle', text: 'إطار القص', 'aria-pressed': 'false',
     onClick: () => { showFrame = !showFrame; render(); },
   });
+  const nextButton = typeof onInspectSite === 'function' ? node('button', {
+    type: 'button', class: 'photo-inspector-next button', text: 'افحص سجل الموقع ←', hidden: true,
+    onClick: onInspectSite,
+  }) : null;
 
   const inspector = node('section', { class: 'photo-inspector', 'aria-label': 'فحص الصورة PH-06', 'data-photo-mode': mode }, [
     node('p', { class: 'photo-inspector-heading', text: 'إعادة بناء بصرية من بطاقة PH-06' }),
@@ -48,10 +52,12 @@ export function createPhotoInspector({ imageSrc = './assets/photo-ph06.webp', cr
       node('div', { class: 'photo-inspector-frame' }, [pictureWindow]),
       caption,
     ]),
+    nextButton,
   ]);
 
   function render() {
     const isFull = mode === 'full';
+    if (nextButton) nextButton.hidden = !isFull;
     const visible = isFull ? { x: 0, y: 0, width: 1, height: 1 } : region;
     const viewRatio = sourceRatio * visible.width / visible.height;
     inspector.dataset.photoMode = mode;

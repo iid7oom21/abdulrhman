@@ -1,0 +1,44 @@
+/* Short, optional paths between existing evidence; no additional proof is implied. */
+.photo-inspector-next.button{min-height:48px;max-width:100%;margin-top:12px;padding:10px 16px;gap:10px;background:#354536;border-color:#52634d;color:#f0eee3;font-size:14px;line-height:1.7;white-space:normal;text-align:center}
+.photo-inspector-next.button:hover{background:#29392b;border-color:#354536}
+.photo-inspector-next.button:focus-visible{outline:3px solid #486775;outline-offset:3px}
+.photo-inspector-next[hidden],.signature-origin[hidden]{display:none!important}
+
+.document-sheet p.signature-case-lead{margin:0 0 14px;padding:0;font-size:15px;line-height:1.8;color:#5b4738;font-weight:600}
+.signature-inquiry{min-width:0;margin-top:20px;padding-top:16px;border-top:1px solid #78654a44}
+.document-sheet p.signature-inquiry-label{margin:0 0 10px;padding:0;font-size:12px;line-height:1.8;color:#625c4f}
+.signature-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;list-style:none;margin:0;padding:0}
+.signature-list>li{min-width:0;margin:0;padding:0}
+.signature-list .signature-person,.signature-inspect{display:flex;align-items:center;justify-content:center;width:100%;height:100%;min-width:0;min-height:48px;padding:9px 10px;font-family:"Times New Roman",Tahoma,serif;font-size:19px;line-height:1.5;text-align:center;overflow-wrap:anywhere;border:1px solid #78654a44;color:#3d4539}
+.signature-list .signature-person{background:transparent}
+.signature-inspect{appearance:none;border-color:#817252;background:#f6efe1;cursor:pointer;text-decoration:underline;text-decoration-color:#86714b;text-underline-offset:5px}
+.signature-inspect:hover,.signature-inspect[aria-expanded="true"]{background:#dfd5bd;border-color:#74603f;color:#302f25}
+.signature-inspect:focus-visible,.signature-origin-open:focus-visible{outline:3px solid #486775;outline-offset:3px}
+.signature-origin{min-width:0;margin-top:12px;padding:16px;border:1px solid #9c8d71;background:#e2d9c7;color:#302f26}
+.document-sheet .signature-origin>p{margin:0 0 10px;padding:0;font-size:16px;line-height:1.8;color:#302f26;overflow-wrap:anywhere}
+.document-sheet .signature-origin>p.signature-person{font-size:13px;color:#62543f}
+.signature-origin-open{appearance:none;display:inline-flex;align-items:center;justify-content:center;min-width:0;min-height:48px;max-width:100%;padding:10px 16px;border:1px solid #52634d;border-radius:2px;background:#354536;color:#f0eee3;font:inherit;font-size:14px;line-height:1.7;text-align:center;white-space:normal;cursor:pointer}
+.signature-origin-open:hover{background:#29392b}
+
+.document-trail{display:flex;flex-wrap:wrap;align-items:center;gap:10px;min-width:0;margin:12px 30px 20px;padding:16px;border:1px solid var(--line);background:#1e261e}
+.document-trail>p{flex:1 0 100%;min-width:0;margin:0;padding:0;font-size:13px;line-height:1.9;color:#c9c8b9;overflow-wrap:anywhere}
+.document-trail .button{min-height:48px;max-width:100%;padding:10px 16px;gap:10px;font-size:13px;line-height:1.7;white-space:normal;text-align:center}
+.document-trail .button:focus-visible,.discovery-recap .button:focus-visible{outline:2px solid var(--gold-bright);outline-offset:3px}
+
+.discovery-recap{min-width:0;margin-top:14px;padding:14px 0 0;border-top:1px solid #a5b99844}
+.answer-feedback .discovery-recap p.discovery-recap-line{margin:0 0 6px;padding:0;font-size:14px;line-height:1.9;color:#d2d7c9;overflow-wrap:anywhere}
+.answer-feedback .discovery-recap-line>strong{display:inline;color:#e1bf8e;font-size:inherit;font-weight:600}
+.discovery-recap .button{min-height:48px;max-width:100%;margin-top:10px;padding:10px 16px;gap:10px;border-color:#8e866b;font-size:14px;line-height:1.7;white-space:normal;text-align:center}
+
+@media(max-width:700px){
+  .document-trail{margin:10px 12px 16px;padding:14px;gap:8px}
+  .signature-origin{padding:13px}
+}
+@media(max-width:360px){
+  .signature-list{gap:6px}
+  .signature-list .signature-person,.signature-inspect{padding:8px 6px;font-size:18px}
+  .photo-inspector-next.button,.signature-origin-open,.document-trail .button,.discovery-recap .button{width:100%;padding-inline:12px}
+}
+@media print{
+  .photo-inspector-next,.signature-origin-open,.document-trail,.discovery-recap .button{display:none!important}
+}

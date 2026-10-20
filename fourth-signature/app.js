@@ -3,7 +3,7 @@ import { createScene, initializeScenes, pauseScenes, disposeScenes, refreshScene
 
 const $ = (selector, scope = document) => scope.querySelector(selector);
 import { node, arabic } from './dom.js?v=dossier-1';
-import { createDocument, createDocumentPreview } from './documents.js?v=desk-2';
+import { createDocument, createDocumentPreview } from './documents.js?v=discovery-1';
 import { createSupportPicker, requiresSupport, evaluateSupport, maxEvidenceCount } from './deduction-support.js?v=desk-2';
 import { createEnding } from './ending.js?v=closure-1';
 const questions = CASE_DATA.questions;
@@ -157,12 +157,13 @@ function openPerson(id) {
   $('#person-dialog').scrollTop = 0;
 }
 
-function openEvidence(id, { replace = false, trigger } = {}) {
+function openEvidence(id, { replace = false, trigger, trail } = {}) {
   const item = evidence.find((entry) => entry.id === id);
   if (!item) return;
   const index = evidence.indexOf(item);
   const origin = replace ? dialogTriggers.get($('#evidence-dialog')) : trigger || document.activeElement;
   const fromEnding = state.revealed && origin?.closest('#ending');
+  const onOpenEvidence = (nextId, source) => openEvidence(nextId, { replace: true, trail: source });
   $('#document-kicker').textContent = 'من ملف القضية';
   const tools = node('div', { class: 'document-tools' }, [
     node('p', { text: id === 'E06' ? 'قارن القصاصة بالإطار الكامل' : 'مقتطف من الأصل' }),
@@ -187,11 +188,26 @@ function openEvidence(id, { replace = false, trigger } = {}) {
       }),
       node('details', { class: 'photo-evidence-inspection' }, [
         node('summary', { text: 'افحص الصورة والوثيقة' }),
-        createDocument(item, { titleId: 'photo-document-title' }),
+        createDocument(item, { titleId: 'photo-document-title', onOpenEvidence }),
         tools,
       ]),
     ]),
-  ] : [tools, createDocument(item, { titleId: 'document-title' })];
+  ] : [tools, createDocument(item, { titleId: 'document-title', onOpenEvidence })];
+  if (id === 'E02' && trail === 'photo') content.push(node('div', { class: 'document-trail', 'data-trail': 'photo' }, [
+    node('p', { text: 'طابق رمز الموقع مع الصورة.' }),
+    node('button', { class: 'button button-outline', type: 'button', text: 'عُد إلى الصورة ←', onClick: () => openEvidence('E06', { replace: true }) }),
+  ]));
+  if (id === 'E02' && trail === 'signature') content.push(node('div', { class: 'document-trail', 'data-trail': 'signature' }, [
+    node('p', { text: 'اقرأ عنوان الورقة وخانة التوقيع.' }),
+    node('button', { class: 'button button-outline', type: 'button', text: 'قارن الأصل بالمحضر', onClick: () => {
+      $('#compare-first').value = 'E01';
+      $('#compare-second').value = 'E02';
+      activeComparisonTab = 0;
+      const returnTarget = dialogTriggers.get($('#evidence-dialog')) || $('#active-question-title');
+      $('#evidence-dialog').close();
+      queueMicrotask(() => openComparison(returnTarget));
+    } }),
+  ]));
   content.push(
     node('div', { class: 'document-return' }, [node('button', { type: 'button', class: 'button button-gold', text: fromEnding ? 'عُد إلى الخلاصة ←' : 'عُد إلى الاستنتاج ←', onClick: () => {
       dialogTriggers.set($('#evidence-dialog'), fromEnding ? origin : $('#active-question-title'));
@@ -462,7 +478,15 @@ function renderQuestion(moveFocus = false) {
     node('div', { class: 'question-actions' }, [submitButton, hintButton]),
     node('div', { class: 'hint-box', id: 'question-hint', hidden: !hintVisible, text: question.hint }),
   ];
-  if (solved) content.push(node('div', { class: 'answer-feedback', role: 'status' }, [node('strong', { text: '✓ استنتاج تسنده الأدلة.' }), node('details', { class: 'answer-reasoning' }, [node('summary', { text: 'كيف تثبته الأوراق؟' }), node('p', { text: question.explanation })])]));
+  if (solved) content.push(node('div', { class: 'answer-feedback', role: 'status' }, [
+    node('strong', { text: '✓ استنتاج تسنده الأدلة.' }),
+    question.id === 'Q01' ? node('div', { class: 'discovery-recap' }, [
+      node('p', { class: 'discovery-recap-line' }, [node('strong', { text: 'القفل: ' }), 'قفص المعدات ', node('bdi', { dir: 'ltr', text: 'EXT-02' })]),
+      node('p', { class: 'discovery-recap-line' }, [node('strong', { text: 'الاتهام: ' }), 'مخرج الأرشيف ', node('bdi', { dir: 'ltr', text: 'AR-01' })]),
+      node('button', { type: 'button', class: 'button button-outline', text: 'افحص المحضر ←', onClick: event => openEvidence('E01', { trigger: event.currentTarget }) }),
+    ]) : null,
+    node('details', { class: 'answer-reasoning' }, [node('summary', { text: 'كيف تثبته الأوراق؟' }), node('p', { text: question.explanation })]),
+  ]));
   else if (supportErrors[question.id]) content.push(node('div', { class: 'answer-feedback error', role: 'status' }, [node('strong', { text: 'أكمل سند الاستنتاج.' }), document.createTextNode(supportErrors[question.id])]));
   else if (wrong) content.push(node('div', { class: 'answer-feedback error', role: 'status' }, [node('strong', { text: 'هذا الاختيار لا تسنده الأوراق.' }), document.createTextNode('راجع مستندات الخطوة، ثم حاول مرة أخرى.')]));
   const linked = evidence;
