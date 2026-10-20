@@ -1,11 +1,11 @@
-import { CASE_DATA } from './case-data.js?v=cinematic-1';
+import { CASE_DATA } from './case-data.js?v=fourth-1';
 import { createScene, initializeScenes, pauseScenes, disposeScenes, refreshScenes } from './media.js?v=cinema-2';
 
 const $ = (selector, scope = document) => scope.querySelector(selector);
 import { node, arabic } from './dom.js?v=dossier-1';
-import { createDocument, createDocumentPreview } from './documents.js?v=discovery-1';
-import { createSupportPicker, requiresSupport, evaluateSupport, maxEvidenceCount } from './deduction-support.js?v=desk-2';
-import { createEnding } from './ending.js?v=closure-1';
+import { createDocument, createDocumentPreview } from './documents.js?v=fourth-1';
+import { createSupportPicker, requiresSupport, evaluateSupport, maxEvidenceCount } from './deduction-support.js?v=fourth-1';
+import { createEnding } from './ending.js?v=fourth-1';
 const questions = CASE_DATA.questions;
 const evidence = CASE_DATA.evidence;
 const storageKey = `raven-case:${CASE_DATA.id}`;
@@ -18,7 +18,7 @@ let hintQuestions = new Set();
 
 const stepEvidence = {
   Q01: ['E06', 'E02', 'E03'],
-  Q02: ['E01', 'E02', 'E05'],
+  Q02: ['E01', 'E05'],
   Q03: ['E01', 'E07', 'E08'],
   Q04: ['E01', 'E07', 'E08'],
 };
@@ -197,11 +197,11 @@ function openEvidence(id, { replace = false, trigger, trail } = {}) {
     node('p', { text: 'طابق رمز الموقع مع الصورة.' }),
     node('button', { class: 'button button-outline', type: 'button', text: 'عُد إلى الصورة ←', onClick: () => openEvidence('E06', { replace: true }) }),
   ]));
-  if (id === 'E02' && trail === 'signature') content.push(node('div', { class: 'document-trail', 'data-trail': 'signature' }, [
+  if ((id === 'E02' && trail === 'signature') || (id === 'E05' && trail === 'fourth-signature')) content.push(node('div', { class: 'document-trail', 'data-trail': trail }, [
     node('p', { text: 'اقرأ عنوان الورقة وخانة التوقيع.' }),
     node('button', { class: 'button button-outline', type: 'button', text: 'قارن الأصل بالمحضر', onClick: () => {
       $('#compare-first').value = 'E01';
-      $('#compare-second').value = 'E02';
+      $('#compare-second').value = id;
       activeComparisonTab = 0;
       const returnTarget = dialogTriggers.get($('#evidence-dialog')) || $('#active-question-title');
       $('#evidence-dialog').close();
@@ -467,7 +467,7 @@ function renderQuestion(moveFocus = false) {
       node('span', { class: 'step-evidence-title', text: item.title }),
       node('span', { class: 'step-evidence-status', text: state.viewedIds.includes(item.id) ? '✓ فُتحت' : 'افتح الورقة ←' }),
     ]))),
-    node('button', { type: 'button', class: 'text-button question-compare', text: 'قارن ورقتين', onClick: () => {
+    node('button', { type: 'button', class: 'text-button question-compare', text: question.id === 'Q02' ? 'قارن التوقيع الرابع' : 'قارن ورقتين', onClick: () => {
       $('#compare-first').value = leads[0].id;
       $('#compare-second').value = leads[1].id;
       activeComparisonTab = 0;

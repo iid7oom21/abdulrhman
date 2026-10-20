@@ -21,8 +21,8 @@ const checks = [
     sources: [{ id: 'E07', label: 'سجل التنفيذ' }, { id: 'E01', label: 'المحضر ذو البصمة نفسها' }],
   },
   {
-    title: 'ما دافعه؟',
-    detail: 'وقّع أدريان تأجيل إصلاح المزلاج في MA-22. مراسلته في REV-08 تطلب إغلاق الملف تأديبيًا كي لا تعود مساءلة التأجيل إلى مكتبه. هذا يكمل دليل التنفيذ، ولا يحل محله.',
+    title: 'ما سياق القرار؟',
+    detail: 'وقّع أدريان تأجيل إصلاح المزلاج في MA-22. مراسلته في REV-08 تطلب عدم إعادة فتح اعتماد الصيانة قبل استكمال الإجراء. هذه خلفية للقرار؛ سجل AUD-07 هو سند نسبة الإنتاج.',
     sources: [{ id: 'E03', label: 'قرار تأجيل الإصلاح' }, { id: 'E08', label: 'المراسلة المحفوظة' }],
   },
 ];
@@ -77,7 +77,7 @@ export function createEnding(data, { hintCount = null, onOpenEvidence, onRestart
         node('span', { text: ' — عبارة إيصال نورا نفسها.' }),
       ]),
     ]),
-    node('div', { class: 'ending-checks', 'aria-label': 'الصورة وإثبات الفاعل والدافع' }, checks.map((check) => node('details', { class: 'ending-check' }, [
+    node('div', { class: 'ending-checks', 'aria-label': 'الصورة وإسناد المحضر وسياق القرار' }, checks.map((check) => node('details', { class: 'ending-check' }, [
       node('summary', { text: check.title }),
       node('p', { text: check.detail }),
       node('div', { class: 'ending-source-links' }, check.sources.map((source) => evidenceLink(source.id, source.label))),

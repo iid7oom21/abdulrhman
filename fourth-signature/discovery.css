@@ -17,6 +17,7 @@
 .signature-origin{min-width:0;margin-top:12px;padding:16px;border:1px solid #9c8d71;background:#e2d9c7;color:#302f26}
 .document-sheet .signature-origin>p{margin:0 0 10px;padding:0;font-size:16px;line-height:1.8;color:#302f26;overflow-wrap:anywhere}
 .document-sheet .signature-origin>p.signature-person{font-size:13px;color:#62543f}
+.document-sheet .signature-origin>p.signature-origin-clue{display:inline-block;max-width:100%;padding:3px 10px;border-inline-start:3px solid #817252;background:#f3ecdf;font-weight:600}
 .signature-origin-open{appearance:none;display:inline-flex;align-items:center;justify-content:center;min-width:0;min-height:48px;max-width:100%;padding:10px 16px;border:1px solid #52634d;border-radius:2px;background:#354536;color:#f0eee3;font:inherit;font-size:14px;line-height:1.7;text-align:center;white-space:normal;cursor:pointer}
 .signature-origin-open:hover{background:#29392b}
 

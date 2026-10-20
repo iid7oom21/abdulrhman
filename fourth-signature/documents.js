@@ -1,5 +1,5 @@
 import { node, arabic } from './dom.js?v=dossier-1';
-import { EVIDENCE_FOCUS } from './evidence-focus.js?v=copy-1';
+import { EVIDENCE_FOCUS } from './evidence-focus.js?v=fourth-1';
 import { createPhotoInspector } from './photo-inspector.js?v=discovery-1';
 
 // The paper styling carries no clues. The full original remains available below its excerpts.
@@ -29,28 +29,49 @@ function excerptContent(line) {
 }
 
 function createSignatureInquiry(item, onOpenEvidence) {
-  const originId = `signature-origin-${item.id}`;
-  const origin = node('div', { class: 'signature-origin', id: originId, hidden: true }, [
-    node('p', { class: 'signature-person', text: 'لوسيان ڤيل — الحارس المفصول.' }),
-    node('p', { text: 'لماذا يظهر توقيعه هنا؟' }),
-    node('button', {
-      class: 'signature-origin-open', type: 'button', text: 'راجع أصل التوقيع ←',
-      onClick: () => onOpenEvidence('E02', 'signature'),
-    }),
-  ]);
+  const inquiries = {
+    0: {
+      person: 'lucian', role: 'لوسيان ڤيل — الحارس المفصول.',
+      question: 'لماذا يظهر توقيعه هنا؟', evidenceId: 'E02', trail: 'signature',
+    },
+    3: {
+      person: 'nora', role: 'نورا كين — منسقة الأرشيف.',
+      clue: '«توقيع المستلم»', question: 'ما الذي كانت تستلمه؟',
+      evidenceId: 'E05', trail: 'fourth-signature',
+    },
+  };
+  const panels = [];
+  const signatures = item.signature.split(' · ').map((name, index) => {
+    const inquiry = inquiries[index];
+    if (!inquiry) return node('li', {}, node('span', { class: 'signature-person', text: name }));
+    const originId = `signature-origin-${item.id}-${inquiry.person}`;
+    const buttonId = `signature-inspect-${item.id}-${inquiry.person}`;
+    const origin = node('div', {
+      class: 'signature-origin', id: originId, 'data-signature': inquiry.person,
+      role: 'region', 'aria-labelledby': buttonId, hidden: true,
+    }, [
+      node('p', { class: 'signature-person', text: inquiry.role }),
+      inquiry.clue ? node('p', { class: 'signature-origin-clue', text: inquiry.clue }) : null,
+      node('p', { text: inquiry.question }),
+      node('button', {
+        class: 'signature-origin-open', type: 'button', text: 'راجع أصل التوقيع ←',
+        onClick: () => onOpenEvidence(inquiry.evidenceId, inquiry.trail),
+      }),
+    ]);
+    panels.push(origin);
+    return node('li', {}, node('button', {
+      class: 'signature-inspect', id: buttonId, type: 'button', text: name,
+      'data-signature': inquiry.person, 'aria-expanded': 'false', 'aria-controls': originId,
+      onClick: (event) => {
+        origin.hidden = !origin.hidden;
+        event.currentTarget.setAttribute('aria-expanded', String(!origin.hidden));
+      },
+    }));
+  });
   return node('section', { class: 'signature-inquiry', 'aria-label': 'التوقيعات في المحضر' }, [
     node('p', { class: 'signature-inquiry-label', text: 'التوقيعات' }),
-    node('ol', { class: 'signature-list' }, item.signature.split(' · ').map((name, index) =>
-      node('li', {}, index === 0 ? node('button', {
-        class: 'signature-inspect', type: 'button', text: name,
-        'aria-expanded': 'false', 'aria-controls': originId,
-        onClick: (event) => {
-          origin.hidden = !origin.hidden;
-          event.currentTarget.setAttribute('aria-expanded', String(!origin.hidden));
-        },
-      }) : node('span', { class: 'signature-person', text: name }))
-    )),
-    origin,
+    node('ol', { class: 'signature-list' }, signatures),
+    ...panels,
   ]);
 }
 
