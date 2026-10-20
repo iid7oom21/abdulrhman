@@ -69,6 +69,13 @@
         requestAnimationFrame(() => {
           if (id !== restoreId) return;
           const target = typeof view.focusId === 'string' && document.getElementById(view.focusId);
+          // Reveal a previously focused field before measuring its position.
+          // A summary can stay focused while its own disclosure remains closed.
+          for (let ancestor = target?.parentElement; ancestor; ancestor = ancestor.parentElement) {
+            if (ancestor.localName !== 'details' || ancestor.open) continue;
+            const summary = Array.from(ancestor.children).find(child => child.localName === 'summary');
+            if (!summary?.contains(target)) ancestor.open = true;
+          }
           if (target && target.getClientRects().length) target.focus?.({ preventScroll: true });
           window.scrollTo({
             left: Number.isFinite(view.x) ? view.x : 0,

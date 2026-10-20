@@ -6,21 +6,33 @@
 .deduction-layout{grid-template-columns:180px minmax(0,1fr)}
 .deduction-sidebar{padding:24px 20px}
 .question-panel{scroll-margin-top:86px}
-.step-evidence{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:20px}
-.step-evidence:has(>button:last-child:nth-child(2)){grid-template-columns:repeat(2,minmax(0,1fr))}
-.step-evidence-button{display:flex;flex-direction:column;min-width:0;padding:0;background:#21291f;border:1px solid var(--line);text-align:right;overflow:hidden}
-.step-evidence-button:hover{border-color:var(--gold);background:#2a3024}
-.step-evidence-art{height:84px;width:100%;overflow:hidden;flex:none}
-.step-evidence-art .document-preview{padding:12px 6px 0}
-.step-evidence-art .document-preview-sheet{min-height:130px;padding:10px;width:80%;max-width:160px}
-.step-evidence-art .document-preview-tab{display:none}
-.step-evidence-art .document-preview-masthead{margin:0 0 4px;padding-bottom:4px;gap:4px}
-.step-evidence-art .document-preview-mark{width:20px;height:20px;font-size:8px}
-.step-evidence-art .document-preview-code{font-size:9px;letter-spacing:0}
-.step-evidence-art .document-preview-type{font-size:9px}
-.step-evidence-art .document-preview-title{font-size:10px}
-.step-evidence-title{font-size:14px;line-height:1.7;padding:10px 12px 3px;flex:1;overflow-wrap:anywhere}
-.step-evidence-status{font-size:12px;color:var(--gold);padding:4px 12px 10px}
+/* Source records stay readable at every width; no miniature paper facsimiles. */
+.question-panel .step-evidence.evidence-rows{display:flex;flex-direction:column;gap:0;margin-top:24px;border-block:1px solid var(--line)}
+.question-panel .evidence-row{display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:18px;width:100%;min-width:0;min-height:88px;padding:16px 2px;background:transparent;border:0;border-bottom:1px solid var(--line);text-align:start;overflow:visible;color:var(--text);transition:background-color .15s}
+.question-panel .evidence-row:last-child{border-bottom:0}
+.question-panel .evidence-row:hover{background:rgba(198,164,117,.045)}
+.question-panel .evidence-row:focus-visible{outline:2px solid var(--gold-bright);outline-offset:3px}
+.step-evidence-copy{display:block;min-width:0}
+.question-panel .evidence-row .step-evidence-title{display:block;padding:0;font-size:17px;font-weight:450;line-height:1.65;overflow-wrap:anywhere}
+.step-evidence-meta{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:6px;line-height:1.7}
+.step-evidence-code{color:#c6b18c;font:12px/1.7 ui-monospace,"Courier New",monospace;letter-spacing:.025em}
+.question-panel .evidence-row .step-evidence-status{display:inline-flex;align-items:center;gap:6px;padding:0;font-size:11px;line-height:1.7;color:#9ea697}
+.step-evidence-status::before{content:"";width:3px;height:3px;border-radius:50%;background:currentColor}
+.question-panel .evidence-row.is-reviewed .step-evidence-status{color:#a7bb9a}
+.step-evidence-open{flex:none;white-space:nowrap;font-size:12px;color:var(--gold)}
+/* The four stages read as one connected path, not four nested cards. */
+.question-steps.progress-steps{position:relative;display:flex;flex-direction:column;gap:4px;margin-top:20px;isolation:isolate}
+.question-steps.progress-steps::before{content:"";position:absolute;inset:24px 14px 24px auto;width:1px;background:#4a5142;z-index:-1}
+.question-steps.progress-steps .question-step{display:flex;flex-direction:row;align-items:center;justify-content:flex-start;gap:12px;min-height:48px;padding:7px 0;border:0;background:transparent;box-shadow:none;line-height:1.5;text-align:start;color:#aeb6a4;opacity:1}
+.question-steps.progress-steps .question-step-number{width:29px;height:29px;border-radius:50%;border:1px solid #59614e;background:#20241e;box-shadow:none;color:#abb3a1;font-size:12px;font-weight:400}
+.question-steps.progress-steps .question-step-label{font-size:12px;font-weight:400}
+.question-steps.progress-steps .question-step[aria-current="step"]{border:0;background:transparent;box-shadow:none;color:#ead4ad}
+.question-steps.progress-steps .question-step[aria-current="step"] .question-step-number{border-color:#c6a475;background:#c6a475;color:#161b15;box-shadow:0 0 0 4px #c6a47515;font-size:13px;font-weight:600}
+.question-steps.progress-steps .question-step.completed:not([aria-current="step"]) .question-step-number{border-color:#6e825d;background:#202b1d;color:#b3c2a4}
+.question-steps.progress-steps .question-step:disabled{color:#7f8876}
+.question-steps.progress-steps .question-step:disabled .question-step-number{border-color:#464e3e;color:#7f8876}
+.question-steps.progress-steps .question-step:focus-visible{outline:2px solid var(--gold-bright);outline-offset:2px}
+.deduction-sidebar:has(.progress-steps) .progress-track{display:none}
 .question-options{margin-top:22px}
 .answer-feedback>strong{font-weight:500}
 .answer-reasoning{margin-top:6px}
@@ -55,14 +67,16 @@
   .desk-intro>p:last-child{font-size:14px}
   .deduction-layout{grid-template-columns:1fr}
   .deduction-sidebar{padding:14px 18px}
-  .question-steps{margin-top:12px}
+  .question-steps.progress-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:0;margin-top:12px}
+  .question-steps.progress-steps::before{inset:21px 12.5% auto;height:1px;width:auto}
+  .question-steps.progress-steps .question-step{flex-direction:column;justify-content:flex-start;min-width:0;min-height:64px;padding:7px 2px;gap:8px;text-align:center}
+  .question-steps.progress-steps .question-step-label{font-size:11px;line-height:1.5}
   .question-panel{padding:22px 16px}
   .question-kicker{margin-bottom:8px;font-size:11px}
   .question-panel h3{font-size:19px;line-height:1.8}
-  .step-evidence{gap:8px;margin-top:16px}
-  .step-evidence-art{height:66px}
-  .step-evidence-title{padding:8px 7px 2px;font-size:12px;line-height:1.8}
-  .step-evidence-status{padding:5px 7px 8px;font-size:11px}
+  .question-panel .step-evidence.evidence-rows{gap:0;margin-top:20px}
+  .question-panel .evidence-row{min-height:84px;padding:14px 0;gap:14px}
+  .question-panel .evidence-row .step-evidence-title{font-size:16px}
   .question-option{font-size:14px;padding:12px 10px}
   .question-actions>.button{font-size:12px;min-height:44px}
   .question-actions .text-button{font-size:12px;min-height:44px}
@@ -78,6 +92,8 @@
   .hero-overline{margin-top:22px}
   .hero-subtitle{margin-top:16px;font-size:13px}
   .hero-actions{margin-top:18px}
-  .step-evidence-art .document-preview-mark{display:none}
-  .step-evidence-art .document-preview-sheet{width:90%}
+  .question-panel .evidence-row .step-evidence-title{font-size:15px}
+  .step-evidence-open{font-size:11px}
+  .step-evidence-meta{gap:8px}
 }
+@media(prefers-reduced-motion:reduce){.question-panel .evidence-row,.question-steps.progress-steps .question-step{transition:none}}

@@ -53,7 +53,7 @@ loading are reconciled with the document that actually finishes loading. Browser
 Back restores saved scroll and focus for elements with stable IDs. None of these
 actions reconstructs or pauses the soundtrack.
 
-Archive experience (`archive-1`):
+Archive experience (`archive-1`, no longer shown on the homepage):
 
 The homepage retains the horizontal film, episodes, and original investigation.
 `site-entry.js` presents a dismissible welcome once per session; case, episode,
@@ -75,3 +75,17 @@ The optional cinematic sound setting gently changes the tone with scroll depth
 and adds a brief tonal accent when the code opens. It uses one audio graph,
 retains the chosen volume and playback position, and bypasses processing when
 disabled. If Web Audio cannot start, the original media playback is retained.
+
+Homepage and evidence cleanup (`focus-1`):
+
+The Fourth Signature is the only investigation promoted on the homepage.
+The additional mini-case and highlights rail are no longer rendered. Their
+source files remain available for future reuse; the old `#raven-archive` link
+lands at the main investigation entry. One short introduction and a horizontal,
+silent scene replace the repeated text panels. Search tools open on request.
+
+Investigation evidence controls use readable titles and document references
+instead of miniature paper mockups. The full documents, original evidence,
+saved progress, comparisons, and soundtrack keep their existing behavior.
+Content frames load with the host script version to avoid showing a cached
+older investigation after navigating from an updated homepage.

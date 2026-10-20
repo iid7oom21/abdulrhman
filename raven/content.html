@@ -3,7 +3,7 @@
 <html data-raven-locale="ar" dir="rtl" lang="ar">
 <head>
 <meta charset="utf-8">
-<script src="../site-bridge.js?v=archive-1"></script>
+<script src="../site-bridge.js?v=focus-1"></script>
     <title>RAVEN — قصص سينمائية أصلية</title>
     <link rel="canonical" href="https://iid7oom21.github.io/abdulrhman/raven/" />
     <meta name="description" content="RAVEN مشروع سينمائي مستقل لعبدالرحمن العتيبي. شاهد RAVEN 17 بأجزائه الثلاثة، وافتح لغز التوقيع الرابع، واكتشف زرقاء اليمامة.">
@@ -32,8 +32,8 @@ window.ravenIntro={complete:true,finish:function(){}};
 </script>
 <style id="raven-critical">html{background:#07090b}body{margin:0;background:#07090b;color:#eee9df}html.rvn-intro-pending,html.rvn-intro-pending body{overflow:hidden!important;background:#000!important}html.rvn-intro-pending body>*:not(#rvnStudioIntro){visibility:hidden!important}.rvnStudioIntro[hidden]{display:none!important}.refHeroBg .rvnMusicToggle{position:absolute;left:12px;bottom:12px;z-index:3;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;max-width:calc(100% - 80px);padding:8px 12px;border:1px solid rgba(197,154,97,.4);border-radius:2px;background:rgba(5,7,9,.9);color:#dec9a9;font:500 12px/1.4 "IBM Plex Sans Arabic",sans-serif;cursor:pointer;touch-action:manipulation}.refHeroBg .rvnMusicToggle:focus-visible{outline:2px solid #dec9a9;outline-offset:3px}.rvnViewing .rvnMusicToggle{visibility:hidden}@media(hover:hover){.refHeroBg .rvnMusicToggle:hover{background:#161a1c;border-color:#d5b17e}}@media(min-width:651px){.refHeroBg .rvnMusicToggle{left:24px;bottom:18px}}</style>
 <link href="./assets/raven-homepage-v6.css" rel="stylesheet"/>
-<link href="./assets/raven-archive.css?v=archive-1" rel="stylesheet"/>
-<script type="module" src="./assets/raven-archive.js?v=archive-1"></script>
+<link href="./assets/raven-home-focus.css?v=focus-1" rel="stylesheet"/>
+<script defer src="./assets/raven-home-focus.js?v=focus-1"></script>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="RAVEN">
 <meta property="og:locale" content="ar_SA">
@@ -75,7 +75,6 @@ window.ravenIntro={complete:true,finish:function(){}};
 <a aria-label="RAVEN" class="brand ravenWordmark" href="#top" translate="no">RAVEN</a>
 <div aria-label="روابط الصفحة" class="ravenNavLinks">
 <a class="active" data-rvn-i18n="home" href="#top">الرئيسية</a>
-<a data-archive-nav href="#raven-archive">الأرشيف السري</a>
 <a data-rvn-i18n="films" href="#films">الأفلام</a>
 <a data-rvn-v2="archive" href="#archive-experience">اللغز التفاعلي</a>
 <a data-rvn-v2="studio" href="#studio">خلف الكادر</a>
@@ -94,7 +93,6 @@ window.ravenIntro={complete:true,finish:function(){}};
 </div>
 <div class="rvnNavPanel" hidden="" id="ravenNavPanel">
 <a data-rvn-i18n="home" href="#top">الرئيسية</a>
-<a data-archive-nav href="#raven-archive">الأرشيف السري</a>
 <a data-rvn-i18n="films" href="#films">الأفلام</a>
 <a data-rvn-v2="archive" href="#archive-experience">اللغز التفاعلي</a>
 <a data-rvn-v2="studio" href="#studio">خلف الكادر</a>
@@ -125,16 +123,6 @@ window.ravenIntro={complete:true,finish:function(){}};
 </div>
 </div>
 </header>
-<section id="raven-archive" aria-label="الأرشيف السري">
-  <div class="wrap"><h2>على الجانب الآخر</h2><p>افحص الأثر. اختبر الشهادة. واحتفظ ببطاقتك من الأرشيف.</p><noscript><p>فعّل JavaScript لاستخدام كشاف الأدلة وبطاقة المحقق.</p></noscript></div>
-</section>
-<nav aria-label="RAVEN highlights" class="rvnStudioRail">
-<div class="rvnStudioRailInner">
-<a href="#films"><small data-rvn-i18n="railNow">يُعرض الآن</small><strong>RAVEN 17</strong><span data-rvn-v2="railWatch">شاهد الحلقات</span></a>
-<a data-raven-route="../fourth-signature/" href="../fourth-signature/"><small data-rvn-i18n="railCase">لغز تفاعلي</small><strong data-rvn-v2="caseName">التوقيع الرابع</strong><span data-rvn-v2="railPuzzle">ابدأ اللغز</span></a>
-<a href="#next-premiere"><small data-rvn-i18n="railNext">المشروع القادم</small><strong data-rvn-i18n="zarqaTitle">زرقاء اليمامة</strong><span data-rvn-v2="railTeaser">شاهد الإعلان</span></a>
-</div>
-</nav>
 <section id="films">
 <div class="wrap">
 <div class="sectionHead reveal">
@@ -175,12 +163,19 @@ window.ravenIntro={complete:true,finish:function(){}};
 </div>
 </div>
 </section>
-<section aria-labelledby="rvnArchiveTitle" class="rvnArchiveExperience" id="archive-experience">
+<section aria-labelledby="rvnArchiveTitle" class="rvnArchiveExperience rvnCaseSpotlight" id="archive-experience">
+<span id="raven-archive" class="rvnLegacyAnchor" aria-hidden="true"></span>
 <div class="wrap">
-<div class="rvnArchiveHead"><div><div class="eyebrow" data-rvn-i18n="interactiveLabel">لغز تفاعلي / 017</div><h2 data-rvn-v2="caseTitle" id="rvnArchiveTitle">بعد المشاهدة… يبدأ اللغز.</h2></div><p data-rvn-v2="caseIntro">تجربة تحقيق تفاعلية من عالم RAVEN. هنا تبدأ قراءتك الخاصة للأدلة.</p></div>
-<article class="rvnCaseEntry"><div class="rvnCaseNumber" translate="no">017</div><div><h3 data-rvn-v2="caseName">التوقيع الرابع</h3><p data-rvn-v2="caseDescription">أربعة توقيعات، وثماني قطع من الأدلة. افحص الوثائق وقارن الروايات لتكشف ما جرى في الأرشيف.</p><a class="rvnEnterCase" data-raven-route="../fourth-signature/" data-rvn-v2="enter" href="../fourth-signature/">ابدأ اللغز واكشف الحقيقة</a><p data-rvn-v2="caseLanguage" style="font-size:12px;margin-top:10px">القضية متاحة بالعربية · ٨–١٢ دقيقة</p></div></article>
+<div class="rvnCaseHeading"><span class="eyebrow" data-rvn-i18n="interactiveLabel">لغز تفاعلي / 017</span><h2 data-rvn-v2="caseName" id="rvnArchiveTitle">التوقيع الرابع</h2></div>
+<div class="rvnCaseScene">
+<video id="rvnCasePreview" aria-label="مشهد من التوقيع الرابع" muted playsinline loop preload="none" poster="../fourth-signature/assets/hero.webp" data-src="../fourth-signature/assets/video/hero.mp4"></video>
+<button id="rvnCaseMotion" class="rvnCaseMotion" type="button" aria-controls="rvnCasePreview" hidden>تشغيل المشهد</button>
+</div>
+<div class="rvnCaseEntry"><div><p data-rvn-v2="caseDescription">صورة أدانت حارسًا. أربعة توقيعات ثبّتت الرواية. افحص ما تخفيه الأوراق.</p><a class="rvnEnterCase" data-raven-route="../fourth-signature/" data-rvn-v2="enter" href="../fourth-signature/">ابدأ اللغز واكشف الحقيقة</a><p class="rvnCaseDuration" data-rvn-v2="caseLanguage">القضية متاحة بالعربية · ٨–١٢ دقيقة</p></div></div>
+<details class="rvnFileTools"><summary data-rvn-v2="searchLabel">ابحث في ملفات RAVEN</summary>
 <div class="rvnCaseSearch"><label data-rvn-v2="searchLabel" for="rvnArchiveSearch">ابحث في ملفات RAVEN</label><input aria-describedby="rvnSearchStatus" autocomplete="off" dir="auto" id="rvnArchiveSearch" placeholder="ابحث عن فيلم، القضية، الكواليس أو المواد…" type="search"/><p aria-live="polite" class="rvnSearchStatus" data-rvn-v2="searchStart" id="rvnSearchStatus" role="status">ابحث في المحتوى المتاح فقط.</p><ul class="rvnSearchResults" id="rvnSearchResults"></ul></div>
 <div class="rvnArchiveActions"><button data-rvn-v2="terminal" id="rvnOpenTerminal" type="button">فتح محطة الأوامر</button><span data-rvn-v2="terminalHelp">اكتب HELP للمساعدة. استخدم Enter للتنفيذ وEsc للإغلاق.</span></div>
+</details>
 </div>
 </section>
 <section class="nextPremiere" id="next-premiere">
@@ -356,7 +351,7 @@ window.ravenIntro={complete:true,finish:function(){}};
 <script defer="" src="./assets/raven-i18n.js?v=seo-share-1"></script>
 
 <script defer="" src="./assets/raven-enhancements-v1.js?v=music-continuous-1"></script>
-<script defer="" src="./assets/raven-refinement-v2.js?v=archive-1"></script>
+<script defer="" src="./assets/raven-refinement-v2.js?v=focus-1"></script>
 <script>
     (()=>{
       const video=document.getElementById('ravenHeroMotion');

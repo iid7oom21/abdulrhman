@@ -3,6 +3,7 @@ import { createSoundtrack } from './site-audio.js?v=archive-1';
 import { createEntryGate } from './site-entry.js?v=archive-1';
 
 const root = new URL('./', import.meta.url);
+const contentVersion = new URL(import.meta.url).searchParams.get('v');
 const frame = document.querySelector('#site-content');
 const recovery = document.querySelector('#site-recovery');
 const loadMessage = document.querySelector('#site-load-message');
@@ -79,6 +80,7 @@ function show(url, childState = null, view = null, force = false, focus = false)
   destination = { url, childState, view, focus };
   const content = new URL(url);
   content.pathname += 'content.html';
+  if (contentVersion) content.searchParams.set('v', contentVersion);
   direct.href = content.href;
   if (!force && currentChild() && route(frame.contentWindow.location.href)?.pathname === url.pathname) {
     restoreChild();
