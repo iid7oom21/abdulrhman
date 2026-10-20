@@ -12,6 +12,9 @@ browser policy blocks it, loops the track, and respects explicit pause.
 Controls occupy their own bottom row, outside the image/content viewport.
 
 Navigation, evidence dialogs and scrolling never pause or reconstruct the audio.
+Audible films and teasers temporarily pause the song so their dialogue stays clear.
+When that media stops, music resumes from the same position unless the visitor has
+paused it. Muted background clips do not interrupt the soundtrack.
 Reloading the whole browser document, opening another tab or leaving this host is
 outside uninterrupted playback. The WebsitePublisher domain is a separate site.
 
@@ -72,3 +75,5 @@ opened state and an open action. Full documents remain in the reader, with
 comparison, answers and saved progress unchanged. Larger screens retain their
 document previews. The four-step navigation keeps accessible names and 44px
 mobile touch targets.
+Confirming a case reset returns keyboard focus to the first question; cancelling
+returns to the button that opened the confirmation.

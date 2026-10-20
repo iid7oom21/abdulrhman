@@ -563,6 +563,7 @@ $('#confirm-reset').addEventListener('click', () => {
   renderEvidence();
   renderQuestion();
   renderEnding();
+  dialogTriggers.set($('#reset-dialog'), $('#active-question-title'));
   $('#reset-dialog').close();
   showToast('بدأ تحقيق جديد. جميع الأدلة متاحة للفحص.');
   $('#deductions').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });
