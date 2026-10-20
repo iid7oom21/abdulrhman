@@ -356,7 +356,7 @@ export function createSoundtrack(rootURL) {
     if (saved !== null) initialVolume = saved;
   } catch {}
   setVolume(initialVolume);
-  audio.src = new URL('fourth-signature/assets/audio/raven-baqi-athar.mp3', rootURL).href;
+  audio.src = new URL('fourth-signature/assets/audio/raven-baqi-athar-320.mp3', rootURL).href;
   audio.loop = true;
   audio.muted = false;
   soundtrack = { gesture, toggleMusic, state, sync, setDepth, pulse, setMediaActive };

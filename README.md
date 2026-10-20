@@ -6,10 +6,12 @@ to retain one audio element while `site-bridge.js` routes the content frame.
 The root redirects to the homepage.
 
 The approved `RAVEN — باقي أثر` MP3 is the owner's October 20 upload
-(`23463_صوت_.mp3`), copied unchanged to
-`fourth-signature/assets/audio/raven-baqi-athar.mp3`:
-SHA-256 `b88c47de596d03c6eaa2f21c3d7eef7dd6580f981b9ec3df18df06ef654ddd0d`.
-Both entry pages and the audio module use release `baqi-athar-1` to refresh cached
+(`47696ad6.mp3`), copied unchanged to
+`fourth-signature/assets/audio/raven-baqi-athar-320.mp3`:
+SHA-256 `0d0c017891e418684667f5c9242e1d53e1a5acbf4fa69ad186b143feb88f9f2f`.
+This 320 kbps / 48 kHz copy preserves more high-frequency detail than the earlier
+128 kbps upload, with the same recording and timing and no detected clipping.
+Both entry pages and the audio module use release `baqi-athar-2` to refresh cached
 players. Both download links serve this recording.
 The player attempts audible autoplay, retries after a trusted interaction when
 browser policy blocks it, loops the track, and respects explicit pause.
