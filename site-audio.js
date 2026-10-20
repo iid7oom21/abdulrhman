@@ -43,7 +43,10 @@ export function createSoundtrack(rootURL) {
     };
     status.textContent = messages[phase];
     region?.setAttribute('aria-label', english ? 'RAVEN music' : 'أغنية رايفن');
-    download?.setAttribute('aria-label', english ? 'Download the RAVEN song' : 'تنزيل أغنية رايفن');
+    if (download) {
+      download.setAttribute('aria-label', english ? 'Download the RAVEN song' : 'تنزيل أغنية رايفن');
+      download.textContent = english ? 'Download song · MP3' : 'تنزيل الأغنية · MP3';
+    }
     volume.setAttribute('aria-label', english ? 'Music volume' : 'مستوى صوت الأغنية');
     if (volumeLabel) volumeLabel.textContent = english ? 'Volume' : 'الصوت';
     if (settingsLabel) {

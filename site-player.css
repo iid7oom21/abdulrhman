@@ -21,7 +21,7 @@ body{display:grid;grid-template-rows:minmax(0,1fr) auto;height:100dvh}
 .music-volume{display:flex;flex-wrap:wrap;align-items:center;gap:7px;font-size:12px;color:#d1b589}
 #music-volume{width:140px;max-width:100%;min-height:44px;accent-color:#c6a475;direction:ltr}
 #music-volume-hint{font-size:12px;margin:0;color:#d1b589}
-.music-download{display:grid;place-items:center;min-width:44px;min-height:44px;color:#d1b589;text-decoration:none;font-size:22px}
+.music-download{display:inline-flex;align-items:center;min-height:44px;padding:8px 0;color:#d1b589;text-underline-offset:4px;font-size:13px}
 button:focus-visible,a:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid #f0c98f;outline-offset:2px}
 noscript{position:absolute;inset:0;padding:32px;background:#111411}
 noscript a{color:#e7c791}

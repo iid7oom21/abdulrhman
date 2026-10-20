@@ -1,5 +1,5 @@
 // The host owns one soundtrack while the content document changes.
-import { createSoundtrack } from './site-audio.js?v=player-recovery-1';
+import { createSoundtrack } from './site-audio.js?v=sound-menu-1';
 
 const root = new URL('./', import.meta.url);
 const frame = document.querySelector('#site-content');
