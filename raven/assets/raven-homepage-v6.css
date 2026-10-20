@@ -51,7 +51,7 @@ body.rvnCursorOn{cursor:auto}
 .ravenNav::after{content:"";position:absolute;inset:auto auto -1px 0;height:1px;width:var(--rvn-scroll);background:linear-gradient(90deg,#6e5334,#c59a61 70%,#e0bf8d)}
 .ravenNav.rvn-scrolled{background:rgba(5,6,8,.97);border-bottom-color:var(--rvn-line)}
 
-/* Complete source frame, followed by two explicit actions. */
+/* Complete source frame, followed by the film's primary action. */
 .ravenReferenceHero{position:relative;padding-top:var(--rvn-nav-height);background:#050505;isolation:isolate}
 .refHeroBg{position:relative;width:100%;aspect-ratio:910/512;overflow:hidden;background:#050505;border-bottom:1px solid rgba(197,154,97,.13)}
 .refHeroVideo{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:contain;object-position:center;pointer-events:none;background:#050505}
@@ -59,7 +59,6 @@ body.rvnCursorOn{cursor:auto}
 .rvnHeroActions{display:grid;grid-template-columns:1fr;gap:8px;align-items:center;justify-content:center}
 .rvnHeroActions>*{display:inline-flex;align-items:center;justify-content:center;width:100%;min-height:50px;padding:10px 20px;border:1px solid var(--rvn-line);border-radius:2px;font-size:15px;font-weight:600;line-height:1.5;transition:background .2s ease,border-color .2s ease,color .2s ease}
 .rvnHeroWatch{background:var(--rvn-gold);border-color:var(--rvn-gold);color:#080a0b}
-.rvnHeroCase{background:transparent;border-color:rgba(197,154,97,.45);color:#e9e1d3}
 .refMotionToggle{position:absolute;inset:auto 12px 12px auto;z-index:3;display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid rgba(197,154,97,.4);border-radius:2px;background:rgba(5,7,9,.82);color:#dec9a9;font:600 14px/1 system-ui,sans-serif}
 .rvnViewing .refMotionToggle{visibility:hidden}
 .rvnStudioRail{position:relative;background:#0a0d10;border-block:1px solid rgba(197,154,97,.16)}
@@ -82,14 +81,14 @@ body.rvnCursorOn{cursor:auto}
 .film h3{margin:12px 0 8px;color:var(--rvn-warm);font:500 clamp(32px,4vw,52px)/1.15 "Cinzel",serif;letter-spacing:.05em}
 .film p{max-width:540px;margin:0;color:#c0c4c7;font-size:15px;line-height:1.9}
 .filmLink{display:inline-flex;align-items:center;gap:18px;min-height:44px;margin-top:16px;color:#eadac2;font-size:14px;font-weight:600}
-.rvnArchiveExperience{position:relative;border-block:1px solid rgba(197,154,97,.14);background:#0b0e11}
-.rvnArchiveHead{display:grid;gap:20px;align-items:end;margin-bottom:30px}
-.rvnArchiveHead>p{max-width:570px;margin:0;color:var(--rvn-muted);font-size:15px;line-height:1.9}
-.rvnCaseEntry{position:relative;display:grid;gap:16px;align-items:center;padding:24px 0;border-block:1px solid var(--rvn-line)}
+.rvnArchiveExperience{position:relative;padding-block:clamp(40px,6vw,80px);border-block:1px solid rgba(197,154,97,.14);background:#0b0e11}
+.rvnCaseEntry{position:relative;display:grid;gap:24px;align-items:center}
 .rvnCaseEntry>div{min-width:0}
-.rvnCaseNumber{color:#b89b72;font:500 38px/1.2 "Cinzel",serif;letter-spacing:.04em;direction:ltr;text-align:start}
-.rvnCaseEntry h3{margin:0 0 12px;color:var(--rvn-warm);font-size:clamp(25px,3vw,38px);font-weight:500}
+.rvnCaseCopy .eyebrow{direction:inherit;font-family:inherit;letter-spacing:0;text-transform:none}
+.rvnCaseEntry h2{margin:12px 0 16px;color:var(--rvn-warm);font-size:clamp(30px,3vw,42px);font-weight:500;line-height:1.5}
 .rvnCaseEntry p{max-width:640px;margin:0 0 18px;color:#b3bbc1;font-size:15px;line-height:1.9}
+.rvnCaseEntry .rvnCaseMeta{margin:0 0 20px;color:#b7a58a;font-size:12px}
+.rvnCaseArtwork{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:cover;object-position:center;border:1px solid var(--rvn-line)}
 .rvnEnterCase{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 20px;border:1px solid var(--rvn-gold);border-radius:2px;background:var(--rvn-gold);color:#080a0b;font-size:15px;font-weight:600}
 .rvnCaseEntry .rvnEnterCase{width:100%}
 /* Retained legacy DOM is kept out of the primary film sequence. */
@@ -305,8 +304,8 @@ html[lang="en"] .rvnField input,html[lang="en"] .rvnField select,html[lang="en"]
   .film.raven{grid-template-columns:1.2fr 1fr;min-height:360px}
   .film.raven::before{aspect-ratio:auto;min-height:360px}
   .filmContent{padding:32px}
-  .rvnCaseEntry{grid-template-columns:180px minmax(0,1fr);gap:32px;padding:32px 0}
-  .rvnCaseNumber{font-size:54px;text-align:center}
+  .rvnCaseEntry{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:48px}
+  .rvnCaseArtwork{aspect-ratio:4/3}
   .rvnCaseEntry .rvnEnterCase{width:auto}
   .premiereFrame{width:min(100%,380px)}
   .rvnVaultGrid{grid-template-columns:repeat(3,minmax(0,1fr))}
@@ -326,7 +325,7 @@ html[lang="en"] .rvnField input,html[lang="en"] .rvnField select,html[lang="en"]
   .rvnAfterActions button,.rvnAfterActions a{flex:0 1 auto;font-size:14px}
 }
 @media(min-width:901px){
-  .sectionHead,.rvnArchiveHead{grid-template-columns:1.1fr .9fr;gap:48px}
+  .sectionHead{grid-template-columns:1.1fr .9fr;gap:48px}
   .nextPremiereGrid{grid-template-columns:minmax(280px,.85fr) minmax(0,1.15fr);gap:clamp(40px,6vw,86px)}
   .aboutGrid{grid-template-columns:.8fr 1.2fr;gap:70px}
   .rvnStudioGrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:32px}

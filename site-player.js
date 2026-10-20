@@ -92,6 +92,8 @@ function show(url, childState = null, view = null, force = false, focus = false)
   soundtrack.setDepth?.(0, null);
   loadedDocument = null;
   pendingPath = url.pathname;
+  departingDocument?.querySelectorAll('audio, video').forEach(media => media.pause());
+  soundtrack.setMediaActive(false);
   frame.title = url.pathname === routes[0] ? 'RAVEN — الرئيسية' : 'التوقيع الرابع — ملف التحقيق';
   loadFailed = false;
   retry.hidden = true;
@@ -123,6 +125,11 @@ window.RavenSite = {
   gesture: soundtrack.gesture,
   toggleMusic: soundtrack.toggleMusic,
   state: soundtrack.state,
+  setMediaActive(child, source, active) {
+    if (currentChild() && child === frame.contentWindow && source === loadedDocument) {
+      soundtrack.setMediaActive(active);
+    }
+  },
   setDepth(child, value) {
     if (currentChild() && child === frame.contentWindow) soundtrack.setDepth?.(value, frame.contentDocument);
   },

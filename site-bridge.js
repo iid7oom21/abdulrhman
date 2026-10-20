@@ -104,6 +104,29 @@
   const scheduleDepth = () => {
     if (!depthFrame) depthFrame = requestAnimationFrame(sendDepth);
   };
+  // Keep the document token: an iframe's WindowProxy survives navigation.
+  const mediaDocument = document;
+  let audibleMedia = [];
+  const mediaObserver = new MutationObserver(() => syncMedia());
+  function syncMedia() {
+    // A removed player must not keep sounding after its view has closed.
+    audibleMedia.filter(media => !media.isConnected).forEach(media => media.pause());
+    audibleMedia = [...mediaDocument.querySelectorAll('audio, video')].filter(media =>
+      !media.paused && !media.ended && !media.error && !media.muted && media.volume > 0
+    );
+    host.setMediaActive?.(window, mediaDocument, audibleMedia.length > 0);
+    if (audibleMedia.length) mediaObserver.observe(mediaDocument, { childList: true, subtree: true });
+    else mediaObserver.disconnect();
+  }
+  ['play', 'playing', 'pause', 'ended', 'volumechange', 'emptied', 'error'].forEach(name => {
+    document.addEventListener(name, event => {
+      if (event.target instanceof HTMLMediaElement) syncMedia();
+    }, true);
+  });
+  addEventListener('pagehide', () => {
+    mediaObserver.disconnect();
+    host.setMediaActive?.(window, mediaDocument, false);
+  });
   document.addEventListener('click', event => {
     host.gesture?.(event);
     const link = event.target.closest?.('a[href]');
@@ -141,6 +164,7 @@
   document.addEventListener('focusin', scheduleRemember);
   document.addEventListener('DOMContentLoaded', () => {
     host.ready(window);
+    syncMedia();
     scheduleDepth();
   }, { once: true });
   document.addEventListener('raven:language', () => host.ready(window));

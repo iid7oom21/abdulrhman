@@ -5,6 +5,7 @@
 .desk-intro>p:last-child{font-size:15px;line-height:1.95;color:#c5cbbd;max-width:570px}
 .deduction-layout{grid-template-columns:180px minmax(0,1fr)}
 .deduction-sidebar{padding:24px 20px}
+.question-step-label{font:inherit}
 .question-panel{scroll-margin-top:86px}
 /* Source records stay readable at every width; no miniature paper facsimiles. */
 .question-panel .step-evidence.evidence-rows{display:flex;flex-direction:column;gap:0;margin-top:24px;border-block:1px solid var(--line)}

@@ -16,6 +16,9 @@ browser policy blocks it, loops the track, and respects explicit pause.
 Controls occupy their own bottom row, outside the image/content viewport.
 
 Navigation, evidence dialogs and scrolling never pause or reconstruct the audio.
+Audible films and teasers temporarily pause the song so their dialogue stays clear.
+When that media stops, music resumes from the same position unless the visitor has
+paused it. Muted background clips do not interrupt the soundtrack.
 Reloading the whole browser document, opening another tab or leaving this host is
 outside uninterrupted playback. The WebsitePublisher domain is a separate site.
 
@@ -57,39 +60,21 @@ loading are reconciled with the document that actually finishes loading. Browser
 Back restores saved scroll and focus for elements with stable IDs. None of these
 actions reconstructs or pauses the soundtrack.
 
-Archive experience (`archive-1`, no longer shown on the homepage):
+Homepage case entry (`focus-2`):
 
-The homepage retains the horizontal film, episodes, and original investigation.
-`site-entry.js` presents a dismissible welcome once per session; case, episode,
-and anchor links open directly. Entering retries music only when the visitor has
-not explicitly paused it.
+The homepage presents one investigation: The Fourth Signature. The film hero
+starts the film; the menu leads to the single case section with its silent scene
+and one investigation button. Search opens on request. The former mini-case and
+highlights rail are no longer rendered; their source assets and the mini-case's
+separately saved progress remain intact. Old `#raven-archive` links reach the case.
 
-`raven/assets/raven-archive.js` adds the optional “On the Other Side” mini-case:
-four source records, a pointer/touch UV lens with keyboard and text equivalents,
-a separate insight-code dialog, and a conclusion supported by the door report.
-It establishes a contradiction in an account, not the identity of the thief.
-Only explicitly opened records, the discovered code, and the solved question
-count toward progress. Local progress is versioned separately from Case 017.
+`site-entry.js` presents a dismissible welcome once per session; case, episode and
+anchor links open directly. The optional cinematic sound setting retains the
+chosen playback position. Content frames use the host script version to avoid
+loading a cached older investigation after navigation from an updated homepage.
 
-`raven/assets/raven-story-card.js` prepares a 1080×1920 PNG on the device, with
-the optional name and actual progress. Names are not submitted or stored. Save
-and Share are separate actions; cancelling a share does not start a download.
-
-The optional cinematic sound setting gently changes the tone with scroll depth
-and adds a brief tonal accent when the code opens. It uses one audio graph,
-retains the chosen volume and playback position, and bypasses processing when
-disabled. If Web Audio cannot start, the original media playback is retained.
-
-Homepage and evidence cleanup (`focus-1`):
-
-The Fourth Signature is the only investigation promoted on the homepage.
-The additional mini-case and highlights rail are no longer rendered. Their
-source files remain available for future reuse; the old `#raven-archive` link
-lands at the main investigation entry. One short introduction and a horizontal,
-silent scene replace the repeated text panels. Search tools open on request.
-
-Investigation evidence controls use readable titles and document references
-instead of miniature paper mockups. The full documents, original evidence,
-saved progress, comparisons, and soundtrack keep their existing behavior.
-Content frames load with the host script version to avoid showing a cached
-older investigation after navigating from an updated homepage.
+Evidence uses readable rows with a document reference, title, opened state and
+open action. Full documents remain in the reader; comparisons, answers and saved
+progress are preserved. The four-step navigation keeps accessible names and
+44px mobile touch targets. Confirming a reset focuses the first question;
+cancelling returns to the button that opened the confirmation.

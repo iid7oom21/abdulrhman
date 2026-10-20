@@ -123,7 +123,7 @@ function renderEvidence() {
   $('#reviewed-count').textContent = `${arabic(state.viewedIds.length)} / ${arabic(evidence.length)} أدلة مفتوحة`;
   for (const button of document.querySelectorAll('.step-evidence-button')) {
     const reviewed = state.viewedIds.includes(button.dataset.evidenceId);
-    $('.step-evidence-status', button).textContent = reviewed ? 'تم الاطلاع' : 'لم تُفتح بعد';
+    $('.step-evidence-status', button).textContent = reviewed ? '✓ فُتحت' : 'لم تُفتح';
     button.classList.toggle('is-reviewed', reviewed);
   }
 }
@@ -468,13 +468,14 @@ function renderQuestion(moveFocus = false) {
     node('h3', { id: 'active-question-title', tabindex: '-1', text: question.prompt }),
     node('div', { class: 'step-evidence evidence-rows', role: 'group', 'aria-label': 'أوراق هذه الخطوة' }, leads.map(item => node('button', {
       type: 'button', class: `step-evidence-button evidence-row${state.viewedIds.includes(item.id) ? ' is-reviewed' : ''}`, 'data-evidence-id': item.id,
-      'aria-label': `${item.title} — ${item.reference.split(' · ')[0]} — افتح الدليل`, onClick: () => openEvidence(item.id),
+      'aria-label': `${item.title} — ${item.reference.split(' · ')[0]} — افتح الدليل`, 'aria-haspopup': 'dialog',
+      'aria-describedby': `step-evidence-status-${item.id}`, onClick: () => openEvidence(item.id),
     }, [
       node('span', { class: 'step-evidence-copy' }, [
         node('span', { class: 'step-evidence-title', text: item.title }),
         node('span', { class: 'step-evidence-meta' }, [
           node('bdi', { class: 'step-evidence-code', dir: 'ltr', text: item.reference.split(' · ')[0] }),
-          node('span', { class: 'step-evidence-status', text: state.viewedIds.includes(item.id) ? 'تم الاطلاع' : 'لم تُفتح بعد' }),
+          node('span', { class: 'step-evidence-status', id: `step-evidence-status-${item.id}`, text: state.viewedIds.includes(item.id) ? '✓ فُتحت' : 'لم تُفتح' }),
         ]),
       ]),
       node('span', { class: 'step-evidence-open', 'aria-hidden': 'true', text: 'افتح ←' }),
@@ -569,6 +570,7 @@ $('#confirm-reset').addEventListener('click', () => {
   renderEvidence();
   renderQuestion();
   renderEnding();
+  dialogTriggers.set($('#reset-dialog'), $('#active-question-title'));
   $('#reset-dialog').close();
   showToast('بدأ تحقيق جديد. جميع الأدلة متاحة للفحص.');
   $('#deductions').scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth', block: 'start' });

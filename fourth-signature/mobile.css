@@ -2,25 +2,7 @@
 @media (max-width:760px) {
   .deduction-sidebar{padding:14px}
   .progress-header{font-size:12px}
-  .question-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin-top:12px}
-  .question-step{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0;min-height:60px;padding:6px 2px;border:1px solid var(--line);font-size:11px;line-height:1.5;text-align:center}
-  .question-step>span{width:23px;height:23px;font-size:12px}
-  .question-step[aria-current="step"]{border-color:var(--gold);background:rgba(198,164,117,.08)}
-  .question-step:focus-visible{outline-offset:2px}
-
-  .question-panel .step-evidence,
-  .question-panel .step-evidence:has(>button:last-child:nth-child(2)){grid-template-columns:1fr;gap:8px;margin-top:16px}
-  .step-evidence-button{display:grid;grid-template-columns:60px minmax(0,1fr);grid-template-rows:auto auto;column-gap:11px;row-gap:2px;align-items:center;min-height:80px;padding:7px 9px}
-  .step-evidence-art{grid-column:1;grid-row:1 / span 2;width:60px;height:64px;align-self:center}
-  .step-evidence-art .document-preview{padding:7px 3px 0}
-  .step-evidence-art .document-preview-sheet{width:90%;min-height:100px;padding:7px 5px}
-  .step-evidence-art .document-preview-mark{display:none}
-  .step-evidence-art .document-preview-masthead{margin-bottom:4px;padding-bottom:3px}
-  .step-evidence-art .document-preview-code{font-size:9px}
-  .step-evidence-art .document-preview-title{font-size:9px}
-  .step-evidence-title{grid-column:2;grid-row:1;align-self:end;padding:0;font-size:14px;line-height:1.75;overflow-wrap:break-word}
-  .step-evidence-status{grid-column:2;grid-row:2;align-self:start;padding:0;font-size:12px;line-height:1.7}
-  .step-evidence-button:focus-visible{outline-offset:3px}
+  /* Shared evidence rows and named progress steps are sized in play.css. */
 
   .question-compare{display:inline-flex;align-items:center;justify-content:center;min-height:44px;max-width:100%;margin:12px 0 0;padding:8px 14px;border:1px solid var(--line);background:rgba(198,164,117,.05);font-size:14px;line-height:1.8;text-decoration:none}
   .question-compare:hover{border-color:var(--gold);background:rgba(198,164,117,.1)}

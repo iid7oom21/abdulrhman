@@ -19,6 +19,7 @@ export function createSoundtrack(rootURL) {
   const volumeKey = 'raven_music_volume_v1';
   const cinematicKey = 'raven_music_cinematic_v1';
   let enabled = true;
+  let mediaActive = false;
   let phase = 'paused';
   let attempt = 0;
   let deviceVolume = false;
@@ -38,7 +39,7 @@ export function createSoundtrack(rootURL) {
   try { cinematic = localStorage.getItem(cinematicKey) !== 'off'; } catch {}
 
   function active() {
-    return enabled && ['starting', 'playing', 'waiting'].includes(phase);
+    return enabled && ['starting', 'playing', 'waiting', 'suspended'].includes(phase);
   }
 
   function state() {
@@ -50,7 +51,9 @@ export function createSoundtrack(rootURL) {
   }
 
   function playbackPhase() {
-    if (!enabled || audio.paused) return 'paused';
+    if (!enabled) return 'paused';
+    if (mediaActive) return 'suspended';
+    if (audio.paused) return 'paused';
     if (audio.error) return 'error';
     if (source && context.state !== 'running') return 'blocked';
     return audio.readyState >= 3 ? 'playing' : 'waiting';
@@ -64,6 +67,7 @@ export function createSoundtrack(rootURL) {
     const messages = {
       starting: english ? 'Starting the music…' : 'جارٍ بدء الأغنية…',
       playing: english ? 'RAVEN · Now playing' : 'RAVEN · الأغنية شغّالة',
+      suspended: english ? 'Music paused while media plays' : 'الأغنية متوقفة أثناء تشغيل المقطع',
       waiting: english ? 'Buffering the music…' : 'جارٍ تحميل الأغنية…',
       blocked: english ? 'Tap to start the music' : 'اضغط لتبدأ الأغنية',
       error: english ? 'Could not load. Tap to retry.' : 'تعذّر التحميل. اضغط للمحاولة.',
@@ -238,12 +242,14 @@ export function createSoundtrack(rootURL) {
 
   function failed(id, error) {
     if (id !== attempt) return;
-    if (!enabled || error?.name === 'AbortError') phase = 'paused';
+    if (enabled && mediaActive) phase = 'suspended';
+    else if (!enabled || error?.name === 'AbortError') phase = 'paused';
     else phase = error?.name === 'NotAllowedError' ? 'blocked' : 'error';
     sync();
   }
 
   function play() {
+    if (enabled && mediaActive) { phase = 'suspended'; sync(); return; }
     if (!enabled || phase === 'starting' ||
         (active() && !audio.paused && !audio.error)) return;
     const id = ++attempt;
@@ -254,11 +260,27 @@ export function createSoundtrack(rootURL) {
       const result = audio.play();
       result?.then(() => {
         if (id !== attempt) return;
-        if (!enabled) { audio.pause(); phase = 'paused'; }
+        if (!enabled || mediaActive) { audio.pause(); phase = playbackPhase(); }
         else phase = playbackPhase();
         sync();
       }).catch(error => failed(id, error));
     } catch (error) { failed(id, error); }
+  }
+
+  function setMediaActive(value) {
+    const next = Boolean(value);
+    if (mediaActive === next) return;
+    mediaActive = next;
+    ++attempt;
+    if (mediaActive) {
+      phase = enabled ? 'suspended' : 'paused';
+      audio.pause();
+      sync();
+    } else {
+      phase = 'paused';
+      sync();
+      if (enabled) play();
+    }
   }
 
   function gesture(event) {
@@ -297,17 +319,17 @@ export function createSoundtrack(rootURL) {
     sync();
   });
   audio.addEventListener('play', () => {
-    if (!enabled) { audio.pause(); return; }
+    if (!enabled || mediaActive) { audio.pause(); phase = playbackPhase(); sync(); return; }
     phase = 'starting';
     sync();
   });
   audio.addEventListener('playing', () => {
-    if (!enabled) { audio.pause(); return; }
+    if (!enabled || mediaActive) { audio.pause(); phase = playbackPhase(); sync(); return; }
     phase = playbackPhase();
     sync();
   });
   const waiting = () => {
-    if (enabled && !audio.paused && !audio.error) { phase = 'waiting'; sync(); }
+    if (enabled && !mediaActive && !audio.paused && !audio.error) { phase = 'waiting'; sync(); }
   };
   audio.addEventListener('waiting', waiting);
   audio.addEventListener('stalled', () => { if (audio.readyState < 3) waiting(); });
@@ -315,11 +337,16 @@ export function createSoundtrack(rootURL) {
     clearTimeout(pulseTimer);
     pulseUntil = 0;
     applyDepth();
-    if (!enabled || !['blocked', 'error'].includes(phase)) phase = audio.error ? 'error' : 'paused';
+    if (enabled && mediaActive) phase = 'suspended';
+    else if (!enabled || !['blocked', 'error'].includes(phase)) phase = audio.error ? 'error' : 'paused';
     sync();
   });
-  audio.addEventListener('error', () => { ++attempt; phase = 'error'; sync(); });
-  audio.addEventListener('ended', () => { phase = 'paused'; sync(); });
+  audio.addEventListener('error', () => {
+    ++attempt;
+    phase = enabled && mediaActive ? 'suspended' : 'error';
+    sync();
+  });
+  audio.addEventListener('ended', () => { phase = enabled && mediaActive ? 'suspended' : 'paused'; sync(); });
   document.addEventListener('click', gesture);
   document.addEventListener('keydown', gesture);
 
@@ -332,7 +359,7 @@ export function createSoundtrack(rootURL) {
   audio.src = new URL('fourth-signature/assets/audio/raven-baqi-athar.mp3', rootURL).href;
   audio.loop = true;
   audio.muted = false;
-  soundtrack = { gesture, toggleMusic, state, sync, setDepth, pulse };
+  soundtrack = { gesture, toggleMusic, state, sync, setDepth, pulse, setMediaActive };
   sync();
   play();
   return soundtrack;
