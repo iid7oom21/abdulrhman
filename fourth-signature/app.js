@@ -124,6 +124,7 @@ function renderEvidence() {
   for (const button of document.querySelectorAll('.step-evidence-button')) {
     const reviewed = state.viewedIds.includes(button.dataset.evidenceId);
     $('.step-evidence-status', button).textContent = reviewed ? '✓ فُتحت' : 'لم تُفتح';
+    button.classList.toggle('is-reviewed', reviewed);
   }
 }
 
@@ -352,15 +353,21 @@ function renderProgress() {
     'افصل الدليل عن الافتراض',
     'حان وقت الخلاصة',
   ][state.solvedIds.length];
-  $('#question-steps').replaceChildren(...questions.map((question, index) => {
+  const steps = $('#question-steps');
+  const stepNames = ['الصورة', 'التوقيعات', 'المصدر', 'الاستنتاج'];
+  steps.classList.add('progress-steps');
+  steps.replaceChildren(...questions.map((question, index) => {
     const solved = state.solvedIds.includes(question.id);
     return node('button', {
       type: 'button', class: `question-step${solved ? ' completed' : ''}`,
       disabled: index > state.solvedIds.length,
       'aria-current': index === state.activeIndex ? 'step' : null,
-      'aria-label': `الاستنتاج ${arabic(index + 1)}${solved ? '، مكتمل' : index > state.solvedIds.length ? '، مغلق' : ''}`,
+      'aria-label': `الاستنتاج ${arabic(index + 1)} — ${stepNames[index]}${solved ? '، مكتمل' : index > state.solvedIds.length ? '، مغلق' : ''}`,
       onClick: () => { state.activeIndex = index; saveState(); renderQuestion(true); },
-    }, [node('span', { 'aria-hidden': 'true', text: solved ? '✓' : arabic(index + 1) }), node('small', { class: 'question-step-label', text: `استنتاج ${arabic(index + 1)}` })]);
+    }, [
+      node('span', { class: 'question-step-number', 'aria-hidden': 'true', text: solved ? '✓' : arabic(index + 1) }),
+      node('small', { class: 'question-step-label', 'aria-hidden': 'true', text: stepNames[index] }),
+    ]);
   }));
 }
 
@@ -459,19 +466,19 @@ function renderQuestion(moveFocus = false) {
   const content = [
     node('p', { class: 'question-kicker', text: `الاستنتاج ${arabic(state.activeIndex + 1)} من ${arabic(questions.length)}` }),
     node('h3', { id: 'active-question-title', tabindex: '-1', text: question.prompt }),
-    node('div', { class: 'step-evidence', role: 'group', 'aria-label': 'أوراق هذه الخطوة' }, leads.map((item, index) => node('button', {
-      type: 'button', class: 'step-evidence-button', 'data-evidence-id': item.id,
-      'aria-label': `${item.title} — افتح الدليل`, 'aria-haspopup': 'dialog',
+    node('div', { class: 'step-evidence evidence-rows', role: 'group', 'aria-label': 'أوراق هذه الخطوة' }, leads.map(item => node('button', {
+      type: 'button', class: `step-evidence-button evidence-row${state.viewedIds.includes(item.id) ? ' is-reviewed' : ''}`, 'data-evidence-id': item.id,
+      'aria-label': `${item.title} — ${item.reference.split(' · ')[0]} — افتح الدليل`, 'aria-haspopup': 'dialog',
       'aria-describedby': `step-evidence-status-${item.id}`, onClick: () => openEvidence(item.id),
     }, [
-      node('div', { class: 'step-evidence-art', 'aria-hidden': 'true' }, [createDocumentPreview(item, index)]),
-      node('span', { class: 'step-evidence-file', 'aria-hidden': 'true' }),
-      node('span', { class: 'step-evidence-title', text: item.title }),
-      node('span', { class: 'step-evidence-meta' }, [
-        node('bdi', { class: 'step-evidence-reference', dir: 'ltr', text: item.reference.split(' · ')[0] }),
-        node('span', { class: 'step-evidence-status', id: `step-evidence-status-${item.id}`, text: state.viewedIds.includes(item.id) ? '✓ فُتحت' : 'لم تُفتح' }),
+      node('span', { class: 'step-evidence-copy' }, [
+        node('span', { class: 'step-evidence-title', text: item.title }),
+        node('span', { class: 'step-evidence-meta' }, [
+          node('bdi', { class: 'step-evidence-code', dir: 'ltr', text: item.reference.split(' · ')[0] }),
+          node('span', { class: 'step-evidence-status', id: `step-evidence-status-${item.id}`, text: state.viewedIds.includes(item.id) ? '✓ فُتحت' : 'لم تُفتح' }),
+        ]),
       ]),
-      node('span', { class: 'step-evidence-open', 'aria-hidden': 'true' }, [node('span', { text: 'افتح' }), node('span', { text: '←' })]),
+      node('span', { class: 'step-evidence-open', 'aria-hidden': 'true', text: 'افتح ←' }),
     ]))),
     node('button', { type: 'button', class: 'text-button question-compare', text: question.id === 'Q02' ? 'قارن التوقيع الرابع' : 'قارن ورقتين', onClick: () => {
       $('#compare-first').value = leads[0].id;

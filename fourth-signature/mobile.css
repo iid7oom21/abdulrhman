@@ -2,30 +2,7 @@
 @media (max-width:760px) {
   .deduction-sidebar{padding:14px}
   .progress-header{font-size:12px}
-  .progress-track{margin-top:10px}
-  .question-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px}
-  .question-steps .question-step{display:flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:6px;border:0;background:transparent;box-shadow:none;text-align:center}
-  .question-steps .question-step>span{width:28px;height:28px;border-radius:50%;font-size:13px}
-  .question-steps .question-step[aria-current="step"]{background:transparent;box-shadow:none}
-  .question-steps .question-step:disabled{opacity:.55}
-  .question-steps .question-step-label{display:none}
-  .question-steps .question-step:focus-visible{outline-offset:2px}
-
-  .question-panel .step-evidence,
-  .question-panel .step-evidence:has(>button:last-child:nth-child(2)){grid-template-columns:1fr;gap:0;margin-top:16px;border-block:1px solid var(--line)}
-  .step-evidence-button{display:grid;grid-template-columns:22px minmax(0,1fr) auto;grid-template-rows:auto auto;column-gap:12px;row-gap:3px;align-items:center;min-height:76px;padding:12px 4px;border:0;border-bottom:1px solid var(--line);background:transparent;overflow:visible}
-  .step-evidence-button:last-child{border-bottom:0}
-  .step-evidence-button:hover{background:rgba(198,164,117,.05)}
-  .step-evidence-art{display:none}
-  .step-evidence-file{display:block;position:relative;grid-column:1;grid-row:1 / span 2;width:18px;height:24px;border:1px solid var(--gold);border-radius:2px;opacity:.8}
-  .step-evidence-file::before{content:"";position:absolute;top:-1px;right:-1px;width:6px;height:6px;background:#20241e;border-inline-end:1px solid var(--gold);border-bottom:1px solid var(--gold)}
-  .step-evidence-file::after{content:"";position:absolute;top:11px;right:4px;width:8px;height:1px;background:var(--gold);box-shadow:0 4px var(--gold)}
-  .step-evidence-title{grid-column:2;grid-row:1;align-self:end;padding:0;font-size:14px;line-height:1.75;overflow-wrap:break-word}
-  .step-evidence-meta{display:flex;grid-column:2;grid-row:2;align-self:start;align-items:center;flex-wrap:wrap;gap:4px 12px}
-  .step-evidence-reference{display:inline;font:12px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.04em;color:#c8ccbf}
-  .step-evidence-status{padding:0;font-size:11px;line-height:1.8;color:var(--muted)}
-  .step-evidence-open{display:flex;grid-column:3;grid-row:1 / span 2;align-items:center;gap:6px;color:var(--gold);font-size:12px;white-space:nowrap}
-  .step-evidence-button:focus-visible{outline-offset:3px}
+  /* Shared evidence rows and named progress steps are sized in play.css. */
 
   .question-compare{display:inline-flex;align-items:center;justify-content:center;min-height:44px;max-width:100%;margin:12px 0 0;padding:8px 14px;border:1px solid var(--line);background:rgba(198,164,117,.05);font-size:14px;line-height:1.8;text-decoration:none}
   .question-compare:hover{border-color:var(--gold);background:rgba(198,164,117,.1)}

@@ -56,24 +56,21 @@ loading are reconciled with the document that actually finishes loading. Browser
 Back restores saved scroll and focus for elements with stable IDs. None of these
 actions reconstructs or pauses the soundtrack.
 
-Homepage case entry (`mobile-puzzle-1`):
+Homepage case entry (`focus-2`):
 
 The homepage presents one investigation: The Fourth Signature. The film hero
-starts the film; the highlights rail and menu scroll to the single case section,
-whose button opens the investigation through the persistent soundtrack host.
-The former “On the Other Side” mini-case is no longer mounted or advertised on
-the homepage. Its source files, assets and separately versioned saved progress
-remain intact.
+starts the film; the menu leads to the single case section with its silent scene
+and one investigation button. Search opens on request. The former mini-case and
+highlights rail are no longer rendered; their source assets and the mini-case's
+separately saved progress remain intact. Old `#raven-archive` links reach the case.
 
-`site-entry.js` still presents the dismissible welcome once per session; case,
-episode, and anchor links open directly. Entering retries music only when the
-visitor has not explicitly paused it. The optional cinematic sound setting
-continues to use one audio graph and retains the chosen playback position.
+`site-entry.js` presents a dismissible welcome once per session; case, episode and
+anchor links open directly. The optional cinematic sound setting retains the
+chosen playback position. Content frames use the host script version to avoid
+loading a cached older investigation after navigation from an updated homepage.
 
-The investigation uses compact evidence rows on mobile: reference, title,
-opened state and an open action. Full documents remain in the reader, with
-comparison, answers and saved progress unchanged. Larger screens retain their
-document previews. The four-step navigation keeps accessible names and 44px
-mobile touch targets.
-Confirming a case reset returns keyboard focus to the first question; cancelling
-returns to the button that opened the confirmation.
+Evidence uses readable rows with a document reference, title, opened state and
+open action. Full documents remain in the reader; comparisons, answers and saved
+progress are preserved. The four-step navigation keeps accessible names and
+44px mobile touch targets. Confirming a reset focuses the first question;
+cancelling returns to the button that opened the confirmation.
