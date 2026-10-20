@@ -8,6 +8,7 @@
   const homepage = new URL('../', document.currentScript.src).pathname;
   const casePath = new URL('../fourth-signature/', new URL(homepage, location.origin)).pathname;
   const originalOrigin = 'https://project25762.websitepublisher.ai';
+  const publicPath = path => path.replace(/(?:index|content)\.html$/, '').replace(/\/?$/, '/');
   function pagePath(path) {
     let value = path.replace(/\/+$/, '') || '/';
     value = value.replace(/\.html$/, '');
@@ -24,12 +25,12 @@
     // Forms stay on their original host, including when their link is translated.
     if (url.origin === originalOrigin && url.hash === '#raven-collaborate') return path;
     const page = pagePath(url.pathname);
-    if (page === '/case' || url.pathname === casePath || url.pathname === casePath + 'index.html' || url.pathname === casePath.slice(0, -1)) {
+    if (page === '/case' || publicPath(url.pathname) === casePath) {
       url.pathname = casePath;
       url.searchParams.delete('lang');
       return url.pathname + url.search + url.hash;
     }
-    if (page === '/' || url.pathname === homepage || url.pathname === homepage + 'index.html' || url.pathname === homepage.slice(0, -1)) {
+    if (page === '/' || publicPath(url.pathname) === homepage) {
       url.pathname = homepage;
       if (chosen === 'en') url.searchParams.set('lang', 'en');
       else url.searchParams.delete('lang');
@@ -46,7 +47,7 @@
     const legacy = url.searchParams.get('lang');
     if (valid(legacy)) return legacy;
     if (/^\/en(?:\.html|\/|$)/.test(url.pathname)) return 'en';
-    if (pages.has(pagePath(url.pathname))) return 'ar';
+    if (pages.has(pagePath(url.pathname)) || [homepage, casePath].includes(publicPath(url.pathname))) return 'ar';
     return valid(root.dataset.ravenLocale) ? root.dataset.ravenLocale : 'ar';
   }
   let current = fromUrl();
@@ -67,6 +68,15 @@
       ['link[rel="canonical"]', 'href', meta.url]].forEach(([selector, attr, value]) => {
         if (value) document.querySelector(selector)?.setAttribute(attr, value);
       });
+    document.querySelectorAll('script[type="application/ld+json"]').forEach(node => {
+      let data;
+      try { data = JSON.parse(node.textContent); } catch (_) { return; }
+      if (data['@type'] !== 'WebSite') return;
+      data.url = meta.url;
+      data.inLanguage = current;
+      data.description = meta.description;
+      node.textContent = JSON.stringify(data);
+    });
   }
   function updateLinks() {
     document.querySelectorAll('a[href]').forEach(link => {

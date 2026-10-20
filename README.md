@@ -22,3 +22,20 @@ python3 -m http.server 8786 --bind 127.0.0.1
 ```
 
 Open `http://127.0.0.1:8786/raven/`.
+
+Public page identities and sharing:
+
+- Home: `https://iid7oom21.github.io/abdulrhman/raven/`
+- English home: `https://iid7oom21.github.io/abdulrhman/raven/?lang=en`
+- Case: `https://iid7oom21.github.io/abdulrhman/fourth-signature/`
+- Sitemap: `https://iid7oom21.github.io/abdulrhman/sitemap.xml`
+
+Each public entry includes canonical, Open Graph, Twitter, and structured
+metadata in its initial HTML. The content documents canonicalize to those public
+entries, and the persistent host updates its metadata on navigation and language
+changes without replacing the audio. Keep the entry and content metadata aligned.
+The home share image is an unchanged local copy of the approved RAVEN 17 artwork.
+
+The home is indexable; inclusion in search results and refreshed social previews
+depend on the crawlers' own schedules. The original WebsitePublisher contact form
+remains an external service. Privacy opens the notice already on this page.

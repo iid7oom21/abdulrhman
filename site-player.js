@@ -7,6 +7,11 @@ const status = document.querySelector('#music-status');
 const volume = document.querySelector('#music-volume');
 const preferenceKey = 'raven_music_enabled_v2';
 const routes = ['raven/', 'fourth-signature/'].map(path => new URL(path, root).pathname);
+const pageMetadata = [
+  'meta[name="description"]', 'meta[property^="og:"]', 'meta[name^="twitter:"]',
+  'link[rel="canonical"]', 'link[rel="alternate"][hreflang]',
+  'script[type="application/ld+json"]'
+].join(',');
 let enabled = true;
 let failure = '';
 let attempt = 0;
@@ -100,9 +105,18 @@ window.RavenSite = {
     if (url?.pathname === activePath) updateHistory(url, push, state);
   },
   ready(child) {
-    if (child !== frame.contentWindow) return;
-    document.title = child.document.title;
-    document.documentElement.lang = child.document.documentElement.lang;
+    if (child !== frame.contentWindow || route(child.location.href)?.pathname !== activePath) return;
+    const source = child.document;
+    document.title = source.title;
+    document.documentElement.lang = source.documentElement.lang;
+    document.documentElement.dir = source.documentElement.dir;
+    frame.title = source.title;
+    // Public entry HTML has its own crawler metadata; keep it aligned with the
+    // displayed page when client-side navigation retains this audio document.
+    document.head.querySelectorAll(pageMetadata).forEach(node => node.remove());
+    source.head.querySelectorAll(pageMetadata).forEach(node => {
+      document.head.appendChild(node.cloneNode(true));
+    });
     sync();
   }
 };
