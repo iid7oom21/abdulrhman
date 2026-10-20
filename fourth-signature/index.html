@@ -26,7 +26,8 @@
   <link rel="stylesheet" href="./photo-scene.css?v=wide-1">
   <link rel="stylesheet" href="./cinematic.css?v=cinematic-1">
   <link rel="stylesheet" href="./discovery.css?v=fourth-1">
-  <script type="module" src="./app.js?v=fourth-1"></script>
+  <link rel="stylesheet" href="./soundtrack.css?v=soundtrack-1">
+  <script type="module" src="./app.js?v=soundtrack-1"></script>
 </head>
 <body>
   <a class="skip-link" href="#deductions">انتقل إلى ملف التحقيق</a>
@@ -49,6 +50,18 @@
       </div>
       <div class="hero-footer"><span>الحقيقة تحتاج إلى شاهدٍ واحد: أنت.</span><span lang="en" dir="ltr">RAVEN INVESTIGATION BUREAU</span></div>
       <span class="hero-stamp" aria-hidden="true">قيد التحقيق</span>
+    </section>
+
+    <section class="case-soundtrack" aria-label="أغنية رايفن">
+      <details id="soundtrack-panel">
+        <summary><span>استمع إلى أغنية رايفن</span><span class="soundtrack-duration" dir="ltr">٢:٥٦</span></summary>
+        <div class="soundtrack-body">
+          <p lang="en" dir="ltr">RAVEN</p>
+          <audio id="case-soundtrack" controls preload="none" src="./assets/audio/raven-dark-pop-intimate-revised.mp3" aria-label="أغنية رايفن"></audio>
+          <p id="soundtrack-status" role="status" aria-live="polite"></p>
+          <a href="./assets/audio/raven-dark-pop-intimate-revised.mp3" download="RAVEN-Dark-Pop-Intimate-Revised.mp3">تنزيل الأغنية</a>
+        </div>
+      </details>
     </section>
 
     <div class="case-nav" aria-label="أقسام القضية">
