@@ -163,25 +163,41 @@ function openEvidence(id, { replace = false, trigger } = {}) {
   const origin = replace ? dialogTriggers.get($('#evidence-dialog')) : trigger || document.activeElement;
   const fromEnding = state.revealed && origin?.closest('#ending');
   $('#document-kicker').textContent = 'من ملف القضية';
-  const content = [
-    node('div', { class: 'document-tools' }, [
-      node('p', { text: id === 'E06' ? 'قارن القصاصة بالإطار الكامل' : 'مقتطف من الأصل' }),
-      node('button', { class: 'button button-outline', type: 'button', text: 'قارن هذه الوثيقة', onClick: () => {
-        $('#compare-first').value = id;
-        if ($('#compare-second').value === id) $('#compare-second').value = evidence.find(entry => entry.id !== id).id;
-        activeComparisonTab = 0;
-        const returnTarget = dialogTriggers.get($('#evidence-dialog')) || $('#active-question-title');
-        $('#evidence-dialog').close();
-        queueMicrotask(() => openComparison(returnTarget));
-      } }),
+  const tools = node('div', { class: 'document-tools' }, [
+    node('p', { text: id === 'E06' ? 'قارن القصاصة بالإطار الكامل' : 'مقتطف من الأصل' }),
+    node('button', { class: 'button button-outline', type: 'button', text: 'قارن هذه الوثيقة', onClick: () => {
+      $('#compare-first').value = id;
+      if ($('#compare-second').value === id) $('#compare-second').value = evidence.find(entry => entry.id !== id).id;
+      activeComparisonTab = 0;
+      const returnTarget = dialogTriggers.get($('#evidence-dialog')) || $('#active-question-title');
+      $('#evidence-dialog').close();
+      queueMicrotask(() => openComparison(returnTarget));
+    } }),
+  ]);
+  const content = id === 'E06' ? [
+    node('section', { class: 'photo-evidence-reader', 'aria-labelledby': 'document-title' }, [
+      node('header', { class: 'photo-evidence-heading' }, [
+        node('p', { class: 'eyebrow', text: 'ليلة الحريق / مشهد القضية' }),
+        node('h2', { id: 'document-title', text: 'لوسيان أمام الأرشيف' }),
+      ]),
+      createScene({
+        id: 'hero', poster: './assets/hero.webp', alt: 'لوسيان يحمل قفلًا أمام مبنى الأرشيف المشتعل',
+        label: 'لوسيان أمام الأرشيف', className: 'photo-evidence-scene', autoplay: true, originalImage: false,
+      }),
+      node('details', { class: 'photo-evidence-inspection' }, [
+        node('summary', { text: 'افحص الصورة والوثيقة' }),
+        createDocument(item, { titleId: 'photo-document-title' }),
+        tools,
+      ]),
     ]),
-    createDocument(item, { titleId: 'document-title' }),
+  ] : [tools, createDocument(item, { titleId: 'document-title' })];
+  content.push(
     node('div', { class: 'document-return' }, [node('button', { type: 'button', class: 'button button-gold', text: fromEnding ? 'عُد إلى الخلاصة ←' : 'عُد إلى الاستنتاج ←', onClick: () => {
       dialogTriggers.set($('#evidence-dialog'), fromEnding ? origin : $('#active-question-title'));
       $('#evidence-dialog').close();
       if (!fromEnding) focusQuestion();
     } })]),
-  ];
+  );
   const attachmentImage = id === 'E06' ? 'assets/padlock.webp' : item.image;
   if (attachmentImage) {
     const sceneId = attachmentImage.includes('padlock') ? 'padlock' : attachmentImage.includes('documents') ? 'documents' : attachmentImage.includes('archive') ? 'archive' : /(?:fire|hero)/.test(attachmentImage) ? 'hero' : null;
@@ -210,6 +226,7 @@ function openEvidence(id, { replace = false, trigger } = {}) {
   if (!replace) openDialog($('#evidence-dialog'), trigger || document.activeElement);
   $('#evidence-dialog').scrollTop = 0;
   if (replace) { $('#document-title').tabIndex = -1; $('#document-title').focus({ preventScroll: true }); }
+  if (id === 'E06') refreshScenes();
 }
 
 for (const dialog of document.querySelectorAll('dialog')) {

@@ -1,0 +1,21 @@
+/* The cinematic scene opens first; the photograph remains available for inspection. */
+.photo-evidence-reader{min-width:0;background:#151b16}
+.photo-evidence-heading{padding:22px 30px 18px}
+.photo-evidence-heading .eyebrow{font-size:10px}
+.photo-evidence-heading h2{font-family:"Times New Roman",Tahoma,serif;font-size:30px;line-height:1.5;margin-top:8px;color:var(--text)}
+.photo-evidence-scene .scene-frame{width:100%;aspect-ratio:16/9;height:auto}
+.photo-evidence-scene .scene-poster,.photo-evidence-scene .scene-video{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;filter:none}
+.photo-evidence-scene .scene-controls{justify-content:flex-start;padding:10px 24px;background:#151b16}
+.photo-evidence-scene .scene-toggle{font-size:12px}
+.photo-evidence-inspection{margin:8px 30px 0;border:1px solid var(--line);background:#20271f}
+.photo-evidence-inspection>summary{min-height:48px;padding:12px 16px;cursor:pointer;font-size:14px;line-height:1.7;color:var(--gold)}
+.photo-evidence-inspection>summary:focus-visible{outline:2px solid var(--gold);outline-offset:3px}
+.document-dialog .photo-evidence-inspection>.document-sheet{margin:0;border-inline:0}
+.photo-evidence-inspection>.document-tools{padding:12px 16px;border-top:1px solid var(--line);border-bottom:0}
+@media(max-width:700px){
+  .photo-evidence-heading{padding:16px 16px 14px}
+  .photo-evidence-heading h2{font-size:25px;margin-top:5px}
+  .photo-evidence-scene .scene-controls{padding:8px 16px}
+  .photo-evidence-inspection{margin:8px 16px 0}
+  .photo-evidence-inspection>summary{font-size:14px}
+}
