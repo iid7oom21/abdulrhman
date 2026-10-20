@@ -1,101 +1,25 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#171916">
-  <meta name="description" content="التوقيع الرابع — ملف تحقيق تفاعلي من رايفن. افحص الوثائق، قارن الروايات، وابنِ استنتاجك من الأدلة.">
-  <title>التوقيع الرابع — رايفن</title>
-  <link rel="canonical" href="https://iid7oom21.github.io/abdulrhman/fourth-signature/">
-  <link rel="icon" href="./favicon.svg" type="image/svg+xml">
-  <meta property="og:type" content="website">
-  <meta property="og:locale" content="ar_AR">
-  <meta property="og:title" content="التوقيع الرابع — رايفن">
-  <meta property="og:description" content="صورة ومحضر بأربعة توقيعات أنهيا عمل حارس الأرشيف. افتح الملف وافحص ما بقي من أدلته.">
-  <meta property="og:url" content="https://iid7oom21.github.io/abdulrhman/fourth-signature/">
-  <meta property="og:image" content="https://iid7oom21.github.io/abdulrhman/fourth-signature/assets/hero.webp">
-  <link rel="stylesheet" href="./styles.css?v=cinema-2">
-  <link rel="stylesheet" href="./documents.css?v=play-1">
-  <link rel="stylesheet" href="./photo-inspector.css?v=desk-2">
-  <link rel="stylesheet" href="./deduction-support.css?v=dossier-1">
-  <link rel="stylesheet" href="./ending.css?v=closure-1">
-  <link rel="stylesheet" href="./case-seal.css?v=seal-1">
-  <link rel="stylesheet" href="./investigation.css?v=dossier-1">
-  <link rel="stylesheet" href="./play.css?v=play-1">
-  <link rel="stylesheet" href="./mobile.css?v=desk-2">
-  <link rel="stylesheet" href="./photo-scene.css?v=wide-1">
-  <link rel="stylesheet" href="./cinematic.css?v=cinematic-1">
-  <link rel="stylesheet" href="./discovery.css?v=fourth-1">
-  <link rel="stylesheet" href="./soundtrack.css?v=soundtrack-1">
-  <script type="module" src="./app.js?v=soundtrack-1"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111411">
+<title>التوقيع الرابع — RAVEN</title>
+<meta name="description" content="افحص الوثائق وقارن الروايات في ملف التحقيق ٠١٧.">
+<link rel="canonical" href="https://iid7oom21.github.io/abdulrhman/fourth-signature/">
+<link rel="icon" href="../fourth-signature/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../site-player.css?v=music-continuous-1">
+<script type="module" src="../site-player.js?v=music-continuous-1"></script>
 </head>
 <body>
-  <a class="skip-link" href="#deductions">انتقل إلى ملف التحقيق</a>
-  <header class="site-header">
-    <a class="brand" href="#top" aria-label="رايفن، بداية الصفحة"><span class="brand-emblem" aria-hidden="true">R</span><span class="brand-name" lang="en" dir="ltr">RAVEN<span>ملفات لم تُغلق</span></span></a>
-    <div class="header-caption"><span class="status-dot" aria-hidden="true"></span> أرشيف القضايا / ٠١٧</div>
-    <a class="site-link" href="../raven/">إلى رايفن <span aria-hidden="true">↗</span></a>
-  </header>
-
-  <main id="top">
-    <section class="hero" aria-labelledby="case-title">
-      <img class="hero-image" src="./assets/hero.webp" alt="حارس يقف أمام أرشيف مشتعل، وبيده قفل قديم" fetchpriority="high">
-      <div class="hero-shade"></div>
-      <div class="hero-content">
-        <p class="eyebrow"><span class="gold-rule"></span> قضية مفتوحة · تحقيق تفاعلي</p>
-        <p class="hero-overline">الملف ٠١٧</p>
-        <h1 id="case-title">التوقيع<br><em>الرابع.</em></h1>
-        <p class="hero-subtitle" id="hero-subtitle">حارسٌ فُصل بعد حريق. صورةٌ أدانته. هل قالت الحقيقة؟</p>
-        <div class="hero-actions"><a class="button button-gold" id="start-link" href="#deductions">ابدأ بفحص الصورة <span aria-hidden="true">←</span></a><span class="hero-meta">٤ استنتاجات · ٨ أدلة</span></div>
-      </div>
-      <div class="hero-footer"><span>الحقيقة تحتاج إلى شاهدٍ واحد: أنت.</span><span lang="en" dir="ltr">RAVEN INVESTIGATION BUREAU</span></div>
-      <span class="hero-stamp" aria-hidden="true">قيد التحقيق</span>
-    </section>
-
-    <section class="case-soundtrack" aria-label="أغنية رايفن">
-      <details id="soundtrack-panel">
-        <summary><span>استمع إلى أغنية رايفن</span><span class="soundtrack-duration" dir="ltr">٢:٥٦</span></summary>
-        <div class="soundtrack-body">
-          <p lang="en" dir="ltr">RAVEN</p>
-          <audio id="case-soundtrack" controls preload="none" src="./assets/audio/raven-dark-pop-intimate-revised.mp3" aria-label="أغنية رايفن"></audio>
-          <p id="soundtrack-status" role="status" aria-live="polite"></p>
-          <a href="./assets/audio/raven-dark-pop-intimate-revised.mp3" download="RAVEN-Dark-Pop-Intimate-Revised.mp3">تنزيل الأغنية</a>
-        </div>
-      </details>
-    </section>
-
-    <div class="case-nav" aria-label="أقسام القضية">
-      <nav class="section-links"><a href="#deductions">التحقيق</a><a href="#evidence">الأدلة</a><a href="#people">الأشخاص</a><a href="#briefing">الخلفية</a></nav>
-      <span class="saved-indicator" id="saved-indicator"><span aria-hidden="true">●</span> يُحفظ تقدّمك على هذا الجهاز</span>
-    </div>
-
-    <div class="content-shell" id="investigation">
-      <section class="section-block deductions-section" id="deductions" aria-labelledby="deductions-title"><div class="desk-intro"><p class="eyebrow">الملف ٠١٧ · إعادة فتح التحقيق</p><h2 id="deductions-title">حريق. صورة. <em>اتهام.</em></h2><p id="quick-brief">فُصل لوسيان بعد حريق الأرشيف. الصورة تُظهره بقفل مكسور. هل كانت دليلًا كافيًا؟</p></div>
-        <div class="deduction-layout"><aside class="deduction-sidebar"><div class="progress-header"><span>تقدّم التحقيق</span><strong id="progress-label">٠ / ٤</strong></div><div class="progress-track"><span id="progress-fill"></span></div><p id="progress-caption" role="status"></p><nav class="question-steps" id="question-steps" aria-label="خطوات الاستنتاج"></nav></aside><div class="question-panel" id="question-panel" aria-live="polite"></div></div>
-      </section>
-      <section class="ending-section" id="ending" hidden aria-labelledby="ending-title"></section>
-      <div class="case-library" aria-label="ملف القضية الكامل">
-        <details class="case-drawer" id="evidence"><summary><span>الأرشيف الكامل</span><small>٨ مستندات</small></summary><section class="section-block evidence-section" aria-labelledby="evidence-title">
-        <div class="section-head-row"><div class="section-heading"><p class="eyebrow">٠٣ / طاولة التحقيق</p><h2 id="evidence-title">المستندات <em>المحفوظة.</em></h2></div><button type="button" class="button button-outline" id="open-compare"><span class="compare-icon" aria-hidden="true">⇄</span> قارن مستندين</button></div>
-        <div class="evidence-toolbar"><p>افتح الوثيقة، ثم قارنها بأصلها أو بسجل إحالتها.</p><span id="reviewed-count" class="count-label" aria-live="polite">٠ أدلة مفتوحة</span></div>
-        <div class="evidence-grid" id="evidence-grid"></div>
-      </section></details>
-        <details class="case-drawer" id="people"><summary><span>أطراف القضية</span><small>٥ أشخاص</small></summary><section class="section-block people-section" aria-labelledby="people-title"><div class="section-head-row"><div class="section-heading"><p class="eyebrow">٠٢ / أطراف الملف</p><h2 id="people-title">دليل <em>أطراف القضية.</em></h2></div><p class="section-aside">الأسماء والأدوار المسجلة في الملف.</p></div><div class="people-grid" id="people-grid"></div></section></details>
-        <details class="case-drawer" id="briefing"><summary><span>خلفية القضية</span><small>ما حدث قبل إعادة الفتح</small></summary><section class="briefing section-block" aria-labelledby="briefing-title">
-        <div class="section-heading"><p class="eyebrow">٠١ / خلفية القضية</p><h2 id="briefing-title">ما تركه <em>الحريق.</em></h2></div>
-        <div class="briefing-copy"><p class="lead" id="backstory">عام 2019 احترق أرشيف بيلمار. انتشرت صورة للحارس لوسيان ڤيل يحمل قفلًا مكسورًا، وفُصل بمحضر ذي أربعة توقيعات ينسب إليه احتجاز زملائه. بعد سبع سنوات، فُتح صندوق الأصول. أمامك المحضر وسجلات الصيانة والإيصالات وبطاقة الصورة. افحصها وراجع أساس قرار الفصل.</p><div class="mission-note"><span class="note-label">على غلاف الملف</span><p>بعض الأوراق لا تحترق. تتعلّم فقط كيف تكذب.</p></div></div>
-        <figure class="archive-photo"><img src="./assets/archive.webp" alt="خزائن الأرشيف والممر المؤدي إلى غرفة حفظ السجلات" loading="lazy"><figcaption><span>أرشيف بيلمار / ممر الحفظ</span><span>الأرشيف</span></figcaption></figure>
-      </section></details>
-      </div>
-      <footer class="case-footer"><div><span class="footer-wordmark" lang="en" dir="ltr">RAVEN</span><p>لكل أثر رواية. ولكل رواية ما ينقصها.</p></div><button type="button" id="reset-progress" class="text-button">إعادة التحقيق من البداية <span aria-hidden="true">↻</span></button></footer>
-    </div>
-  </main>
-
-  <dialog class="person-dialog" id="person-dialog" aria-labelledby="person-title"><div class="dialog-topbar"><span id="person-kicker">ملف الشخصية</span><button type="button" class="icon-button" data-close-dialog aria-label="إغلاق ملف الشخصية">×</button></div><div id="person-content"></div></dialog>
-  <dialog class="document-dialog" id="evidence-dialog" aria-labelledby="document-title"><div class="dialog-topbar"><span id="document-kicker">ملف الدليل</span><button type="button" class="icon-button" data-close-dialog aria-label="إغلاق الدليل">×</button></div><div id="document-content"></div></dialog>
-  <dialog class="compare-dialog" id="compare-dialog" aria-labelledby="compare-title"><div class="dialog-topbar"><span>طاولة المقارنة</span><button type="button" class="icon-button" data-close-dialog aria-label="إغلاق المقارنة">×</button></div><div class="compare-body"><p class="eyebrow">ضع الورقتين جنبًا إلى جنب</p><h2 id="compare-title">ما الذي تغيّر؟</h2><p class="compare-instructions">قارن المصدر والتوقيت والنص. اختر دليلين. على الجوال، بدّل بينهما من التبويبين.</p><details class="comparison-suggestions"><summary>زوايا مقترحة للمقارنة</summary><div id="comparison-presets" class="comparison-presets"></div></details><div class="compare-selectors"><label>الدليل الأول<select id="compare-first"></select></label><label>الدليل الثاني<select id="compare-second"></select></label></div><div id="comparison-tabs" class="comparison-tabs" role="tablist" aria-label="الورقتان في المقارنة" hidden></div><div class="comparison-documents" id="comparison-documents"></div><details id="comparison-note" class="comparison-note"><summary>اعرض تفسير المقارنة</summary><p class="compare-observation" id="compare-observation"></p></details></div></dialog>
-  <dialog class="reset-dialog" id="reset-dialog" aria-labelledby="reset-title"><div class="dialog-topbar"><span>بداية جديدة</span><button type="button" class="icon-button" data-close-dialog aria-label="إغلاق التأكيد">×</button></div><div class="reset-body"><h2 id="reset-title">إعادة فتح التحقيق؟</h2><p>سيُمسح تقدّمك المحفوظ في هذه القضية على هذا الجهاز، وتعود الاستنتاجات إلى البداية.</p><div class="reset-actions"><button type="button" id="confirm-reset" class="button button-gold">نعم، ابدأ من جديد</button><button type="button" class="button button-outline" data-close-dialog>احتفظ بتقدّمي</button></div></div></dialog>
-  <div class="toast" id="toast" role="status" hidden></div>
-  <noscript><p class="noscript-message">يلزم تفعيل JavaScript لفتح الأدلة وحفظ تقدّم التحقيق.</p></noscript>
+<iframe id="site-content" title="التوقيع الرابع — RAVEN" allow="autoplay; fullscreen; web-share" allowfullscreen></iframe>
+<div class="site-player" role="region" aria-label="أغنية رايفن">
+  <button id="music-toggle" type="button" aria-pressed="false">تشغيل الأغنية</button>
+  <div class="music-copy"><p id="music-status" role="status" aria-live="polite">RAVEN</p></div>
+  <label class="music-volume">الصوت <input id="music-volume" aria-label="مستوى صوت الأغنية" type="range" min="0" max="1" step="0.05" value="0.45"></label>
+  <a class="music-download" href="../fourth-signature/assets/audio/raven-dark-pop-intimate-revised.mp3" download="RAVEN-Dark-Pop-Intimate-Revised.mp3" aria-label="تنزيل أغنية رايفن">↓</a>
+  <audio id="site-soundtrack" preload="auto" loop></audio>
+</div>
+<noscript><h1>التوقيع الرابع — RAVEN</h1><a href="./content.html">افتح الصفحة</a></noscript>
 </body>
 </html>

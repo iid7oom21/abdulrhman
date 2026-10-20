@@ -6,7 +6,6 @@ import { node, arabic } from './dom.js?v=dossier-1';
 import { createDocument, createDocumentPreview } from './documents.js?v=fourth-1';
 import { createSupportPicker, requiresSupport, evaluateSupport, maxEvidenceCount } from './deduction-support.js?v=fourth-1';
 import { createEnding } from './ending.js?v=fourth-1';
-import { initializeSoundtrack, pauseSoundtrack } from './soundtrack.js?v=soundtrack-1';
 const questions = CASE_DATA.questions;
 const evidence = CASE_DATA.evidence;
 const storageKey = `raven-case:${CASE_DATA.id}`;
@@ -131,7 +130,6 @@ function renderEvidence() {
 const dialogTriggers = new WeakMap();
 function openDialog(dialog, trigger = document.activeElement) {
   pauseScenes();
-  pauseSoundtrack();
   dialogTriggers.set(dialog, trigger);
   dialog.showModal();
   document.body.style.overflow = 'hidden';
@@ -507,7 +505,6 @@ function focusQuestion() {
 
 $('#start-link').addEventListener('click', event => {
   event.preventDefault();
-  pauseSoundtrack();
   $('#deductions').scrollIntoView({ behavior: 'instant', block: 'start' });
   if (!state.viewedIds.length && !state.solvedIds.length) {
     openEvidence('E06', { trigger: $('.step-evidence-button[data-evidence-id="E06"]') });
@@ -568,7 +565,6 @@ $('#confirm-reset').addEventListener('click', () => {
 
 initializeStory();
 initializeScenes();
-initializeSoundtrack();
 renderEvidence();
 initializeComparison();
 renderQuestion();

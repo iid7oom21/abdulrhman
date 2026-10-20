@@ -1,0 +1,24 @@
+# RAVEN — continuous soundtrack
+
+Serve this directory as the web root. `/raven/` is the homepage and
+`/fourth-signature/` is the investigation. Both entry pages use `site-player.js`
+to retain one audio element while `site-bridge.js` routes the content frame.
+The root redirects to the homepage.
+
+The approved `RAVEN (Dark Pop Intimate - Revised)` MP3 is unchanged:
+SHA-256 `05cc47916015d015d080bc48d354d10fa8189cff817101d96a91da039700325e`.
+The player attempts audible autoplay, retries after a trusted interaction when
+browser policy blocks it, loops the track, and respects explicit pause.
+Controls occupy their own bottom row, outside the image/content viewport.
+
+Navigation, evidence dialogs and scrolling never pause or reconstruct the audio.
+Reloading the whole browser document, opening another tab or leaving this host is
+outside uninterrupted playback. The WebsitePublisher domain is a separate site.
+
+Local preview:
+
+```sh
+python3 -m http.server 8786 --bind 127.0.0.1
+```
+
+Open `http://127.0.0.1:8786/raven/`.
