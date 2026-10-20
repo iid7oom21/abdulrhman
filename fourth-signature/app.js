@@ -1,4 +1,4 @@
-import { CASE_DATA } from './case-data.js?v=desk-2';
+import { CASE_DATA } from './case-data.js?v=cinematic-1';
 import { createScene, initializeScenes, pauseScenes, disposeScenes, refreshScenes } from './media.js?v=cinema-2';
 
 const $ = (selector, scope = document) => scope.querySelector(selector);
@@ -329,6 +329,13 @@ function renderComparison() {
 function renderProgress() {
   $('#progress-label').textContent = `${arabic(state.solvedIds.length)} / ${arabic(questions.length)}`;
   $('#progress-fill').style.width = `${state.solvedIds.length / questions.length * 100}%`;
+  $('#progress-caption').textContent = [
+    'ابدأ بالصورة',
+    'راجع سياق التوقيعات',
+    'تتبّع مصدر المحضر',
+    'افصل الدليل عن الافتراض',
+    'حان وقت الخلاصة',
+  ][state.solvedIds.length];
   $('#question-steps').replaceChildren(...questions.map((question, index) => {
     const solved = state.solvedIds.includes(question.id);
     return node('button', {
@@ -346,12 +353,15 @@ function renderQuestion(moveFocus = false) {
   const panel = $('#question-panel');
   const question = questions[state.activeIndex];
   if (!question) {
-    panel.replaceChildren(node('div', { class: 'completed-panel' }, [
-      node('span', { class: 'completed-symbol', 'aria-hidden': 'true', text: '✓' }),
+    panel.replaceChildren(node('div', {
+      class: state.revealed ? 'completed-panel' : 'completed-panel ending-interlude',
+      'data-cinematic-intro': state.revealed ? null : 'true',
+    }, [
+      state.revealed ? node('span', { class: 'completed-symbol', 'aria-hidden': 'true', text: '✓' }) : null,
       node('p', { class: 'question-kicker', text: 'اكتملت سلسلة الاستنتاجات' }),
-      node('h3', { id: 'active-question-title', tabindex: '-1', text: 'اكتملت استنتاجاتك.' }),
-      node('p', { text: 'راجع في الخلاصة ما أثبتته الأوراق وما بقي غير محسوم.' }),
-      node('button', { class: 'button button-gold', type: 'button', onClick: revealEnding, text: state.revealed ? 'عد إلى خلاصة القضية  ←' : 'افتح خلاصة القضية  ←' }),
+      node('h3', { id: 'active-question-title', tabindex: '-1', text: state.revealed ? 'اكتملت استنتاجاتك.' : CASE_DATA.ending.title }),
+      node('p', { text: state.revealed ? 'راجع في الخلاصة ما أثبتته الأوراق وما بقي غير محسوم.' : 'عادت التوقيعات إلى أوراقها. وبقي للحريق سؤاله.' }),
+      node('button', { class: 'button button-gold', type: 'button', onClick: revealEnding, text: state.revealed ? 'عد إلى خلاصة القضية  ←' : 'اقرأ التقرير النهائي  ←' }),
     ]));
     if (moveFocus) focusQuestion();
     return;
