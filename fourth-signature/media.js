@@ -134,6 +134,15 @@ export function createScene({ id, poster, alt, label, className = '', autoplay =
     if (!allowedNow()) return;
     if (!explicit && (!automaticAllowed() || manualPause || ended || autoRejected || failed)) return;
     if (explicit) {
+      // The hero controls sit below the image. Bring the scene back into view
+      // when replay is requested with most of the picture above the viewport.
+      if (!root.contains(toggle)) {
+        const box = root.getBoundingClientRect();
+        const visibleHeight = Math.max(0, Math.min(box.bottom, innerHeight) - Math.max(box.top, 0));
+        if (visibleHeight < Math.min(box.height, innerHeight) * .5) {
+          root.scrollIntoView({ block: 'center', behavior: 'instant' });
+        }
+      }
       manualPause = false;
       autoRejected = false;
       if (failed) {
@@ -251,10 +260,16 @@ export function initializeScenes() {
   if (initialized) return;
   initialized = true;
   const heroImage = document.querySelector('.hero-image');
-  if (heroImage) heroImage.replaceWith(createScene({
-    id: 'hero', poster: heroImage.getAttribute('src'), alt: heroImage.alt,
-    label: 'ليلة الحريق', className: 'hero-scene', autoplay: true, originalImage: false,
-  }));
+  if (heroImage) {
+    const heroScene = createScene({
+      id: 'hero', poster: heroImage.getAttribute('src'), alt: heroImage.alt,
+      label: 'ليلة الحريق', className: 'hero-scene', autoplay: true, originalImage: false,
+    });
+    heroImage.replaceWith(heroScene);
+    document.querySelector('.hero-scene-tools')?.append(
+      heroScene.querySelector('.scene-controls'), heroScene.querySelector('.scene-status'),
+    );
+  }
   const archiveImage = document.querySelector('.archive-photo > img');
   if (archiveImage) archiveImage.replaceWith(createScene({
     id: 'archive', poster: archiveImage.getAttribute('src'), alt: archiveImage.alt,

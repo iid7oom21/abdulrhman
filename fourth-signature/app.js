@@ -1,11 +1,11 @@
 import { CASE_DATA } from './case-data.js?v=fourth-1';
-import { createScene, initializeScenes, pauseScenes, disposeScenes, refreshScenes } from './media.js?v=cinema-2';
+import { createScene, initializeScenes, pauseScenes, disposeScenes, refreshScenes } from './media.js?v=scene-controls-1';
 
 const $ = (selector, scope = document) => scope.querySelector(selector);
 import { node, arabic } from './dom.js?v=dossier-1';
 import { createDocument, createDocumentPreview } from './documents.js?v=fourth-1';
 import { createSupportPicker, requiresSupport, evaluateSupport, maxEvidenceCount } from './deduction-support.js?v=fourth-1';
-import { createEnding } from './ending.js?v=fourth-1';
+import { createEnding } from './ending.js?v=scene-controls-1';
 const questions = CASE_DATA.questions;
 const evidence = CASE_DATA.evidence;
 const storageKey = `raven-case:${CASE_DATA.id}`;

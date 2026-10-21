@@ -1,5 +1,5 @@
 import { node, arabic } from './dom.js?v=dossier-1';
-import { createScene } from './media.js?v=cinema-2';
+import { createScene } from './media.js?v=scene-controls-1';
 import { createCaseSeal } from './case-seal.js?v=seal-1';
 
 const signatures = [
