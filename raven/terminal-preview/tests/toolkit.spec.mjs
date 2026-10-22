@@ -1,6 +1,6 @@
-import { test, expect, boot, expectNoOverflow } from './helpers.mjs';
+import { test, expect, boot, expectNoOverflow, caseState, openEvidence, closeEvidence, EXPANSION_KEY } from './helpers.mjs';
 
-const state = page => page.evaluate(() => JSON.parse(localStorage.getItem('raven-preview:v1:case')));
+const state = caseState;
 async function openTool(page, name) {
   if (await page.locator('.tk-dialog[open]').count()) await page.getByRole('button', { name: 'كل الأدوات', exact: true }).click();
   else await page.locator('[data-open-toolkit]').click();
@@ -8,32 +8,32 @@ async function openTool(page, name) {
 }
 async function read(page, ids) {
   for (const id of ids) {
-    await page.locator(`[data-evidence-id="${id}"]`).first().click();
-    await page.getByRole('button', { name: 'إغلاق الوثيقة', exact: true }).click();
+    await openEvidence(page, id);
+    await closeEvidence(page);
   }
 }
 
 test('board, timeline and hypotheses persist investigator choices without grading them', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await boot(page, 'case-017/');
-  await read(page, ['E01', 'E02']);
+  await read(page, ['E01', 'E06']);
   await openTool(page, 'board');
-  for (const id of ['E01', 'E02']) {
+  for (const id of ['E01', 'E06']) {
     await page.getByLabel('دليل لإضافته إلى اللوحة', { exact: true }).selectOption(id);
     await page.getByRole('button', { name: '＋ ثبّت الدليل', exact: true }).click();
   }
-  for (const id of ['E01', 'E02']) await page.locator(`[data-select-pin="${id}"]`).click();
+  for (const id of ['E01', 'E06']) await page.locator(`[data-select-pin="${id}"]`).click();
   await page.getByLabel('نوع العلاقة', { exact: true }).selectOption('يحتاج تحققًا');
   await page.getByLabel('سبب الربط', { exact: true }).fill('أريد مقارنة سياق التوقيع في المصدرين.');
   await page.locator('[data-connect-pins]').click();
   expect((await state(page)).links).toHaveLength(1);
   expect((await state(page)).links[0]).toMatchObject({ relation: 'يحتاج تحققًا', reason: 'أريد مقارنة سياق التوقيع في المصدرين.' });
   await openTool(page, 'timeline');
-  await page.getByLabel('الدليل المصدر', { exact: true }).selectOption('E02');
+  await page.getByLabel('الدليل المصدر', { exact: true }).selectOption('E06');
   await page.getByLabel('موضع الحدث في التسلسل', { exact: true }).selectOption('unknown');
   await page.getByLabel('عنوان الحدث', { exact: true }).fill('حدث يحتاج إلى ترتيب');
   await page.getByRole('button', { name: 'أضف إلى التسلسل', exact: true }).click();
-  expect((await state(page)).timeline[0]).toMatchObject({ bucket: 'unknown', evidenceId: 'E02' });
+  expect((await state(page)).timeline[0]).toMatchObject({ bucket: 'unknown', evidenceId: 'E06' });
   await openTool(page, 'hypotheses');
   await page.getByLabel('نص الفرضية', { exact: true }).fill('فرضية شخصية قيد الفحص.');
   await page.locator('.tk-hypothesis-source input[type="checkbox"]').first().check();
@@ -89,10 +89,10 @@ test('all three training tools keep feedback and never solve a case deduction', 
 });
 
 test('malformed saved notebook entries do not break any investigative tool', async ({ context, page }) => {
-  await context.addInitScript(() => {
+  await context.addInitScript(key => {
     localStorage.setItem('raven-preview:v1:initialized', 'true');
-    localStorage.setItem('raven-preview:v1:case', JSON.stringify({ viewedIds: ['E01'], notes: [{}, { text: 'bad', evidenceId: 'UNKNOWN' }], pins: [{}], links: [{}], timeline: [{}], hypotheses: [{ text: 'old record', sources: 7 }] }));
-  });
+    localStorage.setItem(key, JSON.stringify({ viewedIds: ['E01'], notes: [{}, { text: 'bad', evidenceId: 'UNKNOWN' }], pins: [{}], links: [{}], timeline: [{}], hypotheses: [{ text: 'old record', sources: 7 }] }));
+  }, EXPANSION_KEY);
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await boot(page, 'case-017/');

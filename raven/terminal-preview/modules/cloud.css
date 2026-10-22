@@ -1,0 +1,10 @@
+.cloud-panel{border:1px solid #d6b98d45;background:#101616;margin:1.25rem 0;color:#eee8de;min-width:0}
+.cloud-panel>summary{padding:1rem;cursor:pointer;min-height:48px;color:#d6b98d;font-size:1rem}
+.cloud-panel-body{padding:0 1rem 1rem;min-width:0;overflow-wrap:anywhere}
+.cloud-panel-body p{line-height:1.8}.cloud-status{font-size:1rem}.cloud-small{font-size:.9rem;color:#c1c8c6}
+.cloud-actions{display:flex;flex-wrap:wrap;gap:.65rem}.cloud-panel button{max-width:100%;white-space:normal;min-height:48px}
+.cloud-alias{display:grid;gap:.5rem;margin-block:1rem}.cloud-alias input{width:100%;min-width:0;box-sizing:border-box;padding:.8rem;background:#080a0b;color:#eee8de;border:1px solid #d6b98d80;font:inherit}
+.cloud-conflict{border-inline-start:3px solid #d6b98d;padding-inline-start:1rem;margin-top:1rem}.cloud-conflict button{margin:.3rem}
+.cloud-leaderboard{padding-inline-start:1.5rem}.cloud-leaderboard li{padding:.8rem 0;border-bottom:1px solid #d6b98d33}.cloud-leaderboard span{display:block;font-size:.9rem;color:#c1c8c6}
+.cloud-panel :focus-visible{outline:2px solid #d6b98d;outline-offset:3px}.cloud-panel [aria-busy=true]{opacity:.8}
+@media(max-width:480px){.cloud-actions{display:grid;grid-template-columns:minmax(0,1fr)}.cloud-actions button{width:100%}}

@@ -1,4 +1,4 @@
-import { test, expect, PREVIEW, route, boot, expectNoOverflow } from './helpers.mjs';
+import { test, expect, PREVIEW, route, boot, expectNoOverflow, openEvidence, selectCaseTab } from './helpers.mjs';
 
 const paths = ['', 'raven-17/', 'raven-17/part-1/', 'raven-17/part-2/', 'raven-17/part-3/', 'zarqa/', 'case-017/'];
 
@@ -66,7 +66,8 @@ test('case to films to episode to case to home mounts each destination without r
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await boot(page, 'case-017/');
-  await expect(page.locator('.case-evidence-card')).toHaveCount(8);
+  await selectCaseTab(page, 'evidence');
+  await expect(page.locator('.case-evidence-card')).toHaveCount(16);
   await page.locator('#site-header a[href$="/raven-17/"]').click();
   await expect(page).toHaveURL(route('raven-17/'));
   await expect(page.locator('#route-outlet h1')).toHaveText('RAVEN 17');
@@ -79,7 +80,8 @@ test('case to films to episode to case to home mounts each destination without r
   await page.locator('#site-header a[href$="/case-017/"]').click();
   await expect(page).toHaveURL(route('case-017/'));
   await expect(page.locator('#route-outlet h1')).toHaveText('التوقيع الرابع.');
-  await expect(page.locator('.case-evidence-card')).toHaveCount(8);
+  await selectCaseTab(page, 'evidence');
+  await expect(page.locator('.case-evidence-card')).toHaveCount(16);
   await expect(page.locator('[data-film-video]')).toHaveCount(0);
   await page.locator('#site-header .brand').click();
   await expect(page).toHaveURL(PREVIEW);
@@ -94,8 +96,7 @@ test('a failed soundtrack does not prevent entering the case or reading evidence
   await page.route('**/*raven-baqi-athar*.mp3*', intercepted => intercepted.abort());
   await boot(page);
   await page.locator('a[href*="/case-017/"]').first().click();
-  await expect(page.locator('[data-evidence-id="E01"]').first()).toBeVisible();
-  await page.locator('[data-evidence-id="E01"]').first().click();
+  await openEvidence(page, 'E01');
   await expect(page.locator('dialog[open]')).toBeVisible();
   await expect(page.locator('dialog[open]')).toContainText('محضر المسؤولية');
 });
@@ -111,7 +112,7 @@ test('all preview storage remains isolated from legacy progress', async ({ conte
     }
   }, legacy);
   await boot(page, 'case-017/');
-  await page.locator('[data-evidence-id="E01"]').first().click();
+  await openEvidence(page, 'E01');
   await expect(page.locator('dialog[open]')).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('raven-case:fourth-signature-reconstruction'))).toBe(legacy);
   expect(await page.evaluate(() => localStorage.getItem('raven17_episode_1_progress'))).toBe('42');
@@ -123,7 +124,7 @@ test('denied persistent storage leaves the current session usable', async ({ con
     Storage.prototype.getItem = function () { throw new DOMException('Storage disabled', 'SecurityError'); };
   });
   await boot(page, 'case-017/');
-  await page.locator('[data-evidence-id="E01"]').first().click();
+  await openEvidence(page, 'E01');
   await expect(page.locator('dialog[open]')).toBeVisible();
   await expect(page.locator('dialog[open]')).toContainText('محضر المسؤولية');
 });

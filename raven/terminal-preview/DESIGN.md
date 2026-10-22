@@ -43,7 +43,7 @@ Internal navigation replaces the route outlet while retaining the audio owner. B
 | Timeline | Arrange sourced excerpts in before-fire, after-fire, reopening-2026, or unspecified buckets. Do not create precise times or pretend that the player's arrangement is verified. |
 | Search | Search and filter opened documents only. Search must not index correct answers, explanations, or the ending. |
 | Hypotheses | Collect the visitor's claims with supporting or contradicting sources. Feedback confirms saving, not correctness. |
-| Final report | After the four original deductions, show the existing reasoning and limits; separate personal notes and allow printing. |
+| Final report | After all 32 activities and the four original deductions, show the existing reasoning and limits plus a separate 2026 appendix; separate personal notes and allow printing. |
 | Morse practice | Play/visualize `017`, with speed, replay, stop, reference chart, and an answer field. |
 | Caesar practice | Decode `WKH ILOH LV RSHQ` with a shift of three to obtain `THE FILE IS OPEN`. |
 | Number-letter practice | Decode `18-1-22-5-14` to `RAVEN` using an alphabet reference. |
@@ -73,16 +73,38 @@ One soundtrack element owns the unchanged 320 kbps recording. It receives a sour
 
 Ambient room tone and typewriter effects are independent and off initially. These effects suspend while the document is hidden. View-specific media stops when disposed, while the site's song follows the visitor's playback choice. Documents appear immediately; typing effects must not delay reading.
 
-All new state uses the `raven-preview:v1` namespace. Legacy progress may be imported once into an absent preview state, but production keys are never overwritten. Reset creates fresh preview case state so old progress cannot reappear through re-import. Case reset clears its notes, board, timeline, hypotheses, and practice badges while preserving film progress and sound preferences. Storage denial must leave an in-memory session usable.
+All new state uses the `raven-preview:v1` namespace. The expansion has its own `case-017:expansion-v3` subkey; legacy case progress remains preserved and never unlocks the new activities. Reset creates fresh expansion state, including notes, board, timeline, hypotheses, call state, and practice badges, while preserving film progress and sound preferences. Storage denial leaves an in-memory session usable.
 
-Each route mounts and disposes its own events/media. The single audio owner survives route replacement. The prototype needs no backend, user account, mailing provider, fabricated festival award, or unpublished release date.
+Each route mounts and disposes its own events/media. The single audio owner survives route replacement. Local investigation needs no account or backend; optional Google/cloud/ranking features require the supplied Supabase deployment. No mailing provider, festival award, or unpublished release date is fabricated.
+
+## Expanded investigation: review 2026
+
+The playable path alternates short source reading with concrete manipulations. There is one current activity, three progressive hints per activity, and a review index for completed activities. Reopening a completed activity shows its accepted answer read-only. Controls use buttons/selects and explicit move actions as keyboard and touch alternatives; no puzzle requires dragging alone.
+
+| Chapter | Activities and outcomes |
+| --- | --- |
+| 1 · Opening the package | A01 duplex UV inspection; A02 fragments and template; A03 Morse and Caesar; A04 missing versus cancelled ledger numbers. |
+| 2 · Image and location | A05 crop/full frame; A06 cage lock versus exit latch map; A07 three encodings and cabinet reference; A08 original first deduction. |
+| 3 · Signature context | A09 route and word coordinates; A10 symbolic alphabet; A11 logic lock; A12 discriminating document request; A13 signature purposes and attachment/receipt distinction; A14 original second deduction. |
+| 4 · Handling and recordings | A15 illustrated handling traces and their limits; A16 camera-event cards; A17 audible DTMF; A18 clock correction and channel alignment; A19 reverse direction and same-source excerpt comparison. |
+| 5 · Package recovery | A20 scan-strip restoration; A21 digitwise subtraction and column order; A22 version-key matching; A23 actual file hashes; A24 correspondence order; A25 people/document grid. |
+| 6 · Building proof | A26 report assembly and original third deduction; A27 causal chronology; A28 test completeness; A29 proof limits; A30 claim/source/quotation matches. |
+| 7 · Closing the review | A31 combined archive address; A32 original fourth deduction, correct B17-R attachment, report and 2026 appendix. |
+
+E01, E06, E09 are initially available. A04 opens E02/E03; A12 opens E04/E05/E08; A14 opens E15; A15 opens E12; A17 opens E13; A18 opens E14; A19 opens E10; A21 opens E11; A23 opens E16; A25 opens E07. Readers, comparisons, search, source pickers, paragraph questions, and notes all honor the same access rules. Future-source question notes are hidden after restoring an earlier state. The source files remain public static assets; access gating is an experience boundary, not secrecy or DRM.
+
+New 2026 materials cannot alter the original documents: E09 envelope, E10 B17 handling card, E11 derivative manifest, E12 CCTV log, E13 laboratory transcript, E14 publication receipt/excerpt, E15 illustrated handling comparison, E16 correspondence ledger. A missing reverse from the publication proves the package needs correction; it does not establish deliberate concealment. Lucian remains the deliverer of EXT-02 pieces, Adrian deferred AR-01 latch repair, all four signatures remain genuine, and fire origin remains unresolved.
+
+An optional Elias/Adrian scene becomes eligible after A14 and opening MA-22. It waits until no dialog/media interaction is active, can be deferred, reopened, or read, and never gates a required activity. Pending recordings are visibly labeled. The soundtrack pauses only for actual call/signal playback and resumes only if still enabled.
+
+The local timer is elapsed active practice time. Ranked time is server wall-clock time and continues across navigation/offline periods. A ranked attempt cannot be created by uploading a practice save. The server checks answers and source availability, commits requests transactionally with idempotency, and publishes only an opted-in alias. Cloud saves use revision checks and retain both sides of a conflict. Default configuration keeps online controls unavailable until a real deployment exists.
 
 ## Acceptance criteria
 
 - All static routes load directly, remain noindex, and contain no content iframe.
 - At 320, 390, and 430 px and desktop width, content fits the viewport and media controls do not obscure images.
 - All thirteen actions have keyboard/touch paths. A touch magnifier must not permanently trap page scrolling.
-- The four deductions can be completed with existing answers and evidence rules. Optional tools do not disclose answers.
+- All 32 activities can be completed through the UI; forward skips and early report access are rejected. The four original deductions retain their answers and support rules. Optional tools do not disclose unavailable sources.
 - Song identity and position survive internal navigation. Film/Morse handoff, explicit pause, blocked playback, and failed media are handled.
 - Reload restores preview work without mutating legacy storage. Reset, invalid saved data, and unavailable storage are covered.
 - Initial transfer target is under 1.5 MB, including the short hero; secondary media and training load on demand. Measure transfer, not just directory size.

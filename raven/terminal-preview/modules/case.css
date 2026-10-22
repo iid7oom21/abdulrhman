@@ -6,3 +6,13 @@
 @media(prefers-reduced-motion:reduce){.case-page *,.case-dialog *{animation:none!important;transition:none!important;scroll-behavior:auto!important}.case-workspace::after{display:none}}
 @media print{body.printing-case-report>*{visibility:hidden!important}body.printing-case-report .case-dialog,body.printing-case-report .case-dialog *{visibility:visible!important}body.printing-case-report .case-dialog{position:absolute!important;inset:0!important;margin:0!important;width:100%!important;max-height:none!important;height:auto!important;overflow:visible!important;border:0!important;background:white!important;box-shadow:none!important}body.printing-case-report .case-dialog-head,body.printing-case-report .case-report-actions{display:none!important}body.printing-case-report .case-report{background:white!important;color:black!important;padding:15mm!important}body.printing-case-report .case-report li,body.printing-case-report .case-report blockquote{break-inside:avoid}}
 .case-redacted-line{font-size:16px;line-height:1.8;color:#c7bda9;padding:0 0 22px;margin:0}.case-redaction{display:inline-block;min-width:60px;min-height:48px;padding:8px 14px;background:#070a08;color:transparent;border:1px solid #89724888;border-radius:2px;font-size:17px;vertical-align:middle;transition:color .2s,background .2s}.case-redaction.is-revealed{color:#e9d4af;background:#252d23}.quiet-mode .case-workspace{animation:none!important}.quiet-mode .case-workspace::after{display:none}.case-magnifier-view.is-cropped>img{width:181.818182%}
+
+/* Expanded case navigation and document gates, including narrow phones. */
+.case-toolbar-actions{display:flex;flex-wrap:wrap;gap:10px;min-width:0}
+.case-toolbar-actions>.case-button{flex:1;min-width:0}
+.case-folders{grid-template-columns:repeat(5,minmax(0,1fr))}
+.case-file-locked{display:grid;place-items:center;aspect-ratio:1.6;background:repeating-linear-gradient(135deg,#121715,#121715 10px,#171d19 10px,#171d19 11px);color:#aaa28f;font-size:32px}
+.case-evidence-card:disabled{cursor:default;opacity:.65}
+.case-evidence-card:disabled:hover{transform:none}
+.case-review-appendix{border:1px solid #b6986960;padding:22px;margin-block:24px;line-height:1.9}
+@media(max-width:600px){.case-folders{grid-template-columns:repeat(3,minmax(0,1fr));row-gap:14px}.case-folder{min-height:50px}.case-toolbar-actions{flex-direction:column}.case-toolbar-actions>.case-button{width:100%}.case-file-locked{font-size:24px}}

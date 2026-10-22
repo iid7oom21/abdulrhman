@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { test, expect, boot } from './helpers.mjs';
+import { test, expect, boot, openEvidence } from './helpers.mjs';
 
 // Deterministic, real media decoding: synthetic PCM fixtures exercise playback
 // policy and continuity. They do not assert the remote film's artistic content.
@@ -30,7 +30,7 @@ test('music starts on interaction, keeps its position across routes, and remembe
   await page.locator('[data-audio-toggle]').click();
   await expect.poll(() => page.locator('#preview-soundtrack').evaluate(audio => audio.paused)).toBe(true);
   await page.reload();
-  await page.locator('[data-evidence-id="E01"]').first().click();
+  await openEvidence(page, 'E01');
   expect(await page.locator('#preview-soundtrack').evaluate(audio => audio.paused)).toBe(true);
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('raven-preview:v1:musicEnabled')))).toBe(false);
 });

@@ -1,45 +1,28 @@
-import { test, expect, boot, expectNoOverflow } from './helpers.mjs';
+import { test, expect, boot, expectNoOverflow, caseState, openEvidence, closeEvidence, selectCaseTab, EXPANSION_KEY } from './helpers.mjs';
 
-const state = page => page.evaluate(() => JSON.parse(localStorage.getItem('raven-preview:v1:case')));
-const closeReader = page => page.getByRole('button', { name: 'إغلاق الوثيقة', exact: true }).click();
-async function openEvidence(page, id) {
-  await page.locator(`[data-evidence-id="${id}"]`).first().click();
-  await expect(page.locator('.case-dialog[open]')).toBeVisible();
-}
+import { seedExpansion } from './activity-journey.mjs';
+
+const state = caseState;
+const closeReader = closeEvidence;
 async function openTool(page, name) {
   await page.locator('[data-open-toolkit]').click();
   await page.locator(`[data-tool="${name}"]`).click();
 }
 
-test('all four original deductions require valid source support and preserve the ending limits', async ({ page }) => {
-  await boot(page, 'case-017/');
-  for (let i = 1; i <= 8; i++) { await openEvidence(page, `E0${i}`); await closeReader(page); }
-  await page.locator('[data-case-tab="deductions"]').click();
-  await expect(page.locator('[data-question-step="3"]')).toBeDisabled();
-  await page.locator('input[name="answer-Q01"][value="a"]').check();
-  await page.locator('[data-submit-answer="Q01"]').click();
-  expect((await state(page)).solvedIds).toEqual([]);
-  for (const [id, answer, support] of [['Q01', 'b', []], ['Q02', 'd', []], ['Q03', 'a', ['E01', 'E07']], ['Q04', 'c', ['E07', 'E08']]]) {
-    await page.locator(`input[name="answer-${id}"][value="${answer}"]`).check();
-    if (support.length) {
-      await page.locator(`[data-submit-answer="${id}"]`).click();
-      expect((await state(page)).solvedIds).not.toContain(id);
-      for (const evidence of ['E02', 'E03']) await page.locator(`input[name="support-${id}"][value="${evidence}"]`).check();
-      await page.locator(`[data-submit-answer="${id}"]`).click();
-      expect((await state(page)).solvedIds).not.toContain(id);
-      for (const evidence of ['E02', 'E03']) await page.locator(`input[name="support-${id}"][value="${evidence}"]`).uncheck();
-      for (const evidence of support) await page.locator(`input[name="support-${id}"][value="${evidence}"]`).check();
-    }
-    await page.locator(`[data-submit-answer="${id}"]`).click();
-    await expect(page.locator('.case-answer-feedback.is-correct')).toBeVisible();
-    expect((await state(page)).solvedIds).toContain(id);
-    if (id !== 'Q04') await page.locator(`[data-submit-answer="${id}"]`).click();
-  }
-  await page.locator('[data-final-report]').click();
-  await expect(page.locator('#case-final-report')).toContainText('ما بقي غير محسوم');
-  await expect(page.locator('.case-report-limits')).toContainText('الحريق');
-  await page.reload();
-  expect((await state(page)).solvedIds).toEqual(['Q01', 'Q02', 'Q03', 'Q04']);
+test('four forged deduction flags cannot unlock the expansion report or original future sources', async ({ context, page }) => {
+  await context.addInitScript(key => {
+    localStorage.setItem('raven-preview:v1:initialized', 'true');
+    localStorage.setItem(key, JSON.stringify({ solvedIds: ['Q01', 'Q02', 'Q03', 'Q04'], viewedIds: ['E07', 'E08'], progress: { completedActivityIds: Array.from({ length: 32 }, (_, i) => `A${String(i + 1).padStart(2, '0')}`) } }));
+  }, EXPANSION_KEY);
+  await boot(page, 'case-017/#report');
+  await expect(page.locator('#case-final-report')).toHaveCount(0);
+  expect((await state(page)).solvedIds || []).toEqual([]);
+  await openTool(page, 'report');
+  await expect(page.locator('#case-final-report')).toHaveCount(0);
+  if (await page.locator('dialog[open]').count()) await page.keyboard.press('Escape');
+  await selectCaseTab(page, 'evidence');
+  await expect(page.locator('[data-evidence-id="E07"]').first()).toBeDisabled();
+  await expect(page.locator('[data-evidence-id="E08"]').first()).toBeDisabled();
 });
 
 test('photo, magnifier and scene controls work without covering the photo at mobile width', async ({ page }) => {
@@ -89,7 +72,7 @@ test('mobile comparison switches accessible tabs and closes back to the case', a
   await openEvidence(page, 'E01');
   await page.locator('[data-compare-evidence="E01"]').click();
   await expect(page.locator('.case-comparison-dialog[open]')).toBeVisible();
-  await page.locator('#case-compare-second').selectOption('E07');
+  await page.locator('#case-compare-second').selectOption('E06');
   await page.locator('#case-compare-tab-1').click();
   await expect(page.locator('#case-compare-tab-1')).toHaveAttribute('aria-selected', 'true');
   await expect(page.locator('#case-compare-panel-1')).toBeVisible();
@@ -99,7 +82,7 @@ test('mobile comparison switches accessible tabs and closes back to the case', a
   await expect(page.locator('dialog[open]')).toHaveCount(0);
 });
 
-test('case reset keeps episode progress and legacy imports happen only once', async ({ context, page }) => {
+test('case reset keeps episode progress and does not promote or reimport legacy deductions', async ({ context, page }) => {
   await context.addInitScript(() => {
     if (localStorage.getItem('test:reset-seed')) return;
     localStorage.setItem('test:reset-seed', '1');
@@ -107,6 +90,9 @@ test('case reset keeps episode progress and legacy imports happen only once', as
     localStorage.setItem('raven17_episode_1_progress', '42');
   });
   await boot(page, 'case-017/');
+  expect((await state(page)).solvedIds || []).toEqual([]);
+  await openEvidence(page, 'E01');
+  await closeReader(page);
   expect((await state(page)).viewedIds).toContain('E01');
   await page.getByRole('button', { name: 'إعادة فتح الملف من البداية', exact: true }).click();
   await page.getByRole('button', { name: 'ابدأ ملفًا جديدًا', exact: true }).click();
@@ -133,9 +119,8 @@ test('classified reveal works by keyboard and closing a document restores its tr
 });
 
 test('final report enters print mode before invoking print and clears it after printing', async ({ context, page }) => {
+  await seedExpansion(context, 32);
   await context.addInitScript(() => {
-    localStorage.setItem('raven-preview:v1:initialized', 'true');
-    localStorage.setItem('raven-preview:v1:case', JSON.stringify({ solvedIds: ['Q01', 'Q02', 'Q03', 'Q04'] }));
     window.__printCalls = 0;
     window.__printSawClass = false;
     window.print = () => {

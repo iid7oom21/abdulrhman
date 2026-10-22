@@ -1,13 +1,21 @@
 import { el } from './core.js';
 import { createToolkit } from './toolkit.js';
+import { mountActivities } from './activities.js';
+import { attachPhotoRegions } from './photo-regions.js';
+import { attachParagraphQuestions } from './paragraph-questions.js';
+import { mountIncomingCall } from './incoming-call.js';
+import { mountCloudPanel } from './cloud.js';
 import { EVIDENCE_FOCUS } from '../../../fourth-signature/evidence-focus.js?v=fourth-1';
-import { evaluateSupport, requiresSupport, maxEvidenceCount } from '../../../fourth-signature/deduction-support.js?v=fourth-1';
 
 const TYPES = {
   E01: ['administrative', 'ADM', 'محضر إداري'], E02: ['receipt', 'LC', 'محضر تسليم'],
   E03: ['technical', 'MA', 'طلب إصلاح'], E04: ['inventory', 'AR', 'سجل جرد'],
   E05: ['transfer', 'RC', 'إيصال إحالة'], E06: ['photograph', 'PH', 'بطاقة حفظ'],
   E07: ['audit', 'AUD', 'سجل تدقيق'], E08: ['letter', 'REV', 'مراسلة محفوظة'],
+  E09: ['transfer', 'UV', 'ظرف المراجعة'], E10: ['technical', 'B17', 'بطاقة مناولة'],
+  E11: ['audit', 'SHA', 'بيان الرقمنة'], E12: ['photograph', 'CAM', 'سجل الكاميرات'],
+  E13: ['technical', 'REC', 'جلسة المختبر'], E14: ['receipt', 'PUB', 'إيصال النشر'],
+  E15: ['technical', 'TRACE', 'آثار المناولة'], E16: ['letter', 'LOG', 'مراسلات المراجعة'],
 };
 const STEP_EVIDENCE = { Q01: ['E06', 'E02', 'E03'], Q02: ['E01', 'E05', 'E08'], Q03: ['E01', 'E07', 'E08'], Q04: ['E01', 'E07', 'E08'] };
 const num = value => new Intl.NumberFormat('ar', { useGrouping: false }).format(value);
@@ -20,11 +28,18 @@ export function mount(root, services) {
   const state = () => services.caseStore.get();
   const asset = path => services.caseAsset(path);
   let disposed = false;
-  let tab = 'evidence';
+  let tab = 'activities';
   let activeQuestion = Math.max(0, data.questions.findIndex(q => !state().solvedIds.includes(q.id)));
   let modalDisposers = [];
   let heroDisposers = [];
   let compareDisposers = [];
+  let activityCleanup = () => {};
+  let readerRequest = 0;
+  let compareRequest = 0;
+  let viewedQueue = Promise.resolve();
+  const investigation = services.investigation;
+  const canAccess = id => investigation.getAccess(id).allowed;
+  const accessible = () => evidence.filter(item => canAccess(item.id));
   const page = el('div', { class: 'case-page', dir: 'rtl', lang: 'ar' });
   const workspace = el('section', { class: 'case-workspace', id: 'case-workspace', tabindex: '-1', 'aria-label': 'مساحة التحقيق' });
   const nav = el('nav', { class: 'case-folders', 'aria-label': 'ملفات القضية' });
@@ -34,14 +49,18 @@ export function mount(root, services) {
   const comparison = el('dialog', { class: 'case-dialog case-comparison-dialog', 'aria-labelledby': 'case-compare-title' });
   root.replaceChildren(page);
   page.append(dialog, comparison);
-  const toolkit = createToolkit(page, services, { openEvidence, openCompare });
+  const toolkit = createToolkit(page, services, { openEvidence, openCompare, resume: () => selectTab('activities') });
+  services.openEvidence = openEvidence;
+  investigation.setActive?.(true);
 
   function cleanupList(list) { for (const dispose of list.splice(0)) { try { dispose(); } catch (_) {} } }
   function pauseWithin(container) { container.querySelectorAll('video').forEach(video => video.pause()); }
-  function closeReader() { pauseWithin(dialog); if (dialog.open) dialog.close(); }
-  function closeComparison() { pauseWithin(comparison); if (comparison.open) comparison.close(); }
+  function closeReader() { readerRequest++; pauseWithin(dialog); if (dialog.open) dialog.close(); }
+  function closeComparison() { compareRequest++; pauseWithin(comparison); if (comparison.open) comparison.close(); }
   dialog.addEventListener('close', () => { pauseWithin(dialog); cleanupList(modalDisposers); });
   comparison.addEventListener('close', () => { pauseWithin(comparison); cleanupList(compareDisposers); });
+  dialog.addEventListener('cancel', () => { readerRequest++; });
+  comparison.addEventListener('cancel', () => { compareRequest++; });
   const tool = (id, context = {}) => { closeReader(); closeComparison(); toolkit.open(id, context); };
   function showDialog(content, title) {
     closeComparison();
@@ -52,9 +71,21 @@ export function mount(root, services) {
     ]), ...[content].flat());
     if (!dialog.open) dialog.showModal();
     dialog.scrollTop = 0;
+    attachHelpers(dialog, modalDisposers);
   }
   function markViewed(id) {
-    if (!state().viewedIds.includes(id)) services.caseStore.update(s => { s.viewedIds.push(id); });
+    const task = viewedQueue.then(() => !disposed && canAccess(id) ? investigation.markViewed(id) : false)
+      .catch(error => { services.notify(error.message || 'تعذر تسجيل فتح الدليل. أعد المحاولة.'); return false; });
+    viewedQueue = task;
+    return task;
+  }
+  function attachHelpers(container, disposers) {
+    for (const row of container.querySelectorAll('.case-paragraph')) {
+      const sheet = row.closest('[data-document]');
+      const item = evidence.find(item => item.id === sheet?.dataset.document);
+      if (item) disposers.push(attachParagraphQuestions(row, item, Number(row.dataset.paragraphIndex), services));
+    }
+    for (const scan of container.querySelectorAll('.case-photo-inspector')) disposers.push(attachPhotoRegions(scan, services, 'E06'));
   }
 
   function scene({ image, video, title, alt, hero = false }, disposers = modalDisposers) {
@@ -94,7 +125,7 @@ export function mount(root, services) {
       el('p', { class: 'case-eyebrow', text: 'ملف ٠١٧ / أعيد فتحه عام ٢٠٢٦' }),
       el('h1', { id: 'case-title' }, ['التوقيع ', el('span', { text: 'الرابع.' })]),
       el('p', { class: 'case-hero-lead', text: data.subtitle }),
-      el('div', { class: 'case-hero-actions' }, [button(state().viewedIds.length ? 'واصل التحقيق ←' : 'ابدأ بفحص الصورة ←', () => openEvidence('E06'), { class: 'case-button case-primary' }), el('span', { class: 'case-small', text: '٨ أدلة · ٤ استنتاجات · أنت المحقق' })]),
+      el('div', { class: 'case-hero-actions' }, [button(state().progress.completedActivityIds.length ? 'واصل التحقيق ←' : 'افتح حزمة المراجعة ←', () => selectTab('activities'), { class: 'case-button case-primary', 'data-resume-investigation': true }), el('span', { class: 'case-small', text: '٧ مراحل · ٣٢ نشاطًا · ١٦ دليلًا' })]),
     ]),
     scene({ image: asset('assets/hero.webp'), video: asset('assets/video/hero.mp4'), title: 'ليلة الحريق / لوسيان أمام الأرشيف', alt: 'لوسيان يحمل قفلًا أمام مبنى الأرشيف المشتعل', hero: true }, heroDisposers),
   ]);
@@ -108,8 +139,12 @@ export function mount(root, services) {
   redaction.addEventListener('blur', () => revealWord(revealPinned));
   const redactedLine = el('p', { class: 'case-redacted-line' }, ['الحقيقة تحتاج إلى شاهد واحد: ', redaction]);
   const toolsButton = button('حقيبة المحقق · ١٣ أداة →', () => tool('overview'), { class: 'case-button case-tools-open', 'data-open-toolkit': true });
-  const toolbar = el('div', { class: 'case-toolbar' }, [el('div', { class: 'case-progress' }, [progressText, el('div', { class: 'case-progress-track', 'aria-hidden': 'true' }, progressFill)]), toolsButton]);
-  page.prepend(...(services.lang === 'en' ? [el('p', { class: 'case-language-note', lang: 'en', dir: 'ltr', text: 'Case documents and investigation tools are in Arabic.' })] : []), hero, redactedLine, intro, toolbar, nav, workspace);
+  const toolbar = el('div', { class: 'case-toolbar' }, [el('div', { class: 'case-progress' }, [progressText, el('div', { class: 'case-progress-track', 'aria-hidden': 'true' }, progressFill)]), el('div', { class: 'case-toolbar-actions' }, [toolsButton, button('مذكرة الاستئناف', () => tool('resume'), { 'data-open-resume': true })])]);
+  const accountHost = el('div', { class: 'case-account-host' });
+  const callHost = el('div', { class: 'case-call-host' });
+  page.prepend(...(services.lang === 'en' ? [el('p', { class: 'case-language-note', lang: 'en', dir: 'ltr', text: 'Case documents and investigation tools are in Arabic.' })] : []), hero, redactedLine, intro, toolbar, accountHost, callHost, nav, workspace);
+  const cloudCleanup = mountCloudPanel(accountHost, services) || (() => {});
+  const callCleanup = mountIncomingCall(callHost, services) || (() => {});
   const quiet = button('واجهة هادئة', () => {
     const active = !page.classList.contains('case-quiet'); page.classList.toggle('case-quiet', active);
     quiet.setAttribute('aria-pressed', String(active)); services.store?.set?.('caseQuiet', active);
@@ -119,22 +154,28 @@ export function mount(root, services) {
 
   function updateProgress() {
     if (disposed) return;
-    progressText.textContent = `${num(state().solvedIds.length)} / ٤ استنتاجات · ${num(state().viewedIds.length)} / ٨ أدلة مفتوحة`;
-    progressFill.style.width = `${state().solvedIds.length / 4 * 100}%`;
+    progressText.textContent = `${num(state().progress.completedActivityIds.length)} / ٣٢ نشاطًا · ${num(state().solvedIds.length)} / ٤ استنتاجات · ${num(state().viewedIds.length)} / ١٦ دليلًا`;
+    progressFill.style.width = `${state().progress.completedActivityIds.length / 32 * 100}%`;
     page.querySelectorAll('[data-evidence-id]').forEach(card => {
       const viewed = state().viewedIds.includes(card.dataset.evidenceId);
       card.classList.toggle('is-viewed', viewed);
-      const badge = card.querySelector('.case-read-status'); if (badge) badge.textContent = viewed ? 'فُتح ✓' : 'افتح الملف ←';
+      const allowed = canAccess(card.dataset.evidenceId);
+      const badge = card.querySelector('.case-read-status'); if (badge) badge.textContent = !allowed ? 'يفتح مع تقدم التحقيق' : viewed ? 'فُتح ✓' : 'افتح الملف ←';
+      if (card.tagName === 'BUTTON') card.disabled = !allowed;
     });
   }
   function selectTab(next, move = true) {
     if (next === 'board') { tool('board'); return; }
+    activityCleanup(); activityCleanup = () => {};
     tab = next; renderNav();
-    workspace.replaceChildren(next === 'people' ? peopleView() : next === 'deductions' ? deductionsView() : evidenceView());
+    if (next === 'activities') {
+      workspace.replaceChildren();
+      activityCleanup = mountActivities(workspace, services, { openEvidence, openPhoto: () => openEvidence('E06', { tool: 'crop' }), openTool: tool, showReport }) || (() => {});
+    } else workspace.replaceChildren(next === 'people' ? peopleView() : next === 'deductions' ? deductionsView() : evidenceView());
     if (move) { workspace.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }); workspace.focus({ preventScroll: true }); }
   }
   function renderNav() {
-    nav.replaceChildren(...[['evidence', 'الأدلة'], ['people', 'الشخصيات'], ['board', 'لوحة الربط'], ['deductions', 'الاستنتاجات']].map(([id, name]) => button(name, () => selectTab(id), { class: `case-folder${tab === id ? ' is-active' : ''}`, 'aria-current': tab === id ? 'page' : null, 'data-case-tab': id })));
+    nav.replaceChildren(...[['activities', 'المهمة الحالية'], ['evidence', 'الأدلة'], ['people', 'الشخصيات'], ['board', 'لوحة الربط'], ['deductions', 'الاستنتاجات']].map(([id, name]) => button(name, () => selectTab(id), { class: `case-folder${tab === id ? ' is-active' : ''}`, 'aria-current': tab === id ? 'page' : null, 'data-case-tab': id })));
   }
   function documentThumbnail(item) {
     const [kind, mark, name] = TYPES[item.id];
@@ -150,7 +191,9 @@ export function mount(root, services) {
     return el('div', { class: 'case-evidence-view' }, [
       el('header', { class: 'case-section-heading' }, [el('div', {}, [el('span', { class: 'case-eyebrow', text: 'صندوق الأصول' }), el('h2', { text: 'الأوراق تقول أكثر.' })]), button('ابحث في الملفات المفتوحة', () => tool('search'))]),
       el('div', { class: 'case-evidence-grid' }, evidence.map(item => button('', () => openEvidence(item.id), { class: `case-evidence-card${state().viewedIds.includes(item.id) ? ' is-viewed' : ''}`, 'data-evidence-id': item.id, 'aria-label': `افتح ${item.title}` })).map((card, index) => {
-        const item = evidence[index]; card.append(documentThumbnail(item), el('div', { class: 'case-file-caption' }, [el('span', { class: 'case-file-id', text: item.id, dir: 'ltr' }), el('h3', { text: item.title }), el('p', { text: item.summary }), el('span', { class: 'case-read-status', text: state().viewedIds.includes(item.id) ? 'فُتح ✓' : 'افتح الملف ←' })])); return card;
+        const item = evidence[index];
+        const allowed = canAccess(item.id); card.disabled = !allowed;
+        card.append(allowed ? documentThumbnail(item) : el('div', { class: 'case-file-locked', 'aria-hidden': 'true', text: item.id, dir: 'ltr' }), el('div', { class: 'case-file-caption' }, [el('span', { class: 'case-file-id', text: item.id, dir: 'ltr' }), el('h3', { text: item.title }), el('p', { text: allowed ? item.summary : 'يُتاح هذا الملف عند الوصول إلى مهمته.' }), el('span', { class: 'case-read-status', text: !allowed ? 'يفتح مع تقدم التحقيق' : state().viewedIds.includes(item.id) ? 'فُتح ✓' : 'افتح الملف ←' })])); return card;
       })),
       el('div', { class: 'case-action-strip' }, [el('p', { text: 'راقب ما تقوله كل ورقة، وما يمكن أن تثبته.' }), button('انتقل إلى الاستنتاجات ←', () => selectTab('deductions'), { class: 'case-button case-primary' })]),
     ]);
@@ -197,10 +240,12 @@ export function mount(root, services) {
     return sheet;
   }
 
-  function openEvidence(id, options = {}) {
+  async function openEvidence(id, options = {}) {
     if (options.tool === 'report') { showReport(); return; }
     const item = evidence.find(item => item.id === (id || 'E06')); if (!item) return;
-    markViewed(item.id);
+    if (!canAccess(item.id)) { services.notify(investigation.getAccess(item.id).reason || 'أكمل المهمة الحالية لفتح هذا الدليل.'); return; }
+    const request = ++readerRequest;
+    if (!await markViewed(item.id) || disposed || request !== readerRequest) return;
     const content = el('div', { class: 'case-reader' });
     const actions = el('div', { class: 'case-reader-tools', 'aria-label': 'أدوات الدليل' }, [
       button('قارن ورقتين', () => openCompare(item.id), { 'data-compare-evidence': item.id }),
@@ -214,7 +259,7 @@ export function mount(root, services) {
       magnifier(asset('assets/padlock.webp'), 'القفل المكسور', { label: 'عدسة القفل' }),
       scene({ image: asset('assets/padlock.webp'), video: asset('assets/video/padlock.mp4'), title: 'مشهد القفل', alt: 'جزآ قفل مكسور على ورقة' }),
     ]));
-    content.append(el('div', { class: 'case-reader-return' }, [button('عُد إلى الاستنتاج ←', () => { closeReader(); selectTab('deductions'); }, { class: 'case-button case-primary' }), button('حقيبة المحقق', () => tool('overview', { evidenceId: item.id }))]));
+    content.append(el('div', { class: 'case-reader-return' }, [button('عُد إلى المهمة الحالية ←', () => { closeReader(); selectTab('activities'); }, { class: 'case-button case-primary' }), button('حقيبة المحقق', () => tool('overview', { evidenceId: item.id }))]));
     showDialog(content, item.title);
     if (Number.isInteger(options.paragraphIndex)) {
       const target = dialog.querySelector(`#case-${item.id}-p${options.paragraphIndex}`);
@@ -275,99 +320,84 @@ export function mount(root, services) {
 
   function openCompare(firstId, secondId) {
     closeReader(); cleanupList(compareDisposers);
-    const first = el('select', { id: 'case-compare-first', 'aria-label': 'الوثيقة الأولى' }, evidence.map(item => el('option', { value: item.id, text: `${item.reference.split(' · ')[0]} · ${item.title}` })));
-    const second = el('select', { id: 'case-compare-second', 'aria-label': 'الوثيقة الثانية' }, evidence.map(item => el('option', { value: item.id, text: `${item.reference.split(' · ')[0]} · ${item.title}` })));
-    first.value = evidence.some(e => e.id === firstId) ? firstId : 'E01';
-    second.value = evidence.some(e => e.id === secondId) && secondId !== first.value ? secondId : first.value === 'E02' ? 'E01' : 'E02';
+    const allowed = accessible();
+    if (allowed.length < 2) { services.notify('تحتاج وثيقتين متاحتين للمقارنة.'); return; }
+    const first = el('select', { id: 'case-compare-first', 'aria-label': 'الوثيقة الأولى' }, allowed.map(item => el('option', { value: item.id, text: `${item.reference.split(' · ')[0]} · ${item.title}` })));
+    const second = el('select', { id: 'case-compare-second', 'aria-label': 'الوثيقة الثانية' }, allowed.map(item => el('option', { value: item.id, text: `${item.reference.split(' · ')[0]} · ${item.title}` })));
+    first.value = allowed.some(e => e.id === firstId) ? firstId : allowed[0].id;
+    second.value = allowed.some(e => e.id === secondId) && secondId !== first.value ? secondId : allowed.find(item => item.id !== first.value).id;
     const tabs = el('div', { class: 'case-compare-tabs', role: 'tablist', 'aria-label': 'الوثيقة المعروضة على الجوال' });
     const papers = el('div', { class: 'case-compare-papers' });
     const message = el('p', { class: 'case-compare-message', role: 'status', text: 'قارن العنوان وخانة التوقيع وما تقوله كل وثيقة.' });
     comparison.replaceChildren(el('header', { class: 'case-dialog-head' }, [el('h2', { id: 'case-compare-title', text: 'قارن ورقتين' }), button('إغلاق ×', closeComparison, { class: 'case-close', 'aria-label': 'إغلاق المقارنة' })]), el('div', { class: 'case-compare-selects' }, [label('الوثيقة الأولى', first), label('الوثيقة الثانية', second)]), message, tabs, papers);
     let active = 0;
+    const contentDisposers = [];
+    compareDisposers.push(() => cleanupList(contentDisposers));
     const breakpoint = matchMedia('(max-width: 720px)');
     function activate(index) {
       active = index;
       [...tabs.children].forEach((tab, i) => { tab.setAttribute('aria-selected', String(i === index)); tab.tabIndex = i === index ? 0 : -1; });
       [...papers.children].forEach((panel, i) => { panel.hidden = breakpoint.matches && i !== active; panel.setAttribute('role', breakpoint.matches ? 'tabpanel' : 'region'); });
     }
-    function renderPair() {
+    async function renderPair() {
+      const request = ++compareRequest;
+      cleanupList(contentDisposers);
+      if (![first.value, second.value].every(canAccess)) { papers.replaceChildren(); tabs.replaceChildren(); message.textContent = 'الدليل غير متاح في هذه المرحلة.'; return; }
       if (first.value === second.value) { papers.replaceChildren(); tabs.replaceChildren(); message.textContent = 'اختر وثيقتين مختلفتين للمقارنة.'; return; }
       message.textContent = 'قارن العنوان وخانة التوقيع وما تقوله كل وثيقة.';
       papers.replaceChildren(); tabs.replaceChildren();
-      [first.value, second.value].forEach((id, index) => {
-        const item = evidence.find(e => e.id === id); markViewed(id);
+      const selected = [first.value, second.value];
+      for (const id of selected) {
+        if (!await markViewed(id) || disposed || !comparison.open || request !== compareRequest) return;
+      }
+      selected.forEach((id, index) => {
+        const item = evidence.find(e => e.id === id);
         const tab = button(item.title, () => activate(index), { class: 'case-compare-tab', role: 'tab', id: `case-compare-tab-${index}`, 'aria-controls': `case-compare-panel-${index}` });
         tab.addEventListener('keydown', event => { if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) { event.preventDefault(); const target = event.key === 'Home' ? 0 : event.key === 'End' ? 1 : 1 - active; activate(target); tabs.children[target]?.focus(); } });
         tabs.append(tab);
         papers.append(el('section', { class: 'case-compare-panel', id: `case-compare-panel-${index}`, 'aria-labelledby': tab.id, tabindex: '0' }, renderDocument(item, { full: true, comparisonMode: true, prefix: `compare-${index}` })));
-      }); activate(0);
+      }); activate(0); attachHelpers(papers, contentDisposers);
     }
     first.addEventListener('change', renderPair); second.addEventListener('change', renderPair);
     const resize = () => activate(active); breakpoint.addEventListener('change', resize); compareDisposers.push(() => breakpoint.removeEventListener('change', resize));
-    renderPair(); if (!comparison.open) comparison.showModal(); comparison.scrollTop = 0;
+    if (!comparison.open) comparison.showModal(); renderPair(); comparison.scrollTop = 0;
   }
 
   function deductionsView() {
-    const container = el('div', { class: 'case-deductions' });
-    const steps = el('nav', { class: 'case-steps', 'aria-label': 'خطوات الاستنتاج' }, data.questions.map((q, index) => button('', () => { activeQuestion = index; selectTab('deductions', false); }, { class: `case-step${index === activeQuestion ? ' is-current' : ''}${state().solvedIds.includes(q.id) ? ' is-solved' : ''}`, 'aria-current': index === activeQuestion ? 'step' : null, disabled: index > state().solvedIds.length, 'data-question-step': index })).map((b, index) => { b.append(el('strong', { text: state().solvedIds.includes(data.questions[index].id) ? '✓' : num(index + 1) }), el('span', { text: `استنتاج ${num(index + 1)}` })); return b; }));
-    container.append(el('header', { class: 'case-section-heading' }, [el('div', {}, [el('span', { class: 'case-eyebrow', text: 'من الورقة إلى البرهان' }), el('h2', { text: 'ما الذي تثبته الأدلة؟' })])]), steps);
-    if (state().solvedIds.length === data.questions.length && activeQuestion >= data.questions.length) {
-      container.append(el('section', { class: 'case-complete' }, [el('span', { class: 'case-seal', text: 'اكتملت المراجعة' }), el('h3', { text: data.ending.title }), el('p', { text: 'عادت التوقيعات إلى أوراقها. وبقي للحريق سؤاله.' }), button('اقرأ التقرير النهائي ←', showReport, { class: 'case-button case-primary', 'data-final-report': true })])); return container;
+    const container = el('div', { class: 'case-deductions' }, [
+      el('header', { class: 'case-section-heading' }, [el('div', {}, [el('span', { class: 'case-eyebrow', text: 'من الورقة إلى البرهان' }), el('h2', { text: 'استنتاجاتك المثبتة' })])]),
+      el('p', { text: 'تثبت الاستنتاجات داخل مسار التحقيق. تبقى نتائجك هنا للمراجعة.' }),
+    ]);
+    for (const [index, q] of data.questions.entries()) {
+      const solved = state().solvedIds.includes(q.id);
+      container.append(el('section', { class: `case-question${solved ? ' is-solved' : ''}`, 'data-question-id': q.id }, [
+        el('p', { class: 'case-eyebrow', text: `الاستنتاج ${num(index + 1)} · النشاط ${num([8, 14, 26, 32][index])}` }),
+        el('h3', { text: q.prompt }),
+        solved ? el('p', { class: 'case-answer-feedback is-correct', text: q.explanation }) : el('p', { text: 'يتاح تثبيته عند الوصول إلى مهمته.' }),
+        ...(solved ? STEP_EVIDENCE[q.id].filter(canAccess).map(id => button(evidence.find(item => item.id === id).title, () => openEvidence(id), { 'data-evidence-id': id })) : []),
+      ]));
     }
-    const q = data.questions[activeQuestion] || data.questions[0];
-    const solved = state().solvedIds.includes(q.id);
-    const panel = el('section', { class: 'case-question', 'data-question-id': q.id });
-    panel.append(el('p', { class: 'case-eyebrow', text: `الاستنتاج ${num(activeQuestion + 1)} من ٤` }), el('h3', { id: 'case-question-title', text: q.prompt, tabindex: '-1' }));
-    const leads = el('div', { class: 'case-question-evidence' }, STEP_EVIDENCE[q.id].map(id => evidenceRow(evidence.find(e => e.id === id))));
-    function evidenceRow(item) { return el('button', { type: 'button', class: `case-evidence-row${state().viewedIds.includes(item.id) ? ' is-viewed' : ''}`, 'data-evidence-id': item.id, onClick: () => openEvidence(item.id) }, [el('bdi', { dir: 'ltr', text: item.reference.split(' · ')[0] }), el('span', { text: item.title }), el('span', { class: 'case-read-status', text: state().viewedIds.includes(item.id) ? 'فُتح ✓' : 'افتح ←' })]); }
-    panel.append(leads, button('قارن ورقتين', () => openCompare(STEP_EVIDENCE[q.id][0], STEP_EVIDENCE[q.id][1]), { class: 'case-button case-question-compare' }));
-    const options = el('fieldset', { class: 'case-answer-options', 'aria-labelledby': 'case-question-title' });
-    q.options.forEach(option => options.append(el('label', { class: 'case-answer-option' }, [el('input', { type: 'radio', name: `answer-${q.id}`, value: option.id, checked: (solved ? q.correctId : state().answers?.[q.id]) === option.id, disabled: solved, onChange: () => services.caseStore.update(s => { s.answers[q.id] = option.id; }) }), el('span', { text: option.label })])));
-    panel.append(options);
-    let support = [...(state().supportByQuestion?.[q.id] || [])];
-    if (requiresSupport(q)) {
-      const fieldset = el('fieldset', { class: 'case-support', 'data-support-question': q.id }, [el('legend', { text: 'أرفق سند استنتاجك' }), el('p', { text: q.id === 'Q03' ? 'اختر دليلين يسندان اختيارك.' : 'اختر دليلين أو ثلاثة تسند الخلاصة وحدودها.' })]);
-      const choices = el('div', { class: 'case-support-choices' });
-      evidence.forEach(item => {
-        const check = el('input', { type: 'checkbox', name: `support-${q.id}`, value: item.id, checked: support.includes(item.id), disabled: solved });
-        check.addEventListener('change', () => {
-          if (check.checked && support.length >= maxEvidenceCount(q)) { check.checked = false; services.notify('أزل أحد الأدلة المختارة قبل إضافة دليل آخر.'); return; }
-          support = check.checked ? [...support, item.id] : support.filter(id => id !== item.id);
-          services.caseStore.update(s => { s.supportByQuestion[q.id] = support; });
-        });
-        choices.append(el('label', {}, [check, el('span', { text: `${item.reference.split(' · ')[0]} · ${item.title}` })]));
-      }); fieldset.append(choices); panel.append(fieldset);
-    }
-    const feedback = el('p', { class: `case-answer-feedback${solved ? ' is-correct' : ''}`, role: 'status', text: solved ? q.explanation : '', hidden: !solved });
-    const hint = el('p', { class: 'case-hint', text: q.hint, hidden: true });
-    const hintButton = button('أحتاج تلميحًا', () => { hint.hidden = !hint.hidden; hintButton.setAttribute('aria-expanded', String(!hint.hidden)); }, { class: 'case-hint-button', 'aria-expanded': 'false' });
-    const submit = button(solved ? activeQuestion === 3 ? 'إلى التقرير النهائي ←' : 'الاستنتاج التالي ←' : 'ثبّت الاستنتاج ←', () => {
-      if (state().solvedIds.includes(q.id)) {
-        activeQuestion += 1; selectTab('deductions', false); workspace.querySelector('#case-question-title')?.focus(); return;
-      }
-      const answer = state().answers?.[q.id]; const checked = evaluateSupport(q, support);
-      if (!answer) { feedback.textContent = 'اختر استنتاجك أولًا.'; feedback.hidden = false; return; }
-      if (answer !== q.correctId) { feedback.textContent = 'راجع ما تثبته الأوراق، ثم جرّب استنتاجًا يسنده المصدر.'; feedback.hidden = false; return; }
-      if (!checked.valid) { feedback.textContent = checked.message; feedback.hidden = false; return; }
-      services.caseStore.update(s => { if (!s.solvedIds.includes(q.id)) s.solvedIds.push(q.id); });
-      selectTab('deductions', false); workspace.querySelector('.case-answer-feedback')?.scrollIntoView({ block: 'nearest' });
-    }, { class: 'case-button case-primary', 'data-submit-answer': q.id });
-    panel.append(feedback, hint, el('div', { class: 'case-question-actions' }, [submit, hintButton]));
-    if (state().solvedIds.length === 4) panel.append(button('التقرير النهائي', showReport, { class: 'case-button', 'data-final-report': true }));
-    container.append(panel); return container;
+    container.append(button(investigation.canReport() ? 'اقرأ التقرير النهائي ←' : 'واصل المهمة الحالية ←', () => investigation.canReport() ? showReport() : selectTab('activities'), { class: 'case-button case-primary', ...(investigation.canReport() ? { 'data-final-report': true } : {}) }));
+    return container;
   }
 
   function showReport() {
-    if (state().solvedIds.length < data.questions.length) { services.notify('يتاح التقرير بعد إكمال الاستنتاجات الأربعة.'); selectTab('deductions'); return; }
+    if (!investigation.canReport()) { services.notify('يتاح التقرير بعد إكمال الأنشطة الـ٣٢ واستنتاجاتها.'); selectTab('activities'); return; }
     const report = el('article', { class: 'case-report', id: 'case-final-report' }, [
       el('p', { class: 'case-eyebrow', text: 'الملف ٠١٧ / نتيجة مراجعة الأصول' }), el('h3', { text: data.ending.title }),
       el('p', { class: 'case-report-summary', text: data.ending.summary }),
       el('h4', { text: 'ما أثبتته الأوراق' }), el('ol', {}, data.ending.reasoning.map(text => el('li', { text }))),
       el('h4', { text: 'ما بقي غير محسوم' }), el('ul', { class: 'case-report-limits' }, data.ending.limits.map(text => el('li', { text }))),
     ]);
+    report.append(el('section', { class: 'case-report-expansion' }, [
+      el('h4', { text: 'ملحق مراجعة ٢٠٢٦ · الوجه B17-R' }),
+      el('p', { text: 'دخل وجها بطاقة المناولة الجديدة مراجعة الرقمنة. نُشر الوجه الأمامي، وبقي الخلفي B17-R في المراجعة؛ لذلك لم يكن وصف الحزمة المنشورة بأنها كاملة دقيقًا. أُرفق الوجه الخلفي الموافق لبيان الملفات لاستكمال الحزمة.' }),
+      el('p', { text: 'هذا استنتاج عن معالجة مواد ٢٠٢٦. لا يثبت وحده تعمد الإخفاء أو هوية من تسبب فيه، ولا يغيّر حدود التحقيق في منشأ حريق ٢٠١٩.' }),
+    ]));
     const notes = (state().notes || []);
     if (notes.length) report.append(el('section', { class: 'case-report-personal' }, [el('h4', { text: 'ملاحظاتك الشخصية · ليست نتائج التقرير' }), ...notes.map(note => el('blockquote', {}, [el('p', { text: note.text || note.content || '' }), el('cite', { text: note.evidenceId ? `المصدر: ${note.evidenceId}` : 'ملاحظة المحقق' })]))]));
     const actions = el('div', { class: 'case-report-actions' }, [button('اطبع التقرير', () => {
+      if (!investigation.canReport()) return;
       document.body.classList.add('printing-case-report');
       const done = () => { document.body.classList.remove('printing-case-report'); window.removeEventListener('afterprint', done); };
       window.addEventListener('afterprint', done); window.print(); setTimeout(done, 1000);
@@ -375,19 +405,25 @@ export function mount(root, services) {
     showDialog([report, actions], 'التقرير النهائي');
   }
   function resetCase() {
-    showDialog(el('div', { class: 'case-reset-confirm' }, [el('p', { text: 'ستبدأ القضية من جديد، وتُمسح ملاحظاتك ولوحتك وفرضياتك في هذه النسخة. يبقى تقدم الحلقات كما هو.' }), button('ابدأ ملفًا جديدًا', () => {
-      closeReader(); closeComparison(); services.caseStore.update(s => {
-        Object.assign(s, { viewedIds: [], solvedIds: [], answers: {}, supportByQuestion: {}, notes: [], highlights: [], pins: [], links: [], timeline: [], hypotheses: [], training: {} });
-      }); activeQuestion = 0; selectTab('evidence'); services.notify('فُتح ملف جديد.');
+    showDialog(el('div', { class: 'case-reset-confirm' }, [el('p', { text: 'ستبدأ الأنشطة الـ٣٢ من جديد، وتُمسح ملاحظاتك ولوحتك وفرضياتك في التوسعة. يبقى حفظ القضية السابقة وتقدم الحلقات وإعدادات الصوت.' }), button('ابدأ ملفًا جديدًا', async () => {
+      const current = state().progress;
+      if (current.mode === 'ranked' && current.runId && services.cloud?.configured) {
+        try { await services.cloud.abandonRun(current.runId, crypto.randomUUID(), current.seq); }
+        catch { services.notify('تعذّر إنهاء المحاولة المتصلة. أعد المحاولة بعد استعادة الاتصال.'); return; }
+      }
+      closeReader(); closeComparison(); services.caseStore.reset();
+      investigation.setActive?.(true); activeQuestion = 0; selectTab('activities'); services.notify('فُتحت حزمة مراجعة جديدة.');
     }, { class: 'case-button case-primary' }), button('احتفظ بتقدمي', closeReader)]), 'إعادة فتح الملف');
   }
+
   const unsubscribe = services.caseStore.subscribe?.(updateProgress);
-  renderNav(); selectTab('evidence', false); updateProgress();
+  renderNav(); selectTab('activities', false); updateProgress();
   const hash = location.hash;
-  if (['#deductions', '#people', '#evidence'].includes(hash)) selectTab(hash.slice(1), false);
-  if (hash === '#report' && state().solvedIds.length === 4) showReport();
+  if (['#activities', '#deductions', '#people', '#evidence'].includes(hash)) selectTab(hash.slice(1), false);
+  if (hash === '#report') showReport();
   return () => {
-    disposed = true; unsubscribe?.(); closeReader(); closeComparison(); toolkit.destroy();
+    disposed = true; unsubscribe?.(); activityCleanup(); callCleanup(); cloudCleanup(); investigation.setActive?.(false); closeReader(); closeComparison(); toolkit.destroy();
+    if (services.openEvidence === openEvidence) delete services.openEvidence;
     cleanupList(heroDisposers); cleanupList(modalDisposers); cleanupList(compareDisposers);
     document.body.classList.remove('printing-case-report'); page.remove();
   };

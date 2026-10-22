@@ -46,7 +46,7 @@ export function mount(root, services, route = '') {
       el('div', { class: 'case-invitation-copy' }, [eyebrow('ملف مفتوح · أنت المحقق', 'OPEN FILE · YOU INVESTIGATE'),
         el('h2', {}, [t('التوقيع ', 'The '), el('em', { text: t('الرابع.', 'Fourth Signature.') })]),
         el('p', { class: 'section-lead', text: t('حارسٌ فُصل بعد حريق. صورةٌ أدانته. هل قالت الحقيقة؟', 'A guard dismissed after a fire. A photograph condemned him. Did it tell the truth?') }),
-        el('p', { class: 'case-stats', text: t('٨ أدلة · ٤ استنتاجات · حقيبة محقق', '8 documents · 4 deductions · An investigator’s toolkit') }),
+        el('p', { class: 'case-stats', text: t('٧ مراحل · ٣٢ نشاطًا · ١٦ دليلًا', '7 chapters · 32 activities · 16 documents') }),
         link('case-017/', progress.viewedIds.length ? 'واصل التحقيق ←' : 'افتح ملف التحقيق ←', progress.viewedIds.length ? 'Continue investigating →' : 'Open the case →', true),
         progress.viewedIds.length ? el('p', { class: 'progress-note', text: t(`${progress.solvedIds.length} من ٤ استنتاجات محفوظة`, `${progress.solvedIds.length} of 4 deductions saved`) }) : null,
       ]),

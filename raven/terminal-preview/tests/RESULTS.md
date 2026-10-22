@@ -1,50 +1,55 @@
-# Verification record
+# Expansion verification record
 
-Recorded 2026-10-22 at 15:45 UTC against the local static preview served from the repository root at `http://127.0.0.1:8786/raven/terminal-preview/`, after the document-renderer naming fix.
+Recorded 2026-10-22 UTC (2026-10-23 in Riyadh) against the repository's static preview on `http://127.0.0.1:8786/raven/terminal-preview/`. These results supersede the pre-expansion 27-test record.
 
 | Run | Result |
 | --- | --- |
-| Chromium, complete suite | **27 passed**, 0 failed, 0 skipped; 15.3 seconds |
-| WebKit smoke: direct routes, mobile comparison, training, navigation/Back, report printing | **6 passed**, 0 failed; 7.2 seconds |
-| Chromium measured first-load transfer, normal motion | **1,281,765 bytes**, below the 1,500,000-byte budget |
+| Chromium, complete browser suite | **44 passed**, zero failures/skips; 54.7 seconds |
+| WebKit, same browser cases across three runs | **43 passed**, zero failures, one expected skip for Chromium-only CDP transfer accounting |
+| Full 32-activity journey through public controls at 320px | Passed in Chromium and WebKit, including one rejected answer at every activity and chapter reloads |
+| Pure investigation engine | **19 passed**, including stale ranked-response and timer regressions |
+| Cloud adapter and server command rules | **22 passed**; combined final Node run **41/41** |
+| Final Chromium route/performance smoke after cloud fixes | **4 passed** |
+| Chromium first-load transfer after final code changes | **1,371,263 bytes**, below the 1,500,000-byte budget |
 
-The transfer was measured from Chromium CDP `Network.loadingFinished.encodedDataLength`, with an empty browser context and a local server without compression. It includes the seven-second hero, fonts, script/style responses, and fetched posters. The approved song and full episodes had zero requests before interaction. Save-Data and reduced-motion visits kept the hero as a poster.
+The WebKit runs contain 29 shell/investigation/toolkit/audio/helper checks, nine call/media checks, and five expansion/Save-Data checks. Its one skipped case requires Chromium CDP. The host lacked `libGLESv2`; a Debian package was extracted into `/tmp/raven-webkit-deps` and provided through `LD_LIBRARY_PATH`/`LD_PRELOAD`, without installing system packages. WebKit actually launched and executed the tests.
 
-## Coverage
+Transfer uses CDP `Network.loadingFinished.encodedDataLength` from a fresh context and local uncompressed server. It includes the short hero, fonts, script/style responses and fetched posters. No song or episode request occurs before eligible interaction. The final four-case smoke covers all direct entries, cross-route destination content, Save-Data and the transfer budget after the cloud retry fixes.
 
-- Seven independent static routes, noindex tags, no content iframe, internal navigation and browser Back. The case → films → part 1 → case → home regression asserts each actual destination heading, cards/video, removal of stale content, and zero page errors; a changed URL alone cannot satisfy it.
-- 320, 390, 430, and 1440 px layouts; no horizontal overflow and visible main-page buttons at least 48 px high/wide.
-- Original four deductions, rejection of wrong answers and invalid/missing evidence support, the final report's unresolved-fire limits, saved completion. A stubbed `window.print` verifies that report print styling is applied before printing and cleared by `afterprint`, without opening a native print dialog.
-- PH-06 crop/full frame and keyboard magnifier, scene controls below the image, mobile comparison tabs, document focus return, keyboard reveal of the optional blackout.
-- Source-linked notes and highlights across reload, source paragraph reopening, evidence pins/links, personal timeline, sourced hypotheses, and search limited to opened documents.
-- All three independent practice answers: `017` (including Arabic digits), Caesar shift `3`, and `RAVEN`; completion feedback persists without modifying case deductions.
-- Storage import once, preview/production isolation, reset preserving episode progress, unavailable storage, and malformed saved tool records.
-- Browser media playback after interaction, identical audio element and retained position across routes, film priority, resume, explicit pause, volume, ambience settings, and failed soundtrack recovery without blocking evidence access.
+## Investigation, persistence and access
 
-Audio integration tests decode a deterministic PCM fixture delivered at the song URL and an approved local MP4 delivered at the episode URL. This tests playback policy and control ownership without a dependency on remote streaming. It does not establish that every external host is currently reachable.
+- The full journey uses visible inputs/buttons and actual source readers, not seeded completion or direct calls to solve the engine. It covers UV, ordering, Morse, Caesar, crop/full frame, map placement, logic/encoding tasks, camera-caption controls, DTMF, alignment, reversal, scan repair, columns, real SHA-256 downloads, citations, and the final report.
+- Every activity rejects an incorrect result. Empty inputs and unopened required sources do not count as wrong answers. Q03 and Q04 reject incorrect supporting documents and retain canonical support rules.
+- Reload at every chapter boundary preserves accepted answers. Drafts, opened hint levels, photo discoveries, notes and explicit music pause survive. Completed tasks show accepted answers read-only.
+- Forged four-deduction flags, noncontiguous accepted answers, wrong answers embedded in saves and nonexistent activity keys cannot unlock later evidence or the report. Legacy completion never promotes into the expansion.
+- Search, comparison, source pickers, paragraph answers and restored annotations do not expose closed evidence. A regression covers an earlier-run restore dropping a question answer supported by a now-locked document.
+- Reset clears the expansion while preserving the old case, film progress and music preferences. Denied local storage retains a usable in-memory session.
+- All thirteen tools remain available. Optional training and personal hypotheses cannot solve case deductions. Report printing is invoked only after accepted A32 and print state is cleared after printing.
 
-## Visual review and artifacts
+## Browser and media
 
-Home and case screenshots were captured at all four widths. The 390 px home, 390 px case, 1440 px home, PH-06 inspection, and toolkit overview were inspected. The offscreen photo thumbnail successfully loaded its actual 1672 × 941 source when scrolled into view; the initial full-page capture's blank thumbnail was lazy loading.
+- Seven static routes, internal navigation/Back, direct loading and noindex. Case-to-films-to-episode-to-case-to-home checks assert actual destination content and no stale route errors.
+- Layout checks at 320, 390, 430 and 1440px; no horizontal page overflow, reachable controls and visible touch targets. The full activity journey also checks overflow at every task at 320px.
+- Keyboard UV/reorder/map/scan/column operations, photo discovery, magnifier, comparison tabs, dialog dismissal and focus return. Scene play buttons remain below imagery.
+- One unchanged soundtrack element survives route navigation and position is retained. Film, Morse, DTMF and actual call playback hold/release the same audio owner. Explicit manual pause is respected after a hold ends.
+- Call eligibility after Q02/E03, idle notice, defer/restore, written scene, replay, actual ended-only listened state, playback rejection/error cleanup and late media-promise disposal.
 
-This workspace run stores its artifacts at:
+Audio policy tests use a valid deterministic PCM fixture and an approved local silent MP4. Call tests exercise real browser decoding with an audio fixture; signal tests exercise Web Audio. These tests do not claim the missing performed recordings or camera footage have been delivered, nor do they establish current availability of every external film host.
 
-- `/tmp/raven-terminal-test-report.json`
-- `/tmp/raven-terminal-webkit-report.json`
-- `/tmp/raven-terminal-initial-transfer.json`
-- `/tmp/raven-terminal-test-results/`
-- `/tmp/raven-terminal-webkit-results/`
+## Cloud/backend verification
 
-The four layout tests save full-page home and case captures in their respective result folders. Release artifacts are retained separately under `/workspace/artifacts/raven-terminal-preview-release/`, including `public-home-390.png`, `public-case-390.png`, `public-toolkit-390.png`, and `public-training-390.png`. Set the output/report environment variables documented in the README to retain later runs elsewhere.
+The shared server-command evaluator and browser cloud adapter have passing Node tests. The actual Edge HTTP handler has nine passing Deno tests with mocked Auth/PostgREST, including owner binding and the concurrent duplicate-request race. The actual SQL migration passes **47 assertions** in ephemeral PostgreSQL 16: RLS, cross-account isolation, service-only mutation, CAS saves, idempotent scoring, sequential completion, server timing, leaderboard ordering and opt-in visibility. Deno type-checking passes.
 
-## Release checks
+Additional client/engine regressions prevent a pending refresh from resurrecting a logged-out account and prevent historical idempotency responses from replacing newer progress. See `supabase/README.md` for commands, exact fixtures and deployment requirements. No hosted Supabase project, real Google account or public score was touched. Live OAuth, device-to-device saves and ranked browser journeys remain pending actual project configuration.
 
-The three episode URLs, Zarqa teaser, and approved public soundtrack each returned HEAD 200 and byte-range GET 206 with the expected MP4/MP3 signatures. Only 32 bytes per remote media file were read for this reachability check. A Chromium run with a simulated `/abdulrhman/` project prefix loaded all seven entries and opened PH-06, with no HTTP failures or local requests escaping the project prefix. Destination-content assertions for internal navigation are covered by the regression journeys above.
+## Artifacts and visual review
 
-A final 390 px visual pass after replacing emoji-prone arrows with monochrome text arrows confirmed the home CTA sits above the audio dock and the toolkit fits without horizontal overflow.
+- Chromium report: `/tmp/raven-terminal-test-report.json`; screenshots/traces: `/tmp/raven-terminal-test-results/`.
+- WebKit reports: `/tmp/raven-expansion-webkit.json`, `/tmp/raven-call-webkit-final-report.json`, `/tmp/raven-expansion-journey-webkit.json`.
+- Current visual artifacts: `/workspace/artifacts/raven-expansion-release/`.
 
-A Chromium PDF export of the final report was also inspected from 1440 px and 390 px viewports. Both produced the same two-page A4 PDF, with all six reasoning points, three unresolved limits, and a separately labelled personal note and its source. Neither contained blank pages or clipped text. The export is saved in the release artifacts as `case-report.pdf`.
+Visual review inspected the current-task viewport at 390px, alignment at 320px, file hashing at 1440px, and report layout. Additional captures cover opening and people/document grid. Isolated screenshots use valid seeded prefixes only to reach the view being inspected; the full journey tests above start fresh. Original case facts, approved films and the soundtrack files have no source changes in this release.
 
-## Scope limits
+## Remaining acceptance
 
-The automated suite totals above cover the local prototype; public-deployment and actual-media checks are recorded separately in the release artifacts. WebKit received the six listed smoke journeys rather than the complete Chromium suite. Automated layout checks do not replace testing on the owner's physical mobile device. Audible autoplay still depends on browser permission and a valid user interaction.
+New call performances, CCTV, laboratory audio channels and same-source audio derivatives still need delivery and actual-media integration checks. The accessible authored alternatives are labeled as such. Exact media requirements are in `MEDIA_ASSETS.md`. Hosted Google/Supabase remain disabled until configured. Physical Android/iOS checks and real-player difficulty/playtime feedback are still useful; automated tests do not establish a 90–120 minute playtime or override browser audible-autoplay policy.

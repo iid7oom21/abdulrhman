@@ -1,0 +1,36 @@
+{
+  "revision": "case-017-expansion-v3",
+  "source": "Authored 2026 review exhibits; SHA-256 computed from exact shipped bytes.",
+  "files": [
+    {
+      "id": "front-v1",
+      "label": "B17-F / V1",
+      "file": "front-v1.svg",
+      "bytes": 800,
+      "sha256": "6f92d2f1786d34e7f8e12f49db5724959377a81994c8c1cf286b45aeb0cda36a",
+      "mime": "image/svg+xml",
+      "reference": "B17-F",
+      "version": "V1"
+    },
+    {
+      "id": "back-v1",
+      "label": "B17-R / V1",
+      "file": "back-v1.svg",
+      "bytes": 823,
+      "sha256": "cc801ddcb2b7edbff1d7d20ab7ede4ba35636eb74de03a9777ddf921e169c458",
+      "mime": "image/svg+xml",
+      "reference": "B17-R",
+      "version": "V1"
+    },
+    {
+      "id": "back-v2",
+      "label": "B17-R / V2",
+      "file": "back-v2.svg",
+      "bytes": 801,
+      "sha256": "e7baf54cd21013ea4cb6e438fdcde0615c2af241ccad343c73b43f2fa07044d1",
+      "mime": "image/svg+xml",
+      "reference": "B17-R",
+      "version": "V2"
+    }
+  ]
+}

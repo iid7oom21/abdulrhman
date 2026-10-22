@@ -1,5 +1,7 @@
 import { BASE, CASE, caseAsset, el, routeURL, createStore, createCaseStore, importLegacy } from './core.js';
 import { createAudio } from './audio.js';
+import { createInvestigation } from './investigation.js';
+import { createCloud } from './cloud.js';
 
 const outlet = document.querySelector('#route-outlet');
 const notices = document.querySelector('#site-notice');
@@ -29,6 +31,8 @@ const services = {
   navigate: (path, options = {}) => navigate(path, options),
 };
 services.audio = createAudio(document.querySelector('#audio-dock'), services);
+services.cloud = createCloud(services);
+services.investigation = createInvestigation(services);
 let cleanup = () => {};
 let routeGeneration = 0;
 let currentURL = location.href;
@@ -91,7 +95,7 @@ async function renderRoute({ restoreY, focus = true } = {}) {
   outlet.replaceChildren(el('div', { class: 'route-loading', role: 'status', text: services.t('نفتح الملف…', 'Opening the file…') }));
   try {
     if (relative === 'case-017') {
-      const [module] = await Promise.all([import('./case.js'), stylesheet('case.css'), stylesheet('toolkit.css')]);
+      const [module] = await Promise.all([import('./case.js'), stylesheet('case.css'), stylesheet('toolkit.css'), stylesheet('activities.css'), stylesheet('evidence-helpers.css'), stylesheet('incoming-call.css'), stylesheet('cloud.css')]);
       if (generation !== routeGeneration) return;
       outlet.replaceChildren(); cleanup = module.mount(outlet, services) || (() => {});
       document.title = services.t('التوقيع الرابع — ملف 017 | RAVEN', 'The Fourth Signature — Case 017 | RAVEN');

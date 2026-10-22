@@ -1,4 +1,5 @@
 import { el } from './core.js';
+import { renderResumeMemo } from './resume-memo.js';
 
 const TYPES = ['ملاحظة', 'فرضية', 'سؤال'];
 const RELATIONS = ['يؤيد', 'يعارض', 'يفسر', 'يحتاج تحققًا'];
@@ -53,6 +54,7 @@ export function createToolkit(root, services, callbacks = {}) {
   const data = services.caseData;
   const store = services.caseStore;
   const evidenceById = new Map(data.evidence.map((item) => [item.id, item]));
+  const allowed = id => evidenceById.has(id) && (!services.investigation || services.investigation.getAccess(id).allowed);
   const abort = new AbortController();
   let destroyed = false;
   let activeTool = 'overview';
@@ -85,17 +87,18 @@ export function createToolkit(root, services, callbacks = {}) {
   const state = () => {
     const saved = store.get();
     // A damaged or older local record must not make the investigation tools fail.
-    const hasSource = entry => entry && evidenceById.has(entry.evidenceId);
+    const hasSource = entry => entry && allowed(entry.evidenceId) && (saved.viewedIds || []).includes(entry.evidenceId);
     return {
       ...saved,
-      notes: (saved.notes || []).filter(entry => hasSource(entry) && typeof entry.text === 'string' && typeof entry.quote === 'string'),
+      notes: (saved.notes || []).filter(entry => hasSource(entry) && typeof entry.text === 'string' && typeof entry.quote === 'string'
+        && (!entry.questionId || (Array.isArray(entry.answerSources) && entry.answerSources.length > 0 && entry.answerSources.every(hasSource)))),
       pins: (saved.pins || []).filter(hasSource),
-      links: (saved.links || []).filter(entry => entry && evidenceById.has(entry.fromId) && evidenceById.has(entry.toId) && entry.fromId !== entry.toId),
+      links: (saved.links || []).filter(entry => entry && hasSource({ evidenceId: entry.fromId }) && hasSource({ evidenceId: entry.toId }) && entry.fromId !== entry.toId),
       timeline: (saved.timeline || []).filter(entry => hasSource(entry) && typeof entry.quote === 'string' && BUCKETS.some(([id]) => id === entry.bucket)),
       hypotheses: (saved.hypotheses || []).filter(entry => entry && typeof entry.text === 'string').map(entry => ({ ...entry, sources: (Array.isArray(entry.sources) ? entry.sources : []).filter(hasSource) })),
     };
   };
-  const viewed = () => data.evidence.filter((item) => (state().viewedIds || []).includes(item.id));
+  const viewed = () => data.evidence.filter((item) => allowed(item.id) && (state().viewedIds || []).includes(item.id));
   const update = (mutator) => {
     internalUpdate = true;
     try { return store.update(mutator); } finally { internalUpdate = false; }
@@ -114,6 +117,7 @@ export function createToolkit(root, services, callbacks = {}) {
     } else callback();
   }
   function goToEvidence(id, options = {}) {
+    if (id && !allowed(id)) { say('هذا الدليل لم يصل إلى حزمة المراجعة بعد.'); return; }
     handoff(() => callbacks.openEvidence?.(id, options));
   }
   function sourceButton(entry) {
@@ -156,6 +160,7 @@ export function createToolkit(root, services, callbacks = {}) {
 
   function renderOverview() {
     body.append(el('p', { class: 'tk-intro', text: 'اختر أداة تساعدك على فحص ما أمامك. طريق الاستنتاج يبقى لك.' }));
+    body.append(button('مذكرة الاستئناف', () => open('resume'), { 'data-open-resume': '' }));
     for (const category of ['فحص', 'تنظيم', 'استنتاج', 'تدريب']) {
       body.append(el('h3', { class: 'tk-section-heading', text: category === 'تدريب' ? 'تدريب المحقق · اختياري' : category }));
       body.append(el('div', { class: 'tk-tools-grid' }, TOOL_LIST.filter((item) => item[4] === category).map(([id, number, title, description]) =>
@@ -507,10 +512,14 @@ export function createToolkit(root, services, callbacks = {}) {
     renderGeneration += 1;
     body.replaceChildren(); status.textContent = '';
     const tool = TOOL_LIST.find((entry) => entry[0] === activeTool);
-    heading.textContent = tool?.[2] || 'حقيبة المحقق';
+    heading.textContent = activeTool === 'resume' ? 'مذكرة الاستئناف' : tool?.[2] || 'حقيبة المحقق';
     breadcrumb.hidden = activeTool === 'overview';
     dialog.dataset.activeTool = activeTool;
-    if (activeTool === 'notes') renderNotes();
+    if (activeTool === 'resume') body.append(renderResumeMemo(services, {
+      resume: () => handoff(() => callbacks.resume?.()),
+      openEvidence: (id, options) => goToEvidence(id, options),
+    }));
+    else if (activeTool === 'notes') renderNotes();
     else if (activeTool === 'board') renderBoard();
     else if (activeTool === 'timeline') renderTimeline();
     else if (activeTool === 'search') renderSearch();
@@ -543,7 +552,12 @@ export function createToolkit(root, services, callbacks = {}) {
     pendingHandoff = null;
     if (!destroyed) next?.();
   }, { signal: abort.signal });
-  const unsubscribe = store.subscribe?.(() => {
+  const notebookKey = saved => JSON.stringify([saved.viewedIds, saved.notes, saved.pins, saved.links, saved.highlights, saved.timeline, saved.hypotheses, saved.solvedIds, saved.progress?.completedActivityIds]);
+  let lastNotebook = notebookKey(store.get());
+  const unsubscribe = store.subscribe?.(saved => {
+    const key = notebookKey(saved);
+    if (key === lastNotebook) return;
+    lastNotebook = key;
     // Training owns its own feedback and badges. Saving its completion must not
     // destroy the live exercise (or its audio controller) under the submit event.
     if (!internalUpdate && dialog.open && !destroyed && !activeTool.startsWith('training-')) render();

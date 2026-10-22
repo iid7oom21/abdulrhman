@@ -1,0 +1,30 @@
+project_id = "raven-terminal-preview"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+major_version = 15
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:8786/raven/terminal-preview/case-017/"
+additional_redirect_urls = ["http://127.0.0.1:8786/raven/terminal-preview/case-017/", "https://iid7oom21.github.io/abdulrhman/raven/terminal-preview/case-017/"]
+jwt_expiry = 3600
+enable_signup = true
+
+[auth.external.google]
+enabled = false
+client_id = "env(GOOGLE_CLIENT_ID)"
+secret = "env(GOOGLE_CLIENT_SECRET)"
+skip_nonce_check = false
+
+[functions.raven-api]
+# The function checks the bearer token with Auth before every private action.
+# Disabling the gateway's legacy JWT check also supports new publishable keys.
+verify_jwt = false
