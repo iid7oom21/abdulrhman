@@ -24,6 +24,8 @@ The official local Supabase startup could not unpack its PostgreSQL image in the
 
 Reports: `/tmp/raven-release-complete-chromium.json`, `/tmp/raven-release-complete-webkit.json`, `/tmp/raven-media-final-chromium.json`, `/tmp/raven-media-final-webkit.json`. Ready-media visual review captures are `media-a16-320.png`, `media-a18-320.png`, and `media-a19-320.png` in `/workspace/artifacts/raven-expansion-release/`; their camera frames are deliberately synthetic test video. Reviewed layout keeps controls below imagery and waveform labels readable. The A16 readiness copy and A18 clock spacing were corrected after this review.
 
+Code commit `f043b5f` was pushed to both `raven-fourth-signature` and `gh-pages`; GitHub Pages reported `built`. Browser-fetched public workbench, activity, data and runtime-config modules matched local SHA-256 exactly. The fresh 32-activity public journey at 320px then passed in 23.5 seconds, as did the case/films/episode/home navigation test (2/2 checks, 24.2 seconds overall). Report: `/tmp/raven-media-release-public.json`. The published media manifest remains pending and hosted cloud configuration remains disabled, matching actual delivery status.
+
 ## Initial expansion baseline
 
 Recorded 2026-10-22 UTC (2026-10-23 in Riyadh) against the repository's static preview on `http://127.0.0.1:8786/raven/terminal-preview/`. These results supersede the pre-expansion 27-test record.
