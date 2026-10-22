@@ -15,6 +15,8 @@ The guide scenarios cover no automatic document opening or solution disclosure, 
 
 Reports: `/tmp/raven-start-guide-chromium.json` (the initial run included one incorrect test assumption that a returning player's guide stays expanded after reader return), `/tmp/raven-start-guide-chromium-final.json` (corrected cases and final presentation), `/tmp/raven-start-guide-webkit.json`, `/tmp/raven-start-guide-webkit-final.json`. Captures: `start-guide-320.png`, `start-guide-390.png`, `start-guide-1440.png` in `/workspace/artifacts/raven-expansion-release/`.
 
+Commit `67f9c7d` was atomically published to both branches; Pages reported `built`. The public case returned HTTP 200 with the expected release and mounted guide. Both guide scenarios passed against the public origin (2/2, 2.9 seconds). Report: `/tmp/raven-start-guide-public.json`.
+
 ## Mobile code keyboard fix — 2026-10-22
 
 The activity renderer inferred a numeric keyboard from field names containing `code` or `key`, preventing normal mobile entry of archive references with letters and separators. It now defaults text inputs to `inputmode="text"`, respecting explicitly declared numeric hints and real number fields. Release `6d062d5989d21c42` refreshes the complete module graph; no case facts, validation rules, save schema or approved media changed.
