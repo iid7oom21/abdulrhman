@@ -1,4 +1,4 @@
-import { el } from './core.js?v=bd8a32b4db729ff9';
+import { el } from './core.js?v=6d062d5989d21c42';
 
 const MORSE = {
   A: '.-', B: '-...', C: '-.-.', D: '-..', E: '.', F: '..-.', G: '--.', H: '....',

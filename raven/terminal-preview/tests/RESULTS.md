@@ -1,5 +1,20 @@
 # Expansion verification record
 
+## Mobile code keyboard fix — 2026-10-22
+
+The activity renderer inferred a numeric keyboard from field names containing `code` or `key`, preventing normal mobile entry of archive references with letters and separators. It now defaults text inputs to `inputmode="text"`, respecting explicitly declared numeric hints and real number fields. Release `6d062d5989d21c42` refreshes the complete module graph; no case facts, validation rules, save schema or approved media changed.
+
+| Check | Result |
+| --- | --- |
+| Chromium expansion and release-loading regressions | **10/10 passed**, including the full fresh 32-activity journey |
+| WebKit new keyboard regressions and full fresh journey | **3/3 passed** |
+| Engine and release-stamper tests | **28/28 passed** |
+| Release consistency and whitespace | Both passed |
+
+At 320px, the new tests type the UV reference with keyboard events, restore its draft after reload and submit using the opened source. A completed review fixture checks every text/number field, including colon-separated times, archive keys, explicit numeric codes and leading zeros. These browser tests verify input hints, typing and persistence; they do not operate a physical Android keyboard.
+
+Reports: `/tmp/raven-mobile-keyboard-chromium.json`, `/tmp/raven-keyboard-fields-webkit.json`, `/tmp/raven-keyboard-journey-webkit.json`.
+
 ## Returning-visitor loading fix — 2026-10-22
 
 The reported «تعذّر فتح الملف» was reproduced with the previous cached `core.js` and current `case.js`: the missing `caseCompletionKey` export rejects module linking. GitHub Pages returned `Cache-Control: max-age=600`; the page query alone did not refresh relative module imports. Clicking the old Retry reused the rejected entry in the current document's module map, while saved investigation bytes remained intact.

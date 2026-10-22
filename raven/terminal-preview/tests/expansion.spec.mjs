@@ -135,6 +135,80 @@ test('all 32 public activities reject wrong work, restore each chapter, and reac
   expect(errors).toEqual([]);
 });
 
+test('mobile UV reference uses a text keyboard, preserves typed B17-R on reload and submits with its opened source', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 844 });
+  await boot(page, 'case-017/');
+  await readRequiredSources(page, ACTIVITIES[0]);
+  const scope = page.locator('[data-activity-id="A01"]');
+  for (const hook of ['data-envelope-flip', 'data-envelope-uv']) {
+    await scope.locator(`[${hook}]`).focus();
+    await page.keyboard.press('Enter');
+  }
+  const reference = scope.locator('[data-activity-field="code"]');
+  await expect(reference).toHaveAttribute('type', 'text');
+  await expect(reference).toHaveAttribute('inputmode', 'text');
+  await expect(scope.locator('.act-envelope-code')).toHaveText('B17-R');
+  await reference.focus();
+  await reference.pressSequentially('B17-R');
+  await expect(reference).toHaveValue('B17-R');
+  await expect.poll(async () => (await caseState(page)).drafts.A01.code).toBe('B17-R');
+  await page.reload();
+  await expect(reference).toHaveAttribute('inputmode', 'text');
+  await expect(reference).toHaveValue('B17-R');
+  await expect(scope.locator('[data-activity-field="face"]')).toHaveValue('back');
+  await expect(scope.locator('[data-activity-field="lamp"]')).toHaveValue('uv');
+  expect((await caseState(page)).viewedIds).toContain('E09');
+  await submitActivity(page, ACTIVITIES[0]);
+  await expect.poll(async () => (await caseState(page)).progress.accepted.length).toBe(1);
+  expect((await caseState(page)).progress.accepted[0].payload.code).toBe('B17-R');
+  expect((await caseState(page)).progress.wrongSubmissions).toBe(0);
+  await expectNoOverflow(page);
+});
+
+test('mobile input hints across all activities preserve text references, colon times and explicit numeric codes', async ({ page, context }) => {
+  await page.setViewportSize({ width: 320, height: 844 });
+  // Review a valid completed fixture so every declared input can be inspected;
+  // this setup does not bypass the separate full journey or submit future work.
+  await seedExpansion(context, 32);
+  await boot(page, 'case-017/');
+  const payloads = await solutions();
+  const seen = new Map();
+  for (const activity of ACTIVITIES) {
+    const fields = activity.fields.filter(field => ['text', 'number'].includes(field.type));
+    if (!fields.length) continue;
+    await test.step(`${activity.id}: declared keyboard hints`, async () => {
+      const index = page.locator('.act-reference').filter({ has: page.locator(`[data-activity-open="${activity.id}"]`) });
+      if (await index.getAttribute('open') === null) await index.locator('summary').click();
+      await page.locator(`[data-activity-open="${activity.id}"]`).click();
+      const scope = page.locator(`[data-activity-id="${activity.id}"]`);
+      for (const field of fields) {
+        const input = scope.locator(`[data-activity-field="${field.key}"]`);
+        const type = field.type === 'number' ? 'number' : 'text';
+        const mode = field.inputMode || (type === 'number' ? 'numeric' : 'text');
+        await expect(input).toHaveAttribute('type', type);
+        await expect(input).toHaveAttribute('inputmode', mode);
+        if (field.maxLength) await expect(input).toHaveAttribute('maxlength', String(field.maxLength));
+        const answer = solutionFor(payloads, activity)[field.key];
+        if (answer !== undefined) await expect(input).toHaveValue(String(answer));
+        seen.set(`${activity.id}:${field.key}`, { type, mode });
+      }
+    });
+  }
+  // These encode different semantic formats despite misleading key names:
+  // a UV reference, ASCII/hex-decoded text, minute:second and a cabinet address.
+  for (const key of ['A01:code', 'A07:document', 'A07:container', 'A18:position', 'A31:key']) {
+    expect(seen.get(key), key).toEqual({ type: 'text', mode: 'text' });
+  }
+  for (const key of ['A04:code', 'A11:code', 'A17:code']) {
+    expect(seen.get(key), key).toEqual({ type: 'text', mode: 'numeric' });
+  }
+  for (const key of ['A18:clockOffset', 'A18:alignment']) {
+    expect(seen.get(key), key).toEqual({ type: 'number', mode: 'numeric' });
+  }
+  expect((await caseState(page)).progress.accepted).toHaveLength(32);
+  await expectNoOverflow(page);
+});
+
 test('drafts and progressive hints restore without unlocking future tasks; keyboard can perform UV inspection', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 844 });
   await boot(page, 'case-017/');

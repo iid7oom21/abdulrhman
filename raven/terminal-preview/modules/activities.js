@@ -1,6 +1,6 @@
-import { el } from './core.js?v=bd8a32b4db729ff9';
-import { ACTIVITIES, CHAPTERS } from './expansion-data.js?v=bd8a32b4db729ff9';
-import { createSignalPlayer } from './expansion-media.js?v=bd8a32b4db729ff9';
+import { el } from './core.js?v=6d062d5989d21c42';
+import { ACTIVITIES, CHAPTERS } from './expansion-data.js?v=6d062d5989d21c42';
+import { createSignalPlayer } from './expansion-media.js?v=6d062d5989d21c42';
 
 const arabic = value => new Intl.NumberFormat('ar', { useGrouping: false }).format(value);
 const button = (text, action, attributes = {}) => el('button', { type: 'button', class: 'act-button', text, onClick: action, ...attributes });
@@ -177,9 +177,11 @@ export function mountActivities(root, services, callbacks = {}) {
       fieldNodes.set(field.key, { element: control, set(next) { control.value = String(next ?? ''); } });
     } else {
       const isNumber = field.type === 'number';
+      // Archive codes can include letters and separators. Only explicitly
+      // numeric fields should request the mobile number keyboard.
       const control = el('input', { id: name, name, type: isNumber ? 'number' : 'text', autocomplete: 'off', spellcheck: 'false', value: value ?? '',
         min: field.min, max: field.max, step: field.step ?? (isNumber ? 1 : undefined), disabled: locked,
-        maxlength: isNumber ? undefined : field.maxLength || (field.optional ? 1200 : 180), inputmode: field.inputMode || (isNumber || /code|pin|key|offset|time/i.test(field.key) ? 'numeric' : undefined),
+        maxlength: isNumber ? undefined : field.maxLength || (field.optional ? 1200 : 180), inputmode: field.inputMode || (isNumber ? 'numeric' : 'text'),
         dir: field.dir || (/code|pin|cipher|morse|binary|hex|hash/i.test(field.key) ? 'ltr' : 'auto'),
         placeholder: field.placeholder, 'data-activity-field': field.key });
       control.addEventListener('input', () => setValue(field.key, isNumber && control.value !== '' ? Number(control.value) : control.value, { updateControl: false }));
@@ -217,7 +219,7 @@ export function mountActivities(root, services, callbacks = {}) {
     fallback.open = true;
     fallback.classList.add('act-media-fallback');
     cleanups.push(() => { disposed = true; unmount?.(); });
-    import('./media-workbench.js?v=bd8a32b4db729ff9').then(({ mountMediaWorkbench }) => {
+    import('./media-workbench.js?v=6d062d5989d21c42').then(({ mountMediaWorkbench }) => {
       if (disposed || destroyed || generation !== mountedGeneration) return;
       host.replaceChildren();
       unmount = mountMediaWorkbench(host, services, {
