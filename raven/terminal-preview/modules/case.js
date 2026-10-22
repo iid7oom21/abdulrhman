@@ -1,4 +1,4 @@
-import { el } from './core.js';
+import { el, caseCompletionKey } from './core.js';
 import { createToolkit } from './toolkit.js';
 import { mountActivities } from './activities.js';
 import { attachPhotoRegions } from './photo-regions.js';
@@ -37,6 +37,10 @@ export function mount(root, services) {
   let readerRequest = 0;
   let compareRequest = 0;
   let viewedQueue = Promise.resolve();
+  let endingController;
+  let endingImport;
+  let endingRequest = 0;
+  let endingRunKey = '';
   const investigation = services.investigation;
   const canAccess = id => investigation.getAccess(id).allowed;
   const accessible = () => evidence.filter(item => canAccess(item.id));
@@ -154,6 +158,9 @@ export function mount(root, services) {
 
   function updateProgress() {
     if (disposed) return;
+    if (!investigation.canReport() || (endingRunKey && endingRunKey !== caseCompletionKey(state().progress))) {
+      endingRequest++; endingController?.close(); endingRunKey = '';
+    }
     progressText.textContent = `${num(state().progress.completedActivityIds.length)} / ٣٢ نشاطًا · ${num(state().solvedIds.length)} / ٤ استنتاجات · ${num(state().viewedIds.length)} / ١٦ دليلًا`;
     progressFill.style.width = `${state().progress.completedActivityIds.length / 32 * 100}%`;
     page.querySelectorAll('[data-evidence-id]').forEach(card => {
@@ -170,7 +177,9 @@ export function mount(root, services) {
     tab = next; renderNav();
     if (next === 'activities') {
       workspace.replaceChildren();
-      activityCleanup = mountActivities(workspace, services, { openEvidence, openPhoto: () => openEvidence('E06', { tool: 'crop' }), openTool: tool, showReport }) || (() => {});
+      activityCleanup = mountActivities(workspace, services, { openEvidence, openPhoto: () => openEvidence('E06', { tool: 'crop' }), openTool: tool, showReport,
+        onCompleted: () => { void showEnding({ automatic: true }); }, replayEnding: () => { void showEnding(); },
+      }) || (() => {});
     } else workspace.replaceChildren(next === 'people' ? peopleView() : next === 'deductions' ? deductionsView() : evidenceView());
     if (move) { workspace.scrollIntoView({ block: 'start', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth' }); workspace.focus({ preventScroll: true }); }
   }
@@ -378,11 +387,32 @@ export function mount(root, services) {
       ]));
     }
     container.append(button(investigation.canReport() ? 'اقرأ التقرير النهائي ←' : 'واصل المهمة الحالية ←', () => investigation.canReport() ? showReport() : selectTab('activities'), { class: 'case-button case-primary', ...(investigation.canReport() ? { 'data-final-report': true } : {}) }));
+    if (investigation.canReport()) container.append(button('أعد مشهد النهاية ↻', () => { void showEnding(); }, { 'data-ending-replay': '' }));
     return container;
+  }
+
+  async function showEnding({ automatic = false } = {}) {
+    if (disposed || !investigation.canReport()) return false;
+    const request = ++endingRequest;
+    const requestedRun = caseCompletionKey(state().progress);
+    closeReader(); closeComparison();
+    try {
+      endingImport ||= import('./case-ending.js').catch(error => { endingImport = null; throw error; });
+      const module = await endingImport;
+      if (disposed || request !== endingRequest || !investigation.canReport() || requestedRun !== caseCompletionKey(state().progress)) return false;
+      endingController ||= module.createCaseEnding(page, services, { onReport: showReport });
+      endingRunKey = requestedRun;
+      return endingController.open({ automatic });
+    } catch {
+      if (disposed || request !== endingRequest || requestedRun !== caseCompletionKey(state().progress)) return false;
+      services.notify('تعذّر تحميل مشهد النهاية. التقرير النهائي متاح.');
+      showReport(); return false;
+    }
   }
 
   function showReport() {
     if (!investigation.canReport()) { services.notify('يتاح التقرير بعد إكمال الأنشطة الـ٣٢ واستنتاجاتها.'); selectTab('activities'); return; }
+    endingRequest++; endingController?.close();
     const report = el('article', { class: 'case-report', id: 'case-final-report' }, [
       el('p', { class: 'case-eyebrow', text: 'الملف ٠١٧ / نتيجة مراجعة الأصول' }), el('h3', { text: data.ending.title }),
       el('p', { class: 'case-report-summary', text: data.ending.summary }),
@@ -401,7 +431,7 @@ export function mount(root, services) {
       document.body.classList.add('printing-case-report');
       const done = () => { document.body.classList.remove('printing-case-report'); window.removeEventListener('afterprint', done); };
       window.addEventListener('afterprint', done); window.print(); setTimeout(done, 1000);
-    }, { class: 'case-button case-primary' }), button('أعد فحص الأوراق', () => { closeReader(); selectTab('evidence'); })]);
+    }, { class: 'case-button case-primary' }), button('أعد مشهد النهاية ↻', () => { void showEnding(); }, { 'data-ending-replay': '' }), button('أعد فحص الأوراق', () => { closeReader(); selectTab('evidence'); })]);
     showDialog([report, actions], 'التقرير النهائي');
   }
   function resetCase() {
@@ -422,7 +452,7 @@ export function mount(root, services) {
   if (['#activities', '#deductions', '#people', '#evidence'].includes(hash)) selectTab(hash.slice(1), false);
   if (hash === '#report') showReport();
   return () => {
-    disposed = true; unsubscribe?.(); activityCleanup(); callCleanup(); cloudCleanup(); investigation.setActive?.(false); closeReader(); closeComparison(); toolkit.destroy();
+    disposed = true; endingRequest++; endingController?.destroy(); unsubscribe?.(); activityCleanup(); callCleanup(); cloudCleanup(); investigation.setActive?.(false); closeReader(); closeComparison(); toolkit.destroy();
     if (services.openEvidence === openEvidence) delete services.openEvidence;
     cleanupList(heroDisposers); cleanupList(modalDisposers); cleanupList(compareDisposers);
     document.body.classList.remove('printing-case-report'); page.remove();

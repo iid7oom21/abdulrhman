@@ -41,6 +41,7 @@ export function createAudio(dockRoot, services) {
   const lifetime = new AbortController();
   const signal = lifetime.signal;
   const holds = new Set();
+  const ducks = new Map();
   const videos = new Map();
   let desired = store.get('musicEnabled', true) !== false;
   let volume = clamp(store.get('musicVolume', .65));
@@ -180,6 +181,20 @@ export function createAudio(dockRoot, services) {
     update();
   }
 
+  // Temporary attenuation never overwrites the listener's saved volume or pause.
+  function applyVolume() {
+    element.volume = volume * (ducks.size ? Math.min(...ducks.values()) : 1);
+  }
+  function duck(token, factor = .18) {
+    if (destroyed) return;
+    ducks.set(String(token), clamp(factor, .18));
+    applyVolume();
+  }
+  function unduck(token) {
+    if (destroyed || !ducks.delete(String(token))) return;
+    applyVolume();
+  }
+
   // Called by playback controls as well as on the first global gesture. The
   // soundtrack can be armed while held by a film; its source stays untouched.
   function arm() { armed = true; }
@@ -217,7 +232,7 @@ export function createAudio(dockRoot, services) {
   closeSettings.addEventListener('click', () => { openSettings(false); settings.focus(); }, { signal });
   volumeInput.addEventListener('input', () => {
     volume = clamp(Number(volumeInput.value) / 100);
-    element.volume = volume;
+    applyVolume();
     save('musicVolume', volume);
     update();
   }, { signal });
@@ -367,7 +382,7 @@ export function createAudio(dockRoot, services) {
   update();
 
   return {
-    element, hold, release, watchVideo,
+    element, hold, release, duck, unduck, watchVideo,
     refreshLanguage: update,
     destroy() {
       if (destroyed) return;

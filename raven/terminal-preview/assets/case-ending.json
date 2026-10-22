@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "video": {
+    "id": "case-017-ending",
+    "status": "pending",
+    "url": null,
+    "mime": "video/mp4",
+    "bytes": null,
+    "sha256": null,
+    "durationSeconds": 14,
+    "hasAudio": false,
+    "provenance": "خاتمة سينمائية مخططة مبنية على الوثائق؛ لم يُسلّم ملف فيديو بعد. الخاتمة الحالية تركيب بصري بالواجهة."
+  }
+}

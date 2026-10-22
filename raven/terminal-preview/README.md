@@ -51,6 +51,12 @@ Preview storage remains namespaced under `raven-preview:v1`. The expansion uses 
 
 The approved recording is shared from `fourth-signature/assets/audio/raven-baqi-athar-320.mp3` without recompression. One player survives internal navigation and respects explicit pause. Browser autoplay policy still applies. Actual film sources are unchanged. Call and puzzle audio use the same priority/hold system, never an independent background-song player.
 
+## Closing scene
+
+A newly accepted A32 opens a 14-second authored web cinematic: the accusation gives way to the four source documents, then the 2026 B17-R card and «انكشفت الرواية… وبقي الأثر.». It never grants progress or resolves the fire's origin. Automatic presentation is recorded once per completed run; reloading or restoring a completed save does not interrupt the visitor. Replay is available from the final activity, deductions and report. Skip reveals the closing card and report immediately; reduced motion, quiet mode and Save-Data use that static ending without downloading video. Reset clears the ending markers with the investigation.
+
+The supplied ending is DOM/CSS, not a generated video. [ENDING_PRODUCTION.md](ENDING_PRODUCTION.md) contains the shot direction, copyable generation prompt and exact delivery requirements for a future 12–15-second video. Its separate `assets/case-ending.json` stays `pending`. A ready file must pass byte count, SHA-256 and decoded-duration checks; download/playback failure leaves the web scene and report available. Video starts muted. Explicitly enabled scene audio lowers the existing song through the same player's `duck`/`unduck` API, restores the visitor's chosen volume, and never overrides manual pause. Controls sit below the imagery.
+
 ## Media and optional online features
 
 Morse and DTMF are real synthesized signals. SHA-256 is calculated with Web Crypto from the three downloadable SVG derivative files, checked against their manifest. The archival identifier `7A41` is not presented as a cryptographic hash.

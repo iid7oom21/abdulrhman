@@ -119,7 +119,12 @@ test('all 32 public activities reject wrong work, restore each chapter, and reac
       }
     });
   }
-  await page.locator('[data-activity-report]').click();
+  const ending = page.locator('[data-case-ending][open]');
+  await expect(ending).toBeVisible();
+  // Reduced-motion runs show the static conclusion immediately. In animated
+  // runs the public skip control reaches that same card without skipping A32.
+  if (await ending.locator('[data-ending-skip]').isEnabled()) await ending.locator('[data-ending-skip]').click();
+  await ending.locator('[data-ending-report]').click();
   const report = page.locator('#case-final-report');
   await expect(report).toBeVisible();
   await expect(report.locator('.case-report-limits')).toContainText('الحريق');

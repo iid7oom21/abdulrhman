@@ -605,6 +605,7 @@ export function mountActivities(root, services, callbacks = {}) {
         if (isComplete(selectedId)) {
           render(); say(result?.message || 'ثبتت النتيجة. يمكنك متابعة المهمة التالية.', 'success');
           shell.querySelector('[data-activity-next]')?.focus({ preventScroll: true });
+          if (selectedId === 'A32' && result?.accepted === true && engine.canReport()) callbacks.onCompleted?.();
         } else { renderedKey = signature(snapshot()); submit.disabled = false; say(result?.message || 'راجع الفحص والمصادر المتاحة، ثم جرّب مرة أخرى.', 'error'); }
       } catch { if (!destroyed) { busy = false; submit.disabled = false; say('تعذّر إرسال النتيجة. مسودتك محفوظة؛ أعد المحاولة.', 'error'); } }
     });
@@ -634,6 +635,7 @@ export function mountActivities(root, services, callbacks = {}) {
       card.append(el('div', { class: 'act-completed' }, [text('span', '✓ نتيجة مثبتة', 'act-completed-label'),
         next ? button('واصل إلى المهمة التالية ←', () => openActivity(idOf(next)), { class: 'act-button act-primary', 'data-activity-next': idOf(next) })
           : button('اقرأ التقرير النهائي ←', () => callbacks.showReport?.(), { class: 'act-button act-primary', 'data-activity-report': '' }),
+        ...(!next ? [button('أعد مشهد النهاية ↻', () => callbacks.replayEnding?.(), { 'data-ending-replay': '' })] : []),
       ]));
       if (question) card.append(text('p', question.explanation, 'act-result-explanation'));
     }

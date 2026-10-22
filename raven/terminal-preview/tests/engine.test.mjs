@@ -5,6 +5,7 @@ import { createHash } from 'node:crypto';
 import { ACTIVITIES, CHAPTERS, EXPANSION_EVIDENCE, FILE_MANIFEST, REVISION } from '../modules/expansion-data.js';
 import { emptyProgress, normalizeProgress, availableEvidenceIds, evaluateActivity, solvedQuestionIds, createInvestigation, calculateFileHashes } from '../modules/investigation.js';
 import { SOLUTION_PAYLOADS, acceptedPrefix, solutionPayload } from './expansion-fixtures.mjs';
+import { normalizeCase, emptyCase, caseCompletionKey } from '../modules/core.js';
 
 function harness(initial={}) {
   let state={progress:emptyProgress(),viewedIds:[],drafts:{},...structuredClone(initial)};
@@ -97,6 +98,25 @@ test('forged completion lists and discontinuous or wrong accepted records never 
   const corrupt=acceptedPrefix(32);corrupt[12].payload.lucian='receipt';
   assert.equal(normalizeProgress({accepted:corrupt}).accepted.length,12);
   for(const bad of [null,[],true,{accepted:{}},{revision:'wrong',accepted:acceptedPrefix(32)}])assert.equal(normalizeProgress(bad).accepted.length,0);
+});
+
+test('ending presentation metadata follows only its verified completed run and never grants progress',()=>{
+  const progress=normalizeProgress({accepted:acceptedPrefix(32),startedAt:1000,completedAt:2000});
+  const ending={version:1,runKey:caseCompletionKey(progress),presentedAt:2100,completedAt:2200,skippedAt:0};
+  const saved=normalizeCase({progress,ending});
+  assert.deepEqual(saved.ending,ending);
+  assert.deepEqual(normalizeCase(JSON.parse(JSON.stringify(saved))).ending,ending);
+  assert.deepEqual(saved.progress,progress);
+  for(const replacement of [
+    {completedActivityIds:ACTIVITIES.map(a=>a.id),completedAt:2000},
+    {...progress,accepted:acceptedPrefix(31)},
+    {...progress,startedAt:3000,completedAt:4000},
+    {...progress,mode:'ranked',runId:'different-run'},
+  ]) assert.deepEqual(normalizeCase({progress:replacement,ending}).ending,emptyCase().ending);
+  assert.deepEqual(normalizeCase({progress,ending:{...ending,version:2}}).ending,emptyCase().ending);
+  assert.deepEqual(normalizeCase({progress,ending:{...ending,presentedAt:'2100',completedAt:Infinity,skippedAt:-1}}).ending,
+    {...emptyCase().ending,runKey:ending.runKey});
+  assert.deepEqual(normalizeCase({}).ending,emptyCase().ending);
 });
 
 test('each chapter boundary round-trips valid progress without upgrading old four-answer saves',()=>{

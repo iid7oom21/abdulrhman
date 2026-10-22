@@ -1,5 +1,25 @@
 # Expansion verification record
 
+## Case ending — 2026-10-22
+
+The ending release adds a 14-second authored DOM/CSS cinematic after newly accepted A32, skip/replay/report actions, run-bound presentation state and optional verified-video playback. No actual finale video has been supplied; `assets/case-ending.json` stays pending. The original case data, approved recording and film files are unchanged.
+
+| Run | Result |
+| --- | --- |
+| Chromium, all 75 distinct browser cases across the targeted runs | **75 passed**, zero failures/skips |
+| WebKit, same cases | **74 passed**, one expected Chromium-CDP-only skip |
+| Ending-specific cases, both browsers | **13/13 passed in each** |
+| Full fresh 32-activity UI journey at 320px, both browsers | Passed through automatic ending and final report |
+| Engine plus cloud-client/server-command regressions | **42/42 passed** |
+
+The ending checks cover actual final submission, forged completion rejection, no asset fetch before eligibility, no automatic replay on restore, reset, skip versus completed state, report access after module failure, reduced motion, quiet mode, keyboard wrap/focus return and the real DOM timeline. A temporary native 14-second H.264/AAC fixture exercises decoded video, mute/unmute, pause/resume, native end, hashing/network failures, hidden-page pause and browser Back disposal. The AAC fixture is silent; it verifies playback ownership, not delivered story performance. No fixture is in production assets.
+
+The same soundtrack element and source continue through navigation. Audible video attenuates only while actually playing; pauses, waiting, failure, close and disposal release attenuation. Separate owner tests cover multiple tokens, changed preferred volume, media holds and explicit music-off. Presentation metadata cannot grant accepted activities or survive replacement with an incomplete/different run. A lazy-import guard also checks the originating run before opening the scene.
+
+Visual review inspected the four source papers at 390px and settled final cards at 320px and desktop. Controls sit below the 16:9 scene, the report remains reachable, and the unresolved-fire/B17-R limits are readable. Captures: `ending-papers-390.png`, `ending-final-320.png`, `ending-final-1440.png` under `/workspace/artifacts/raven-expansion-release/`.
+
+Reports: `/tmp/raven-ending-regression-chromium.json` (58 existing browser checks), `/tmp/raven-ending-regression-webkit.json` (the same 58); `/tmp/raven-ending-report.json`, `/tmp/raven-ending-journey-report.json`, `/tmp/raven-ending-webkit-report.json`, `/tmp/raven-ending-regression-report.json`, `/tmp/raven-ending-regression-webkit-report.json` cover the 13 ending and four expansion scenarios plus targeted reruns after the audible-playing guard. Repeated checks are not counted as additional distinct cases. Hosted Google/Supabase and new performed media remain pending as documented below.
+
 ## Real-media workbench and release tooling — 2026-10-22
 
 The follow-up adds ready-asset playback to A16/A18/A19, production-media preparation and cloud deployment checks. Production recordings remain pending; all generated media below are temporary test fixtures.

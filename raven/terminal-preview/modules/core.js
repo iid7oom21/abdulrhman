@@ -96,8 +96,11 @@ function boundedJSON(value, depth = 0) {
 }
 
 export function emptyCase() {
-  return { ...emptyLegacyCase(), version: 3, revision: REVISION, progress: emptyProgress(), drafts: {}, photoRegions: [], call: {} };
+  return { ...emptyLegacyCase(), version: 3, revision: REVISION, progress: emptyProgress(), drafts: {}, photoRegions: [], call: {}, ending: emptyEnding() };
 }
+
+const emptyEnding = () => ({ version: 1, presentedAt: 0, completedAt: 0, skippedAt: 0, runKey: '' });
+export const caseCompletionKey = progress => progress.runId || `practice:${progress.startedAt || 0}:${progress.completedAt || 0}`;
 
 /** A revision-specific workspace; legacy completion never unlocks expanded stages. */
 export function normalizeCase(value) {
@@ -126,6 +129,13 @@ export function normalizeCase(value) {
   result.training = boundedJSON(record(input.training));
   result.drafts = Object.fromEntries(Object.entries(record(input.drafts)).filter(([key]) => /^A(0[1-9]|[12]\d|3[0-2])$/.test(key)).map(([key, draft]) => [key, boundedJSON(draft)]));
   result.call = boundedJSON(record(input.call));
+  const ending = record(input.ending);
+  if (result.progress.accepted.length === 32 && ending.version === 1 && ending.runKey === caseCompletionKey(result.progress)) {
+    result.ending.runKey = ending.runKey;
+    for (const key of ['presentedAt', 'completedAt', 'skippedAt']) {
+      result.ending[key] = Number.isFinite(ending[key]) && ending[key] > 0 ? ending[key] : 0;
+    }
+  }
   result.activeIndex = Math.min(3, result.solvedIds.length);
   result.answers = Object.fromEntries(CASE.questions.filter(q => q.options.some(o => o.id === record(input.answers)[q.id])).map(q => [q.id, input.answers[q.id]]));
   result.supportByQuestion = Object.fromEntries(CASE.questions.map(q => [q.id, [...new Set((Array.isArray(record(input.supportByQuestion)[q.id]) ? input.supportByQuestion[q.id] : []).filter(id => seen.has(id)))].slice(0, q.id === 'Q04' ? 3 : 2)]));

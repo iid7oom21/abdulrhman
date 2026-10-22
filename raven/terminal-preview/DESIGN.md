@@ -97,6 +97,12 @@ New 2026 materials cannot alter the original documents: E09 envelope, E10 B17 ha
 
 An optional Elias/Adrian scene becomes eligible after A14 and opening MA-22. It waits until no dialog/media interaction is active, can be deferred, reopened, or read, and never gates a required activity. Pending recordings are visibly labeled. The soundtrack pauses only for actual call/signal playback and resumes only if still enabled.
 
+### Closing the file
+
+A newly accepted A32 opens the ending once per completed run, followed by immediate access to the report. Restored completion never auto-opens it. The 14-second DOM/CSS scene separates the accusation from the genuine source signatures, shows the B17-R review/publication distinction and ends with «انكشفت الرواية… وبقي الأثر.». It adds no new evidence and does not establish fire origin or deliberate concealment. Presentation metadata is separate from scoring and survives only for its matching, valid completed run.
+
+Skip goes directly to the static closing card; replay remains available from the completed activity, deductions and report. Reduced motion, quiet mode and Save-Data go directly to the card. The modal supports keyboard dismissal and focus return at 320px; playback controls remain below the 16:9 image. Timelines pause when hidden, and route changes/reset dispose playback. A future verified video starts muted and only explicitly enabled sound ducks the existing song; user pause and chosen volume remain authoritative. Missing or failed media cannot block the report. See `ENDING_PRODUCTION.md` for the optional actual-video brief, which remains pending separately from the existing laboratory manifest.
+
 The local timer is elapsed active practice time. Ranked time is server wall-clock time and continues across navigation/offline periods. A ranked attempt cannot be created by uploading a practice save. The server checks answers and source availability, commits requests transactionally with idempotency, and publishes only an opted-in alias. Cloud saves use revision checks and retain both sides of a conflict. Default configuration keeps online controls unavailable until a real deployment exists.
 
 ## Acceptance criteria
