@@ -1,20 +1,20 @@
 # Verification record
 
-Recorded 2026-10-22 against the local static preview served from the repository root at `http://127.0.0.1:8786/raven/terminal-preview/`.
+Recorded 2026-10-22 at 15:45 UTC against the local static preview served from the repository root at `http://127.0.0.1:8786/raven/terminal-preview/`, after the document-renderer naming fix.
 
 | Run | Result |
 | --- | --- |
-| Chromium, complete suite | **25 passed**, 0 failed, 0 skipped; 15.1 seconds |
-| WebKit smoke: direct routes, mobile document comparison, three training exercises | **3 passed**, 0 failed; 6.5 seconds |
-| Chromium measured first-load transfer, normal motion | **1,281,795 bytes**, below the 1,500,000-byte budget |
+| Chromium, complete suite | **27 passed**, 0 failed, 0 skipped; 15.3 seconds |
+| WebKit smoke: direct routes, mobile comparison, training, navigation/Back, report printing | **6 passed**, 0 failed; 7.2 seconds |
+| Chromium measured first-load transfer, normal motion | **1,281,765 bytes**, below the 1,500,000-byte budget |
 
 The transfer was measured from Chromium CDP `Network.loadingFinished.encodedDataLength`, with an empty browser context and a local server without compression. It includes the seven-second hero, fonts, script/style responses, and fetched posters. The approved song and full episodes had zero requests before interaction. Save-Data and reduced-motion visits kept the hero as a poster.
 
 ## Coverage
 
-- Seven independent static routes, noindex tags, no content iframe, internal navigation and browser Back.
+- Seven independent static routes, noindex tags, no content iframe, internal navigation and browser Back. The case → films → part 1 → case → home regression asserts each actual destination heading, cards/video, removal of stale content, and zero page errors; a changed URL alone cannot satisfy it.
 - 320, 390, 430, and 1440 px layouts; no horizontal overflow and visible main-page buttons at least 48 px high/wide.
-- Original four deductions, rejection of wrong answers and invalid/missing evidence support, the final report's unresolved-fire limits, saved completion.
+- Original four deductions, rejection of wrong answers and invalid/missing evidence support, the final report's unresolved-fire limits, saved completion. A stubbed `window.print` verifies that report print styling is applied before printing and cleared by `afterprint`, without opening a native print dialog.
 - PH-06 crop/full frame and keyboard magnifier, scene controls below the image, mobile comparison tabs, document focus return, keyboard reveal of the optional blackout.
 - Source-linked notes and highlights across reload, source paragraph reopening, evidence pins/links, personal timeline, sourced hypotheses, and search limited to opened documents.
 - All three independent practice answers: `017` (including Arabic digits), Caesar shift `3`, and `RAVEN`; completion feedback persists without modifying case deductions.
@@ -35,14 +35,16 @@ This workspace run stores its artifacts at:
 - `/tmp/raven-terminal-test-results/`
 - `/tmp/raven-terminal-webkit-results/`
 
-Screenshots include `photo-inspection-390.png`, `toolkit-390.png`, and `case-390-loaded.png`. The four normal layout tests also save full-page home and case captures in their respective result folders. Set the output/report environment variables documented in the README to retain artifacts elsewhere.
+The four layout tests save full-page home and case captures in their respective result folders. Release artifacts are retained separately under `/workspace/artifacts/raven-terminal-preview-release/`, including `public-home-390.png`, `public-case-390.png`, `public-toolkit-390.png`, and `public-training-390.png`. Set the output/report environment variables documented in the README to retain later runs elsewhere.
 
 ## Release checks
 
-The three episode URLs, Zarqa teaser, and approved public soundtrack each returned HEAD 200 and byte-range GET 206 with the expected MP4/MP3 signatures. Only 32 bytes per remote media file were read for this reachability check. A Chromium run with a simulated `/abdulrhman/` project prefix loaded all seven entries, opened PH-06, and navigated between the case and films with no script errors, HTTP failures, or local requests escaping the project prefix.
+The three episode URLs, Zarqa teaser, and approved public soundtrack each returned HEAD 200 and byte-range GET 206 with the expected MP4/MP3 signatures. Only 32 bytes per remote media file were read for this reachability check. A Chromium run with a simulated `/abdulrhman/` project prefix loaded all seven entries and opened PH-06, with no HTTP failures or local requests escaping the project prefix. Destination-content assertions for internal navigation are covered by the regression journeys above.
 
 A final 390 px visual pass after replacing emoji-prone arrows with monochrome text arrows confirmed the home CTA sits above the audio dock and the toolkit fits without horizontal overflow.
 
+A Chromium PDF export of the final report was also inspected from 1440 px and 390 px viewports. Both produced the same two-page A4 PDF, with all six reasoning points, three unresolved limits, and a separately labelled personal note and its source. Neither contained blank pages or clipped text. The export is saved in the release artifacts as `case-report.pdf`.
+
 ## Scope limits
 
-This record covers the local prototype, not a production deployment. WebKit received the three listed smoke journeys rather than the complete Chromium suite. Automated layout checks do not replace testing on the owner's physical mobile device. Audible autoplay still depends on browser permission and a valid user interaction.
+The automated suite totals above cover the local prototype; public-deployment and actual-media checks are recorded separately in the release artifacts. WebKit received the six listed smoke journeys rather than the complete Chromium suite. Automated layout checks do not replace testing on the owner's physical mobile device. Audible autoplay still depends on browser permission and a valid user interaction.

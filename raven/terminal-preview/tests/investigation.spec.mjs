@@ -131,3 +131,28 @@ test('classified reveal works by keyboard and closing a document restores its tr
   await expect(page.locator('.case-dialog[open]')).toHaveCount(0);
   await expect(page.locator('[data-evidence-id="E01"]').first()).toBeFocused();
 });
+
+test('final report enters print mode before invoking print and clears it after printing', async ({ context, page }) => {
+  await context.addInitScript(() => {
+    localStorage.setItem('raven-preview:v1:initialized', 'true');
+    localStorage.setItem('raven-preview:v1:case', JSON.stringify({ solvedIds: ['Q01', 'Q02', 'Q03', 'Q04'] }));
+    window.__printCalls = 0;
+    window.__printSawClass = false;
+    window.print = () => {
+      window.__printCalls++;
+      window.__printSawClass = document.body.classList.contains('printing-case-report');
+    };
+  });
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await boot(page, 'case-017/');
+  await openTool(page, 'report');
+  await expect(page.locator('#case-final-report')).toBeVisible();
+  await page.getByRole('button', { name: 'اطبع التقرير', exact: true }).click();
+  expect(await page.evaluate(() => window.__printCalls)).toBe(1);
+  expect(await page.evaluate(() => window.__printSawClass)).toBe(true);
+  await page.evaluate(() => window.dispatchEvent(new Event('afterprint')));
+  await expect(page.locator('body')).not.toHaveClass(/printing-case-report/);
+  await expect(page.locator('#case-final-report')).toBeVisible();
+  expect(errors).toEqual([]);
+});

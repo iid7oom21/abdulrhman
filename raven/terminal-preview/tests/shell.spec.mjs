@@ -45,17 +45,49 @@ test('cold load fetches no song or episode and the reduced motion hero remains a
 });
 
 test('internal navigation and Back keep the exact same audio node', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
   await boot(page);
   await page.evaluate(() => { window.__previewAudio = document.querySelector('#preview-soundtrack'); });
   const caseLink = page.locator('a[href*="/case-017/"]').first();
   await caseLink.click();
   await expect(page).toHaveURL(/\/case-017\//);
-  await expect(page.locator('#route-outlet h1')).toBeVisible();
+  await expect(page.locator('#route-outlet h1')).toHaveText('التوقيع الرابع.');
   expect(await page.evaluate(() => window.__previewAudio === document.querySelector('#preview-soundtrack'))).toBe(true);
   await page.goBack();
   await expect(page).toHaveURL(PREVIEW);
-  await expect(page.locator('#route-outlet h1')).toBeVisible();
+  await expect(page.locator('#route-outlet h1')).toHaveText(/كل حكاية\s*تترك أثرًا\./);
+  await expect(page.locator('.home-page')).toBeVisible();
   expect(await page.evaluate(() => window.__previewAudio === document.querySelector('#preview-soundtrack'))).toBe(true);
+  expect(errors).toEqual([]);
+});
+
+test('case to films to episode to case to home mounts each destination without route cleanup errors', async ({ page }) => {
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  await boot(page, 'case-017/');
+  await expect(page.locator('.case-evidence-card')).toHaveCount(8);
+  await page.locator('#site-header a[href$="/raven-17/"]').click();
+  await expect(page).toHaveURL(route('raven-17/'));
+  await expect(page.locator('#route-outlet h1')).toHaveText('RAVEN 17');
+  await expect(page.locator('[data-episode-card]')).toHaveCount(3);
+  await expect(page.locator('.case-page')).toHaveCount(0);
+  await page.locator('[data-episode-card="1"] a').first().click();
+  await expect(page).toHaveURL(route('raven-17/part-1/'));
+  await expect(page.locator('#route-outlet h1')).toHaveText('RAVEN 17 — الجزء الأول');
+  await expect(page.locator('[data-film-video="1"]')).toBeVisible();
+  await page.locator('#site-header a[href$="/case-017/"]').click();
+  await expect(page).toHaveURL(route('case-017/'));
+  await expect(page.locator('#route-outlet h1')).toHaveText('التوقيع الرابع.');
+  await expect(page.locator('.case-evidence-card')).toHaveCount(8);
+  await expect(page.locator('[data-film-video]')).toHaveCount(0);
+  await page.locator('#site-header .brand').click();
+  await expect(page).toHaveURL(PREVIEW);
+  await expect(page.locator('#route-outlet h1')).toHaveText(/كل حكاية\s*تترك أثرًا\./);
+  await expect(page.locator('.home-hero')).toBeVisible();
+  await expect(page.locator('[data-episode-card]')).toHaveCount(3);
+  await expect(page.locator('.case-page')).toHaveCount(0);
+  expect(errors).toEqual([]);
 });
 
 test('a failed soundtrack does not prevent entering the case or reading evidence', async ({ page }) => {

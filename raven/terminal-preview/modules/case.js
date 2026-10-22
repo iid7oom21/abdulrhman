@@ -181,7 +181,7 @@ export function mount(root, services) {
     }
     return row;
   }
-  function document(item, { full = false, comparisonMode = false, prefix = 'case' } = {}) {
+  function renderDocument(item, { full = false, comparisonMode = false, prefix = 'case' } = {}) {
     const [kind, mark, name] = TYPES[item.id];
     const sheet = el('article', { class: `case-paper case-paper-${kind}`, 'data-document': item.id }, [
       el('header', { class: 'case-paper-heading' }, [el('div', { class: 'case-paper-masthead' }, [el('span', { class: 'case-paper-emblem', text: mark, dir: 'ltr', 'aria-hidden': 'true' }), el('span', { text: name }), el('bdi', { text: item.reference.split(' · ')[0], dir: 'ltr' })]), el('h3', { text: item.title }), el('p', { class: 'case-paper-reference', text: item.reference })]),
@@ -207,7 +207,7 @@ export function mount(root, services) {
       button('ثبّت على اللوحة', () => { toolkit.pin(item.id); }, { 'data-pin-evidence': item.id }),
       button('ملاحظاتي', () => tool('notes', { evidenceId: item.id })),
     ]);
-    content.append(actions, document(item, { full: Number.isInteger(options.paragraphIndex) || options.tool === 'highlight' }));
+    content.append(actions, renderDocument(item, { full: Number.isInteger(options.paragraphIndex) || options.tool === 'highlight' }));
     if (item.id === 'E06') content.append(el('details', { class: 'case-attachment' }, [
       el('summary', { text: 'افحص القفل · مرفق توضيحي' }),
       el('p', { class: 'case-small', text: 'المرفق يوضّح القفل. بطاقة PH-06 هي مصدر الاستدلال.' }),
@@ -299,7 +299,7 @@ export function mount(root, services) {
         const tab = button(item.title, () => activate(index), { class: 'case-compare-tab', role: 'tab', id: `case-compare-tab-${index}`, 'aria-controls': `case-compare-panel-${index}` });
         tab.addEventListener('keydown', event => { if (['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) { event.preventDefault(); const target = event.key === 'Home' ? 0 : event.key === 'End' ? 1 : 1 - active; activate(target); tabs.children[target]?.focus(); } });
         tabs.append(tab);
-        papers.append(el('section', { class: 'case-compare-panel', id: `case-compare-panel-${index}`, 'aria-labelledby': tab.id, tabindex: '0' }, document(item, { full: true, comparisonMode: true, prefix: `compare-${index}` })));
+        papers.append(el('section', { class: 'case-compare-panel', id: `case-compare-panel-${index}`, 'aria-labelledby': tab.id, tabindex: '0' }, renderDocument(item, { full: true, comparisonMode: true, prefix: `compare-${index}` })));
       }); activate(0);
     }
     first.addEventListener('change', renderPair); second.addEventListener('change', renderPair);
