@@ -15,6 +15,8 @@ At 320px, the new tests type the UV reference with keyboard events, restore its 
 
 Reports: `/tmp/raven-mobile-keyboard-chromium.json`, `/tmp/raven-keyboard-fields-webkit.json`, `/tmp/raven-keyboard-journey-webkit.json`.
 
+Code commit `1a1844c` was atomically published to both branches and GitHub Pages reported `built`. A fresh public case request returned HTTP 200 and the expected release script. Both new mobile-input checks passed on the public origin (2/2, 4.8 seconds), including typed-reference restoration and submission. Report: `/tmp/raven-keyboard-public.json`.
+
 ## Returning-visitor loading fix — 2026-10-22
 
 The reported «تعذّر فتح الملف» was reproduced with the previous cached `core.js` and current `case.js`: the missing `caseCompletionKey` export rejects module linking. GitHub Pages returned `Cache-Control: max-age=600`; the page query alone did not refresh relative module imports. Clicking the old Retry reused the rejected entry in the current document's module map, while saved investigation bytes remained intact.
