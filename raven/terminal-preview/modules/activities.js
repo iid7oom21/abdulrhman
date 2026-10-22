@@ -29,6 +29,7 @@ export function mountActivities(root, services, callbacks = {}) {
   let status;
   let fieldNodes = new Map();
   let fieldObservers = new Map();
+  const offsetListeners = new Set();
   let signal;
   let saveTimer;
   const shell = el('section', { class: 'act-investigation', dir: 'rtl', 'aria-label': 'مراحل التحقيق' });
@@ -64,6 +65,7 @@ export function mountActivities(root, services, callbacks = {}) {
     selectedDraft[key] = clone(value);
     if (updateControl) fieldNodes.get(key)?.set(value);
     fieldObservers.get(key)?.(value);
+    if (key === 'alignment') offsetListeners.forEach(listener => listener(Number(value || 0)));
     clearTimeout(saveTimer);
     if (immediate) flushDraft(); else saveTimer = setTimeout(flushDraft, 180);
   }
@@ -72,6 +74,7 @@ export function mountActivities(root, services, callbacks = {}) {
     for (const cleanup of cleanups.splice(0)) cleanup();
     fieldNodes.clear();
     fieldObservers.clear();
+    offsetListeners.clear();
   }
   function openActivity(id, focus = true) {
     if (busy) { say('انتظر اكتمال التحقق من النتيجة الحالية.'); return; }
@@ -206,6 +209,40 @@ export function mountActivities(root, services, callbacks = {}) {
     ]);
   }
   function details(label, children) { return el('details', { class: 'act-reference' }, [text('summary', label), ...children]); }
+  function readyMedia(activity, fallback) {
+    const host = el('div', { class: 'act-media-host', 'data-activity-media': activity.id, 'data-media-availability': 'pending' }, [text('p', 'جارٍ فحص مواد هذه المهمة…', 'act-small')]);
+    const mountedGeneration = generation;
+    let disposed = false;
+    let unmount;
+    fallback.open = true;
+    fallback.classList.add('act-media-fallback');
+    cleanups.push(() => { disposed = true; unmount?.(); });
+    import('./media-workbench.js').then(({ mountMediaWorkbench }) => {
+      if (disposed || destroyed || generation !== mountedGeneration) return;
+      host.replaceChildren();
+      unmount = mountMediaWorkbench(host, services, {
+        activityId: activity.id,
+        getOffset: () => Number(selectedDraft.alignment || 0),
+        subscribeOffset(listener) {
+          offsetListeners.add(listener);
+          listener(Number(selectedDraft.alignment || 0));
+          return () => offsetListeners.delete(listener);
+        },
+        onAvailability({ state }) {
+          if (disposed || destroyed || generation !== mountedGeneration) return;
+          host.dataset.mediaAvailability = state;
+          if (state !== 'ready') fallback.open = true;
+          else if (!fallback.contains(document.activeElement)) fallback.open = false;
+        },
+      });
+    }).catch(() => {
+      if (disposed || destroyed || generation !== mountedGeneration) return;
+      host.dataset.mediaAvailability = 'error';
+      host.replaceChildren(text('p', 'تعذّر تحميل أدوات الوسائط. يمكنك متابعة الفحص بالنسخة المكتوبة أدناه.', 'act-small'));
+      fallback.open = true;
+    });
+    return host;
+  }
   function savedUi(key, fallback) { return selectedDraft._ui?.[key] ?? fallback; }
   function saveUi(key, value) {
     selectedDraft._ui = { ...(selectedDraft._ui || {}), [key]: value };
@@ -328,7 +365,8 @@ export function mountActivities(root, services, callbacks = {}) {
     }
     range.addEventListener('input', () => { time = Number(range.value); saveUi('cameraTime', time); draw(); });
     draw();
-    return panel('كاميرات مختبر المراجعة', [frame, el('label', { class: 'act-range-label' }, ['افحص اللحظة', range]), cameras], 'مقاطع الكاميرات المصوّرة لم تُرفق بعد. بطاقات الملاحظات المعنونة تحمل معلومات الفحص نفسها، ولا تُعرض كأنها فيديو مسجل.');
+    const fallback = details('سجل الكاميرات المكتوب', [frame, el('label', { class: 'act-range-label' }, ['افحص اللحظة', range]), cameras, text('p', 'بطاقات إعادة بناء من سجل E12، وليست إطارات مستخرجة من فيديو. وهي متاحة أيضًا عند تعذّر تحميل المشاهد.', 'act-small')]);
+    return panel('كاميرات مختبر المراجعة', [readyMedia(activity, fallback), fallback]);
   }
 
   function alignmentWidget(activity) {
@@ -351,9 +389,11 @@ export function mountActivities(root, services, callbacks = {}) {
     range.addEventListener('input', () => widgetValue(activity, ['alignment'], Number(range.value)));
     fieldObservers.set('alignment', value => { offset = Number(value || 0); range.value = String(offset); draw(); });
     draw();
-    return panel('محاذاة قناتي الجلسة', [lanes, el('label', { class: 'act-range-label' }, ['حرّك القناة B حتى تتطابق علامة المعايرة', range]), meter,
+    const fallback = details('علامات التزامن المكتوبة', [lanes,
       table(['القناة', 'النقرات الثلاث', 'العبارة'], [['A', '00:48', '—'], ['B', '00:12', '00:37']]),
-    ], 'مسارات نصية زمنية، وليست موجات صوتية مستخرجة. التسجيلان الصوتيان لم يُرفقا بعد؛ علامات التزامن متاحة للفحص هنا.');
+      text('p', 'هذه علامات من تفريغ E13 وليست موجات صوتية. تظهر الموجات الفعلية في المشغّل بعد تحميل التسجيلات والتحقق منها.', 'act-small'),
+    ]);
+    return panel('محاذاة قناتي الجلسة', [readyMedia(activity, fallback), el('label', { class: 'act-range-label' }, ['حرّك القناة B حتى تتطابق علامة المعايرة', range]), meter, fallback]);
   }
 
   function reverseWidget(activity) {
@@ -364,10 +404,11 @@ export function mountActivities(root, services, callbacks = {}) {
     function draw() { display.textContent = (reversed ? [...words].reverse() : words).join(' / '); toggle.setAttribute('aria-pressed', String(reversed)); }
     fieldObservers.set('direction', value => { reversed = value === 'reverse'; draw(); });
     draw();
-    return panel('اتجاه المقطع ومصدره', [display, toggle, details('مقتطف الإيصال ومسار الجلسة', [
+    const fallback = details('اتجاه المقاطع في التفريغ المكتوب', [display, toggle, text('p', 'ترتيب كلمات مأخوذ من المادة المكتوبة. هذا البديل النصي لا يشغّل تسجيلًا ولا يحاكي صوته.', 'act-small')]);
+    return panel('اتجاه المقطع ومصدره', [readyMedia(activity, fallback), fallback, details('مقتطف الإيصال ومسار الجلسة', [
       text('blockquote', 'الأمامي منشور، والخلفي معلق.'),
       text('p', 'قارن العبارة بسياق E13 كاملًا، ثم حدد هل المقتطف مصدر مستقل أم جزء من الجلسة نفسها.'),
-    ])], 'بديل نصي لاتجاه المقاطع. نسخة الصوت المعكوس ستُشتق من التسجيل المعتمد عند توفره.');
+    ])]);
   }
 
   function hashWidget(activity) {

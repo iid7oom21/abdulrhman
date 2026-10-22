@@ -13,6 +13,47 @@ Status: implemented and locally tested; **not deployed or connected to a Supabas
 
 This verifies accepted actions and score ownership on the server. As with any open-source puzzle, it does not make published solutions or automated correct answering impossible.
 
+## Release helpers: validate, deploy, check, enable
+
+The scripts in `scripts/` reduce setup to one explicit deployment command after the owner supplies a real project. They never print credential values, and the deploy helper keeps browser cloud configuration unchanged until anonymous API checks pass and the public Auth settings confirm that Google is enabled.
+
+Provide these variables through your terminal/secret manager, not through a committed file:
+
+| Variable | Source |
+| --- | --- |
+| `SUPABASE_PROJECT_REF` | The existing project's20-letter reference |
+| `SUPABASE_ACCESS_TOKEN` | Supabase account access token with access to that project |
+| `SUPABASE_DB_PASSWORD` | That project's database password |
+| `RAVEN_SUPABASE_PUBLIC_KEY` | Public publishable key or legacy **anon** JWT from project settings |
+
+The project URL is derived from the reference. A separately supplied `RAVEN_SUPABASE_URL` must match it. Google client ID/secret are configured in Supabase's provider dashboard, not in this frontend or deployment script. No service-role key is required on the operator's command line.
+
+From the repository root:
+
+```sh
+# Read-only prerequisite report; does not deploy or edit browser configuration.
+node raven/terminal-preview/supabase/scripts/deploy-cloud.mjs --use-npx
+
+# Verify target ownership, apply the migration, deploy the API, check it, then enable public config.
+node raven/terminal-preview/supabase/scripts/deploy-cloud.mjs --use-npx --apply
+```
+
+`--use-npx` uses pinned Supabase CLI2.121.0. If the CLI is installed, omit that option. An existing verified binary can be selected with `--cli /absolute/path/to/supabase` or `SUPABASE_CLI_BIN`. The helper rejects ambiguous project/branch names and mismatched URLs; it verifies the requested project is accessible before deployment. CLI subprocess output is withheld on failure to avoid echoing credentials. Successful deployment still requires publishing the changed static file and verifying real Google login.
+
+For an already deployed backend, independent checks and configuration are available:
+
+```sh
+node raven/terminal-preview/supabase/scripts/check-cloud.mjs --url https://YOUR_PROJECT_REF.supabase.co
+node raven/terminal-preview/supabase/scripts/configure-cloud.mjs --url https://YOUR_PROJECT_REF.supabase.co
+node raven/terminal-preview/supabase/scripts/configure-cloud.mjs --url https://YOUR_PROJECT_REF.supabase.co --write
+```
+
+The configuration command defaults to validation only. `--write` atomically replaces the existing public config. It rejects service-role/secret keys, expired anon JWTs, insecure non-local URLs and URLs containing credentials. `--disable --write` returns the frontend to explicit local-only mode. Local HTTP requires `--allow-local`.
+
+The health checker sends no user bearer token and does not create a run: it checks the anonymous top50 view, rejection of unauthenticated writes, allowed-origin preflight, foreign-origin rejection, and `/auth/v1/settings` using the public API key. `apiReady` reports the API checks separately from `googleProviderEnabled` (`true`, `false`, or `null` when unverifiable). Local API checks allow Google to remain disabled by default; add `--require-google` to require its enabled flag. The deploy helper always requires that flag before updating browser configuration. An enabled provider flag does not verify OAuth credentials or a successful login/callback; those real acceptance checks remain pending.
+
+Credential availability was inspected by names/existence only: no project variables, CLI auth cache or linked project were available at implementation time. A CLI version/help invocation and mocked release tests do not count as a hosted deployment.
+
 ## Configure a real project
 
 Needed from the project owner: a Supabase project, its public project URL and publishable/anon key, and a Google OAuth web client. Keep the Google client secret and Supabase service-role key in the Supabase dashboard/server environment; never put them in the browser config or commit them.
@@ -75,7 +116,7 @@ Tables: `profiles`, `case_saves`, `runs`, `run_events`, `leaderboard_entries`. R
 From the repository root, with Node24 and Docker installed:
 
 ```sh
-node --test raven/terminal-preview/supabase/tests/commands.test.mjs raven/terminal-preview/supabase/tests/cloud-client.test.mjs
+node --test raven/terminal-preview/supabase/tests/commands.test.mjs raven/terminal-preview/supabase/tests/cloud-client.test.mjs raven/terminal-preview/supabase/tests/release-tools.test.mjs
 node raven/terminal-preview/supabase/tests/database.test.mjs
 docker run --rm -v "$PWD:/project:ro" -w /project denoland/deno:2.5.4 deno check raven/terminal-preview/supabase/functions/raven-api/index.ts
 docker run --rm -v "$PWD:/project:ro" -w /project denoland/deno:2.5.4 deno test --allow-env raven/terminal-preview/supabase/tests/edge.test.ts
@@ -84,9 +125,34 @@ docker run --rm -v "$PWD:/project:ro" -w /project denoland/deno:2.5.4 deno test 
 - `commands.test.mjs`: all32 server-evaluated activities, real derivative-file SHA-256 bytes, sequence/source gates, hints, invalid vs wrong answers and sanitized accepted payloads.
 - `cloud-client.test.mjs`: disabled configuration, PKCE, invalid callback, logout during refresh/API requests, sequence queue, save conflict preservation, serialized CAS saves practice restoration after logout, monotonic retry snapshots, and response-loss/reload idempotency. Network is mocked.
 - `database.test.mjs`: **47 assertions against a real ephemeral PostgreSQL16 Docker container**, applying the actual migration. Minimal `auth.users`/`auth.uid()` and role fixtures model Supabase. Tests include RLS, cross-account isolation, forbidden direct writes, CAS, idempotent score updates,32 sequential commits, final-only finish, fixed elapsed time, ranking and opt-in visibility. Database answer fixtures deliberately isolate SQL from puzzle logic; actual answer checking is covered separately by command tests.
+- `release-tools.test.mjs`:13 tests for public-key/URL checks, atomic replacement, anonymous health probes, Google-provider readiness, prerequisite reporting, explicit-target ownership, no credential leakage, and enabling browser config only after API/provider checks pass. Deployment and network responses are mocked.
 - `edge.test.ts`:9 tests run the actual HTTP handler with mocked Auth/PostgREST calls, covering verified owner binding, private-token rejection, public view restriction, cached/reordered requests, duplicate-request concurrency regression, source gating and request boundaries.
 
 Docker test containers are removed after completion. No hosted database, real Google account, production score or public result is touched by these tests.
+
+## Optional real local-stack integration
+
+`tests/local-stack.test.mjs` runs against an **already started** local Supabase stack with this migration applied and `raven-api` served. It does not start a stack, deploy a hosted service or test Google. Without the explicit opt-in it reports a skip.
+
+```sh
+RAVEN_LOCAL_STACK_TEST=1 \
+RAVEN_LOCAL_STACK_WORKDIR="$PWD/raven/terminal-preview" \
+RAVEN_SUPABASE_CLI=/absolute/path/to/supabase \
+node --test raven/terminal-preview/supabase/tests/local-stack.test.mjs
+```
+
+The test reads `supabase status --output json` privately and rejects non-loopback API URLs. It creates two random `.invalid` fixture users through the local Auth admin API with email already confirmed, so no email is sent. It signs in with password, exercises both complete32-activity runs through the actual Edge endpoint, verifies owner isolation/RLS, forbidden direct writes, save CAS, scoring/idempotency, stopped completion time and opt-in leaderboard order/visibility. Finally it deletes only its own fixture users, with their associated rows removed by foreign-key cascades. Generated local keys and user tokens are never printed.
+
+A disposable smaller real-component stack is also available when the full Supabase CLI stack cannot start:
+
+```sh
+node raven/terminal-preview/supabase/scripts/run-local-stack.mjs
+```
+
+It requires these images to be locally available (the runner deliberately does not pull them): `postgres:16-alpine`, `public.ecr.aws/supabase/gotrue:v2.197.0`, `public.ecr.aws/supabase/postgrest:v16.4` and `denoland/deno:2.5.4`. It creates an isolated Docker network, an in-memory PostgreSQL data directory, real Auth/PostgREST services and the actual Edge HTTP handler. A loopback byte-forwarding bridge handles Docker/workspace network separation; Auth and database responses are not mocked. Generated credentials stay in private temporary environment files and process pipes. The runner removes only its own containers, network and temporary files on normal completion, errors, SIGINT or SIGTERM.
+
+This real-component test passed all8 tests, including two complete32-activity runs. It verifies actual Auth/password sessions, PostgREST RLS/RPC behavior and the Deno handler with the full repository mounted read-only. It does **not** verify Google login or official Supabase CLI deployment bundling; the full CLI stack was blocked locally by Docker image-layer disk exhaustion. Hosted deployment remains unperformed.
+
 
 ## Live acceptance still required
 

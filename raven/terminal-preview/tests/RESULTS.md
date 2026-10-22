@@ -1,5 +1,31 @@
 # Expansion verification record
 
+## Real-media workbench and release tooling — 2026-10-22
+
+The follow-up adds ready-asset playback to A16/A18/A19, production-media preparation and cloud deployment checks. Production recordings remain pending; all generated media below are temporary test fixtures.
+
+| Run | Result |
+| --- | --- |
+| Chromium full regression | **57/57 passed**, including the fresh 32-activity UI journey at 320px |
+| WebKit full regression after the two additional mobile media cases | **58 passed**, one expected Chromium-CDP-only skip |
+| Final media suite in Chromium and WebKit | **16/16 passed in each**, including the additional 44.1 kHz output regression |
+| Existing engine, command and cloud-client tests | **41/41 passed** |
+| Deployment/configuration/provider-readiness tools | **13/13 passed** |
+| Media preparation and complete-release validation | **10/10 passed** |
+| Real local Auth/REST/database/Edge integration | **8/8 passed**, with two complete 32-activity ranked attempts |
+
+The final media suite decodes actual H.264 and PCM fixtures, switches cameras at a shared position, derives waveform peaks from samples, applies the selected channel offset, reverses actual sample frames and checks excerpts against their declared source range. It rejects invalid hashes, durations and unavailable files; differing excerpt samples are not labeled identical even when the file's own hash is valid. Navigation, hidden-page loading, music ownership and manual pause are exercised. All three ready-media activities are keyboard-operated at 320px.
+
+Decoding/comparison uses 48 kHz independently of device output. A real 44.1 kHz playback context test confirms exact source/excerpt/reversal comparison and playback of 48 kHz buffers in both browsers. The media pipeline verifies full decoding, the 64 MiB per-file bound, camera frames and actual lossless source/derivative samples. Its complete-release check correctly rejects the current pending manifest. No test fixture was added to the production assets.
+
+The cloud release helper checks API boundaries and public Google-provider settings before writing production configuration. A disabled, missing, failed or unauthorized settings response cannot enable the release. An enabled provider flag is not proof of successful OAuth login. The owner confirmed no Supabase project exists yet; hosted configuration and real Google login remain pending.
+
+The official local Supabase startup could not unpack its PostgreSQL image in the Docker daemon's VFS storage (`no space left on device`). A disposable smaller stack then ran real PostgreSQL 16, GoTrue password authentication, PostgREST, and the actual Deno Edge handler with the repository's SQL migration. A local transport bridge forwarded HTTP responses unchanged across the executor/Docker network boundary; Auth and database responses were not mocked. The integration created two confirmed `.invalid` fixture accounts without sending email, completed both 32-activity attempts, and checked account isolation/RLS, rejected direct writes, save CAS, source/stage gates, hints/errors, retries, server timing, opt-in ranking, hiding and abandonment. The runner removes its own fixture infrastructure. This validates the real handler imports and service interactions; official hosted CLI bundling, Google OAuth and device-to-device browser acceptance still require the owner's project.
+
+Reports: `/tmp/raven-release-complete-chromium.json`, `/tmp/raven-release-complete-webkit.json`, `/tmp/raven-media-final-chromium.json`, `/tmp/raven-media-final-webkit.json`. Ready-media visual review captures are `media-a16-320.png`, `media-a18-320.png`, and `media-a19-320.png` in `/workspace/artifacts/raven-expansion-release/`; their camera frames are deliberately synthetic test video. Reviewed layout keeps controls below imagery and waveform labels readable. The A16 readiness copy and A18 clock spacing were corrected after this review.
+
+## Initial expansion baseline
+
 Recorded 2026-10-22 UTC (2026-10-23 in Riyadh) against the repository's static preview on `http://127.0.0.1:8786/raven/terminal-preview/`. These results supersede the pre-expansion 27-test record.
 
 | Run | Result |
@@ -60,4 +86,4 @@ All seven public static routes were then checked through Chromium navigation: HT
 
 ## Remaining acceptance
 
-New call performances, CCTV, laboratory audio channels and same-source audio derivatives still need delivery and actual-media integration checks. The accessible authored alternatives are labeled as such. Exact media requirements are in `MEDIA_ASSETS.md`. Hosted Google/Supabase remain disabled until configured. Physical Android/iOS checks and real-player difficulty/playtime feedback are still useful; automated tests do not establish a 90–120 minute playtime or override browser audible-autoplay policy.
+New call performances, CCTV and the master laboratory recording still need delivery and content review. The workbench and derivative preparation are implemented and tested with actual decoded fixtures; the supplied production files must then pass the same validation and story/timing review. The accessible authored alternatives are labeled as such. Exact media requirements are in `MEDIA_ASSETS.md`. Hosted Google/Supabase remain disabled until configured. Physical Android/iOS checks and real-player difficulty/playtime feedback are still useful; automated tests do not establish a 90–120 minute playtime or override browser audible-autoplay policy.

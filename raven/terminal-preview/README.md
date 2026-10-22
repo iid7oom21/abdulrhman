@@ -57,7 +57,13 @@ Morse and DTMF are real synthesized signals. SHA-256 is calculated with Web Cryp
 
 New performed dialogue, laboratory channels, and CCTV clips have **not** been supplied. The optional Elias/Adrian call therefore offers a clearly labeled written scene; activities 15–19 use authored, accessible visual/text materials. They are not described as extracted recordings. Exact recording, timing, filenames, and manifest requirements are in [MEDIA_ASSETS.md](MEDIA_ASSETS.md).
 
+The real-media workbench is implemented for those assets: synchronized camera switching and seeking in A16, decoded PCM waveforms and the player's chosen channel offset in A18, and actual sample reversal/source-excerpt comparison in A19. It verifies file sizes, SHA-256 and decoded durations before enabling playback, releases resources on navigation, and uses the existing soundtrack priority system. Written alternatives remain available. Playback never submits an answer or grants progress.
+
+The media preparation tool takes five supplied originals (one master recording, one optional-call recording, three camera clips) and a timed cue sheet. It creates the three audio derivatives without re-performing them, validates exact sample provenance, and stages a manifest plus captions in a new directory. Its complete-release check fails on the current pending manifest. Technical checks do not certify the spoken dialogue or depicted events; these must match the production script. Synthetic test fixtures are temporary and never shipped as production media.
+
 Google sign-in, cloud save, and ranking are implemented behind the disabled public runtime configuration. Local play works without them. Supabase must be deployed and Google OAuth configured before those services are live; see [Supabase deployment documentation](supabase/README.md). No private key belongs in `runtime-config.js`.
+
+Deployment helpers provide a read-only prerequisite check, explicit-project deployment, live API health probes and atomic public configuration. They leave cloud disabled if prerequisites or health checks fail. Google OAuth requires the owner's Supabase project and Google web client; passing local or mocked tests does not mean hosted sign-in is enabled.
 
 Competitive attempts start fresh on the server. The Edge function validates every activity with the shared rules; database transactions enforce sequencing, idempotency, source access, owner isolation, counters, and server timing. Ranking uses fewer hints, then fewer errors, then lower elapsed time. Only a voluntarily published alias is shown. Local saves and client timer values cannot submit a score. This is server validation, not a claim that public puzzle answers are impossible to discover.
 

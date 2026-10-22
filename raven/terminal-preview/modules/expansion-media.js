@@ -79,6 +79,68 @@ export function mediaURL(record) {
   } catch { return null; }
 }
 
+/** Fetch the declared bytes, not an unchecked remote media URL. */
+export async function loadVerifiedMedia(record, { signal, kind = 'audio', maxBytes = 64 * 1024 * 1024 } = {}) {
+  const url = mediaURL(record);
+  if (!url || !String(record.mime).startsWith(`${kind}/`) || !/^[a-f\d]{64}$/i.test(record.sha256 || '')
+    || !Number.isSafeInteger(record.bytes) || record.bytes < 1 || record.bytes > maxBytes
+    || !Number.isFinite(record.durationSeconds) || record.durationSeconds <= 0) throw new Error('بيانات الأصل غير مكتملة؛ يلزم ملف معتمد بحجمه وبصمته ومدته.');
+  const response = await fetch(url, { signal, credentials: 'same-origin' });
+  if (!response.ok) throw new Error('تعذّر تنزيل أصل الوسائط.');
+  const length = Number(response.headers.get('content-length'));
+  if (length > maxBytes) throw new Error('حجم الأصل أكبر من الحد المسموح.');
+  const bytes = await response.arrayBuffer();
+  if (signal?.aborted) throw new DOMException('Aborted', 'AbortError');
+  if (bytes.byteLength !== record.bytes || bytes.byteLength > maxBytes) throw new Error('حجم الملف لا يطابق بيان الأصل.');
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  const sha256 = [...new Uint8Array(digest)].map(value => value.toString(16).padStart(2, '0')).join('');
+  if (sha256 !== record.sha256.toLowerCase()) throw new Error('بصمة الملف لا تطابق الأصل المعتمد؛ أوقف تحميله.');
+  return { bytes, blob: new Blob([bytes], { type: record.mime }), url, sha256 };
+}
+
+/** Peaks are calculated only from decoded PCM samples. */
+export function waveformPeaks(buffer, bins = 240) {
+  const count = Math.max(1, Math.min(buffer.length, Math.floor(bins) || 240));
+  const peaks = new Float32Array(count);
+  for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+    const samples = buffer.getChannelData(channel);
+    for (let bin = 0; bin < count; bin++) {
+      const start = Math.floor(bin * buffer.length / count);
+      const end = Math.floor((bin + 1) * buffer.length / count);
+      for (let index = start; index < end; index++) peaks[bin] = Math.max(peaks[bin], Math.abs(samples[index]));
+    }
+  }
+  return peaks;
+}
+
+export function reverseAudioBuffer(context, buffer) {
+  const reversed = context.createBuffer(buffer.numberOfChannels, buffer.length, buffer.sampleRate);
+  for (let channel = 0; channel < buffer.numberOfChannels; channel++) {
+    const source = buffer.getChannelData(channel), target = reversed.getChannelData(channel);
+    for (let index = 0; index < source.length; index++) target[index] = source[source.length - index - 1];
+  }
+  return reversed;
+}
+
+export function sliceAudioBuffer(context, buffer, start, end) {
+  if (!Number.isFinite(start) || !Number.isFinite(end) || start < 0 || end <= start || end > buffer.duration + 1 / buffer.sampleRate) throw new Error('مدى المقتطف خارج الأصل.');
+  const first = Math.round(start * buffer.sampleRate), last = Math.min(buffer.length, Math.round(end * buffer.sampleRate));
+  const result = context.createBuffer(buffer.numberOfChannels, last - first, buffer.sampleRate);
+  for (let channel = 0; channel < buffer.numberOfChannels; channel++) result.copyToChannel(buffer.getChannelData(channel).subarray(first, last), channel);
+  return result;
+}
+
+/** A PCM comparison is not a claim that independently encoded files have equal bytes. */
+export function compareAudioBuffers(left, right) {
+  if (left.sampleRate !== right.sampleRate || left.numberOfChannels !== right.numberOfChannels || left.length !== right.length) return { comparable: false, equal: false, maxDifference: null };
+  let maxDifference = 0;
+  for (let channel = 0; channel < left.numberOfChannels; channel++) {
+    const a = left.getChannelData(channel), b = right.getChannelData(channel);
+    for (let index = 0; index < a.length; index++) maxDifference = Math.max(maxDifference, Math.abs(a[index] - b[index]));
+  }
+  return { comparable: true, equal: maxDifference <= 1e-6, maxDifference };
+}
+
 /**
  * Call play methods directly from a trusted button with data-media-start.
  * Promise resolves true only after audible completion. Signals never solve activities.
