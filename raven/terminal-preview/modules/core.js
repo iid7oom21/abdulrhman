@@ -1,6 +1,6 @@
-import { CASE_DATA } from '../../../fourth-signature/case-data.js?v=6d062d5989d21c42';
-import { EXPANSION_EVIDENCE, REVISION } from './expansion-data.js?v=6d062d5989d21c42';
-import { emptyProgress, normalizeProgress, availableEvidenceIds, solvedQuestionIds } from './investigation.js?v=6d062d5989d21c42';
+import { CASE_DATA } from '../../../fourth-signature/case-data.js?v=70ffb86082c1ed7e';
+import { EXPANSION_EVIDENCE, REVISION } from './expansion-data.js?v=70ffb86082c1ed7e';
+import { emptyProgress, normalizeProgress, availableEvidenceIds, solvedQuestionIds } from './investigation.js?v=70ffb86082c1ed7e';
 
 export const BASE = new URL('../', import.meta.url);
 export const CASE_BASE = new URL('../../../fourth-signature/', import.meta.url);

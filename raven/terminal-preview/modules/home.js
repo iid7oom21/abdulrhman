@@ -1,5 +1,5 @@
-import { el } from './core.js?v=6d062d5989d21c42';
-import { HERO, EPISODES, ZARQA } from './catalog.js?v=6d062d5989d21c42';
+import { el } from './core.js?v=70ffb86082c1ed7e';
+import { HERO, EPISODES, ZARQA } from './catalog.js?v=70ffb86082c1ed7e';
 
 export function mount(root, services, route = '') {
   const { t, store, audio } = services;

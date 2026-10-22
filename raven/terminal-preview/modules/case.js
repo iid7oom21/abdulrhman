@@ -1,11 +1,11 @@
-import { el, caseCompletionKey } from './core.js?v=6d062d5989d21c42';
-import { createToolkit } from './toolkit.js?v=6d062d5989d21c42';
-import { mountActivities } from './activities.js?v=6d062d5989d21c42';
-import { attachPhotoRegions } from './photo-regions.js?v=6d062d5989d21c42';
-import { attachParagraphQuestions } from './paragraph-questions.js?v=6d062d5989d21c42';
-import { mountIncomingCall } from './incoming-call.js?v=6d062d5989d21c42';
-import { mountCloudPanel } from './cloud.js?v=6d062d5989d21c42';
-import { EVIDENCE_FOCUS } from '../../../fourth-signature/evidence-focus.js?v=6d062d5989d21c42';
+import { el, caseCompletionKey } from './core.js?v=70ffb86082c1ed7e';
+import { createToolkit } from './toolkit.js?v=70ffb86082c1ed7e';
+import { mountActivities } from './activities.js?v=70ffb86082c1ed7e';
+import { attachPhotoRegions } from './photo-regions.js?v=70ffb86082c1ed7e';
+import { attachParagraphQuestions } from './paragraph-questions.js?v=70ffb86082c1ed7e';
+import { mountIncomingCall } from './incoming-call.js?v=70ffb86082c1ed7e';
+import { mountCloudPanel } from './cloud.js?v=70ffb86082c1ed7e';
+import { EVIDENCE_FOCUS } from '../../../fourth-signature/evidence-focus.js?v=70ffb86082c1ed7e';
 
 const TYPES = {
   E01: ['administrative', 'ADM', 'محضر إداري'], E02: ['receipt', 'LC', 'محضر تسليم'],
@@ -129,7 +129,7 @@ export function mount(root, services) {
       el('p', { class: 'case-eyebrow', text: 'ملف ٠١٧ / أعيد فتحه عام ٢٠٢٦' }),
       el('h1', { id: 'case-title' }, ['التوقيع ', el('span', { text: 'الرابع.' })]),
       el('p', { class: 'case-hero-lead', text: data.subtitle }),
-      el('div', { class: 'case-hero-actions' }, [button(state().progress.completedActivityIds.length ? 'واصل التحقيق ←' : 'افتح حزمة المراجعة ←', () => selectTab('activities'), { class: 'case-button case-primary', 'data-resume-investigation': true }), el('span', { class: 'case-small', text: '٧ مراحل · ٣٢ نشاطًا · ١٦ دليلًا' })]),
+      el('div', { class: 'case-hero-actions' }, [button(state().progress.completedActivityIds.length ? 'واصل التحقيق ←' : 'افتح حزمة المراجعة ←', () => selectTab('activities'), { class: 'case-button case-primary', 'data-resume-investigation': true }), button('دليل البداية', openStartGuide, { 'data-open-start-guide': '' }), el('span', { class: 'case-small', text: '٧ مراحل · ٣٢ نشاطًا · ١٦ دليلًا' })]),
     ]),
     scene({ image: asset('assets/hero.webp'), video: asset('assets/video/hero.mp4'), title: 'ليلة الحريق / لوسيان أمام الأرشيف', alt: 'لوسيان يحمل قفلًا أمام مبنى الأرشيف المشتعل', hero: true }, heroDisposers),
   ]);
@@ -170,6 +170,14 @@ export function mount(root, services) {
       const badge = card.querySelector('.case-read-status'); if (badge) badge.textContent = !allowed ? 'يفتح مع تقدم التحقيق' : viewed ? 'فُتح ✓' : 'افتح الملف ←';
       if (card.tagName === 'BUTTON') card.disabled = !allowed;
     });
+  }
+  function openStartGuide() {
+    selectTab('activities', false);
+    const guide = workspace.querySelector('[data-start-guide]');
+    if (!guide) return;
+    guide.open = true;
+    guide.querySelector('summary')?.focus({ preventScroll: true });
+    guide.scrollIntoView({ block: 'start', behavior: 'auto' });
   }
   function selectTab(next, move = true) {
     if (next === 'board') { tool('board'); return; }
@@ -397,7 +405,7 @@ export function mount(root, services) {
     const requestedRun = caseCompletionKey(state().progress);
     closeReader(); closeComparison();
     try {
-      endingImport ||= import('./case-ending.js?v=6d062d5989d21c42').catch(error => { endingImport = null; throw error; });
+      endingImport ||= import('./case-ending.js?v=70ffb86082c1ed7e').catch(error => { endingImport = null; throw error; });
       const module = await endingImport;
       if (disposed || request !== endingRequest || !investigation.canReport() || requestedRun !== caseCompletionKey(state().progress)) return false;
       endingController ||= module.createCaseEnding(page, services, { onReport: showReport });

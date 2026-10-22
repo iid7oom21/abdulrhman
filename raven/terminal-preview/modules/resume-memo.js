@@ -1,5 +1,5 @@
-import { node as el } from '../../../fourth-signature/dom.js?v=6d062d5989d21c42';
-import { ACTIVITIES } from './expansion-data.js?v=6d062d5989d21c42';
+import { node as el } from '../../../fourth-signature/dom.js?v=70ffb86082c1ed7e';
+import { ACTIVITIES } from './expansion-data.js?v=70ffb86082c1ed7e';
 
 const list = value => Array.isArray(value) ? value : [];
 const text = value => typeof value === 'string' ? value : '';

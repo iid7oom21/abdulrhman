@@ -1,5 +1,20 @@
 # Expansion verification record
 
+## Beginner investigation guide — 2026-10-22
+
+Release `70ffb86082c1ed7e` adds a short, inline three-step guide, an explicit current-source action, a persistent dismissal preference, a hero reopening button and visible source labels. It introduces no solution values, evidence unlocks, scoring changes or new media. Only an explicit source click marks an available document viewed; drafts and the actual current task survive guide navigation.
+
+| Check | Result |
+| --- | --- |
+| Chromium expansion, release-loading and new guide scenarios | **12 distinct cases passed**, including the fresh 32-activity journey |
+| WebKit new guide scenarios and fresh 32-activity journey | **3/3 passed** |
+| Final guide copy/scroll positioning, Chromium and WebKit | **2/2 passed in each engine** |
+| Engine and release-stamper tests | **28/28 passed** |
+
+The guide scenarios cover no automatic document opening or solution disclosure, unchanged hints/errors/accepted work, explicit E09 reading, source return, draft restoration after reload, remembered dismissal, keyboard reopening/focus, manual music-off, and a returning A05 investigator reviewing A01 without losing current progress. Layouts at 320, 390 and 1440px have no page overflow and usable controls. Visual review checked the mobile stack and desktop three-column guide; the shell's existing scroll padding keeps its heading below navigation.
+
+Reports: `/tmp/raven-start-guide-chromium.json` (the initial run included one incorrect test assumption that a returning player's guide stays expanded after reader return), `/tmp/raven-start-guide-chromium-final.json` (corrected cases and final presentation), `/tmp/raven-start-guide-webkit.json`, `/tmp/raven-start-guide-webkit-final.json`. Captures: `start-guide-320.png`, `start-guide-390.png`, `start-guide-1440.png` in `/workspace/artifacts/raven-expansion-release/`.
+
 ## Mobile code keyboard fix — 2026-10-22
 
 The activity renderer inferred a numeric keyboard from field names containing `code` or `key`, preventing normal mobile entry of archive references with letters and separators. It now defaults text inputs to `inputmode="text"`, respecting explicitly declared numeric hints and real number fields. Release `6d062d5989d21c42` refreshes the complete module graph; no case facts, validation rules, save schema or approved media changed.

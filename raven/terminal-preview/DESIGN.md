@@ -83,6 +83,8 @@ Browser releases carry one content-derived version through all module imports an
 
 The playable path alternates short source reading with concrete manipulations. There is one current activity, three progressive hints per activity, and a review index for completed activities. Reopening a completed activity shows its accepted answer read-only. Controls use buttons/selects and explicit move actions as keyboard and touch alternatives; no puzzle requires dragging alone.
 
+A collapsible three-step beginner guide appears before the activity navigation. It is initially expanded only for a fresh investigation without a dismissal preference, with native keyboard-accessible reopening and a hero shortcut. Copy explains source → inspection → accepted submission, without solution values; a direct source button uses the current task's first unread accessible requirement. A visible source caption distinguishes source buttons from decorative references. Dismissal is a device UI preference independent of case progress, scoring and reset. Existing players return to their current activity without replaying the beginning.
+
 | Chapter | Activities and outcomes |
 | --- | --- |
 | 1 · Opening the package | A01 duplex UV inspection; A02 fragments and template; A03 Morse and Caesar; A04 missing versus cancelled ledger numbers. |

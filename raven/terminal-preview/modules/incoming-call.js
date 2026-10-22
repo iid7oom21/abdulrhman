@@ -1,5 +1,5 @@
-import { el } from './core.js?v=6d062d5989d21c42';
-import { loadMediaManifest, mediaURL } from './expansion-media.js?v=6d062d5989d21c42';
+import { el } from './core.js?v=70ffb86082c1ed7e';
+import { loadMediaManifest, mediaURL } from './expansion-media.js?v=70ffb86082c1ed7e';
 
 export const CALL_TRANSCRIPT = Object.freeze([
   { speaker: 'إلياس', text: 'أدريان… عندي طلب مخرج الأرشيف. المزلاج يعلق إذا حاولنا نفتحه من الداخل. يحتاج استبدال.' },

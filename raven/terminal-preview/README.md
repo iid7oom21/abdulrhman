@@ -58,6 +58,8 @@ Audio-policy tests intercept the song with a valid PCM audio fixture and the fil
 
 ## Content and state
 
+The inline **كيف أبدأ التحقيق؟** guide explains three actions: open the current source, inspect and record, then submit and continue. It starts expanded for a new investigator and remembers dismissal on this device; the hero's **دليل البداية** button reopens it at any time. Its source action opens only an accessible document required by the actual current task, and returning to the task preserves drafts. Reading the guide cannot solve an activity, reveal a code or consume a hint. Toolkit use remains optional.
+
 The original `fourth-signature/case-data.js` and deduction-support rules remain authoritative. The original eight documents are unchanged. E09–E16 are separately labeled, authored materials from a 2026 review. Their duplex handling card B17 has a reverse B17-R which entered review but was absent from the published package. This establishes an incomplete package, not a new culprit or a determined fire origin.
 
 Activities A01–A32 are required in order. The four canonical deductions occur at A08, A14, A26, and A32; only the final accepted activity enables the report. The three existing free-practice cipher tools remain optional. Notes, board links, chronology, and hypotheses remain personal working material. Photo discoveries require explicit activation, paragraph questions cite opened sources, and the resume memo separates progress from personal notes.

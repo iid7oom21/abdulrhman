@@ -1,7 +1,7 @@
-import { BASE, CASE, caseAsset, el, routeURL, createStore, createCaseStore, importLegacy } from './core.js?v=6d062d5989d21c42';
-import { createAudio } from './audio.js?v=6d062d5989d21c42';
-import { createInvestigation } from './investigation.js?v=6d062d5989d21c42';
-import { createCloud } from './cloud.js?v=6d062d5989d21c42';
+import { BASE, CASE, caseAsset, el, routeURL, createStore, createCaseStore, importLegacy } from './core.js?v=70ffb86082c1ed7e';
+import { createAudio } from './audio.js?v=70ffb86082c1ed7e';
+import { createInvestigation } from './investigation.js?v=70ffb86082c1ed7e';
+import { createCloud } from './cloud.js?v=70ffb86082c1ed7e';
 
 const outlet = document.querySelector('#route-outlet');
 const notices = document.querySelector('#site-notice');
@@ -106,12 +106,12 @@ async function renderRoute({ restoreY, focus = true } = {}) {
   outlet.replaceChildren(el('div', { class: 'route-loading', role: 'status', text: services.t('نفتح الملف…', 'Opening the file…') }));
   try {
     if (relative === 'case-017') {
-      const [module] = await Promise.all([import('./case.js?v=6d062d5989d21c42'), stylesheet('case.css'), stylesheet('toolkit.css'), stylesheet('activities.css'), stylesheet('media-workbench.css'), stylesheet('case-ending.css'), stylesheet('evidence-helpers.css'), stylesheet('incoming-call.css'), stylesheet('cloud.css')]);
+      const [module] = await Promise.all([import('./case.js?v=70ffb86082c1ed7e'), stylesheet('case.css'), stylesheet('toolkit.css'), stylesheet('activities.css'), stylesheet('media-workbench.css'), stylesheet('case-ending.css'), stylesheet('evidence-helpers.css'), stylesheet('incoming-call.css'), stylesheet('cloud.css')]);
       if (generation !== routeGeneration) return;
       outlet.replaceChildren(); cleanup = module.mount(outlet, services) || (() => {});
       document.title = services.t('التوقيع الرابع — ملف 017 | RAVEN', 'The Fourth Signature — Case 017 | RAVEN');
     } else {
-      const module = await import('./home.js?v=6d062d5989d21c42');
+      const module = await import('./home.js?v=70ffb86082c1ed7e');
       if (generation !== routeGeneration) return;
       outlet.replaceChildren(); cleanup = module.mount(outlet, services, relative) || (() => {});
     }

@@ -1,6 +1,6 @@
-import { el } from './core.js?v=6d062d5989d21c42';
-import { ACTIVITIES, CHAPTERS } from './expansion-data.js?v=6d062d5989d21c42';
-import { createSignalPlayer } from './expansion-media.js?v=6d062d5989d21c42';
+import { el } from './core.js?v=70ffb86082c1ed7e';
+import { ACTIVITIES, CHAPTERS } from './expansion-data.js?v=70ffb86082c1ed7e';
+import { createSignalPlayer } from './expansion-media.js?v=70ffb86082c1ed7e';
 
 const arabic = value => new Intl.NumberFormat('ar', { useGrouping: false }).format(value);
 const button = (text, action, attributes = {}) => el('button', { type: 'button', class: 'act-button', text, onClick: action, ...attributes });
@@ -19,6 +19,7 @@ export function mountActivities(root, services, callbacks = {}) {
   }
   let destroyed = false;
   const initialSnapshot = engine.getSnapshot();
+  let guideOpen = !(initialSnapshot.completedActivityIds || []).length && !services.store?.get?.('caseStartGuideCollapsed', false);
   let selectedId = initialSnapshot.currentActivityId || idOf(ACTIVITIES[Math.min(ACTIVITIES.length - 1, (initialSnapshot.completedActivityIds || []).length)]);
   let localUpdate = false;
   let selectedDraft = {};
@@ -81,6 +82,40 @@ export function mountActivities(root, services, callbacks = {}) {
     if (!canVisit(id)) { services.notify?.('أكمل المهمة الحالية لفتح هذه المرحلة.'); return; }
     flushDraft(); selectedId = id; render();
     if (focus) shell.querySelector('.act-title')?.focus({ preventScroll: true });
+  }
+  function startGuide() {
+    // Procedural help only: opening the guide never opens evidence or submits work.
+    const current = getActivity(snapshot().currentActivityId || idOf(ACTIVITIES[currentIndex()]));
+    const ids = (current.requiredEvidenceIds || []).filter(access);
+    const sourceId = ids.find(id => !services.caseStore.get().viewedIds.includes(id)) || ids[0];
+    const source = services.caseData.evidence.find(item => item.id === sourceId);
+    const guide = el('details', { class: 'act-start-guide', 'data-start-guide': '', open: guideOpen });
+    const step = (title, copy) => el('li', {}, [text('strong', title), text('p', copy)]);
+    const first = step('افتح المصدر', 'اقرأ الوثيقة، ثم اضغط «عُد إلى المهمة الحالية».');
+    if (source) first.append(button(`افتح ${source.title} ←`, () => {
+      flushDraft(); callbacks.openEvidence?.(sourceId);
+    }, { 'data-guide-source': sourceId }));
+    const instructions = el('ol', { class: 'act-guide-steps' }, [first,
+      step('افحص وسجّل', current.id === 'A01'
+        ? 'اقلب الظرف وغيّر الإضاءة. اكتب المرجع الذي يظهر، بحروفه وأرقامه والشرطة.'
+        : 'اتبع طلب المهمة واستخدم أزرار الفحص، ثم سجّل ما يدعمه المصدر.'),
+      step('ثبّت وتابع', 'اضغط «ثبّت نتيجة الفحص»، ثم «واصل إلى المهمة التالية» بعد القبول.'),
+    ]);
+    guide.append(text('summary', 'كيف أبدأ التحقيق؟'),
+      text('p', 'ابدأ بمصدر واحد، ثم جرّب الفحص.', 'act-guide-lead'), instructions,
+      text('p', 'الأدوات اختيارية. «أحتاج تلميحًا» يُحسب ضمن محاولتك؛ هذا الدليل لا يُحسب.', 'act-small'),
+      button('فهمت، إلى المهمة الحالية ←', () => {
+        guideOpen = false; services.store?.set?.('caseStartGuideCollapsed', true);
+        openActivity(idOf(current));
+        shell.querySelector('.act-title')?.scrollIntoView({ block: 'start', behavior: 'auto' });
+      }, { class: 'act-button act-primary', 'data-guide-start': '' }),
+    );
+    guide.addEventListener('toggle', () => {
+      if (destroyed || shell.querySelector('[data-start-guide]') !== guide) return;
+      guideOpen = guide.open;
+      if (!guideOpen) services.store?.set?.('caseStartGuideCollapsed', true);
+    });
+    return guide;
   }
   function sources(activity) {
     const ids = activity.requiredEvidenceIds || [];
@@ -219,7 +254,7 @@ export function mountActivities(root, services, callbacks = {}) {
     fallback.open = true;
     fallback.classList.add('act-media-fallback');
     cleanups.push(() => { disposed = true; unmount?.(); });
-    import('./media-workbench.js?v=6d062d5989d21c42').then(({ mountMediaWorkbench }) => {
+    import('./media-workbench.js?v=70ffb86082c1ed7e').then(({ mountMediaWorkbench }) => {
       if (disposed || destroyed || generation !== mountedGeneration) return;
       host.replaceChildren();
       unmount = mountMediaWorkbench(host, services, {
@@ -585,7 +620,7 @@ export function mountActivities(root, services, callbacks = {}) {
       disabled: !canVisit(idOf(item)), 'data-activity-open': idOf(item), 'aria-current': idOf(item) === selectedId ? 'step' : undefined,
     })))]);
     const card = el('article', { class: `act-card${done ? ' is-complete' : ''}`, 'data-activity-id': selectedId });
-    card.append(text('p', `${chapterTitle} · المهمة ${arabic(activity.number)} من ٣٢`, 'act-eyebrow'), el('h3', { class: 'act-title', text: activity.title, tabindex: '-1' }), text('p', activity.instruction || '', 'act-instruction'), sources(activity));
+    card.append(text('p', `${chapterTitle} · المهمة ${arabic(activity.number)} من ٣٢`, 'act-eyebrow'), el('h3', { class: 'act-title', text: activity.title, tabindex: '-1' }), text('p', activity.instruction || '', 'act-instruction'), text('p', 'مصدر هذه المهمة · افتحه قبل الفحص', 'act-source-heading'), sources(activity));
     const briefing = (activity.briefing || []).filter(line => line !== activity.instruction);
     if (briefing.length) card.append(el('div', { class: 'act-briefing' }, briefing.map(line => text('p', line))));
     const widget = customWidget(activity); if (widget) card.append(widget);
@@ -642,7 +677,7 @@ export function mountActivities(root, services, callbacks = {}) {
       if (question) card.append(text('p', question.explanation, 'act-result-explanation'));
     }
     const footer = el('p', { class: 'act-save-note', text: 'مسودة الفحص محفوظة على هذا الجهاز. يمكنك فتح الأدلة والعودة إلى المهمة.' });
-    shell.replaceChildren(header, chapters, navigator, card, footer);
+    shell.replaceChildren(header, startGuide(), chapters, navigator, card, footer);
   }
 
   const unsubscribe = engine.subscribe(() => {
