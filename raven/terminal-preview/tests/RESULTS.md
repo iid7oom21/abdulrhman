@@ -50,6 +50,14 @@ Additional client/engine regressions prevent a pending refresh from resurrecting
 
 Visual review inspected the current-task viewport at 390px, alignment at 320px, file hashing at 1440px, and report layout. Additional captures cover opening and people/document grid. Isolated screenshots use valid seeded prefixes only to reach the view being inspected; the full journey tests above start fresh. Original case facts, approved films and the soundtrack files have no source changes in this release.
 
+The actual Chromium print export is a two-page A4 PDF. Page two was visually inspected: unresolved-fire limits and the distinct B17-R/2026 appendix are readable without clipping. Artifact: `report.pdf` in the release folder above.
+
+## Published preview verification
+
+Code commit `19d1364` was pushed to `raven-fourth-signature` and fast-forwarded to the existing `gh-pages` deployment branch. GitHub Pages reported a successful build. On the actual public `/abdulrhman/raven/terminal-preview/` origin, the full fresh 32-activity journey at 320px passed in 23.2 seconds, as did the cross-route case/films/episode/home journey. The real derivative files were downloaded and hashed by the public page.
+
+All seven public static routes were then checked through Chromium navigation: HTTP200, noindex, mounted headings, no iframe, no horizontal overflow at 390px, and zero page errors. The original APIRequestContext route check could not connect directly from this executor (`ENETUNREACH`/`ECONNREFUSED`); the browser-based replacement used the functioning browser network path and passed all seven routes. This was an executor transport limitation, not a site HTTP failure. Public artifacts: `/tmp/raven-expansion-public.json`, `public-routes.json`, and `public-case-390.png` in the release folder. The production homepage and original case/media files were not changed by this expansion commit.
+
 ## Remaining acceptance
 
 New call performances, CCTV, laboratory audio channels and same-source audio derivatives still need delivery and actual-media integration checks. The accessible authored alternatives are labeled as such. Exact media requirements are in `MEDIA_ASSETS.md`. Hosted Google/Supabase remain disabled until configured. Physical Android/iOS checks and real-player difficulty/playtime feedback are still useful; automated tests do not establish a 90–120 minute playtime or override browser audible-autoplay policy.
