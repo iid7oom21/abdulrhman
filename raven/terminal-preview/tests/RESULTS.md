@@ -1,5 +1,23 @@
 # Expansion verification record
 
+## Returning-visitor loading fix — 2026-10-22
+
+The reported «تعذّر فتح الملف» was reproduced with the previous cached `core.js` and current `case.js`: the missing `caseCompletionKey` export rejects module linking. GitHub Pages returned `Cache-Control: max-age=600`; the page query alone did not refresh relative module imports. Clicking the old Retry reused the rejected entry in the current document's module map, while saved investigation bytes remained intact.
+
+Release `bd8a32b4db729ff9` versions all 43 local module imports, the app/style references in seven static pages, and lazy route CSS. The content-derived stamper hashes shared canonical leaf files without modifying them; `--check` verifies drift without writes. Retry now navigates to a fresh document with a fresh page query while retaining route/language/hash and stored progress. This is cache busting, not immutable hosting of prior releases.
+
+| Check | Result |
+| --- | --- |
+| Complete Chromium browser suite | **79/79 passed**, 91.9 seconds |
+| Complete WebKit browser suite | **78 passed**, one expected Chromium-CDP-only skip, 2.1 minutes |
+| Engine, server commands, cloud client and release stamper | **50/50 passed** |
+| Deno Edge-handler tests | **9/9 passed**; type check passed |
+| Release consistency | `stamp-release.mjs --check` passed |
+
+Four new browser regressions verify consistent HTML versions, ignoring a stale unversioned core across initial/lazy modules and route CSS, real document navigation after a network failure, and recovery from the exact missing-export linking failure. Accepted progress, a personal note, manual music-off and film position survive both recovery paths. Both browsers also completed the full fresh 32-activity UI journey through the ending and report. No storage schema, case revision, canonical document or approved media file changed.
+
+Reports: `/tmp/raven-loadfix-chromium.json`, `/tmp/raven-loadfix-webkit.json`. The release-stamper unit cases cover stable/idempotent versioning, static/dynamic/shared imports, untouched examples/comments, seven HTML entries, dependency/style/canonical-byte changes, read-only checking and failure before writes for an unsupported shared dependency graph.
+
 ## Case ending — 2026-10-22
 
 The ending release adds a 14-second authored DOM/CSS cinematic after newly accepted A32, skip/replay/report actions, run-bound presentation state and optional verified-video playback. No actual finale video has been supplied; `assets/case-ending.json` stays pending. The original case data, approved recording and film files are unchanged.

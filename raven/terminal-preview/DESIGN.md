@@ -77,6 +77,8 @@ All new state uses the `raven-preview:v1` namespace. The expansion has its own `
 
 Each route mounts and disposes its own events/media. The single audio owner survives route replacement. Local investigation needs no account or backend; optional Google/cloud/ranking features require the supplied Supabase deployment. No mailing provider, festival award, or unpublished release date is fabricated.
 
+Browser releases carry one content-derived version through all module imports and entry/route styles. This prevents returning visitors from combining an old cached core with a new route module. The explicit error-page Retry opens a fresh document/module map while keeping saved investigation, film and music state. Normal internal navigation remains within the existing shell and audio owner.
+
 ## Expanded investigation: review 2026
 
 The playable path alternates short source reading with concrete manipulations. There is one current activity, three progressive hints per activity, and a review index for completed activities. Reopening a completed activity shows its accepted answer read-only. Controls use buttons/selects and explicit move actions as keyboard and touch alternatives; no puzzle requires dragging alone.

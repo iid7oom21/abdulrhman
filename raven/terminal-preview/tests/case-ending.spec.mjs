@@ -192,7 +192,7 @@ test('loading an already completed run stays quiet; reset removes ending progres
 
 test('an unavailable ending module leaves the completed investigation and report usable', async ({ page, context }) => {
   const errors = []; page.on('pageerror', error => errors.push(error.message));
-  await page.route('**/modules/case-ending.js', request => request.abort());
+  await page.route(/\/modules\/case-ending\.js(?:\?.*)?$/, request => request.abort());
   await seedExpansion(context, 31);
   await boot(page, 'case-017/');
   await readRequiredSources(page, ACTIVITIES[31]);

@@ -1,6 +1,6 @@
-import { el } from './core.js';
-import { ACTIVITIES, CHAPTERS } from './expansion-data.js';
-import { createSignalPlayer } from './expansion-media.js';
+import { el } from './core.js?v=bd8a32b4db729ff9';
+import { ACTIVITIES, CHAPTERS } from './expansion-data.js?v=bd8a32b4db729ff9';
+import { createSignalPlayer } from './expansion-media.js?v=bd8a32b4db729ff9';
 
 const arabic = value => new Intl.NumberFormat('ar', { useGrouping: false }).format(value);
 const button = (text, action, attributes = {}) => el('button', { type: 'button', class: 'act-button', text, onClick: action, ...attributes });
@@ -217,7 +217,7 @@ export function mountActivities(root, services, callbacks = {}) {
     fallback.open = true;
     fallback.classList.add('act-media-fallback');
     cleanups.push(() => { disposed = true; unmount?.(); });
-    import('./media-workbench.js').then(({ mountMediaWorkbench }) => {
+    import('./media-workbench.js?v=bd8a32b4db729ff9').then(({ mountMediaWorkbench }) => {
       if (disposed || destroyed || generation !== mountedGeneration) return;
       host.replaceChildren();
       unmount = mountMediaWorkbench(host, services, {

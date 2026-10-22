@@ -1,6 +1,6 @@
-import { CLOUD_CONFIG } from './runtime-config.js';
-import { REVISION } from './expansion-data.js';
-import { el } from './core.js';
+import { CLOUD_CONFIG } from './runtime-config.js?v=bd8a32b4db729ff9';
+import { REVISION } from './expansion-data.js?v=bd8a32b4db729ff9';
+import { el } from './core.js?v=bd8a32b4db729ff9';
 
 export class CloudError extends Error {
   constructor(message, code = 'UNAVAILABLE', status = 0) { super(message); this.code = code; this.status = status; }

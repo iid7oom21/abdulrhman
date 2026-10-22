@@ -17,6 +17,21 @@ python3 -m http.server 8786 --bind 127.0.0.1
 
 Open <http://127.0.0.1:8786/raven/terminal-preview/>. The same directory structure also works under the GitHub Pages `/abdulrhman/` project prefix. Each film and case route has its own static entry file.
 
+## Publish a coherent browser release
+
+GitHub Pages caches scripts for up to ten minutes. A query on the page URL or only the entry script does not refresh its imported dependencies. After changing browser JavaScript, styles or static entries, run:
+
+```sh
+node raven/terminal-preview/tools/stamp-release.mjs
+node raven/terminal-preview/tools/stamp-release.mjs --check
+```
+
+The content-derived release token versions every local static/dynamic module import, all seven app entries and their styles, including lazy route CSS. Commit these changes together. The tool reads shared canonical dependencies for the fingerprint without modifying them. Changes to production media do not replace approved assets through this process. Tests and documentation alone do not rotate the browser release.
+
+This refreshes browser cache entries; it does not retain immutable copies of previous releases on GitHub Pages. A tab left open across a later deployment may still need the explicit Retry navigation.
+
+The error page's Retry button performs a fresh document navigation, preserving the current route, language, hash and local saves. Re-importing a failed ES module in the same document cannot recover from the browser's cached linking failure. No recovery path clears investigation, film progress or music preferences.
+
 ## Tests
 
 The suite uses Playwright and a separately running static server. With dependencies installed in the test directory:

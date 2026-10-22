@@ -1,7 +1,7 @@
-import { BASE, CASE, caseAsset, el, routeURL, createStore, createCaseStore, importLegacy } from './core.js';
-import { createAudio } from './audio.js';
-import { createInvestigation } from './investigation.js';
-import { createCloud } from './cloud.js';
+import { BASE, CASE, caseAsset, el, routeURL, createStore, createCaseStore, importLegacy } from './core.js?v=bd8a32b4db729ff9';
+import { createAudio } from './audio.js?v=bd8a32b4db729ff9';
+import { createInvestigation } from './investigation.js?v=bd8a32b4db729ff9';
+import { createCloud } from './cloud.js?v=bd8a32b4db729ff9';
 
 const outlet = document.querySelector('#route-outlet');
 const notices = document.querySelector('#site-notice');
@@ -37,13 +37,24 @@ let cleanup = () => {};
 let routeGeneration = 0;
 let currentURL = location.href;
 const styleLoads = new Map();
+const releaseVersion = new URL(import.meta.url).searchParams.get('v');
 function stylesheet(name) {
   if (!styleLoads.has(name)) {
-    const link = el('link', { rel: 'stylesheet', href: new URL(name, import.meta.url).href });
+    const url = new URL(name, import.meta.url);
+    if (releaseVersion) url.searchParams.set('v', releaseVersion);
+    const link = el('link', { rel: 'stylesheet', href: url.href });
     const ready = new Promise(resolve => { link.addEventListener('load', resolve, { once: true }); link.addEventListener('error', resolve, { once: true }); });
     document.head.append(link); styleLoads.set(name, ready);
   }
   return styleLoads.get(name);
+}
+
+// A failed ESM link stays cached for this document. Retrying needs a fresh
+// document/module map; do not clear saved investigation or music preferences.
+function reloadRoute() {
+  const url = new URL(location.href);
+  url.searchParams.set('_reload', Date.now().toString(36));
+  location.replace(url.href);
 }
 
 function renderHeader() {
@@ -95,12 +106,12 @@ async function renderRoute({ restoreY, focus = true } = {}) {
   outlet.replaceChildren(el('div', { class: 'route-loading', role: 'status', text: services.t('نفتح الملف…', 'Opening the file…') }));
   try {
     if (relative === 'case-017') {
-      const [module] = await Promise.all([import('./case.js'), stylesheet('case.css'), stylesheet('toolkit.css'), stylesheet('activities.css'), stylesheet('media-workbench.css'), stylesheet('case-ending.css'), stylesheet('evidence-helpers.css'), stylesheet('incoming-call.css'), stylesheet('cloud.css')]);
+      const [module] = await Promise.all([import('./case.js?v=bd8a32b4db729ff9'), stylesheet('case.css'), stylesheet('toolkit.css'), stylesheet('activities.css'), stylesheet('media-workbench.css'), stylesheet('case-ending.css'), stylesheet('evidence-helpers.css'), stylesheet('incoming-call.css'), stylesheet('cloud.css')]);
       if (generation !== routeGeneration) return;
       outlet.replaceChildren(); cleanup = module.mount(outlet, services) || (() => {});
       document.title = services.t('التوقيع الرابع — ملف 017 | RAVEN', 'The Fourth Signature — Case 017 | RAVEN');
     } else {
-      const module = await import('./home.js');
+      const module = await import('./home.js?v=bd8a32b4db729ff9');
       if (generation !== routeGeneration) return;
       outlet.replaceChildren(); cleanup = module.mount(outlet, services, relative) || (() => {});
     }
@@ -110,7 +121,7 @@ async function renderRoute({ restoreY, focus = true } = {}) {
     outlet.replaceChildren(el('section', { class: 'error-page' }, [el('p', { class: 'eyebrow', text: 'RAVEN / ARCHIVE' }),
       el('h1', { text: services.t('تعذّر فتح الملف', 'The file could not be opened') }),
       el('p', { text: services.t('أعد المحاولة. تقدمك المحفوظ يبقى معك.', 'Try again. Your saved progress is retained.') }),
-      el('button', { class: 'button primary', text: services.t('أعد المحاولة', 'Retry'), onClick: () => renderRoute() }),
+      el('button', { type: 'button', class: 'button primary', text: services.t('أعد المحاولة', 'Retry'), onClick: reloadRoute }),
       el('a', { class: 'button', href: services.routeURL(''), text: services.t('إلى الرئيسية', 'Go home') }),
     ]));
   } finally {
