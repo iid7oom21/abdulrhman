@@ -17,6 +17,8 @@ Episode checks verify exact source/poster/duration identity, first-playing resum
 
 Reports: `/tmp/raven-two-episodes-chromium.json`, `/tmp/raven-two-episodes-chromium-final.json`, `/tmp/raven-two-episodes-webkit.json`, `/tmp/raven-two-episodes-webkit-fixed.json`, `/tmp/raven-two-episodes-webkit-range.json`. The legacy scenario is retained as `tests/legacy-episodes.mjs`. Visual review at 320, 390 and 1440px confirms two cards with the new numbering and no overflow; captures are `two-episodes-320.png`, `two-episodes-390.png`, `two-episodes-1440.png` in the release artifact folder.
 
+Commit `5ed9df3` was atomically published to both branches; GitHub Pages reported `built`. All three preview episode cases passed on the public origin (3/3, 3.5 seconds), and the legacy wrapper's native-playback scenario also passed publicly. Report: `/tmp/raven-two-episodes-public.json`. These runs verify the public source mapping and state behavior with seekable fixtures, not remote film-host availability.
+
 ## Beginner investigation guide — 2026-10-22
 
 Release `70ffb86082c1ed7e` adds a short, inline three-step guide, an explicit current-source action, a persistent dismissal preference, a hero reopening button and visible source labels. It introduces no solution values, evidence unlocks, scoring changes or new media. Only an explicit source click marks an available document viewed; drafts and the actual current task survive guide navigation.
