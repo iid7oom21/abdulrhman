@@ -18,6 +18,8 @@ Four new browser regressions verify consistent HTML versions, ignoring a stale u
 
 Reports: `/tmp/raven-loadfix-chromium.json`, `/tmp/raven-loadfix-webkit.json`. The release-stamper unit cases cover stable/idempotent versioning, static/dynamic/shared imports, untouched examples/comments, seven HTML entries, dependency/style/canonical-byte changes, read-only checking and failure before writes for an unsupported shared dependency graph.
 
+Commit `25aaab3` was atomically published to both branches and GitHub Pages reported `built`. The public app/core/case/ending modules matched local SHA-256 at release URLs. All five public checks passed: stale-core avoidance, both Retry recovery paths, cross-route media ownership and a fresh 32-activity journey at 320px (25.0 seconds; 25.7 seconds overall). Report: `/tmp/raven-loadfix-public.json`. Visual review at 390px confirms the case hero and entry action render instead of the error screen; artifacts are `loadfix-public-390.png` and `loadfix-public-files.json` in `/workspace/artifacts/raven-expansion-release/`.
+
 ## Case ending — 2026-10-22
 
 The ending release adds a 14-second authored DOM/CSS cinematic after newly accepted A32, skip/replay/report actions, run-bound presentation state and optional verified-video playback. No actual finale video has been supplied; `assets/case-ending.json` stays pending. The original case data, approved recording and film files are unchanged.
