@@ -1,7 +1,7 @@
-import { BASE, CASE, caseAsset, el, routeURL, createStore, createCaseStore, importLegacy } from './core.js?v=70ffb86082c1ed7e';
-import { createAudio } from './audio.js?v=70ffb86082c1ed7e';
-import { createInvestigation } from './investigation.js?v=70ffb86082c1ed7e';
-import { createCloud } from './cloud.js?v=70ffb86082c1ed7e';
+import { BASE, CASE, caseAsset, el, routeURL, createStore, createCaseStore, importLegacy } from './core.js?v=850282e6effbff45';
+import { createAudio } from './audio.js?v=850282e6effbff45';
+import { createInvestigation } from './investigation.js?v=850282e6effbff45';
+import { createCloud } from './cloud.js?v=850282e6effbff45';
 
 const outlet = document.querySelector('#route-outlet');
 const notices = document.querySelector('#site-notice');
@@ -94,10 +94,23 @@ function renderHeader() {
   services.audio.refreshLanguage?.();
 }
 
+function normalizeEpisodeURL(u) {
+  // The former third film is now Part Two. Keep old links inside the same
+  // document/audio owner and retain their language, query and fragment.
+  if (u.origin === BASE.origin && u.pathname.startsWith(BASE.pathname) && u.pathname.slice(BASE.pathname.length).replace(/index\.html$/, '').replace(/\/+$/, '') === 'raven-17/part-3') {
+    u.pathname = new URL('raven-17/part-2/', BASE).pathname;
+  }
+  return u;
+}
+
 async function renderRoute({ restoreY, focus = true } = {}) {
   const generation = ++routeGeneration;
   cleanup(); cleanup = () => {};
-  const u = new URL(location.href);
+  const u = normalizeEpisodeURL(new URL(location.href));
+  if (u.href !== location.href) {
+    history.replaceState(history.state, '', u);
+    currentURL = u.href;
+  }
   services.lang = u.searchParams.get('lang') === 'en' ? 'en' : u.searchParams.get('lang') === 'ar' ? 'ar' : store.get('language', 'ar');
   store.set('language', services.lang);
   renderHeader();
@@ -106,12 +119,12 @@ async function renderRoute({ restoreY, focus = true } = {}) {
   outlet.replaceChildren(el('div', { class: 'route-loading', role: 'status', text: services.t('نفتح الملف…', 'Opening the file…') }));
   try {
     if (relative === 'case-017') {
-      const [module] = await Promise.all([import('./case.js?v=70ffb86082c1ed7e'), stylesheet('case.css'), stylesheet('toolkit.css'), stylesheet('activities.css'), stylesheet('media-workbench.css'), stylesheet('case-ending.css'), stylesheet('evidence-helpers.css'), stylesheet('incoming-call.css'), stylesheet('cloud.css')]);
+      const [module] = await Promise.all([import('./case.js?v=850282e6effbff45'), stylesheet('case.css'), stylesheet('toolkit.css'), stylesheet('activities.css'), stylesheet('media-workbench.css'), stylesheet('case-ending.css'), stylesheet('evidence-helpers.css'), stylesheet('incoming-call.css'), stylesheet('cloud.css')]);
       if (generation !== routeGeneration) return;
       outlet.replaceChildren(); cleanup = module.mount(outlet, services) || (() => {});
       document.title = services.t('التوقيع الرابع — ملف 017 | RAVEN', 'The Fourth Signature — Case 017 | RAVEN');
     } else {
-      const module = await import('./home.js?v=70ffb86082c1ed7e');
+      const module = await import('./home.js?v=850282e6effbff45');
       if (generation !== routeGeneration) return;
       outlet.replaceChildren(); cleanup = module.mount(outlet, services, relative) || (() => {});
     }
@@ -143,7 +156,7 @@ async function renderRoute({ restoreY, focus = true } = {}) {
 }
 
 function navigate(path, { replace = false } = {}) {
-  const next = new URL(path.startsWith('http') || path.startsWith('/') ? path : services.routeURL(path), location.href);
+  const next = normalizeEpisodeURL(new URL(path.startsWith('http') || path.startsWith('/') ? path : services.routeURL(path), location.href));
   if (next.origin !== location.origin || !next.pathname.startsWith(BASE.pathname)) { location.href = next.href; return; }
   if (!next.searchParams.has('lang') && services.lang === 'en') next.searchParams.set('lang', 'en');
   history.replaceState({ ...history.state, scrollY: window.scrollY }, '', location.href);

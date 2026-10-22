@@ -14,19 +14,10 @@ export const HERO = Object.freeze({
 export const EPISODES = Object.freeze([
   Object.freeze({
     id: 1,
+    // Keep progress tied to the original film, independently of display order.
+    progressId: 2,
     labelAr: 'الجزء الأول',
     labelEn: 'Part One',
-    src: 'https://res.cloudinary.com/du88n6b83/video/upload/v1789985712/raven17/episode-1.mp4',
-    poster: asset('episode-1.jpg'),
-    duration: 82,
-    durationLabel: '1:22',
-    width: 464,
-    height: 848,
-  }),
-  Object.freeze({
-    id: 2,
-    labelAr: 'الجزء الثاني',
-    labelEn: 'Part Two',
     src: 'https://res.cloudinary.com/du88n6b83/video/upload/v1789985735/raven17/episode-2.mp4',
     poster: asset('episode-2.jpg'),
     duration: 115.766667,
@@ -35,9 +26,10 @@ export const EPISODES = Object.freeze([
     height: 848,
   }),
   Object.freeze({
-    id: 3,
-    labelAr: 'الجزء الثالث',
-    labelEn: 'Part Three',
+    id: 2,
+    progressId: 3,
+    labelAr: 'الجزء الثاني',
+    labelEn: 'Part Two',
     src: 'https://res.cloudinary.com/du88n6b83/video/upload/v1789986504/raven17/episode-3.mp4',
     poster: asset('episode-3.jpg'),
     duration: 238.1,

@@ -1,4 +1,4 @@
-import { CASE_DATA } from '../../../fourth-signature/case-data.js?v=70ffb86082c1ed7e';
+import { CASE_DATA } from '../../../fourth-signature/case-data.js?v=850282e6effbff45';
 
 // Authored 2026 review material. The original eight documents are imported unchanged.
 export const REVISION = 'case-017-expansion-v3';

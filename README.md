@@ -39,6 +39,21 @@ Public page identities and sharing:
 - Case: `https://iid7oom21.github.io/abdulrhman/fourth-signature/`
 - Sitemap: `https://iid7oom21.github.io/abdulrhman/sitemap.xml`
 
+RAVEN 17 now shows two episodes: the original second film is episode 1 and the
+original third film is episode 2. Film files remain unchanged. The retired first
+film is absent from the catalogue, player tabs and search. Saved playback and
+personal notes still use original media IDs 2 and 3, so renumbering cannot attach
+the retired film's progress to a different film. Old `?episode=3` links open the
+current episode 2. The legacy content/player queries use `episodes-two-1`.
+
+`tests/legacy-episodes.mjs` checks the two-episode legacy player in a real browser:
+source identity, resumed playback, original-film notes, final-episode controls,
+old-third-link handling, English labels, manual music-off and 320px layout. Run
+it with `node tests/legacy-episodes.mjs` after serving the repository; set
+`PLAYWRIGHT_TEST_MODULE` to an available `@playwright/test` installation and
+`RAVEN_BROWSER=webkit` for WebKit. It requires `ffmpeg` to generate a temporary
+native playback fixture; no generated fixture is shipped as film content.
+
 Each public entry includes canonical, Open Graph, Twitter, and structured
 metadata in its initial HTML. The content documents canonicalize to those public
 entries, and the persistent host updates its metadata on navigation and language

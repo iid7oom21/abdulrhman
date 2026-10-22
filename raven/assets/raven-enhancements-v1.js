@@ -3,7 +3,7 @@
 const TEXT={
  home:['الرئيسية','Home'],films:['الأفلام','Films'],about:['صانع RAVEN','Creator'],contact:['التواصل','Contact'],teaserNav:['الفيلم القادم','Upcoming film'],collaborate:['تعاون مع RAVEN','Collaborate with RAVEN'],
  hero:['أصيغ الغموض فنياً،<br>وأبني عوالم خيالية لا تُنسى. <span>🎬</span>','I craft mystery into art,<br>and build worlds you will not forget.'],
- selected:['أعمال مختارة','SELECTED WORKS'],filmsEyebrow:['NOW SHOWING','NOW SHOWING'],filmsTitle:['شاهد RAVEN 17','Watch RAVEN 17'],filmsIntro:['ثلاثة أجزاء. ابدأ من الملف الأول.','Three parts. Begin with the first file.'],
+ selected:['أعمال مختارة','SELECTED WORKS'],filmsEyebrow:['NOW SHOWING','NOW SHOWING'],filmsTitle:['شاهد RAVEN 17','Watch RAVEN 17'],filmsIntro:['حلقتان. ابدأ من الحلقة الأولى.','Two episodes. Begin with episode one.'],
  now:['يُعرض الآن','NOW SCREENING'],ravenStory:['غموض نفسي، أدلة لا تقول الحقيقة كاملة، وشخصية لا تكشف كل ما تعرفه.','A psychological mystery. Evidence that never tells the whole truth. A man who reveals less than he knows.'],watchEpisodes:['شاهد الحلقات <span aria-hidden="true">←</span>','Watch episodes <span aria-hidden="true">→</span>'],
  development:['قيد التطوير','IN DEVELOPMENT'],zarqaTitle:['زرقاء اليمامة','ZARQA AL-YAMAMA'],zarqaStory:['رؤية جديدة لأسطورة زرقاء اليمامة عبر عدسة RAVEN السينمائية.','A new vision of the legend of Zarqa Al-Yamama through the cinematic lens of RAVEN.'],watchTeaser:['شاهد الإعلان <span aria-hidden="true">←</span>','Watch the teaser <span aria-hidden="true">→</span>'],
  classified:['ملف مغلق','CLASSIFIED'],nextTitle:['الملف القادم','NEXT FILE'],nextStory:['المشروع القادم يُكشف عندما يحين الوقت.','The next project will be revealed when the time is right.'],updates:['تابع التحديثات <span aria-hidden="true">←</span>','Follow updates <span aria-hidden="true">→</span>'],
@@ -102,13 +102,15 @@ if('IntersectionObserver' in window&&sectionTargets.size){
  },{passive:true});
 }
 const EPISODES=[
- {id:1,src:'https://res.cloudinary.com/du88n6b83/video/upload/v1789985712/raven17/episode-1.mp4'},
- {id:2,src:'https://res.cloudinary.com/du88n6b83/video/upload/v1789985735/raven17/episode-2.mp4'},
- {id:3,src:'https://res.cloudinary.com/du88n6b83/video/upload/v1789986504/raven17/episode-3.mp4'}
+ {id:1,sourceId:2,src:'https://res.cloudinary.com/du88n6b83/video/upload/v1789985735/raven17/episode-2.mp4'},
+ {id:2,sourceId:3,src:'https://res.cloudinary.com/du88n6b83/video/upload/v1789986504/raven17/episode-3.mp4'}
 ];
 
 const theaterPlayer=$('#ravenEpisodePlayer'),theaterStatus=$('#rvnEpisodeStatus'),nowEpisode=$('#rvnNowEpisode'),resumeNote=$('#rvnResumeNote'),prevEpisode=$('#rvnPrevEpisode'),nextEpisode=$('#rvnNextEpisode'),shareEpisode=$('#rvnShareEpisode');
-const progressKey=n=>'raven17_episode_'+n+'_progress';
+// Display order changes independently of the original film's saved progress.
+const sourceEpisodeId=n=>EPISODES[n-1]?.sourceId;
+window.ravenEpisodeSourceId=sourceEpisodeId;
+const progressKey=n=>'raven17_episode_'+sourceEpisodeId(n)+'_progress';
 function savedProgress(n){try{return Math.max(0,Number(localStorage.getItem(progressKey(n)))||0)}catch(_){return 0}}
 function saveProgress(episodeId){const n=Number(episodeId)||currentEpisode;if(!theaterPlayer||!n)return;try{const t=theaterPlayer.currentTime||0,d=theaterPlayer.duration||0;if(t>2&&(!d||t<d-4))localStorage.setItem(progressKey(n),String(Math.floor(t)));else if(d&&t>=d-4)localStorage.removeItem(progressKey(n))}catch(_){}}
 function episodeText(n){return lang==='en'?'Episode '+n:'الحلقة '+n}
@@ -127,7 +129,7 @@ function selectEpisode(n,autoplay,updateRoute=true){
 }
 function updateEpisodeLanguageLinks(){all('#episodeModal [data-rvn-lang]').forEach(link=>{if(window.RavenI18n?.route)link.href=window.RavenI18n.route(location.pathname+location.search+location.hash,link.dataset.rvnLang);});}
 function updateEpisodeLabels(){if(theaterStatus)theaterStatus.textContent=episodeText(currentEpisode);if(theaterPlayer)theaterPlayer.setAttribute('aria-label','RAVEN 17 — '+episodeText(currentEpisode));const saved=savedProgress(currentEpisode);if(resumeNote)resumeNote.textContent=saved>5?(lang==='en'?'Resume available':'يمكنك المتابعة من آخر نقطة'):'';updateEpisodeLanguageLinks();}
-function readEpisodeRoute(){const value=new URL(location.href).searchParams.get('episode'),n=Number(value);return value!==null&&Number.isInteger(n)&&n>=1&&n<=EPISODES.length?n:null;}
+function readEpisodeRoute(){const value=new URL(location.href).searchParams.get('episode'),n=Number(value);return n===3?2:value!==null&&Number.isInteger(n)&&n>=1&&n<=EPISODES.length?n:null;}
 function historyState(){return history.state&&typeof history.state==='object'?{...history.state}:{};}
 function writeEpisodeRoute(n,push){const u=new URL(location.href);u.searchParams.set('episode',String(n));const state=historyState();if(push)state.rvnTheaterEntry=true;history[push?'pushState':'replaceState'](state,'',u);}
 function removeEpisodeRoute(){const u=new URL(location.href);u.searchParams.delete('episode');if(u.hash==='#episodeModal')u.hash='';const state=historyState();delete state.rvnTheaterEntry;history.replaceState(state,'',u);window.RavenI18n?.setLanguage(window.RavenI18n.language());}
@@ -137,9 +139,9 @@ function showEpisodes(n){
  const modal=$('#episodeModal');if(!modal)return;if(modal.classList.contains('open')){selectEpisode(n,false,false);return;}setMenu(false);lastFocus=document.activeElement;previousOverflow=document.body.style.overflow;modal.classList.add('open');modal.setAttribute('aria-hidden','false');document.body.classList.add('rvnViewing');document.body.style.overflow='hidden';$('#ravenHeroMotion')?.pause();$('.premiereVideo')?.pause();document.dispatchEvent(new CustomEvent('raven:theater',{detail:{open:true}}));selectEpisode(n,false,false);$('.episodeClose')?.focus({preventScroll:true});
 }
 function hideEpisodes(){const modal=$('#episodeModal');if(!modal?.classList.contains('open'))return;saveProgress();modal.classList.remove('open');modal.setAttribute('aria-hidden','true');theaterPlayer?.pause();document.body.classList.remove('rvnViewing');document.body.style.overflow=previousOverflow;document.dispatchEvent(new CustomEvent('raven:theater',{detail:{open:false}}));if(lastFocus?.isConnected)lastFocus.focus({preventScroll:true});}
-function openEpisodes(e,requested){e?.preventDefault?.();const n=requested??readEpisodeRoute()??currentEpisode;const modal=$('#episodeModal'),push=!modal?.classList.contains('open')&&!theaterWaitingForIntro&&readEpisodeRoute()===null;writeEpisodeRoute(Math.max(1,Math.min(3,Math.trunc(Number(n)||1))),push);showEpisodes(readEpisodeRoute());}
+function openEpisodes(e,requested){e?.preventDefault?.();const n=requested??readEpisodeRoute()??currentEpisode;const modal=$('#episodeModal'),push=!modal?.classList.contains('open')&&!theaterWaitingForIntro&&readEpisodeRoute()===null;writeEpisodeRoute(Math.max(1,Math.min(EPISODES.length,Math.trunc(Number(n)||1))),push);showEpisodes(readEpisodeRoute());}
 function closeEpisodes(){if(!$('#episodeModal')?.classList.contains('open')&&!theaterWaitingForIntro)return;hideEpisodes();if(history.state?.rvnTheaterEntry)history.back();else removeEpisodeRoute();}
-function syncTheaterRoute(){const n=readEpisodeRoute();if(n===null){hideEpisodes();return;}showEpisodes(n);}
+function syncTheaterRoute(){const n=readEpisodeRoute();if(n===null){hideEpisodes();return;}if(new URL(location.href).searchParams.get('episode')==='3')writeEpisodeRoute(n,false);showEpisodes(n);}
 window.addEventListener('popstate',syncTheaterRoute);
 window.ravenSelectEpisode=selectEpisode;window.openEpisodes=openEpisodes;window.closeEpisodes=closeEpisodes;window.closeEpisodesOutside=e=>{if(e.target.id==='episodeModal')closeEpisodes()};
 window.ravenRetryEpisode=()=>{if(!theaterPlayer)return Promise.resolve();if(retryAt===null)retryAt=Number.isFinite(theaterPlayer.currentTime)&&theaterPlayer.currentTime>=0?theaterPlayer.currentTime:savedProgress(currentEpisode);saveProgress();resumeApplied=false;theaterPlayer.load();return theaterPlayer.play();};

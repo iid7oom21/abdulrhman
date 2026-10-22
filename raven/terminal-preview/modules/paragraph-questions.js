@@ -1,4 +1,4 @@
-import { node as el } from '../../../fourth-signature/dom.js?v=70ffb86082c1ed7e';
+import { node as el } from '../../../fourth-signature/dom.js?v=850282e6effbff45';
 
 // Each answer has an exact clicked paragraph and exact already-opened sources.
 const QUESTIONS = [

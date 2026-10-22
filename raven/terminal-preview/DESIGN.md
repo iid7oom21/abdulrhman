@@ -13,7 +13,7 @@ The homepage is a cinematic entrance. The investigation is a working archive. Th
 - Terminal texture: a restrained nine-second desktop frame glow rather than rapid flashes. Reduced motion and quiet mode suppress scanlines and animation. A short heading reveal is decorative; source documents remain immediately readable.
 - Classified text: the optional opening-line blackout reveals on hover or keyboard focus and can be pinned open by a tap or Enter. Essential evidence is never concealed behind this effect.
 - First screen: approved cinematic image, “أفلام غموض وتحقيقات تفاعلية”, and “شاهد RAVEN 17”. No mandatory introduction or audio gate.
-- Film cards: three visible parts with actual durations 1:22, 1:55, and 3:58. Their playback preserves the portrait aspect ratios of the actual films. Completion and resume are separate states.
+- Film cards: two visible parts with actual durations 1:55 and 3:58. The former second and third films are now Part One and Part Two; the former first film is no longer listed or played. Portrait aspect ratios and separate completion/resume state are retained.
 - Zarqa Al-Yamama: the existing 16-second teaser, “قيد التطوير”, and the official follow link. There is no confirmed release date or countdown.
 
 ## Information architecture
@@ -23,12 +23,15 @@ Static entry files make each route independently reloadable on GitHub Pages:
 | Route, relative to the preview | Purpose |
 | --- | --- |
 | `/` | Cinematic homepage and visible film cards |
-| `/raven-17/` | Series overview and three parts |
-| `/raven-17/part-1/` to `/part-3/` | Individual film, resume and watched state |
+| `/raven-17/` | Series overview and two parts |
+| `/raven-17/part-1/` and `/part-2/` | Individual film, resume and watched state |
+| `/raven-17/part-3/` | Legacy alias to Part Two, preserving query/fragment and the audio owner |
 | `/zarqa/` | Upcoming film and existing teaser |
 | `/case-017/` | The Fourth Signature archive, deductions, and tools |
 
 Internal navigation replaces the route outlet while retaining the audio owner. Browser Back/Forward, direct links, focus, and scroll restoration remain part of the navigation contract. Public interface text supports Arabic and English. The actual case documents are Arabic and the language is stated clearly.
+
+Episode display IDs are independent of saved-film identity: new Part One uses `episode:2` and new Part Two uses `episode:3`. Existing `episode:1` data is retained but never applied to a remaining film. Media URLs and original poster filenames keep their historical numbers; no media is recompressed or deleted from its host.
 
 ## Investigator toolkit: 13 useful actions
 

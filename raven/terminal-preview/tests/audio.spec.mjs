@@ -61,7 +61,7 @@ test('music starts on interaction, keeps its position across routes, and remembe
 test('a film gets first-interaction audio priority, resumes music on pause, and respects manual music off', async ({ page }) => {
   await fixtureSong(page);
   const videoFile = fileURLToPath(new URL('../assets/hero-loop.mp4', import.meta.url));
-  await page.route('**/episode-1.mp4*', request => request.fulfill({ contentType: 'video/mp4', body: fs.readFileSync(videoFile) }));
+  await page.route('**/episode-2.mp4*', request => request.fulfill({ contentType: 'video/mp4', body: fs.readFileSync(videoFile) }));
   await boot(page, 'raven-17/part-1/');
   const soundtrack = page.locator('#preview-soundtrack');
   const film = page.locator('[data-film-video="1"]');

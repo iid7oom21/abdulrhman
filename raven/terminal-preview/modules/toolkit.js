@@ -1,5 +1,5 @@
-import { el } from './core.js?v=70ffb86082c1ed7e';
-import { renderResumeMemo } from './resume-memo.js?v=70ffb86082c1ed7e';
+import { el } from './core.js?v=850282e6effbff45';
+import { renderResumeMemo } from './resume-memo.js?v=850282e6effbff45';
 
 const TYPES = ['ملاحظة', 'فرضية', 'سؤال'];
 const RELATIONS = ['يؤيد', 'يعارض', 'يفسر', 'يحتاج تحققًا'];
@@ -496,7 +496,7 @@ export function createToolkit(root, services, callbacks = {}) {
     body.append(el('p', { class: 'tk-training-label', text: 'تدريب مستقل · لا يغيّر أدلة القضية أو نتيجة التحقيق' }), host);
     host.append(el('p', { role: 'status', text: 'جارٍ فتح أداة التدريب…' }));
     try {
-      const module = await import('./training.js?v=70ffb86082c1ed7e');
+      const module = await import('./training.js?v=850282e6effbff45');
       if (destroyed || generation !== renderGeneration || !dialog.open) return;
       host.replaceChildren();
       contentCleanup = module.mount(host, services, { mode }) || (() => {});

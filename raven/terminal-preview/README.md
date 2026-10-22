@@ -66,7 +66,9 @@ Activities A01–A32 are required in order. The four canonical deductions occur 
 
 Preview storage remains namespaced under `raven-preview:v1`. The expansion uses the new subkey `case-017:expansion-v3`; legacy completion stays preserved under `case` and never unlocks the expansion. Drafts, accepted answers, sourced notes, photo discoveries, hints, errors, timer, and optional-call state survive reloads. Invalid or noncontiguous accepted answers are discarded. Reset clears expansion work only, retaining films, music preferences, and the legacy case. Practice timing pauses when hidden, outside the case, or manually paused.
 
-The approved recording is shared from `fourth-signature/assets/audio/raven-baqi-athar-320.mp3` without recompression. One player survives internal navigation and respects explicit pause. Browser autoplay policy still applies. Actual film sources are unchanged. Call and puzzle audio use the same priority/hold system, never an independent background-song player.
+The series now shows two episodes: the original second film is Part One (1:55), and the original third is Part Two (3:58). Catalog `id` is the display/route number; `progressId` retains original film identity (2 and 3) for resume and watched state. The removed first film's saved data is not reassigned. The old `/raven-17/part-3/` entry resolves inside the same player shell to `/part-2/`, retaining query parameters and fragment.
+
+The approved recording is shared from `fourth-signature/assets/audio/raven-baqi-athar-320.mp3` without recompression. One player survives internal navigation and respects explicit pause. Browser autoplay policy still applies. Remaining film sources are unchanged. Call and puzzle audio use the same priority/hold system, never an independent background-song player.
 
 ## Closing scene
 

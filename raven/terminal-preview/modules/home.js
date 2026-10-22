@@ -1,5 +1,5 @@
-import { el } from './core.js?v=70ffb86082c1ed7e';
-import { HERO, EPISODES, ZARQA } from './catalog.js?v=70ffb86082c1ed7e';
+import { el } from './core.js?v=850282e6effbff45';
+import { HERO, EPISODES, ZARQA } from './catalog.js?v=850282e6effbff45';
 
 export function mount(root, services, route = '') {
   const { t, store, audio } = services;
@@ -13,7 +13,7 @@ export function mount(root, services, route = '') {
   };
 
   function episodeCard(episode) {
-    const saved = getProgress(episode.id);
+    const saved = getProgress(episode.progressId);
     const path = `raven-17/part-${episode.id}/`;
     return el('article', { class: 'film-card', 'data-episode-card': episode.id }, [
       el('a', { class: 'film-image-link', href: services.routeURL(path), 'aria-label': t(`شاهد الجزء ${episode.id}`, `Watch part ${episode.id}`) }, [
@@ -22,7 +22,7 @@ export function mount(root, services, route = '') {
       el('div', { class: 'film-card-body' }, [
         el('div', { class: 'film-meta' }, [el('span', { text: `PART 0${episode.id}`, dir: 'ltr' }), el('span', { text: episode.durationLabel, dir: 'ltr' })]),
         el('h3', { text: t(episode.labelAr, episode.labelEn) }),
-        el('p', { class: 'muted', text: t('من ثلاثية RAVEN 17 السينمائية.', 'A chapter of the RAVEN 17 trilogy.') }),
+        el('p', { class: 'muted', text: t('من سلسلة RAVEN 17 السينمائية.', 'A chapter of the RAVEN 17 series.') }),
         saved.watched ? el('span', { class: 'watched-tag', text: t('✓ شاهدته', '✓ Watched') }) : saved.time > 2 ? el('span', { class: 'watched-tag', text: t(`استكمل من ${formatTime(saved.time)}`, `Resume at ${formatTime(saved.time)}`) }) : null,
         link(path, saved.time > 2 && !saved.watched ? 'واصل المشاهدة ←' : 'شاهد الجزء ←', saved.time > 2 && !saved.watched ? 'Resume →' : 'Watch part →'),
       ]),
@@ -32,7 +32,7 @@ export function mount(root, services, route = '') {
   function filmsSection(full = false) {
     return el('section', { class: 'section films-section', id: 'films' }, [
       el('div', { class: 'section-heading' }, [el('div', {}, [eyebrow('يُعرض الآن · سلسلة أصلية', 'NOW SCREENING · ORIGINAL SERIES'),
-        el(full ? 'h1' : 'h2', { text: 'RAVEN 17', dir: 'ltr' }), el('p', { class: 'section-lead', text: t('ثلاثة أجزاء. ابدأ من الأثر الأول.', 'Three chapters. Follow the first trace.') })]),
+        el(full ? 'h1' : 'h2', { text: 'RAVEN 17', dir: 'ltr' }), el('p', { class: 'section-lead', text: t('جزآن. ابدأ من الأثر الأول.', 'Two chapters. Follow the first trace.') })]),
         !full ? el('span', { class: 'section-index', text: '01 / CINEMA', dir: 'ltr' }) : null]),
       el('div', { class: 'film-grid' }, EPISODES.map(episodeCard)),
     ]);
@@ -104,17 +104,18 @@ export function mount(root, services, route = '') {
   function theater(item, isTeaser = false) {
     const partLabel = isTeaser ? t('زرقاء اليمامة', 'Zarqa Al-Yamama') : `RAVEN 17 — ${t(item.labelAr, item.labelEn)}`;
     document.title = partLabel + ' | RAVEN';
-    const saved = isTeaser ? {} : getProgress(item.id);
+    const saved = isTeaser ? {} : getProgress(item.progressId);
     const video = el('video', { class: 'theater-video', poster: item.poster, playsinline: true, controls: true, preload: 'none', 'aria-label': partLabel, 'data-film-video': isTeaser ? 'zarqa' : item.id });
     const status = el('p', { class: 'player-status', role: 'status', text: saved.time > 2 && !saved.watched ? t(`يمكنك الاستكمال من ${formatTime(saved.time)}`, `Resume available at ${formatTime(saved.time)}`) : t('جاهز للمشاهدة', 'Ready to watch') });
     let started = false;
     let failed = false;
+    let disposed = false;
     let lastSaved = 0;
     let startHold = `film-start-${isTeaser ? 'zarqa' : item.id}`;
     const save = (ended = false) => {
-      if (isTeaser || !started) return;
-      const prior = getProgress(item.id);
-      store.set('episode:' + item.id, { time: ended ? 0 : Math.floor(video.currentTime || 0), watched: Boolean(ended || prior.watched) });
+      if (isTeaser || !started || disposed) return;
+      const prior = getProgress(item.progressId);
+      store.set('episode:' + item.progressId, { time: ended ? 0 : Math.floor(video.currentTime || 0), watched: Boolean(ended || prior.watched) });
     };
     const play = (restart = false) => {
       audio.hold(startHold);
@@ -143,7 +144,7 @@ export function mount(root, services, route = '') {
     disposers.push(audio.watchVideo(video));
     videos.push(video);
     const watched = !isTeaser ? el('button', { type: 'button', class: 'button', 'aria-pressed': String(Boolean(saved.watched)), text: t(saved.watched ? '✓ شاهدته' : 'علّم: شاهدته', saved.watched ? '✓ Watched' : 'Mark as watched'), onClick: () => {
-      const progress = getProgress(item.id); progress.watched = !progress.watched; store.set('episode:' + item.id, progress);
+      const progress = getProgress(item.progressId); progress.watched = !progress.watched; store.set('episode:' + item.progressId, progress);
       watched.setAttribute('aria-pressed', String(progress.watched)); watched.textContent = t(progress.watched ? '✓ شاهدته' : 'علّم: شاهدته', progress.watched ? '✓ Watched' : 'Mark as watched');
     } }) : null;
     root.append(el('section', { class: `section theater-page${isTeaser ? ' zarqa-page' : ''}` }, [
@@ -161,13 +162,13 @@ export function mount(root, services, route = '') {
         href: services.routeURL(`raven-17/part-${ep.id}/`), 'aria-current': ep.id === item.id ? 'page' : undefined, text: t(ep.labelAr, ep.labelEn),
       }))),
     ]));
-    disposers.push(() => { save(); audio.release(startHold); });
+    disposers.push(() => { save(); disposed = true; audio.release(startHold); });
   }
 
   if (!route) home();
   else if (route === 'raven-17') { document.title = 'RAVEN 17 | RAVEN'; root.append(filmsSection(true), caseSection()); }
   else if (route === 'zarqa') theater(ZARQA, true);
-  else if (/^raven-17\/part-[1-3]$/.test(route)) theater(EPISODES[Number(route.at(-1)) - 1]);
+  else if (/^raven-17\/part-[1-2]$/.test(route)) theater(EPISODES[Number(route.at(-1)) - 1]);
   else { document.title = t('ملف مفقود | RAVEN', 'Missing file | RAVEN'); root.append(el('section', { class: 'section error-page' }, [eyebrow('404 · الأرشيف', '404 · ARCHIVE'), el('h1', { text: t('هذا الملف مفقود من الأرشيف.', 'This file is missing from the archive.') }), link('', 'عد إلى الرئيسية', 'Return home', true)])); }
   return () => { disposers.forEach(dispose => dispose()); videos.forEach(v => { v.pause(); v.removeAttribute('src'); v.load(); }); };
 }

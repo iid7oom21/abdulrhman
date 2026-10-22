@@ -1,5 +1,22 @@
 # Expansion verification record
 
+## Two-episode RAVEN 17 release — 2026-10-22
+
+Release `850282e6effbff45` removes the original first film from the catalogue and renumbers original films 2/3 as Parts One/Two (1:55 and 3:58). Cards, posters, static metadata, bilingual copy and navigation agree. Display numbers are separate from original progress IDs, so existing `episode:2`/`episode:3` saves remain with their films; the retired film's save is untouched. The former Part Three route resolves to Part Two without replacing the audio owner or losing query/fragment. A disposed-player guard prevents late playback events from writing a reset position after navigation.
+
+The legacy homepage/player also exposes two episodes, including its search, metadata and after-film controls. Progress and personal notes retain original film IDs; old `?episode=3` opens episode 2. Legacy entry/script versions are `episodes-two-1`. No approved music, film binary or case content was changed.
+
+| Check | Result |
+| --- | --- |
+| Chromium episode, audio, shell and release-loading scenarios | **23 distinct cases passed** |
+| WebKit episode, audio and shell scenarios | **19 distinct cases passed** |
+| Legacy two-episode native playback scenario | **Passed in Chromium and WebKit** |
+| Release-stamper unit cases | **8/8 passed**; release consistency and diff checks passed |
+
+Episode checks verify exact source/poster/duration identity, first-playing resume positions, watched updates/reload, unchanged retired-film data, original-film notes, final-episode controls, old links, Back, manual music-off and 320px layout. Playback uses temporary/native fixtures with HTTP Range support; fixtures are not published as film content. Initial local-server connection failures were resolved by restarting the server. Non-seekable fixture responses and an asynchronous test navigation assumption were corrected before the final runs.
+
+Reports: `/tmp/raven-two-episodes-chromium.json`, `/tmp/raven-two-episodes-chromium-final.json`, `/tmp/raven-two-episodes-webkit.json`, `/tmp/raven-two-episodes-webkit-fixed.json`, `/tmp/raven-two-episodes-webkit-range.json`. The legacy scenario is retained as `tests/legacy-episodes.mjs`. Visual review at 320, 390 and 1440px confirms two cards with the new numbering and no overflow; captures are `two-episodes-320.png`, `two-episodes-390.png`, `two-episodes-1440.png` in the release artifact folder.
+
 ## Beginner investigation guide — 2026-10-22
 
 Release `70ffb86082c1ed7e` adds a short, inline three-step guide, an explicit current-source action, a persistent dismissal preference, a hero reopening button and visible source labels. It introduces no solution values, evidence unlocks, scoring changes or new media. Only an explicit source click marks an available document viewed; drafts and the actual current task survive guide navigation.

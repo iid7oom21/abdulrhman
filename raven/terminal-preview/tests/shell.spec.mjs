@@ -71,7 +71,7 @@ test('case to films to episode to case to home mounts each destination without r
   await page.locator('#site-header a[href$="/raven-17/"]').click();
   await expect(page).toHaveURL(route('raven-17/'));
   await expect(page.locator('#route-outlet h1')).toHaveText('RAVEN 17');
-  await expect(page.locator('[data-episode-card]')).toHaveCount(3);
+  await expect(page.locator('[data-episode-card]')).toHaveCount(2);
   await expect(page.locator('.case-page')).toHaveCount(0);
   await page.locator('[data-episode-card="1"] a').first().click();
   await expect(page).toHaveURL(route('raven-17/part-1/'));
@@ -87,7 +87,7 @@ test('case to films to episode to case to home mounts each destination without r
   await expect(page).toHaveURL(PREVIEW);
   await expect(page.locator('#route-outlet h1')).toHaveText(/كل حكاية\s*تترك أثرًا\./);
   await expect(page.locator('.home-hero')).toBeVisible();
-  await expect(page.locator('[data-episode-card]')).toHaveCount(3);
+  await expect(page.locator('[data-episode-card]')).toHaveCount(2);
   await expect(page.locator('.case-page')).toHaveCount(0);
   expect(errors).toEqual([]);
 });

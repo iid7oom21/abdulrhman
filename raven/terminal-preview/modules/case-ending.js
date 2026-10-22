@@ -1,5 +1,5 @@
-import { CASE, el, caseCompletionKey } from './core.js?v=70ffb86082c1ed7e';
-import { loadVerifiedMedia, mediaURL } from './expansion-media.js?v=70ffb86082c1ed7e';
+import { CASE, el, caseCompletionKey } from './core.js?v=850282e6effbff45';
+import { loadVerifiedMedia, mediaURL } from './expansion-media.js?v=850282e6effbff45';
 
 const manifestURL = new URL('../assets/case-ending.json', import.meta.url);
 const DURATION = 14000;
