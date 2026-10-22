@@ -20,6 +20,8 @@ Visual review inspected the four source papers at 390px and settled final cards 
 
 Reports: `/tmp/raven-ending-regression-chromium.json` (58 existing browser checks), `/tmp/raven-ending-regression-webkit.json` (the same 58); `/tmp/raven-ending-report.json`, `/tmp/raven-ending-journey-report.json`, `/tmp/raven-ending-webkit-report.json`, `/tmp/raven-ending-regression-report.json`, `/tmp/raven-ending-regression-webkit-report.json` cover the 13 ending and four expansion scenarios plus targeted reruns after the audible-playing guard. Repeated checks are not counted as additional distinct cases. Hosted Google/Supabase and new performed media remain pending as documented below.
 
+Code commit `c4f6a42` was atomically pushed to `raven-fourth-signature` and `gh-pages`; Pages reported `built`. Browser-fetched SHA-256 matched all eight changed runtime/media-manifest assets. The public fresh 32-activity journey at 320px passed through automatic ending and report in 23.7 seconds; the case/films/episode/home route journey also passed (2/2 checks, 24.3 seconds overall). Report: `/tmp/raven-ending-public.json`; asset checks: `ending-public-files.json` in the release artifact folder. The live finale manifest remains pending, so the public site presents the authored web cinematic.
+
 ## Real-media workbench and release tooling — 2026-10-22
 
 The follow-up adds ready-asset playback to A16/A18/A19, production-media preparation and cloud deployment checks. Production recordings remain pending; all generated media below are temporary test fixtures.
