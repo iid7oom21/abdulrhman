@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+ <meta charset="UTF-8" />
+ <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+ <title>RAVEN | الأرشيف السري - على الجانب الآخر</title>
+
+ <!-- إعدادات المعاينة الفورية لروابط تيك توك، واتساب، و X -->
+ <meta property="og:title" content="RAVEN | الأرشيف السري - على الجانب الآخر" />
+ <meta property="og:description" content="اختبر بصيرتك في قضية قاعة المقتنيات واكتشف الأدلة المخفية." />
+ <meta property="og:type" content="website" />
+ <meta name="twitter:card" content="summary_large_image" />
+
+ <!-- أيقونة الموقع المستقلة داخل مجلد رايفن -->
+ <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 64 64%27%3E%3Crect width=%2764%27 height=%2764%27 rx=%278%27 fill=%27%23050507%27/%3E%3Ctext x=%2732%27 y=%2748%27 fill=%27%23d4a038%27 text-anchor=%27middle%27 font-size=%2748%27 font-weight=%27bold%27%3ER%3C/text%3E%3C/svg%3E" />
+
+ <style>
+   /* الإعدادات الأساسية لأسلوب النوار السينمائي */
+   *, *::before, *::after {
+     box-sizing: border-box;
+     margin: 0;
+     padding: 0;
+   }
+
+   body {
+     background-color: #050507;
+     color: #f2f2f5;
+     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+     overflow-x: hidden;
+     min-height: 100vh;
+     position: relative;
+   }
+
+   /* 1. شريط التحدي النفسي العلوي */
+   #raven-intel-bar {
+     position: fixed;
+     top: 0;
+     left: 0;
+     width: 100%;
+     background: rgba(8, 8, 10, 0.92);
+     border-bottom: 1px solid rgba(212, 160, 56, 0.25);
+     color: #d1d1d6;
+     font-size: 12px;
+     padding: 6px 14px;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     gap: 8px;
+     z-index: 9998;
+     backdrop-filter: blur(8px);
+     text-align: center;
+   }
+
+   .pulse-dot {
+     width: 8px;
+     height: 8px;
+     background-color: #d4a038;
+     border-radius: 50%;
+     box-shadow: 0 0 8px #d4a038;
+     animation: ravenPulse 1.8s infinite;
+   }
+
+   @keyframes ravenPulse {
+     0%, 100% { transform: scale(1); opacity: 1; }
+     50% { transform: scale(1.35); opacity: 0.4; }
+   }
+
+   /* 2. بوابة الدخول السينمائية */
+   #raven-entry-gate {
+     position: fixed;
+     inset: 0;
+     background: radial-gradient(circle at center, #141418 0%, #050507 100%);
+     z-index: 10000;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     transition: opacity 0.7s ease, visibility 0.7s ease;
+   }
+
+   #raven-entry-gate.gate-hidden {
+     opacity: 0;
+     visibility: hidden;
+     pointer-events: none;
+   }
+
+   .gate-content {
+     text-align: center;
+     padding: 24px;
+   }
+
+   .distressed-r-logo {
+     font-family: serif;
+     font-size: 72px;
+     font-weight: 900;
+     color: #d4a038;
+     letter-spacing: -2px;
+     text-shadow: 0 0 25px rgba(212, 160, 56, 0.45);
+     margin-bottom: 8px;
+     user-select: none;
+     cursor: pointer;
+   }
+
+   .gate-title {
+     color: #ffffff;
+     font-size: 28px;
+     letter-spacing: 6px;
+     margin: 0 0 8px 0;
+   }
+
+   .gate-subtitle {
+     color: #8e8e98;
+     font-size: 14px;
+     margin-bottom: 28px;
+   }
+
+   #enter-archive-btn {
+     background: transparent;
+     color: #d4a038;
+     border: 1px solid #d4a038;
+     padding: 12px 32px;
+     font-size: 15px;
+     font-weight: bold;
+     letter-spacing: 1px;
+     cursor: pointer;
+     border-radius: 4px;
+     transition: all 0.3s ease;
+     box-shadow: 0 0 15px rgba(212, 160, 56, 0.15);
+   }
+
+   #enter-archive-btn:hover {
+     background: #d4a038;
+     color: #050507;
+     box-shadow: 0 0 25px rgba(212, 160, 56, 0.6);
+   }
+
+   /* 3. المشغل الصوتي العائم وأزرار التحكم */
+   .raven-floating-controls {
+     position: fixed;
+     bottom: 20px;
+     left: 20px;
+     display: flex;
+     gap: 10px;
+     z-index: 9995;
+   }
+
+   .control-pill {
+     background: rgba(12, 12, 16, 0.88);
+     border: 1px solid rgba(212, 160, 56, 0.35);
+     color: #f2f2f5;
+     padding: 8px 14px;
+     border-radius: 999px;
+     display: flex;
+     align-items: center;
+     gap: 10px;
+     cursor: pointer;
+     font-size: 13px;
+     backdrop-filter: blur(10px);
+     transition: all 0.3s ease;
+   }
+
+   .control-pill:hover {
+     border-color: #d4a038;
+     box-shadow: 0 0 15px rgba(212, 160, 56, 0.25);
+   }
+
+   .brand-r {
+     color: #d4a038;
+     font-weight: 900;
+     font-family: serif;
+     font-size: 16px;
+   }
+
+   .waveform {
+     display: inline-flex;
+     align-items: flex-end;
+     gap: 2px;
+     height: 14px;
+   }
+
+   .waveform i {
+     width: 2px;
+     height: 4px;
+     background: #d4a038;
+     display: inline-block;
+     transition: height 0.2s ease;
+   }
+
+   .waveform.playing i {
+     animation: waveBounce 0.8s infinite ease-in-out;
+   }
+   .waveform.playing i:nth-child(2) { animation-delay: 0.2s; }
+   .waveform.playing i:nth-child(3) { animation-delay: 0.4s; }
+   .waveform.playing i:nth-child(4) { animation-delay: 0.1s; }
+
+   @keyframes waveBounce {
+     0%, 100% { height: 4px; }
+     50% { height: 14px; }
+   }
+
+   .uv-pill.uv-active {
+     border-color: #a855f7;
+     color: #e9d5ff;
+     box-shadow: 0 0 20px rgba(168, 85, 247, 0.6);
+   }
+
+   /* 4. كشاف مسرح الجريمة (UV) والأدلة المخفية */
+   #uv-secret-layer {
+     position: fixed;
+     inset: 0;
+     pointer-events: none;
+     z-index: 9990;
+     opacity: 0;
+     transition: opacity 0.3s ease;
+     -webkit-mask-image: radial-gradient(circle 130px at var(--uv-x, 50%) var(--uv-y, 50%), #000 15%, transparent 100%);
+     mask-image: radial-gradient(circle 130px at var(--uv-x, 50%) var(--uv-y, 50%), #000 15%, transparent 100%);
+     background: radial-gradient(circle 130px at var(--uv-x, 50%) var(--uv-y, 50%), rgba(139, 92, 246, 0.18), transparent 100%);
+   }
+
+   #uv-secret-layer.uv-on {
+     opacity: 1;
+   }
+
+   .uv-clue {
+     position: absolute;
+     color: #c084fc;
+     font-family: monospace;
+     font-size: 14px;
+     font-weight: bold;
+     text-shadow: 0 0 10px #a855f7, 0 0 20px #7e22ce;
+     letter-spacing: 0.5px;
+     user-select: none;
+     max-width: 300px;
+   }
+
+   /* تأثير تفعيل القدرة الخاصة (العين الخضراء) */
+   body.raven-ability-active {
+     animation: screenGlitch 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+   }
+
+   body.raven-ability-active .brand-r,
+   body.raven-ability-active .pulse-dot,
+   body.raven-ability-active .distressed-r-logo {
+     color: #10b981 !important;
+     text-shadow: 0 0 20px #10b981, 0 0 40px #059669 !important;
+     box-shadow: 0 0 25px #10b981 !important;
+   }
+
+   @keyframes screenGlitch {
+     0% { transform: translate(0); filter: hue-rotate(0deg); }
+     20% { transform: translate(-4px, 3px); filter: hue-rotate(90deg) contrast(1.4); }
+     40% { transform: translate(4px, -3px); }
+     60% { transform: translate(-3px, -2px); filter: drop-shadow(0 0 12px #10b981); }
+     80% { transform: translate(3px, 2px); }
+     100% { transform: translate(0); filter: hue-rotate(0deg); }
+   }
+
+   /* نافذة السر المخفي */
+   .secret-modal {
+     position: fixed;
+     inset: 0;
+     background: rgba(3, 7, 5, 0.88);
+     backdrop-filter: blur(12px);
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     z-index: 10001;
+     opacity: 0;
+     visibility: hidden;
+     transition: all 0.35s ease;
+   }
+
+   .secret-modal.modal-open {
+     opacity: 1;
+     visibility: visible;
+   }
+
+   .secret-modal-box {
+     background: #0a0f0d;
+     border: 1px solid #10b981;
+     box-shadow: 0 0 40px rgba(16, 185, 129, 0.25);
+     padding: 28px;
+     max-width: 400px;
+     width: 90%;
+     border-radius: 8px;
+     text-align: center;
+     color: #ecfdf5;
+   }
+
+   .ability-badge {
+     display: inline-block;
+     background: rgba(16, 185, 129, 0.15);
+     color: #34d399;
+     border: 1px solid rgba(16, 185, 129, 0.4);
+     font-size: 12px;
+     padding: 4px 12px;
+     border-radius: 999px;
+     margin-bottom: 12px;
+   }
+
+   .secret-code-box {
+     background: #040706;
+     border: 1px dashed #10b981;
+     color: #10b981;
+     font-family: monospace;
+     font-size: 20px;
+     font-weight: bold;
+     letter-spacing: 3px;
+     padding: 12px;
+     margin: 18px 0;
+   }
+
+   #close-secret-modal {
+     background: #10b981;
+     color: #040706;
+     border: none;
+     padding: 10px 24px;
+     font-weight: bold;
+     border-radius: 4px;
+     cursor: pointer;
+   }
+
+   /* 5. قسم اختبار قضية: على الجانب الآخر */
+   .raven-quiz-section {
+     max-width: 680px;
+     margin: 70px auto 40px auto;
+     padding: 24px 16px;
+   }
+
+   .quiz-container {
+     background: linear-gradient(180deg, rgba(16, 16, 22, 0.95) 0%, rgba(7, 7, 10, 0.98) 100%);
+     border: 1px solid rgba(212, 160, 56, 0.3);
+     border-radius: 12px;
+     padding: 28px 20px;
+     box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85);
+   }
+
+   .quiz-tag {
+     display: inline-block;
+     font-size: 12px;
+     color: #d4a038;
+     letter-spacing: 1px;
+     border: 1px solid rgba(212, 160, 56, 0.35);
+     padding: 4px 10px;
+     border-radius: 4px;
+     margin-bottom: 12px;
+     background: rgba(212, 160, 56, 0.08);
+   }
+
+   .quiz-title {
+     font-size: 22px;
+     margin: 0 0 14px 0;
+     line-height: 1.4;
+   }
+
+   .gold-text {
+     color: #d4a038;
+   }
+
+   .quiz-scenario {
+     color: #c4c4cc;
+     font-size: 15px;
+     line-height: 1.8;
+     background: rgba(255, 255, 255, 0.03);
+     border-right: 3px solid #d4a038;
+     padding: 14px;
+     border-radius: 4px;
+     margin-bottom: 22px;
+   }
+
+   .detective-name-box {
+     margin-bottom: 20px;
+   }
+
+   .detective-name-box label {
+     display: block;
+     font-size: 13px;
+     color: #a1a1aa;
+     margin-bottom: 8px;
+   }
+
+   #detective-name-input {
+     width: 100%;
+     box-sizing: border-box;
+     background: #09090d;
+     border: 1px solid rgba(212, 160, 56, 0.4);
+     color: #ffffff;
+     padding: 12px 14px;
+     border-radius: 6px;
+     font-size: 15px;
+     outline: none;
+     transition: border-color 0.2s ease;
+   }
+
+   #detective-name-input:focus {
+     border-color: #d4a038;
+     box-shadow: 0 0 12px rgba(212, 160, 56, 0.25);
+   }
+
+   .quiz-options {
+     display: flex;
+     flex-direction: column;
+     gap: 12px;
+   }
+
+   .quiz-option-btn {
+     background: rgba(20, 20, 28, 0.9);
+     border: 1px solid rgba(255, 255, 255, 0.12);
+     color: #e4e4e7;
+     padding: 14px 16px;
+     border-radius: 8px;
+     display: flex;
+     align-items: center;
+     gap: 12px;
+     text-align: right;
+     cursor: pointer;
+     font-size: 14px;
+     line-height: 1.6;
+     transition: all 0.25s ease;
+   }
+
+   .quiz-option-btn:hover {
+     border-color: #d4a038;
+     background: rgba(212, 160, 56, 0.08);
+     transform: translateY(-2px);
+   }
+
+   .opt-letter {
+     background: rgba(212, 160, 56, 0.15);
+     color: #d4a038;
+     border: 1px solid rgba(212, 160, 56, 0.4);
+     width: 28px;
+     height: 28px;
+     border-radius: 50%;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     font-weight: bold;
+     flex-shrink: 0;
+   }
+
+   .story-result-wrapper {
+     margin-top: 24px;
+     text-align: center;
+   }
+
+   .result-notice {
+     font-size: 13px;
+     color: #d4a038;
+     margin-bottom: 14px;
+   }
+
+   .canvas-preview-frame {
+     max-width: 280px;
+     margin: 0 auto 20px auto;
+     border-radius: 12px;
+     overflow: hidden;
+     border: 1px solid rgba(212, 160, 56, 0.45);
+     box-shadow: 0 15px 40px rgba(0, 0, 0, 0.9);
+   }
+
+   #raven-story-canvas {
+     width: 100%;
+     height: auto;
+     display: block;
+   }
+
+   .story-action-buttons {
+     display: flex;
+     flex-direction: column;
+     gap: 10px;
+     max-width: 280px;
+     margin: 0 auto;
+   }
+
+   .primary-story-btn {
+     background: #d4a038;
+     color: #050507;
+     border: none;
+     padding: 14px 20px;
+     border-radius: 8px;
+     font-size: 15px;
+     font-weight: 800;
+     cursor: pointer;
+     transition: all 0.25s ease;
+   }
+
+   .primary-story-btn:hover {
+     background: #e5b34b;
+     box-shadow: 0 0 20px rgba(212, 160, 56, 0.5);
+   }
+
+   .secondary-story-btn {
+     background: transparent;
+     color: #a1a1aa;
+     border: 1px solid rgba(255, 255, 255, 0.2);
+     padding: 10px;
+     border-radius: 8px;
+     font-size: 13px;
+     cursor: pointer;
+   }
+ </style>
+</head>
+<body>
+
+ <!-- 1. شريط التحدي العلوي -->
+ <div id="raven-intel-bar">
+   <span class="pulse-dot"></span>
+   <span>حالة الأرشيف: <strong>مفتوح</strong> | <span id="solver-rate">سرّي</span> — اكشف الأدلة المخفية في هذه الصفحة</span>
+ </div>
+
+ <!-- 2. بوابة الدخول السينمائية -->
+ <div id="raven-entry-gate">
+   <div class="gate-content">
+     <div class="distressed-r-logo raven-eye-trigger" title="اضغط ثلاث مرات">R</div>
+     <h1 class="gate-title">RAVEN</h1>
+     <p class="gate-subtitle">ملف تحريات رقم 17 — على الجانب الآخر</p>
+     <button id="enter-archive-btn" type="button">فتح الأرشيف السري</button>
+   </div>
+ </div>
+
+ <!-- 3. المشغل الصوتي العائم ومتحكمات الـ UV -->
+ <div class="raven-floating-controls" role="region" aria-label="أدوات التحكم">
+   <button id="raven-audio-toggle" class="control-pill" type="button" aria-label="تشغيل أو كتم الموسيقى">
+     <span class="brand-r raven-eye-trigger">R</span>
+     <span class="track-name">RAVEN OST</span>
+     <span class="waveform" id="audio-waveform">
+       <i></i><i></i><i></i><i></i>
+     </span>
+   </button>
+
+   <button id="uv-flashlight-toggle" class="control-pill uv-pill" type="button" aria-label="تشغيل كشاف الأدلة">
+     <span>🔦 فحص الأدلة (UV)</span>
+   </button>
+
+   <!-- preload="metadata" لسرعة التحميل على الجوال -->
+   <audio id="raven-bgm" loop preload="metadata">
+     <source src="./assets/RAVEN-Official-Theme-OST.mp3" type="audio/mpeg" />
+   </audio>
+ </div>
+
+ <!-- 4. طبقة الأدلة المخفية بقضية (على الجانب الآخر) -->
+ <div id="uv-secret-layer" aria-hidden="true">
+   <div class="uv-clue" style="top: 18%; right: 8%;">
+     [تحليل UV - قاعة المقتنيات]: أثر مسح كيميائي على حافة طاولة التقييم يطابق قفازات (كمال ناصر)
+   </div>
+   <div class="uv-clue" style="top: 38%; left: 6%;">
+     [ملاحظة RAVEN]: (نبيل مراد) غير توقيت السجل، و(هالة مراد) كانت تقف في الزاوية العمياء للكاميرا
+   </div>
+   <div class="uv-clue" style="top: 62%; right: 10%;">
+     [تناقض جنائي]: (مالك مراد) يدعي كسر الباب من الخارج.. لكن شظايا الزجاج سقطت باتجاه الخارج لا الداخل!
+   </div>
+   <div class="uv-clue" style="top: 84%; left: 12%;">
+     [شفرة البصيرة]: الخدعة ليست في السرقة بل في "الجانب الآخر".. اضغط على شعار R ثلاث مرات لكشف الملف
+   </div>
+ </div>
+
+ <!-- 5. نافذة السر المخفي (العين الخضراء) -->
+ <div id="green-eye-modal" class="secret-modal" aria-hidden="true">
+   <div class="secret-modal-box">
+     <div class="ability-badge">تم تفعيل بصيرة رايفن الخاصة</div>
+     <h2>أهلاً بك في الدائرة المغلقة</h2>
+     <p>أنت من القلة الذين انتبهوا للتفصيل السري. احتفظ بهذا الرمز للمشاركة:</p>
+     <div class="secret-code-box">RAVEN-EYE-17</div>
+     <button id="close-secret-modal" type="button">إغلاق الملف السري</button>
+   </div>
+ </div>
+
+ <!-- 6. قسم اختبار قضية: على الجانب الآخر وبطاقة الستوري -->
+ <section id="raven-detective-test" class="raven-quiz-section" dir="rtl">
+   <div class="quiz-container">
+     <div class="quiz-header">
+       <span class="quiz-tag">قضية تفاعلية // RAVEN — على الجانب الآخر</span>
+       <h2 class="quiz-title">داخل قاعة تقييم المقتنيات.. من الذي يكذب على <span class="gold-text">RAVEN</span>؟</h2>
+       <p class="quiz-scenario">
+         أبواب قاعة تقييم المقتنيات أُغلقت بالكامل. أمامك المشتبه بهم الأربعة: 
+         <strong>نبيل مراد</strong>، <strong>هالة مراد</strong>، <strong>مالك مراد</strong>، و<strong>كمال ناصر</strong>. 
+         <em>(تلميح: شغّل كشاف الـ UV في الصفحة قبل اختيار استنتاجك!)</em>
+       </p>
+     </div>
+
+     <div class="detective-name-box">
+       <label for="detective-name-input">اكتب اسمك أو لقبك لتوثيقه في بطاقة المحقق:</label>
+       <input type="text" id="detective-name-input" placeholder="مثال: المحقق دحوم" maxlength="22" />
+     </div>
+
+     <div class="quiz-options" id="quiz-options-list">
+       <button type="button" class="quiz-option-btn" 
+         data-suspect="خدعة الممر الخلفي (مالك + كمال)"
+         data-rank="محقق ظل — بصيرة العين الخضراء" 
+         data-score="94" 
+         data-color="#10b981" 
+         data-quote="انتبهت لدليل الـ UV: شظايا الزجاج سقطت للخارج والمسح الكيميائي يثبت أن الجريمة دُبّرت من داخل القاعة لا خارجها.">
+         <span class="opt-letter">أ</span>
+         <span class="opt-text">الكسر مفتعل من داخل القاعة للتمويه؛ (مالك مراد) يغطي على تلاعب (كمال ناصر) بمسرح الجريمة.</span>
+       </button>
+
+       <button type="button" class="quiz-option-btn" 
+         data-suspect="مؤامرة السجل والزاوية العمياء (نبيل وهالة)"
+         data-rank="محلل جنائي بارد (Cold Profiler)" 
+         data-score="89" 
+         data-color="#d4a038" 
+         data-quote="ركّزت على التواطؤ الصامت بين نبيل وهالة مراد واستغلالهما للزاوية العمياء وتغيير توقيت السجل الرسمي.">
+         <span class="opt-letter">ب</span>
+         <span class="opt-text">(هالة مراد) استغلت النقطة العمياء بينما تلاعب (نبيل مراد) بتوقيت السجل لتثبيت حجة الغياب.</span>
+       </button>
+
+       <button type="button" class="quiz-option-btn" 
+         data-suspect="تزوير التقييم الفني (كمال ناصر)"
+         data-rank="صائد الأدلة الصامتة (Evidence Hunter)" 
+         data-score="86" 
+         data-color="#d4a038" 
+         data-quote="تتبعت الأثر المادي المباشر في تقرير التقييم وشككت في حياد الخبير كمال ناصر منذ اللحظة الأولى.">
+         <span class="opt-letter">ج</span>
+         <span class="opt-text">(كمال ناصر) استبدل القطعة الأصلية بنسخة مزيفة قبل إغلاق القاعة واستغل فوضى عائلة مراد.</span>
+       </button>
+     </div>
+
+     <div id="story-card-result" class="story-result-wrapper" hidden>
+       <p class="result-notice">تم إصدار بطاقتك الجنائية لقضية «على الجانب الآخر» (مقاس ستوري 9:16):</p>
+       <div class="canvas-preview-frame">
+         <canvas id="raven-story-canvas" width="1080" height="1920"></canvas>
+       </div>
+       <div class="story-action-buttons">
+         <button type="button" id="share-story-btn" class="primary-story-btn">📥 حفظ / مشاركة البطاقة في الستوري</button>
+         <button type="button" id="retry-quiz-btn" class="secondary-story-btn">إعادة فحص أقوال المشتبه بهم</button>
+       </div>
+     </div>
+   </div>
+ </section>
+
+ <!-- المحرك البرمجي الشامل (JavaScript) -->
+ <script>
+   (function () {
+     const bgm = document.getElementById('raven-bgm');
+     bgm.addEventListener('error', () => { const label = document.querySelector('.track-name'); if(label) label.textContent = 'الموسيقى غير متوفرة'; });
+     const entryGate = document.getElementById('raven-entry-gate');
+     const enterBtn = document.getElementById('enter-archive-btn');
+     const audioToggle = document.getElementById('raven-audio-toggle');
+     const waveform = document.getElementById('audio-waveform');
+     const uvToggle = document.getElementById('uv-flashlight-toggle');
+     const uvLayer = document.getElementById('uv-secret-layer');
+     const secretModal = document.getElementById('green-eye-modal');
+     const closeSecretBtn = document.getElementById('close-secret-modal');
+
+     let audioCtx = null;
+     let lowPassFilter = null;
+     let isPlaying = false;
+     let baseVolume = 0.75;
+
+     // 1. تهيئة Web Audio API للفلترة مع السكرول
+     function initWebAudio() {
+       if (audioCtx) return;
+       try {
+         const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+         audioCtx = new AudioContextClass();
+         const source = audioCtx.createMediaElementSource(bgm);
+         lowPassFilter = audioCtx.createBiquadFilter();
+         lowPassFilter.type = 'lowpass';
+         lowPassFilter.frequency.value = 20000;
+         source.connect(lowPassFilter);
+         lowPassFilter.connect(audioCtx.destination);
+       } catch (e) {
+         console.warn('Web Audio API fallback active');
+       }
+     }
+
+     // 2. تشغيل الموسيقى عبر بوابة الدخول
+     function startRavenExperience() {
+       if (entryGate) entryGate.classList.add('gate-hidden');
+       initWebAudio();
+       if (audioCtx && audioCtx.state === 'suspended') {
+         audioCtx.resume();
+       }
+       bgm.volume = 0;
+       bgm.play().then(() => {
+         isPlaying = true;
+         waveform.classList.add('playing');
+         fadeAudioTo(baseVolume, 1200);
+       }).catch(() => {
+         isPlaying = false;
+         waveform.classList.remove('playing');
+       });
+     }
+
+     if (enterBtn) enterBtn.addEventListener('click', startRavenExperience);
+
+     function fadeAudioTo(targetVol, duration = 600) {
+       const startVol = bgm.volume;
+       const diff = targetVol - startVol;
+       const steps = 20;
+       const stepTime = duration / steps;
+       let currentStep = 0;
+       const interval = setInterval(() => {
+         currentStep++;
+         const nextVol = startVol + (diff * (currentStep / steps));
+         bgm.volume = Math.max(0, Math.min(1, nextVol));
+         if (currentStep >= steps) clearInterval(interval);
+       }, stepTime);
+     }
+
+     if (audioToggle) {
+       audioToggle.addEventListener('click', () => {
+         if (bgm.paused) {
+           initWebAudio();
+           if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+           bgm.play().then(() => { isPlaying = true; waveform.classList.add('playing'); fadeAudioTo(baseVolume, 400); }).catch(() => { isPlaying = false; waveform.classList.remove('playing'); });
+         } else {
+           fadeAudioTo(0, 300);
+           setTimeout(() => bgm.pause(), 310);
+           isPlaying = false;
+           waveform.classList.remove('playing');
+         }
+       });
+     }
+
+     // 3. تدرج الصوت مع السكرول
+     window.addEventListener('scroll', () => {
+       if (!lowPassFilter || !audioCtx) return;
+       const maxScroll = Math.max(1, document.body.scrollHeight - window.innerHeight);
+       const scrollRatio = Math.min(1, Math.max(0, window.scrollY / maxScroll));
+       const targetFreq = 20000 - (scrollRatio * 19100);
+       lowPassFilter.frequency.setTargetAtTime(targetFreq, audioCtx.currentTime, 0.15);
+     }, { passive: true });
+
+     // 4. كشاف الـ UV للأدلة المخفية
+     let uvActive = false;
+     if (uvToggle && uvLayer) {
+       uvToggle.addEventListener('click', () => {
+         uvActive = !uvActive;
+         uvToggle.classList.toggle('uv-active', uvActive);
+         uvLayer.classList.toggle('uv-on', uvActive);
+       });
+
+       const updateUvPosition = (x, y) => {
+         if (!uvActive) return;
+         uvLayer.style.setProperty('--uv-x', x + 'px');
+         uvLayer.style.setProperty('--uv-y', y + 'px');
+       };
+
+       window.addEventListener('mousemove', (e) => updateUvPosition(e.clientX, e.clientY), { passive: true });
+       window.addEventListener('touchstart', (e) => { if (e.touches[0]) updateUvPosition(e.touches[0].clientX, e.touches[0].clientY); }, { passive: true });
+       window.addEventListener('touchmove', (e) => {
+         if (e.touches[0]) updateUvPosition(e.touches[0].clientX, e.touches[0].clientY);
+       }, { passive: true });
+     }
+
+     // 5. سر الضغطة الثلاثية (العين الخضراء)
+     let tapCount = 0;
+     let tapTimer = null;
+     document.addEventListener('click', (e) => {
+       const trigger = e.target.closest('.raven-eye-trigger, .brand-r, .distressed-r-logo');
+       if (!trigger) return;
+       tapCount++;
+       clearTimeout(tapTimer);
+       if (tapCount >= 3) {
+         tapCount = 0;
+         activateGreenEyeAbility();
+       } else {
+         tapTimer = setTimeout(() => { tapCount = 0; }, 600);
+       }
+     });
+
+     function activateGreenEyeAbility() {
+       document.body.classList.add('raven-ability-active');
+       if (lowPassFilter && audioCtx) {
+         lowPassFilter.frequency.setValueAtTime(350, audioCtx.currentTime);
+         lowPassFilter.frequency.exponentialRampToValueAtTime(18000, audioCtx.currentTime + 1.2);
+       }
+       setTimeout(() => {
+         if (secretModal) secretModal.classList.add('modal-open');
+       }, 450);
+     }
+
+     if (closeSecretBtn && secretModal) {
+       closeSecretBtn.addEventListener('click', () => {
+         secretModal.classList.remove('modal-open');
+         document.body.classList.remove('raven-ability-active');
+       });
+     }
+
+     // 6. محرك رسم بطاقة الستوري (1080x1920)
+     const optionsList = document.getElementById('quiz-options-list');
+     const nameInput = document.getElementById('detective-name-input');
+     const resultWrapper = document.getElementById('story-card-result');
+     const canvas = document.getElementById('raven-story-canvas');
+     const shareBtn = document.getElementById('share-story-btn');
+     const retryBtn = document.getElementById('retry-quiz-btn');
+
+     if (canvas && optionsList) {
+       const ctx = canvas.getContext('2d');
+
+       function wrapArabicText(context, text, x, y, maxWidth, lineHeight) {
+         const words = text.split(' ');
+         let line = '';
+         let currentY = y;
+         for (let n = 0; n < words.length; n++) {
+           const testLine = line + words[n] + ' ';
+           const metrics = context.measureText(testLine);
+           if (metrics.width > maxWidth && n > 0) {
+             context.fillText(line.trim(), x, currentY);
+             line = words[n] + ' ';
+             currentY += lineHeight;
+           } else {
+             line = testLine;
+           }
+         }
+         context.fillText(line.trim(), x, currentY);
+         return currentY;
+       }
+
+       function renderStoryCard(data) {
+         const W = 1080;
+         const H = 1920;
+         const accent = data.color || '#d4a038';
+         const detectiveName = (nameInput.value || '').trim() || 'محقق مجهول';
+         const serialCode = '#OTS-' + Math.floor(1000 + Math.random() * 9000);
+
+         ctx.clearRect(0, 0, W, H);
+         ctx.direction = 'rtl';
+
+         const bgGrad = ctx.createRadialGradient(W / 2, H * 0.35, 100, W / 2, H / 2, 1200);
+         bgGrad.addColorStop(0, '#16161d');
+         bgGrad.addColorStop(0.6, '#09090c');
+         bgGrad.addColorStop(1, '#030305');
+         ctx.fillStyle = bgGrad;
+         ctx.fillRect(0, 0, W, H);
+
+         const glowGrad = ctx.createRadialGradient(W / 2, 520, 20, W / 2, 520, 480);
+         glowGrad.addColorStop(0, accent + '33');
+         glowGrad.addColorStop(1, 'transparent');
+         ctx.fillStyle = glowGrad;
+         ctx.fillRect(0, 0, W, H);
+
+         ctx.strokeStyle = accent;
+         ctx.lineWidth = 3;
+         ctx.strokeRect(60, 70, W - 120, H - 140);
+         ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+         ctx.lineWidth = 1;
+         ctx.strokeRect(80, 90, W - 160, H - 180);
+
+         ctx.textAlign = 'center';
+         ctx.fillStyle = '#d4a038';
+         ctx.font = 'bold 28px sans-serif';
+         ctx.fillText('قضية: RAVEN — على الجانب الآخر (قاعة المقتنيات)', W / 2, 160);
+
+         ctx.save();
+         ctx.fillStyle = accent;
+         ctx.shadowColor = accent;
+         ctx.shadowBlur = 35;
+         ctx.font = '900 165px serif';
+         ctx.fillText('R', W / 2, 345);
+         ctx.restore();
+
+         ctx.fillStyle = '#ffffff';
+         ctx.font = 'bold 44px sans-serif';
+         ctx.fillText('RAVEN ARCHIVE // CASE REPORT', W / 2, 415);
+
+         ctx.strokeStyle = accent;
+         ctx.lineWidth = 2;
+         ctx.beginPath();
+         ctx.moveTo(260, 460);
+         ctx.lineTo(820, 460);
+         ctx.stroke();
+
+         ctx.fillStyle = '#a1a1aa';
+         ctx.font = '30px sans-serif';
+         ctx.fillText('المحقق المسجل في مسرح الجريمة:', W / 2, 535);
+
+         ctx.fillStyle = '#ffffff';
+         ctx.font = 'bold 62px sans-serif';
+         ctx.fillText(detectiveName, W / 2, 615);
+
+         ctx.fillStyle = accent;
+         ctx.font = 'bold 28px monospace';
+         ctx.fillText('CASE ID: ' + serialCode, W / 2, 670);
+
+         ctx.fillStyle = 'rgba(255, 255, 255, 0.03)';
+         ctx.fillRect(120, 730, W - 240, 360);
+         ctx.strokeStyle = accent;
+         ctx.lineWidth = 2;
+         ctx.strokeRect(120, 730, W - 240, 360);
+
+         ctx.fillStyle = '#d1d1d6';
+         ctx.font = '32px sans-serif';
+         ctx.fillText('نسبة التوافق مع استنتاج RAVEN الجنائي', W / 2, 795);
+
+         ctx.save();
+         ctx.fillStyle = accent;
+         ctx.shadowColor = accent;
+         ctx.shadowBlur = 25;
+         ctx.font = '900 130px sans-serif';
+         ctx.fillText(data.score + '%', W / 2, 940);
+         ctx.restore();
+
+         ctx.fillStyle = '#ffffff';
+         ctx.font = 'bold 36px sans-serif';
+         ctx.fillText(data.rank, W / 2, 1005);
+
+         ctx.fillStyle = accent;
+         ctx.font = 'bold 28px sans-serif';
+         ctx.fillText('مسار التحقيق: ' + (data.suspect || ''), W / 2, 1060);
+
+         ctx.fillStyle = '#e4e4e7';
+         ctx.font = '36px sans-serif';
+         wrapArabicText(ctx, '"' + data.quote + '"', W / 2, 1190, 780, 58);
+
+         if (String(data.score) === '94') {
+           ctx.fillStyle = 'rgba(16, 185, 129, 0.14)';
+           ctx.fillRect(190, 1410, W - 380, 82);
+           ctx.strokeStyle = '#10b981';
+           ctx.strokeRect(190, 1410, W - 380, 82);
+           ctx.fillStyle = '#34d399';
+           ctx.font = 'bold 29px sans-serif';
+           ctx.fillText('★ كشف خيط الـ UV السري وفعّل بصيرة العين الخضراء ★', W / 2, 1462);
+         }
+
+         ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+         ctx.beginPath();
+         ctx.moveTo(180, 1580);
+         ctx.lineTo(900, 1580);
+         ctx.stroke();
+
+         ctx.fillStyle = '#d4a038';
+         ctx.font = 'bold 32px sans-serif';
+         ctx.fillText('نبيل • هالة • مالك • كمال — من تتهم في القاعة؟', W / 2, 1655);
+
+         ctx.fillStyle = '#ffffff';
+         ctx.font = 'bold 38px monospace';
+         ctx.fillText('TikTok: @iid7oom211', W / 2, 1730);
+
+         ctx.fillStyle = '#71717a';
+         ctx.font = 'bold 25px monospace';
+         ctx.fillText('RAVEN × D7OOM // ON THE OTHER SIDE', W / 2, 1800);
+       }
+
+       optionsList.addEventListener('click', (e) => {
+         const btn = e.target.closest('.quiz-option-btn');
+         if (!btn) return;
+         const cardData = {
+           suspect: btn.getAttribute('data-suspect'),
+           rank: btn.getAttribute('data-rank'),
+           score: btn.getAttribute('data-score'),
+           color: btn.getAttribute('data-color'),
+           quote: btn.getAttribute('data-quote')
+         };
+         renderStoryCard(cardData);
+         optionsList.hidden = true;
+         resultWrapper.hidden = false;
+       });
+
+       if (retryBtn) {
+         retryBtn.addEventListener('click', () => {
+           resultWrapper.hidden = true;
+           optionsList.hidden = false;
+         });
+       }
+
+       if (shareBtn) {
+         shareBtn.addEventListener('click', () => {
+           canvas.toBlob(async (blob) => {
+             if (!blob) return;
+             const fileName = 'RAVEN-OnTheOtherSide-Card.png';
+             const file = new File([blob], fileName, { type: 'image/png' });
+
+             if (navigator.canShare && navigator.canShare({ files: [file] })) {
+               try {
+                 await navigator.share({
+                   title: 'بطاقة قضية RAVEN على الجانب الآخر',
+                   text: 'حللت قضية قاعة المقتنيات في أرشيف رايفن! جرب الاختبار من الرابط في بايو @iid7oom211',
+                   files: [file]
+                 });
+                 return;
+               } catch (err) {}
+             }
+
+             const url = URL.createObjectURL(blob);
+             const link = document.createElement('a');
+             link.download = fileName;
+             link.href = url;
+             document.body.appendChild(link);
+             link.click();
+             document.body.removeChild(link);
+             URL.revokeObjectURL(url);
+           }, 'image/png');
+         });
+       }
+     }
+   })();
+ </script>
+</body>
+</html>
