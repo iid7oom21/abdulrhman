@@ -233,8 +233,8 @@
    }
 
    /* تأثير تفعيل القدرة الخاصة (العين الخضراء) */
-   body.raven-ability-active {
-     animation: screenGlitch 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+   body.raven-screen-glitch {
+     animation: screenGlitch 0.45s cubic-bezier(0.25, 0.46, 0.45, 0.94);
    }
 
    body.raven-ability-active .brand-r,
@@ -272,6 +272,8 @@
    .secret-modal.modal-open {
      opacity: 1;
      visibility: visible;
+     /* Make the dialog focusable immediately while its opacity fades in. */
+     transition-property: opacity;
    }
 
    .secret-modal-box {
@@ -402,6 +404,10 @@
      gap: 12px;
    }
 
+   .quiz-options[hidden] {
+     display: none;
+   }
+
    .quiz-option-btn {
      background: rgba(20, 20, 28, 0.9);
      border: 1px solid rgba(255, 255, 255, 0.12);
@@ -511,7 +517,7 @@
  <!-- 2. بوابة الدخول السينمائية -->
  <div id="raven-entry-gate">
    <div class="gate-content">
-     <div class="distressed-r-logo raven-eye-trigger" title="اضغط ثلاث مرات">R</div>
+     <div class="distressed-r-logo raven-eye-trigger" title="اضغط ثلاث مرات" tabindex="-1">R</div>
      <h1 class="gate-title">RAVEN</h1>
      <p class="gate-subtitle">ملف تحريات رقم 17 — على الجانب الآخر</p>
      <button id="enter-archive-btn" type="button">فتح الأرشيف السري</button>
@@ -555,10 +561,10 @@
  </div>
 
  <!-- 5. نافذة السر المخفي (العين الخضراء) -->
- <div id="green-eye-modal" class="secret-modal" aria-hidden="true">
+ <div id="green-eye-modal" class="secret-modal" role="dialog" aria-modal="true" aria-labelledby="green-eye-title" aria-hidden="true" inert>
    <div class="secret-modal-box">
      <div class="ability-badge">تم تفعيل بصيرة رايفن الخاصة</div>
-     <h2>أهلاً بك في الدائرة المغلقة</h2>
+     <h2 id="green-eye-title">أهلاً بك في الدائرة المغلقة</h2>
      <p>أنت من القلة الذين انتبهوا للتفصيل السري. احتفظ بهذا الرمز للمشاركة:</p>
      <div class="secret-code-box">RAVEN-EYE-17</div>
      <button id="close-secret-modal" type="button">إغلاق الملف السري</button>
@@ -747,6 +753,9 @@
      // 5. سر الضغطة الثلاثية (العين الخضراء)
      let tapCount = 0;
      let tapTimer = null;
+     let secretOpenTimer = null;
+     let secretOpener = null;
+     let modalBackground = [];
      document.addEventListener('click', (e) => {
        const trigger = e.target.closest('.raven-eye-trigger, .brand-r, .distressed-r-logo');
        if (!trigger) return;
@@ -754,27 +763,61 @@
        clearTimeout(tapTimer);
        if (tapCount >= 3) {
          tapCount = 0;
-         activateGreenEyeAbility();
+         activateGreenEyeAbility(trigger);
        } else {
          tapTimer = setTimeout(() => { tapCount = 0; }, 600);
        }
      });
 
-     function activateGreenEyeAbility() {
-       document.body.classList.add('raven-ability-active');
+     function activateGreenEyeAbility(trigger) {
+       if (!secretModal || !closeSecretBtn || secretOpenTimer !== null || secretModal.classList.contains('modal-open')) return;
+       secretOpener = trigger.closest('button') || trigger;
+       document.body.classList.add('raven-ability-active', 'raven-screen-glitch');
        if (lowPassFilter && audioCtx) {
          lowPassFilter.frequency.setValueAtTime(350, audioCtx.currentTime);
          lowPassFilter.frequency.exponentialRampToValueAtTime(18000, audioCtx.currentTime + 1.2);
        }
-       setTimeout(() => {
-         if (secretModal) secretModal.classList.add('modal-open');
+       secretOpenTimer = setTimeout(() => {
+         secretOpenTimer = null;
+         // End the body transform/filter before showing viewport-fixed content.
+         document.body.classList.remove('raven-screen-glitch');
+         modalBackground = Array.from(document.body.children)
+           .filter((element) => element !== secretModal && element.tagName !== 'SCRIPT')
+           .map((element) => [element, element.inert]);
+         modalBackground.forEach(([element]) => { element.inert = true; });
+         secretModal.inert = false;
+         secretModal.setAttribute('aria-hidden', 'false');
+         secretModal.classList.add('modal-open');
+         closeSecretBtn.focus({ preventScroll: true });
        }, 450);
      }
 
+     function closeGreenEyeModal() {
+       clearTimeout(secretOpenTimer);
+       secretOpenTimer = null;
+       secretModal.classList.remove('modal-open');
+       document.body.classList.remove('raven-ability-active', 'raven-screen-glitch');
+       modalBackground.forEach(([element, wasInert]) => { element.inert = wasInert; });
+       modalBackground = [];
+       // Return focus before hiding the dialog from assistive technology.
+       if (secretOpener && secretOpener.isConnected) secretOpener.focus({ preventScroll: true });
+       secretOpener = null;
+       secretModal.inert = true;
+       secretModal.setAttribute('aria-hidden', 'true');
+     }
+
      if (closeSecretBtn && secretModal) {
-       closeSecretBtn.addEventListener('click', () => {
-         secretModal.classList.remove('modal-open');
-         document.body.classList.remove('raven-ability-active');
+       closeSecretBtn.addEventListener('click', closeGreenEyeModal);
+       secretModal.addEventListener('keydown', (e) => {
+         if (!secretModal.classList.contains('modal-open')) return;
+         if (e.key === 'Escape') {
+           e.preventDefault();
+           closeGreenEyeModal();
+         } else if (e.key === 'Tab') {
+           // The close button is the dialog's only interactive control.
+           e.preventDefault();
+           closeSecretBtn.focus({ preventScroll: true });
+         }
        });
      }
 
@@ -935,7 +978,7 @@
 
        optionsList.addEventListener('click', (e) => {
          const btn = e.target.closest('.quiz-option-btn');
-         if (!btn) return;
+         if (!btn || optionsList.hidden) return;
          const cardData = {
            suspect: btn.getAttribute('data-suspect'),
            rank: btn.getAttribute('data-rank'),
