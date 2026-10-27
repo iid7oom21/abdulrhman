@@ -1,0 +1,50 @@
+{
+  "simulation": true,
+  "port": 4000,
+  "dbPath": "./data/raven-credits.sqlite",
+  "webhookSecret": "SIMULATION_ONLY_CHANGE_ME",
+  "ai": {
+    "provider": "simulation",
+    "maxTokensPerMessage": 300,
+    "maxConversationMessages": 30,
+    "estimatedCostPerMessageUsd": 0.002,
+    "note": "قيمة تقديرية للمحاكاة فقط. لا تستخدم أسعاراً حقيقية حتى قياس فعلي."
+  },
+  "payment": {
+    "provider": "simulation",
+    "currency": "SAR",
+    "collectionFeePercent": 2.9,
+    "fixedFeeHalalas": 100,
+    "defaultMarginPercent": 35
+  },
+  "packages": [
+    {
+      "id": "pack_small",
+      "name_ar": "باقة صغيرة",
+      "messages": 20,
+      "minutes": null,
+      "price_sar": 500,
+      "margin_percent": 30
+    },
+    {
+      "id": "pack_medium",
+      "name_ar": "باقة متوسطة",
+      "messages": 60,
+      "minutes": null,
+      "price_sar": 1200,
+      "margin_percent": 35
+    },
+    {
+      "id": "pack_large",
+      "name_ar": "باقة كبيرة",
+      "messages": 150,
+      "minutes": null,
+      "price_sar": 2500,
+      "margin_percent": 40
+    }
+  ],
+  "limits": {
+    "maxMessagesPerSession": 40,
+    "rateLimitPerMinute": 10
+  }
+}
