@@ -1,5 +1,5 @@
-import { el } from './core.js?v=039ed59b19dc579c';
-import { loadMediaManifest, mediaURL, loadVerifiedMedia, waveformPeaks, reverseAudioBuffer, sliceAudioBuffer, compareAudioBuffers } from './expansion-media.js?v=039ed59b19dc579c';
+import { el } from './core.js?v=0e63bd470374096b';
+import { loadMediaManifest, mediaURL, loadVerifiedMedia, waveformPeaks, reverseAudioBuffer, sliceAudioBuffer, compareAudioBuffers } from './expansion-media.js?v=0e63bd470374096b';
 
 const clamp = (value, min, max) => Math.min(max, Math.max(min, Number(value) || 0));
 const time = value => { const seconds = Math.max(0, Number(value) || 0); return `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}.${Math.floor(seconds % 1 * 10)}`; };

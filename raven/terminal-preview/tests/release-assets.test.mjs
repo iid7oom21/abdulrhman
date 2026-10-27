@@ -62,7 +62,7 @@ test('HTML stamps only app module and local styles while preserving formatting',
   assert.equal(stamped, source.replace("href='./styles.css?x=%20#theme'", "href='./styles.css?x=%20&v=abc#theme'").replace('src="../modules/app.js"', 'src="../modules/app.js?v=abc"'));
 });
 
-test('release is deterministic and idempotent, including all seven HTML entries and shared leaf URLs', async t => {
+test('release is deterministic and idempotent, including all declared HTML entries and shared leaf URLs', async t => {
   const f = await fixture(t);
   const canonical = await f.read('../../fourth-signature/case-data.js');
   const initial = await planRelease(f.root);

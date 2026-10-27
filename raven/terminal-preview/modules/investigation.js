@@ -1,4 +1,4 @@
-import { ACTIVITIES, ACTIVITY_BY_ID, REVISION, FILE_MANIFEST } from './expansion-data.js?v=039ed59b19dc579c';
+import { ACTIVITIES, ACTIVITY_BY_ID, REVISION, FILE_MANIFEST } from './expansion-data.js?v=0e63bd470374096b';
 
 const ALL_EVIDENCE = Array.from({ length: 16 }, (_, i) => `E${String(i + 1).padStart(2, '0')}`);
 const DEDUCTIONS = { A08: 'Q01', A14: 'Q02', A26: 'Q03', A32: 'Q04' };

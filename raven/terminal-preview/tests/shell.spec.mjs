@@ -1,6 +1,6 @@
 import { test, expect, PREVIEW, route, boot, expectNoOverflow, openEvidence, selectCaseTab } from './helpers.mjs';
 
-const paths = ['', 'raven-17/', 'raven-17/part-1/', 'raven-17/part-2/', 'raven-17/part-3/', 'zarqa/', 'case-017/'];
+const paths = ['', 'raven-17/', 'raven-17/part-1/', 'raven-17/part-2/', 'raven-17/part-3/', 'zarqa/', 'case-017/', 'last-call/'];
 
 test('every direct route has a static entry, noindex, and a mounted accessible page', async ({ page, request }) => {
   for (const path of paths) {
@@ -77,9 +77,11 @@ test('case to films to episode to case to home mounts each destination without r
   await expect(page).toHaveURL(route('raven-17/part-1/'));
   await expect(page.locator('#route-outlet h1')).toHaveText('RAVEN 17 — الجزء الأول');
   await expect(page.locator('[data-film-video="1"]')).toBeVisible();
-  await page.locator('#site-header a[href$="/case-017/"]').click();
+  await page.locator('#site-header a[href$="/last-call/"]').click();
+  await expect(page).toHaveURL(route('last-call/'));
+  await expect(page.locator('#route-outlet h1')).toContainText('آخر');
+  await page.locator('a[href*="/case-017/"]').last().click();
   await expect(page).toHaveURL(route('case-017/'));
-  await expect(page.locator('#route-outlet h1')).toHaveText('التوقيع الرابع.');
   await selectCaseTab(page, 'evidence');
   await expect(page.locator('.case-evidence-card')).toHaveCount(16);
   await expect(page.locator('[data-film-video]')).toHaveCount(0);
