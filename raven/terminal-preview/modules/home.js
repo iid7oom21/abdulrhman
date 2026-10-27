@@ -1,5 +1,5 @@
-import { el } from './core.js?v=039ed59b19dc579c';
-import { HERO, EPISODES, ZARQA } from './catalog.js?v=039ed59b19dc579c';
+import { el, BASE } from './core.js?v=0e63bd470374096b';
+import { HERO, EPISODES, ZARQA } from './catalog.js?v=0e63bd470374096b';
 
 export function mount(root, services, route = '') {
   const { t, store, audio } = services;
@@ -39,16 +39,19 @@ export function mount(root, services, route = '') {
   }
 
   function caseSection() {
-    const progress = services.caseStore.get();
+    const raw = store.get('last-call:v1', {});
+    const progress = raw && typeof raw === 'object' ? raw : {};
+    const completed = Array.isArray(progress.solved) ? Math.min(6, progress.solved.length) : 0;
     return el('section', { class: 'case-invitation section', id: 'investigate' }, [
-      el('figure', { class: 'case-invitation-image' }, [el('img', { src: services.caseAsset('assets/hero.webp'), alt: t('لوسيان أمام الأرشيف المحترق', 'Lucian outside the archive'), loading: 'lazy', width: 1280, height: 720 }),
-        el('figcaption', { text: 'CASE FILE / 017', dir: 'ltr' })]),
-      el('div', { class: 'case-invitation-copy' }, [eyebrow('ملف مفتوح · أنت المحقق', 'OPEN FILE · YOU INVESTIGATE'),
-        el('h2', {}, [t('التوقيع ', 'The '), el('em', { text: t('الرابع.', 'Fourth Signature.') })]),
-        el('p', { class: 'section-lead', text: t('حارسٌ فُصل بعد حريق. صورةٌ أدانته. هل قالت الحقيقة؟', 'A guard dismissed after a fire. A photograph condemned him. Did it tell the truth?') }),
-        el('p', { class: 'case-stats', text: t('٧ مراحل · ٣٢ نشاطًا · ١٦ دليلًا', '7 chapters · 32 activities · 16 documents') }),
-        link('case-017/', progress.viewedIds.length ? 'واصل التحقيق ←' : 'افتح ملف التحقيق ←', progress.viewedIds.length ? 'Continue investigating →' : 'Open the case →', true),
-        progress.viewedIds.length ? el('p', { class: 'progress-note', text: t(`${progress.solvedIds.length} من ٤ استنتاجات محفوظة`, `${progress.solvedIds.length} of 4 deductions saved`) }) : null,
+      el('figure', { class: 'case-invitation-image' }, [el('img', { src: new URL('assets/last-call-cover.webp', BASE).href, alt: t('مكتب في استوديو مظلم، وهاتف بجانب دفتر أزرق', 'A desk in a dark studio, a phone beside a blue ledger'), loading: 'lazy', width: 1672, height: 941 }),
+        el('figcaption', { text: 'CASE FILE / 018', dir: 'ltr' })]),
+      el('div', { class: 'case-invitation-copy' }, [eyebrow('قضية جديدة · أنت المحقق', 'NEW CASE · YOU INVESTIGATE'),
+        el('h2', {}, [t('آخر ', 'Last '), el('em', { text: t('اتصال.', 'Call.') })]),
+        el('p', { class: 'section-lead', text: t('رسالة تصل بعد موت صاحبها. ست شخصيات تعرف جزءًا من الحقيقة. أي وقتٍ تصدّق؟', 'A message arrives after its sender dies. Six people each hold part of the truth. Which time can you trust?') }),
+        el('p', { class: 'case-stats', text: t('٦ شخصيات · ٦ مراحل · تحقيق مجاني كامل', '6 characters · 6 stages · A complete free investigation in Arabic') }),
+        link('last-call/', progress.started ? 'واصل التحقيق ←' : 'افتح ملف التحقيق ←', progress.started ? 'Continue investigating →' : 'Open the case →', true),
+        progress.started ? el('p', { class: 'progress-note', text: t(`${completed} من ٦ مراحل محفوظة على هذا الجهاز`, `${completed} of 6 stages saved on this device`) }) : null,
+        el('p', { class: 'muted' }, [link('case-017/', 'من الأرشيف: التوقيع الرابع', 'Archive: The Fourth Signature')]),
       ]),
     ]);
   }

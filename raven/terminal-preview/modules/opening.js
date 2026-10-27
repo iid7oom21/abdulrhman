@@ -1,4 +1,4 @@
-import { el } from './core.js?v=039ed59b19dc579c';
+import { el } from './core.js?v=0e63bd470374096b';
 
 const VIDEO = new URL('../assets/raven-intro.mp4', import.meta.url).href;
 const POSTER = new URL('../assets/raven-intro-poster.jpg', import.meta.url).href;

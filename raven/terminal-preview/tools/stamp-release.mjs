@@ -7,7 +7,7 @@ import { dirname, resolve, relative, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 export const HTML_ENTRIES = Object.freeze([
-  'index.html', 'case-017/index.html', 'raven-17/index.html',
+  'index.html', 'last-call/index.html', 'case-017/index.html', 'raven-17/index.html',
   'raven-17/part-1/index.html', 'raven-17/part-2/index.html',
   'raven-17/part-3/index.html', 'zarqa/index.html'
 ]);

@@ -4,7 +4,7 @@ import { seedExpansion } from './activity-journey.mjs';
 
 const corePattern = /\/terminal-preview\/modules\/core\.js(?:\?.*)?$/;
 const casePattern = /\/terminal-preview\/modules\/case\.js(?:\?.*)?$/;
-const paths = ['', 'case-017/', 'raven-17/', 'raven-17/part-1/', 'raven-17/part-2/', 'raven-17/part-3/', 'zarqa/'];
+const paths = ['', 'last-call/', 'case-017/', 'raven-17/', 'raven-17/part-1/', 'raven-17/part-2/', 'raven-17/part-3/', 'zarqa/'];
 const note = { id: 'release-note', evidenceId: 'E09', paragraphIndex: 0, type: 'ملاحظة',
   text: 'ملاحظة المحقق محفوظة أثناء تحديث الموقع.', quote: '', createdAt: 1700000000000 };
 
@@ -40,7 +40,7 @@ async function oldCoreAPI() {
   return source.replace('export const caseCompletionKey', 'const caseCompletionKey');
 }
 
-test('all seven static entries declare one coherent release for the app and styles', async ({ request }) => {
+test('all declared static entries declare one coherent release for the app and styles', async ({ request }) => {
   const versions = new Set();
   for (const path of paths) {
     const response = await request.get(route(path));

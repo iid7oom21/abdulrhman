@@ -1,8 +1,8 @@
-import { BASE, CASE, caseAsset, el, routeURL, createStore, createCaseStore, importLegacy } from './core.js?v=039ed59b19dc579c';
-import { createAudio } from './audio.js?v=039ed59b19dc579c';
-import { createInvestigation } from './investigation.js?v=039ed59b19dc579c';
-import { createCloud } from './cloud.js?v=039ed59b19dc579c';
-import { createOpening } from './opening.js?v=039ed59b19dc579c';
+import { BASE, CASE, caseAsset, el, routeURL, createStore, createCaseStore, importLegacy } from './core.js?v=0e63bd470374096b';
+import { createAudio } from './audio.js?v=0e63bd470374096b';
+import { createInvestigation } from './investigation.js?v=0e63bd470374096b';
+import { createCloud } from './cloud.js?v=0e63bd470374096b';
+import { createOpening } from './opening.js?v=0e63bd470374096b';
 
 const outlet = document.querySelector('#route-outlet');
 const notices = document.querySelector('#site-notice');
@@ -70,7 +70,7 @@ function renderHeader() {
       el('span', { class: 'brand-word', text: 'RAVEN', dir: 'ltr' }), el('span', { class: 'brand-caption', text: t('كل حكاية تترك أثرًا', 'EVERY STORY LEAVES A TRACE') }),
     ]),
     el('nav', { class: 'primary-nav', 'aria-label': t('التنقل الرئيسي', 'Main navigation') }, [
-      ...[['raven-17/', 'الأفلام', 'Films'], ['case-017/', 'التحقيق', 'Investigate'], ['zarqa/', 'قريبًا', 'Coming soon']].map(([path, ar, en]) =>
+      ...[['raven-17/', 'الأفلام', 'Films'], ['last-call/', 'التحقيق', 'Investigate'], ['zarqa/', 'قريبًا', 'Coming soon']].map(([path, ar, en]) =>
         el('a', { href: services.routeURL(path), text: t(ar, en), 'aria-current': relative.startsWith(path) ? 'page' : undefined })),
     ]),
     el('div', { class: 'header-settings' }, [
@@ -120,13 +120,18 @@ async function renderRoute({ restoreY, focus = true } = {}) {
   outlet.setAttribute('aria-busy', 'true');
   outlet.replaceChildren(el('div', { class: 'route-loading', role: 'status', text: services.t('نفتح الملف…', 'Opening the file…') }));
   try {
-    if (relative === 'case-017') {
-      const [module] = await Promise.all([import('./case.js?v=039ed59b19dc579c'), stylesheet('case.css'), stylesheet('toolkit.css'), stylesheet('activities.css'), stylesheet('media-workbench.css'), stylesheet('case-ending.css'), stylesheet('evidence-helpers.css'), stylesheet('incoming-call.css'), stylesheet('cloud.css')]);
+    if (relative === 'last-call') {
+      const [module] = await Promise.all([import('./last-call.js?v=0e63bd470374096b'), stylesheet('last-call.css')]);
+      if (generation !== routeGeneration) return;
+      outlet.replaceChildren(); cleanup = module.mount(outlet, services) || (() => {});
+      document.title = services.t('آخر اتصال — ملف 018 | RAVEN', 'Last Call — Case 018 | RAVEN');
+    } else if (relative === 'case-017') {
+      const [module] = await Promise.all([import('./case.js?v=0e63bd470374096b'), stylesheet('case.css'), stylesheet('toolkit.css'), stylesheet('activities.css'), stylesheet('media-workbench.css'), stylesheet('case-ending.css'), stylesheet('evidence-helpers.css'), stylesheet('incoming-call.css'), stylesheet('cloud.css')]);
       if (generation !== routeGeneration) return;
       outlet.replaceChildren(); cleanup = module.mount(outlet, services) || (() => {});
       document.title = services.t('التوقيع الرابع — ملف 017 | RAVEN', 'The Fourth Signature — Case 017 | RAVEN');
     } else {
-      const module = await import('./home.js?v=039ed59b19dc579c');
+      const module = await import('./home.js?v=0e63bd470374096b');
       if (generation !== routeGeneration) return;
       outlet.replaceChildren(); cleanup = module.mount(outlet, services, relative) || (() => {});
     }

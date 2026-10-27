@@ -1,11 +1,11 @@
-import { el, caseCompletionKey } from './core.js?v=039ed59b19dc579c';
-import { createToolkit } from './toolkit.js?v=039ed59b19dc579c';
-import { mountActivities } from './activities.js?v=039ed59b19dc579c';
-import { attachPhotoRegions } from './photo-regions.js?v=039ed59b19dc579c';
-import { attachParagraphQuestions } from './paragraph-questions.js?v=039ed59b19dc579c';
-import { mountIncomingCall } from './incoming-call.js?v=039ed59b19dc579c';
-import { mountCloudPanel } from './cloud.js?v=039ed59b19dc579c';
-import { EVIDENCE_FOCUS } from '../../../fourth-signature/evidence-focus.js?v=039ed59b19dc579c';
+import { el, caseCompletionKey } from './core.js?v=0e63bd470374096b';
+import { createToolkit } from './toolkit.js?v=0e63bd470374096b';
+import { mountActivities } from './activities.js?v=0e63bd470374096b';
+import { attachPhotoRegions } from './photo-regions.js?v=0e63bd470374096b';
+import { attachParagraphQuestions } from './paragraph-questions.js?v=0e63bd470374096b';
+import { mountIncomingCall } from './incoming-call.js?v=0e63bd470374096b';
+import { mountCloudPanel } from './cloud.js?v=0e63bd470374096b';
+import { EVIDENCE_FOCUS } from '../../../fourth-signature/evidence-focus.js?v=0e63bd470374096b';
 
 const TYPES = {
   E01: ['administrative', 'ADM', 'محضر إداري'], E02: ['receipt', 'LC', 'محضر تسليم'],
@@ -405,7 +405,7 @@ export function mount(root, services) {
     const requestedRun = caseCompletionKey(state().progress);
     closeReader(); closeComparison();
     try {
-      endingImport ||= import('./case-ending.js?v=039ed59b19dc579c').catch(error => { endingImport = null; throw error; });
+      endingImport ||= import('./case-ending.js?v=0e63bd470374096b').catch(error => { endingImport = null; throw error; });
       const module = await endingImport;
       if (disposed || request !== endingRequest || !investigation.canReport() || requestedRun !== caseCompletionKey(state().progress)) return false;
       endingController ||= module.createCaseEnding(page, services, { onReport: showReport });
