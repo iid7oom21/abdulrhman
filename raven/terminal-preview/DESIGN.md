@@ -12,7 +12,7 @@ The homepage is a cinematic entrance. The investigation is a working archive. Th
 - Motion: a short muted landscape hero, faint CRT scanlines confined to the investigative atmosphere, and optional quiet mode. Reduced motion and data-saving connections should get a poster instead of automatic video.
 - Terminal texture: a restrained nine-second desktop frame glow rather than rapid flashes. Reduced motion and quiet mode suppress scanlines and animation. A short heading reveal is decorative; source documents remain immediately readable.
 - Classified text: the optional opening-line blackout reveals on hover or keyboard focus and can be pinned open by a tap or Enter. Essential evidence is never concealed behind this effect.
-- First screen: approved cinematic image, “أفلام غموض وتحقيقات تفاعلية”, and “شاهد RAVEN 17”. No mandatory introduction or audio gate.
+- First entry to the homepage: the owner's 12-second portrait RAVEN film, muted, with immediately available skip/pause/sound controls outside the picture. It ends on the existing cinematic homepage, “أفلام غموض وتحقيقات تفاعلية”, and “شاهد RAVEN 17”. Reduced motion, quiet mode, Save-Data and direct film/investigation links reach their page without automatic introduction. Replay is an explicit homepage action; no audio gate is required.
 - Film cards: two visible parts with actual durations 1:55 and 3:58. The former second and third films are now Part One and Part Two; the former first film is no longer listed or played. Portrait aspect ratios and separate completion/resume state are retained.
 - Zarqa Al-Yamama: the existing 16-second teaser, “قيد التطوير”, and the official follow link. There is no confirmed release date or countdown.
 

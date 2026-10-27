@@ -1,5 +1,5 @@
-import { el } from './core.js?v=850282e6effbff45';
-import { HERO, EPISODES, ZARQA } from './catalog.js?v=850282e6effbff45';
+import { el } from './core.js?v=039ed59b19dc579c';
+import { HERO, EPISODES, ZARQA } from './catalog.js?v=039ed59b19dc579c';
 
 export function mount(root, services, route = '') {
   const { t, store, audio } = services;
@@ -69,17 +69,14 @@ export function mount(root, services, route = '') {
     document.title = t('RAVEN — كل حكاية تترك أثرًا', 'RAVEN — Every story leaves a trace');
     const hero = el('video', { class: 'home-hero-video', poster: HERO.poster, muted: true, playsinline: true, loop: true, preload: 'none', 'aria-label': t('افتتاحية RAVEN السينمائية الصامتة', 'RAVEN silent cinematic opening'), 'data-ambient-video': '' });
     hero.muted = true;
-    const replay = el('button', { type: 'button', class: 'text-button', text: t('أعد المشهد ↻', 'Replay scene ↻'), onClick: () => {
-      if (!hero.getAttribute('src')) hero.src = HERO.video;
-      hero.currentTime = 0; hero.play().catch(() => services.notify(t('المشهد غير متاح الآن؛ يمكنك متابعة الأعمال.', 'The scene is unavailable. You can still explore the films.')));
-    } });
+    const replay = el('button', { type: 'button', class: 'text-button', text: t('إعادة الافتتاحية', 'Replay opening'), onClick: () => services.opening.show() });
     const pause = el('button', { type: 'button', class: 'text-button', text: t('إيقاف الحركة', 'Pause motion'), onClick: () => {
       if (hero.paused) { if (!hero.getAttribute('src')) hero.src = HERO.video; hero.play().catch(() => {}); }
       else hero.pause();
     } });
     hero.addEventListener('play', () => pause.textContent = t('إيقاف الحركة', 'Pause motion'));
     hero.addEventListener('pause', () => pause.textContent = t('تشغيل المشهد', 'Play scene'));
-    if (services.motionAllowed()) { hero.src = HERO.video; hero.autoplay = true; hero.play().catch(() => {}); }
+    if (services.motionAllowed() && !services.opening.active) { hero.src = HERO.video; hero.autoplay = true; hero.play().catch(() => {}); }
     else pause.textContent = t('تشغيل المشهد', 'Play scene');
     videos.push(hero);
     root.append(el('div', { class: 'home-page' }, [

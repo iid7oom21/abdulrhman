@@ -4,6 +4,12 @@ An isolated HTML/CSS/JavaScript preview for the cinematic RAVEN entrance and the
 
 Preview URL: <https://iid7oom21.github.io/abdulrhman/raven/terminal-preview/>.
 
+## Opening film
+
+The supplied 12-second RAVEN film plays once when a visitor opens the homepage document, then reveals the existing homepage. It starts muted, preserves the complete portrait frame, and has sound, pause/resume and skip controls. Escape also skips; a blocked or failed video leaves the skip action available. The homepage's **إعادة الافتتاحية** button replays it.
+
+Direct film/investigation links and internal navigation do not trigger the opening. Reduced motion, quiet mode and Save-Data skip automatic playback and its video download; visitors can still choose replay. The scene uses the existing soundtrack hold/release system and never changes music preferences, film progress or investigation saves. The approved `assets/raven-intro.mp4` retains the supplied picture and audio at 1080×1920/24fps with fast-start delivery (12.041667 seconds, 9,089,738 bytes); `raven-intro-poster.jpg` is a frame from the same film.
+
 See [DESIGN.md](DESIGN.md) for the visual system, route map, thirteen tools, story boundaries, audio behavior, and acceptance criteria.
 
 ## Run locally

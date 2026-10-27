@@ -1,4 +1,4 @@
-import { node as el } from '../../../fourth-signature/dom.js?v=850282e6effbff45';
+import { node as el } from '../../../fourth-signature/dom.js?v=039ed59b19dc579c';
 
 // Coordinates belong to the unchanged 1672 × 941 PH-06 reconstruction.
 // The preservation card, not newly inferred visual detail, is the source.
