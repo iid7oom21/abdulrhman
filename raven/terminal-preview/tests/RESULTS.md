@@ -1,5 +1,15 @@
 # Expansion verification record
 
+## Supplied homepage opening — 2026-10-27
+
+Release `039ed59b19dc579c` adds the owner's 12.04-second portrait film on initial homepage entry, with muted autoplay, explicit sound, pause, immediate skip and replay. The real ended event reveals the existing homepage. Direct links, internal navigation, saved progress and the existing soundtrack owner are preserved. Reduced motion, quiet mode and Save-Data avoid automatic download/playback.
+
+**31 Chromium browser scenarios passed** across opening (10), existing audio, shell, episodes and transfer-budget checks. These include real video completion, blocked autoplay, missing video, focus restoration, soundtrack hold/release, manual music-off, deep links, and 320/390/430/1440px layouts. **8 release-stamper cases passed** and release/diff checks are clean. Desktop/mobile browser smoke checks on dev and built previews show no page errors, console errors or horizontal overflow; their rendering agrees. The preview host build/typecheck passed. No WebKit run was performed for this change.
+
+The video retains 1080×1920, 24fps, H.264/yuv420p and AAC, with fast-start MP4 delivery; its size falls from 24,625,935 to 9,089,738 bytes. Full decode succeeds. The page keeps its 1.5 MB non-video transfer budget and the explicitly requested opening has a separate 10 MB limit. The shared browser-test configuration now uses `contextOptions.reducedMotion` so Playwright actually applies its intended preference.
+
+Local reports: `/workspace/screenshots/raven-final-tests.json`, `raven-opening-direct.json`, and `raven-opening-built.json`. Canonical changes are confined to `raven/terminal-preview/`; the separate live homepage and investigation content are unchanged.
+
 ## Two-episode RAVEN 17 release — 2026-10-22
 
 Release `850282e6effbff45` removes the original first film from the catalogue and renumbers original films 2/3 as Parts One/Two (1:55 and 3:58). Cards, posters, static metadata, bilingual copy and navigation agree. Display numbers are separate from original progress IDs, so existing `episode:2`/`episode:3` saves remain with their films; the retired film's save is untouched. The former Part Three route resolves to Part Two without replacing the audio owner or losing query/fragment. A disposed-player guard prevents late playback events from writing a reset position after navigation.

@@ -1,7 +1,8 @@
-import { BASE, CASE, caseAsset, el, routeURL, createStore, createCaseStore, importLegacy } from './core.js?v=850282e6effbff45';
-import { createAudio } from './audio.js?v=850282e6effbff45';
-import { createInvestigation } from './investigation.js?v=850282e6effbff45';
-import { createCloud } from './cloud.js?v=850282e6effbff45';
+import { BASE, CASE, caseAsset, el, routeURL, createStore, createCaseStore, importLegacy } from './core.js?v=039ed59b19dc579c';
+import { createAudio } from './audio.js?v=039ed59b19dc579c';
+import { createInvestigation } from './investigation.js?v=039ed59b19dc579c';
+import { createCloud } from './cloud.js?v=039ed59b19dc579c';
+import { createOpening } from './opening.js?v=039ed59b19dc579c';
 
 const outlet = document.querySelector('#route-outlet');
 const notices = document.querySelector('#site-notice');
@@ -31,6 +32,7 @@ const services = {
   navigate: (path, options = {}) => navigate(path, options),
 };
 services.audio = createAudio(document.querySelector('#audio-dock'), services);
+services.opening = createOpening(services);
 services.cloud = createCloud(services);
 services.investigation = createInvestigation(services);
 let cleanup = () => {};
@@ -119,12 +121,12 @@ async function renderRoute({ restoreY, focus = true } = {}) {
   outlet.replaceChildren(el('div', { class: 'route-loading', role: 'status', text: services.t('نفتح الملف…', 'Opening the file…') }));
   try {
     if (relative === 'case-017') {
-      const [module] = await Promise.all([import('./case.js?v=850282e6effbff45'), stylesheet('case.css'), stylesheet('toolkit.css'), stylesheet('activities.css'), stylesheet('media-workbench.css'), stylesheet('case-ending.css'), stylesheet('evidence-helpers.css'), stylesheet('incoming-call.css'), stylesheet('cloud.css')]);
+      const [module] = await Promise.all([import('./case.js?v=039ed59b19dc579c'), stylesheet('case.css'), stylesheet('toolkit.css'), stylesheet('activities.css'), stylesheet('media-workbench.css'), stylesheet('case-ending.css'), stylesheet('evidence-helpers.css'), stylesheet('incoming-call.css'), stylesheet('cloud.css')]);
       if (generation !== routeGeneration) return;
       outlet.replaceChildren(); cleanup = module.mount(outlet, services) || (() => {});
       document.title = services.t('التوقيع الرابع — ملف 017 | RAVEN', 'The Fourth Signature — Case 017 | RAVEN');
     } else {
-      const module = await import('./home.js?v=850282e6effbff45');
+      const module = await import('./home.js?v=039ed59b19dc579c');
       if (generation !== routeGeneration) return;
       outlet.replaceChildren(); cleanup = module.mount(outlet, services, relative) || (() => {});
     }
@@ -156,6 +158,7 @@ async function renderRoute({ restoreY, focus = true } = {}) {
 }
 
 function navigate(path, { replace = false } = {}) {
+  services.opening.hide({ focus: false });
   const next = normalizeEpisodeURL(new URL(path.startsWith('http') || path.startsWith('/') ? path : services.routeURL(path), location.href));
   if (next.origin !== location.origin || !next.pathname.startsWith(BASE.pathname)) { location.href = next.href; return; }
   if (!next.searchParams.has('lang') && services.lang === 'en') next.searchParams.set('lang', 'en');
@@ -179,9 +182,12 @@ document.addEventListener('click', event => {
 });
 history.scrollRestoration = 'manual';
 window.addEventListener('popstate', () => {
+  services.opening.hide({ focus: false });
   const previous = new URL(currentURL); const next = new URL(location.href); currentURL = next.href;
   if (previous.pathname === next.pathname && previous.search === next.search) { scrollTo(0, history.state?.scrollY || 0); return; }
   renderRoute({ restoreY: history.state?.scrollY || 0 });
 });
 motionQuery.addEventListener('change', () => { renderHeader(); if (!services.motionAllowed()) document.querySelectorAll('video[data-ambient-video]').forEach(v => v.pause()); });
+const entryPath = location.pathname.slice(BASE.pathname.length).replace(/index\.html$/, '').replace(/\/+$/, '');
+if (!entryPath) services.opening.show({ automatic: true });
 renderRoute({ focus: false });

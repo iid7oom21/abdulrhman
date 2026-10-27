@@ -15,7 +15,7 @@ export default defineConfig({
     baseURL: process.env.RAVEN_PREVIEW_URL || 'http://127.0.0.1:8786/raven/terminal-preview/',
     browserName: process.env.RAVEN_BROWSER || 'chromium',
     viewport: { width: 1440, height: 1000 },
-    reducedMotion: 'reduce',
+    contextOptions: { reducedMotion: 'reduce' },
     actionTimeout: 10000,
     screenshot: 'only-on-failure',
     trace: 'retain-on-failure',
