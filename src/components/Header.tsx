@@ -1,5 +1,5 @@
 import React from 'react';
-import { Video, Sparkles, Code2, Globe, Film, Layers, Image as ImageIcon } from 'lucide-react';
+import { Video, Sparkles, Code2, Globe, Layers, Image as ImageIcon } from 'lucide-react';
 import { ModelType } from '../types';
 
 interface HeaderProps {
