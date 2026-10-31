@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { submitRequest, recordShare, simulateReply, makeRequestId, _reset } from '../src/dialogue.js';
+import { submitRequest, recordShare, simulateReply, makeRequestId, _reset, getRequest } from '../src/dialogue.js';
 
 test('TC-A01: open envelope path independent of Jonas later talk', () => {
   _reset();
@@ -30,7 +30,7 @@ test('TC-A06: private correction not auto-spread', () => {
   _reset();
   const claireKnows = simulateReply('claire', 'قلت إني ما راجعت', ['private_correction_shared']);
   const jonasDoesNot = simulateReply('jonas', 'صححت كلامك مع كلير', []);
-  assert.equal(jonasDoesNot.refused, false); // يجاوب من معرفته فقط
+  assert.equal(jonasDoesNot.refused, false);
   assert.doesNotMatch(jonasDoesNot.text, /ملاحظة|تصحيح/);
 });
 
@@ -46,4 +46,14 @@ test('share key is independent and idempotent', () => {
   const k = 'share_claire_note_v1';
   assert.equal(recordShare(k).duplicated, false);
   assert.equal(recordShare(k).duplicated, true);
+});
+
+test('owner isolation: different owner cannot read request', () => {
+  _reset();
+  const id = makeRequestId();
+  submitRequest(id, 'jonas', 'سؤال', [], 'v1', 'playerA');
+  const forbidden = getRequest(id, 'playerB');
+  assert.equal(forbidden.error, 'forbidden');
+  const ok = getRequest(id, 'playerA');
+  assert.ok(ok.response);
 });

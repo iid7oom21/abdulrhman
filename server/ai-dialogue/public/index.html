@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RAVEN — معاينة محادثة</title>
+  <style>
+    :root { --bg:#0a0908; --card:#161412; --gold:#c4a574; --text:#e8e0d4; --muted:#8ea4c8; --danger:#c45; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:var(--bg); color:var(--text); font-family: system-ui, "Segoe UI", Tahoma, sans-serif; }
+    header { padding: 16px 20px; border-bottom: 1px solid #2a2520; display:flex; justify-content:space-between; align-items:center; }
+    h1 { margin:0; font-size:1.2rem; color:var(--gold); }
+    .badge { background:#2a2520; color:var(--gold); padding:4px 10px; border-radius:999px; font-size:0.8rem; }
+    main { max-width: 720px; margin: 0 auto; padding: 16px; }
+    .row { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; }
+    button, select, input, textarea { font: inherit; color:var(--text); background:#1c1916; border:1px solid #3a342e; border-radius:8px; padding:10px 12px; }
+    button { cursor:pointer; background:var(--gold); color:#0a0908; border:none; font-weight:600; }
+    button.secondary { background:#2a2520; color:var(--text); }
+    button:disabled { opacity:0.5; cursor:not-allowed; }
+    #log { background:var(--card); border-radius:12px; padding:12px; min-height:280px; max-height:50vh; overflow:auto; }
+    .msg { margin:8px 0; padding:8px 12px; border-radius:10px; }
+    .me { background:#1e2a3a; text-align:left; }
+    .them { background:#2a2520; }
+    .name { font-size:0.75rem; color:var(--muted); margin-bottom:2px; }
+    .status { font-size:0.85rem; color:var(--muted); margin-top:8px; }
+    .error { color:var(--danger); }
+    footer { text-align:center; font-size:0.75rem; color:var(--muted); padding:16px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>RAVEN — الاسم المحذوف</h1>
+    <span class="badge">محاكاة</span>
+  </header>
+  <main>
+    <div class="row">
+      <select id="character">
+        <option value="jonas">يوناس</option>
+        <option value="claire">كلير</option>
+      </select>
+      <button id="clear" class="secondary">مسح العرض</button>
+    </div>
+    <div id="log"></div>
+    <div class="row" style="margin-top:12px;">
+      <textarea id="input" rows="2" style="flex:1; min-width:180px;" placeholder="اكتب سؤالك..."></textarea>
+      <button id="send">إرسال</button>
+    </div>
+    <div id="status" class="status"></div>
+  </main>
+  <footer>معاينة محاكاة — الردود ليست من نموذج ذكاء اصطناعي حقيقي. الحفظ مؤقت على الخادم.</footer>
+  <script>
+    const log = document.getElementById('log');
+    const input = document.getElementById('input');
+    const sendBtn = document.getElementById('send');
+    const statusEl = document.getElementById('status');
+    const characterEl = document.getElementById('character');
+    let playerId = localStorage.getItem('raven_player') || ('p_' + Math.random().toString(36).slice(2,10));
+    localStorage.setItem('raven_player', playerId);
+
+    function addMsg(who, text, isMe) {
+      const div = document.createElement('div');
+      div.className = 'msg ' + (isMe ? 'me' : 'them');
+      div.innerHTML = '<div class="name">' + who + '</div>' + text;
+      log.appendChild(div);
+      log.scrollTop = log.scrollHeight;
+    }
+
+    async function loadHistory() {
+      try {
+        const r = await fetch('/api/history?owner=' + encodeURIComponent(playerId));
+        if (!r.ok) return;
+        const data = await r.json();
+        log.innerHTML = '';
+        (data.items || []).forEach(it => {
+          addMsg('أنت', it.message || '', true);
+          addMsg(it.characterId === 'claire' ? 'كلير' : 'يوناس', it.response?.text || '', false);
+        });
+      } catch (_) {}
+    }
+
+    async function send() {
+      const text = input.value.trim();
+      if (!text) return;
+      const character = characterEl.value;
+      sendBtn.disabled = true;
+      statusEl.textContent = 'جاري الإرسال...';
+      statusEl.className = 'status';
+      addMsg('أنت', text, true);
+      input.value = '';
+      try {
+        const r = await fetch('/api/dialogue', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ characterId: character, message: text, ownerId: playerId })
+        });
+        const data = await r.json();
+        if (!r.ok || data.error) {
+          statusEl.textContent = 'خطأ: ' + (data.error || r.status);
+          statusEl.className = 'status error';
+        } else {
+          const name = character === 'claire' ? 'كلير' : 'يوناس';
+          addMsg(name, data.response?.text || '(لا رد)', false);
+          statusEl.textContent = data.replayed ? 'تم استرجاع رد محفوظ' : 'تم الرد';
+        }
+      } catch (e) {
+        statusEl.textContent = 'فشل الاتصال';
+        statusEl.className = 'status error';
+      } finally {
+        sendBtn.disabled = false;
+      }
+    }
+
+    sendBtn.onclick = send;
+    input.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
+    document.getElementById('clear').onclick = () => { log.innerHTML = ''; };
+    loadHistory();
+  </script>
+</body>
+</html>
