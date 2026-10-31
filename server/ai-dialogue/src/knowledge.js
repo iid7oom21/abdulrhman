@@ -2,6 +2,7 @@
 export const CHARACTERS = {
   jonas: {
     id: 'jonas',
+    name: 'يوناس',
     allowedKnowledge: [
       'hall_conversation_before_scream',
       'heard_scream_with_player',
@@ -11,6 +12,7 @@ export const CHARACTERS = {
   },
   claire: {
     id: 'claire',
+    name: 'كلير',
     allowedKnowledge: [
       'arranged_invitations',
       'victor_said_player_is_guest',
