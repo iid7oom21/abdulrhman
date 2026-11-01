@@ -10,10 +10,11 @@ export const TRACKS = [
   { title: 'Raven', file: 'assets/audio/raven/06.mp3' },
   { title: 'Raven: Return of the Shadows', file: 'assets/audio/raven/07.mp3' },
   { title: 'RAVEN — A Beautiful Alibi', file: 'assets/audio/raven/08.mp3' },
-  { title: 'Raven', file: 'assets/audio/raven/09.mp3' },
+  { title: 'Raven by Abdulrahman', file: 'assets/audio/raven/09.mp3' },
   { title: 'Raven, Keep Me Guessing', file: 'assets/audio/raven/10.mp3' },
-  { title: 'Raven by Abdulrahman', file: 'assets/audio/raven/11.mp3' },
-  { title: 'Raven, Keep Me Guessing', file: 'assets/audio/raven/12.mp3' }
+  { title: 'Raven', file: 'assets/audio/raven/11.mp3' },
+  { title: 'Raven, Keep Me Guessing', file: 'assets/audio/raven/12.mp3' },
+  { title: 'RAVEN — Keep Me Guessing', file: 'assets/audio/raven/13.mp3' }
 ];
 
 // The outer document owns this one player throughout navigation.
