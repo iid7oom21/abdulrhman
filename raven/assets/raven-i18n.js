@@ -6,7 +6,8 @@
   const valid = value => value === 'en' || value === 'ar';
   const pages = new Set(['/', '/case', '/watch', '/privacy', '/404']);
   const homepage = new URL('../', document.currentScript.src).pathname;
-  const casePath = new URL('../fourth-signature/', new URL(homepage, location.origin)).pathname;
+  // Handoff v2: the former /case route now resolves to the homepage.
+  const casePath = homepage;
   const originalOrigin = 'https://project25762.websitepublisher.ai';
   const publicPath = path => path.replace(/(?:index|content)\.html$/, '').replace(/\/?$/, '/');
   function pagePath(path) {

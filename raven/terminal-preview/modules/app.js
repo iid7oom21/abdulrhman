@@ -1,8 +1,6 @@
-import { BASE, CASE, caseAsset, el, routeURL, createStore, createCaseStore, importLegacy } from './core.js?v=039ed59b19dc579c';
-import { createAudio } from './audio.js?v=039ed59b19dc579c';
-import { createInvestigation } from './investigation.js?v=039ed59b19dc579c';
-import { createCloud } from './cloud.js?v=039ed59b19dc579c';
-import { createOpening } from './opening.js?v=039ed59b19dc579c';
+import { BASE, el, routeURL, createStore } from './core.js?v=abc27e4aad89ec10';
+import { createAudio } from './audio.js?v=abc27e4aad89ec10';
+import { createOpening } from './opening.js?v=abc27e4aad89ec10';
 
 const outlet = document.querySelector('#route-outlet');
 const notices = document.querySelector('#site-notice');
@@ -14,14 +12,12 @@ function notify(message) {
   noticeTimer = setTimeout(() => notices.classList.remove('visible'), 5500);
 }
 const store = createStore(() => notify('الحفظ الدائم غير متاح؛ يمكنك متابعة التجربة في هذه الزيارة.'));
-importLegacy(store);
-const caseStore = createCaseStore(store);
 const motionQuery = matchMedia('(prefers-reduced-motion: reduce)');
 const params = new URL(location.href).searchParams;
 let lang = params.get('lang') === 'en' ? 'en' : params.get('lang') === 'ar' ? 'ar' : store.get('language', 'ar');
 if (!['ar', 'en'].includes(lang)) lang = 'ar';
 const services = {
-  store, caseStore, caseData: CASE, caseAsset, notify, lang,
+  store, notify, lang,
   t: (ar, en) => services.lang === 'en' ? en : ar,
   routeURL: path => {
     const u = new URL(routeURL(path));
@@ -33,8 +29,6 @@ const services = {
 };
 services.audio = createAudio(document.querySelector('#audio-dock'), services);
 services.opening = createOpening(services);
-services.cloud = createCloud(services);
-services.investigation = createInvestigation(services);
 let cleanup = () => {};
 let routeGeneration = 0;
 let currentURL = location.href;
@@ -52,7 +46,7 @@ function stylesheet(name) {
 }
 
 // A failed ESM link stays cached for this document. Retrying needs a fresh
-// document/module map; do not clear saved investigation or music preferences.
+// document/module map; do not clear saved film progress or music preferences.
 function reloadRoute() {
   const url = new URL(location.href);
   url.searchParams.set('_reload', Date.now().toString(36));
@@ -70,7 +64,7 @@ function renderHeader() {
       el('span', { class: 'brand-word', text: 'RAVEN', dir: 'ltr' }), el('span', { class: 'brand-caption', text: t('كل حكاية تترك أثرًا', 'EVERY STORY LEAVES A TRACE') }),
     ]),
     el('nav', { class: 'primary-nav', 'aria-label': t('التنقل الرئيسي', 'Main navigation') }, [
-      ...[['raven-17/', 'الأفلام', 'Films'], ['case-017/', 'التحقيق', 'Investigate'], ['zarqa/', 'قريبًا', 'Coming soon']].map(([path, ar, en]) =>
+      ...[['raven-17/', 'الأفلام', 'Films'], ['zarqa/', 'قريبًا', 'Coming soon']].map(([path, ar, en]) =>
         el('a', { href: services.routeURL(path), text: t(ar, en), 'aria-current': relative.startsWith(path) ? 'page' : undefined })),
     ]),
     el('div', { class: 'header-settings' }, [
@@ -120,16 +114,9 @@ async function renderRoute({ restoreY, focus = true } = {}) {
   outlet.setAttribute('aria-busy', 'true');
   outlet.replaceChildren(el('div', { class: 'route-loading', role: 'status', text: services.t('نفتح الملف…', 'Opening the file…') }));
   try {
-    if (relative === 'case-017') {
-      const [module] = await Promise.all([import('./case.js?v=039ed59b19dc579c'), stylesheet('case.css'), stylesheet('toolkit.css'), stylesheet('activities.css'), stylesheet('media-workbench.css'), stylesheet('case-ending.css'), stylesheet('evidence-helpers.css'), stylesheet('incoming-call.css'), stylesheet('cloud.css')]);
-      if (generation !== routeGeneration) return;
-      outlet.replaceChildren(); cleanup = module.mount(outlet, services) || (() => {});
-      document.title = services.t('التوقيع الرابع — ملف 017 | RAVEN', 'The Fourth Signature — Case 017 | RAVEN');
-    } else {
-      const module = await import('./home.js?v=039ed59b19dc579c');
-      if (generation !== routeGeneration) return;
-      outlet.replaceChildren(); cleanup = module.mount(outlet, services, relative) || (() => {});
-    }
+    const module = await import('./home.js?v=abc27e4aad89ec10');
+    if (generation !== routeGeneration) return;
+    outlet.replaceChildren(); cleanup = module.mount(outlet, services, relative) || (() => {});
   } catch (error) {
     if (generation !== routeGeneration) return;
     console.error('RAVEN route failed', error);
@@ -142,7 +129,7 @@ async function renderRoute({ restoreY, focus = true } = {}) {
   } finally {
     if (generation === routeGeneration) {
       outlet.removeAttribute('aria-busy');
-      const shortHeading = outlet.querySelector('.eyebrow, .case-eyebrow');
+      const shortHeading = outlet.querySelector('.eyebrow');
       if (services.motionAllowed() && shortHeading && shortHeading.textContent.length < 60) {
         shortHeading.classList.add('typewriter-heading');
         document.dispatchEvent(new CustomEvent('raven:typewrite'));

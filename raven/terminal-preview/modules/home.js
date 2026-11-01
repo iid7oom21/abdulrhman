@@ -1,5 +1,5 @@
-import { el } from './core.js?v=039ed59b19dc579c';
-import { HERO, EPISODES, ZARQA } from './catalog.js?v=039ed59b19dc579c';
+import { el } from './core.js?v=abc27e4aad89ec10';
+import { HERO, EPISODES, ZARQA } from './catalog.js?v=abc27e4aad89ec10';
 
 export function mount(root, services, route = '') {
   const { t, store, audio } = services;
@@ -35,21 +35,6 @@ export function mount(root, services, route = '') {
         el(full ? 'h1' : 'h2', { text: 'RAVEN 17', dir: 'ltr' }), el('p', { class: 'section-lead', text: t('جزآن. ابدأ من الأثر الأول.', 'Two chapters. Follow the first trace.') })]),
         !full ? el('span', { class: 'section-index', text: '01 / CINEMA', dir: 'ltr' }) : null]),
       el('div', { class: 'film-grid' }, EPISODES.map(episodeCard)),
-    ]);
-  }
-
-  function caseSection() {
-    const progress = services.caseStore.get();
-    return el('section', { class: 'case-invitation section', id: 'investigate' }, [
-      el('figure', { class: 'case-invitation-image' }, [el('img', { src: services.caseAsset('assets/hero.webp'), alt: t('لوسيان أمام الأرشيف المحترق', 'Lucian outside the archive'), loading: 'lazy', width: 1280, height: 720 }),
-        el('figcaption', { text: 'CASE FILE / 017', dir: 'ltr' })]),
-      el('div', { class: 'case-invitation-copy' }, [eyebrow('ملف مفتوح · أنت المحقق', 'OPEN FILE · YOU INVESTIGATE'),
-        el('h2', {}, [t('التوقيع ', 'The '), el('em', { text: t('الرابع.', 'Fourth Signature.') })]),
-        el('p', { class: 'section-lead', text: t('حارسٌ فُصل بعد حريق. صورةٌ أدانته. هل قالت الحقيقة؟', 'A guard dismissed after a fire. A photograph condemned him. Did it tell the truth?') }),
-        el('p', { class: 'case-stats', text: t('٧ مراحل · ٣٢ نشاطًا · ١٦ دليلًا', '7 chapters · 32 activities · 16 documents') }),
-        link('case-017/', progress.viewedIds.length ? 'واصل التحقيق ←' : 'افتح ملف التحقيق ←', progress.viewedIds.length ? 'Continue investigating →' : 'Open the case →', true),
-        progress.viewedIds.length ? el('p', { class: 'progress-note', text: t(`${progress.solvedIds.length} من ٤ استنتاجات محفوظة`, `${progress.solvedIds.length} of 4 deductions saved`) }) : null,
-      ]),
     ]);
   }
 
@@ -89,7 +74,7 @@ export function mount(root, services, route = '') {
           el('div', { class: 'hero-actions' }, [link('raven-17/', 'شاهد RAVEN 17 ←', 'Watch RAVEN 17 →', true), el('p', { text: t('شاهد الحكاية. اقترب من التفاصيل. واتبع ما تركته خلفها.', 'Watch the story. Look closer. Follow what it leaves behind.') })]),
         ]),
       ]),
-      filmsSection(), caseSection(), upcoming(),
+      filmsSection(), upcoming(),
       el('section', { class: 'section creator-section', id: 'creator' }, [eyebrow('خلف الإطار', 'BEHIND THE FRAME'),
         el('h2', { text: t('عبدالرحمن العتيبي', 'Abdulrahman Alotaibi') }),
         el('p', { class: 'section-lead', text: t('أصنع عوالم تبدأ بصورة، وتبقى بما تتركه من أسئلة.', 'I create worlds that begin with an image and linger through their questions.') }),
@@ -163,7 +148,7 @@ export function mount(root, services, route = '') {
   }
 
   if (!route) home();
-  else if (route === 'raven-17') { document.title = 'RAVEN 17 | RAVEN'; root.append(filmsSection(true), caseSection()); }
+  else if (route === 'raven-17') { document.title = 'RAVEN 17 | RAVEN'; root.append(filmsSection(true)); }
   else if (route === 'zarqa') theater(ZARQA, true);
   else if (/^raven-17\/part-[1-2]$/.test(route)) theater(EPISODES[Number(route.at(-1)) - 1]);
   else { document.title = t('ملف مفقود | RAVEN', 'Missing file | RAVEN'); root.append(el('section', { class: 'section error-page' }, [eyebrow('404 · الأرشيف', '404 · ARCHIVE'), el('h1', { text: t('هذا الملف مفقود من الأرشيف.', 'This file is missing from the archive.') }), link('', 'عد إلى الرئيسية', 'Return home', true)])); }

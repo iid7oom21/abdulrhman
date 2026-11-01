@@ -10,7 +10,7 @@ const loadMessage = document.querySelector('#site-load-message');
 const retry = document.querySelector('#site-retry');
 const direct = document.querySelector('#site-direct');
 const soundtrack = createSoundtrack(root);
-const routes = ['raven/', 'fourth-signature/'].map(path => new URL(path, root).pathname);
+const routes = ['raven/'].map(path => new URL(path, root).pathname);
 const pageMetadata = [
   'meta[name="description"]', 'meta[property^="og:"]', 'meta[name^="twitter:"]',
   'link[rel="canonical"]', 'link[rel="alternate"][hreflang]',
@@ -94,7 +94,7 @@ function show(url, childState = null, view = null, force = false, focus = false)
   pendingPath = url.pathname;
   departingDocument?.querySelectorAll('audio, video').forEach(media => media.pause());
   soundtrack.setMediaActive(false);
-  frame.title = url.pathname === routes[0] ? 'RAVEN — الرئيسية' : 'التوقيع الرابع — ملف التحقيق';
+  frame.title = 'RAVEN — الرئيسية';
   loadFailed = false;
   retry.hidden = true;
   recovery.hidden = false;

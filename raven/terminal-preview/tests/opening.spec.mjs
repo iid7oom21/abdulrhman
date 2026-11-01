@@ -74,9 +74,10 @@ test('skip, explicit replay and Escape preserve the film save and restore focus'
   await expect(soundtrack(page)).toHaveCount(1);
 });
 
-test('a direct investigation link and an internal return home are never interrupted', async ({ page }) => {
-  await boot(page, 'case-017/');
-  await expect(page.locator('.case-page')).toBeVisible();
+// Handoff v2: the direct link is now a film page; the investigation route was removed with the story.
+test('a direct film link and an internal return home are never interrupted', async ({ page }) => {
+  await boot(page, 'raven-17/part-1/');
+  await expect(page.locator('#route-outlet h1')).toBeVisible();
   await expect(opening(page)).toBeHidden();
   await page.evaluate(() => { window.__openingNavigationMarker = true; });
   await page.locator('#site-header .brand').click();
