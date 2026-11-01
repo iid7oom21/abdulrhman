@@ -1,5 +1,5 @@
 // The host owns one soundtrack while the content document changes.
-import { createSoundtrack } from './site-audio.js?v=baqi-athar-2';
+import { createSoundtrack } from './site-audio.js?v=playlist-1';
 import { createEntryGate } from './site-entry.js?v=archive-1';
 
 const root = new URL('./', import.meta.url);
@@ -192,7 +192,7 @@ show(initial, history.state?.childState, history.state?.view);
 entryGate = createEntryGate({
   root,
   show: initial.pathname === routes[0] && !initial.hash && !initial.searchParams.has('episode'),
-  onEnter: soundtrack.gesture,
+  onEnter: soundtrack.enter,
   onClose() {
     destination.focus = true;
     if (!currentChild()) return;

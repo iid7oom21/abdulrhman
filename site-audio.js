@@ -1,10 +1,33 @@
 let soundtrack;
 
+// Play order. Each file sits under the site root; titles come from the files' own tags.
+export const TRACKS = [
+  { title: 'Raven: Return of the Shadows', file: 'assets/audio/raven/01.mp3' },
+  { title: 'Raven by Abdulrahman', file: 'assets/audio/raven/02.mp3' },
+  { title: 'RAVEN — A Beautiful Alibi', file: 'assets/audio/raven/03.mp3' },
+  { title: 'RAVEN — Keep Me Guessing', file: 'assets/audio/raven/04.mp3' },
+  { title: 'RAVEN — Keep Me Guessing', file: 'assets/audio/raven/05.mp3' },
+  { title: 'Raven', file: 'assets/audio/raven/06.mp3' },
+  { title: 'Raven: Return of the Shadows', file: 'assets/audio/raven/07.mp3' },
+  { title: 'RAVEN — A Beautiful Alibi', file: 'assets/audio/raven/08.mp3' },
+  { title: 'Raven', file: 'assets/audio/raven/09.mp3' },
+  { title: 'Raven, Keep Me Guessing', file: 'assets/audio/raven/10.mp3' },
+  { title: 'Raven by Abdulrahman', file: 'assets/audio/raven/11.mp3' },
+  { title: 'Raven, Keep Me Guessing', file: 'assets/audio/raven/12.mp3' }
+];
+
 // The outer document owns this one player throughout navigation.
 export function createSoundtrack(rootURL) {
   if (soundtrack) return soundtrack;
   const audio = document.querySelector('#site-soundtrack');
   const toggle = document.querySelector('#music-toggle');
+  const previous = document.querySelector('#music-prev');
+  const next = document.querySelector('#music-next');
+  const trackPicker = document.querySelector('#music-track-picker');
+  const trackPickerLabel = document.querySelector('#music-track-label');
+  const trackNumber = document.querySelector('#music-track-number');
+  const trackTitle = document.querySelector('#music-track-title');
+  const mute = document.querySelector('#music-mute');
   const status = document.querySelector('#music-status');
   const volume = document.querySelector('#music-volume');
   const volumeLabel = document.querySelector('#music-volume-label');
@@ -15,10 +38,15 @@ export function createSoundtrack(rootURL) {
   const cinematicHint = document.querySelector('#music-cinematic-hint');
   const region = document.querySelector('.site-player');
   const download = document.querySelector('.music-download');
-  const preferenceKey = 'raven_music_enabled_v2';
   const volumeKey = 'raven_music_volume_v1';
   const cinematicKey = 'raven_music_cinematic_v1';
-  let enabled = true;
+  const trackKey = 'raven_music_track_v1';
+  const muteKey = 'raven_music_muted_v1';
+  const base = rootURL;
+  // The visitor asked for playback. Pages always start paused.
+  let enabled = false;
+  let index = readTrackIndex();
+  let muted = false;
   let mediaActive = false;
   let phase = 'paused';
   let attempt = 0;
@@ -35,8 +63,26 @@ export function createSoundtrack(rootURL) {
   let depthSource;
   let pulseUntil = 0;
   let pulseTimer;
-  try { enabled = sessionStorage.getItem(preferenceKey) !== 'off'; } catch {}
   try { cinematic = localStorage.getItem(cinematicKey) !== 'off'; } catch {}
+  try { muted = localStorage.getItem(muteKey) === 'on'; } catch {}
+
+  function readTrackIndex() {
+    try {
+      const saved = Number(localStorage.getItem(trackKey));
+      if (Number.isInteger(saved) && saved >= 0 && saved < TRACKS.length) return saved;
+    } catch {}
+    return 0;
+  }
+
+  function trackURL(position) {
+    return new URL(TRACKS[position].file, base).href;
+  }
+
+  function setDownload() {
+    if (!download) return;
+    download.href = trackURL(index);
+    download.setAttribute('download', `RAVEN-${String(index + 1).padStart(2, '0')}.mp3`);
+  }
 
   function active() {
     return enabled && ['starting', 'playing', 'waiting', 'suspended'].includes(phase);
@@ -70,10 +116,30 @@ export function createSoundtrack(rootURL) {
       suspended: english ? 'Music paused while media plays' : 'الأغنية متوقفة أثناء تشغيل المقطع',
       waiting: english ? 'Buffering the music…' : 'جارٍ تحميل الأغنية…',
       blocked: english ? 'Tap to start the music' : 'اضغط لتبدأ الأغنية',
-      error: english ? 'Could not load. Tap to retry.' : 'تعذّر التحميل. اضغط للمحاولة.',
+      error: english ? 'This track could not play. Pick another, or press Play to retry.' :
+        'تعذّر تشغيل هذه الأغنية. اختر أغنية أخرى، أو اضغط تشغيل للمحاولة.',
       paused: english ? 'RAVEN · Music paused' : 'RAVEN · الأغنية متوقفة'
     };
     status.textContent = messages[phase];
+    if (trackNumber) trackNumber.textContent = english ? `Track ${index + 1} of ${TRACKS.length}` : `${index + 1} من ${TRACKS.length}`;
+    if (trackTitle) trackTitle.textContent = TRACKS[index].title;
+    if (trackPickerLabel) trackPickerLabel.textContent = english ? 'Track' : 'اختر الأغنية';
+    if (trackPicker) {
+      trackPicker.value = String(index);
+      trackPicker.setAttribute('aria-label', english ? 'Choose a track' : 'اختر الأغنية');
+    }
+    if (previous) {
+      previous.textContent = english ? 'Previous' : 'السابقة';
+      previous.setAttribute('aria-label', english ? 'Previous track' : 'الأغنية السابقة');
+    }
+    if (next) {
+      next.textContent = english ? 'Next' : 'التالية';
+      next.setAttribute('aria-label', english ? 'Next track' : 'الأغنية التالية');
+    }
+    if (mute) {
+      mute.textContent = english ? (muted ? 'Unmute' : 'Mute') : (muted ? 'إلغاء الكتم' : 'كتم الصوت');
+      mute.setAttribute('aria-pressed', String(muted));
+    }
     region?.setAttribute('aria-label', english ? 'RAVEN music' : 'أغنية رايفن');
     if (download) {
       download.setAttribute('aria-label', english ? 'Download the RAVEN song' : 'تنزيل أغنية رايفن');
@@ -242,26 +308,31 @@ export function createSoundtrack(rootURL) {
 
   function failed(id, error) {
     if (id !== attempt) return;
-    if (enabled && mediaActive) phase = 'suspended';
+    if (mediaActive) phase = 'suspended';
     else if (!enabled || error?.name === 'AbortError') phase = 'paused';
-    else phase = error?.name === 'NotAllowedError' ? 'blocked' : 'error';
+    else if (error?.name === 'NotAllowedError') phase = 'blocked';
+    else {
+      // A file that cannot play stops here. The visitor chooses another track or retries.
+      enabled = false;
+      phase = 'error';
+    }
     sync();
   }
 
   function play() {
-    if (enabled && mediaActive) { phase = 'suspended'; sync(); return; }
-    if (!enabled || phase === 'starting' ||
-        (active() && !audio.paused && !audio.error)) return;
+    if (!enabled) return;
+    if (mediaActive) { phase = 'suspended'; sync(); return; }
+    // Every request gets an id. A stale promise from an earlier track or tap is ignored.
     const id = ++attempt;
     phase = 'starting';
     sync();
     try {
       if (audio.error) audio.load();
       const result = audio.play();
-      result?.then(() => {
+      Promise.resolve(result).then(() => {
         if (id !== attempt) return;
-        if (!enabled || mediaActive) { audio.pause(); phase = playbackPhase(); }
-        else phase = playbackPhase();
+        if (!enabled || mediaActive) audio.pause();
+        phase = playbackPhase();
         sync();
       }).catch(error => failed(id, error));
     } catch (error) { failed(id, error); }
@@ -283,14 +354,23 @@ export function createSoundtrack(rootURL) {
     }
   }
 
+  // Trusted gestures only prepare the audio path. Playback starts from the player's own controls.
   function gesture(event) {
     if (!event.isTrusted || event.repeat || event.isComposing) return;
     if (event.type === 'keydown' && !['Enter', ' '].includes(event.key)) return;
     // A checkbox's change handler must read its new value before sync renders it.
     if (event.target.closest?.('#music-settings, #music-volume, audio, video')) return;
+    if (enabled) prepareGraph();
+  }
+
+  // The entry gate's enter button is an explicit visitor choice, so it starts the list.
+  function enter(event) {
+    if (!event?.isTrusted) return;
     prepareGraph();
-    if (event.target.closest?.('#music-toggle, [data-music-toggle]')) return;
-    if (enabled && audio.paused) play();
+    if (!enabled) {
+      enabled = true;
+      play();
+    }
   }
 
   function toggleMusic() {
@@ -302,12 +382,44 @@ export function createSoundtrack(rootURL) {
       sync();
     } else {
       enabled = true;
+      prepareGraph();
       play();
     }
-    try { sessionStorage.setItem(preferenceKey, enabled ? 'on' : 'off'); } catch {}
+  }
+
+  // A list that is playing keeps playing on the new track. A paused list stays paused.
+  function selectTrack(position) {
+    const count = TRACKS.length;
+    const number = Math.trunc(Number(position));
+    index = ((Number.isFinite(number) ? number : 0) % count + count) % count;
+    try { localStorage.setItem(trackKey, String(index)); } catch {}
+    ++attempt; // A play() still waiting on the previous file must not take over.
+    audio.pause();
+    audio.src = trackURL(index);
+    setDownload();
+    if (enabled) play();
+    else phase = 'paused';
+    sync();
+  }
+
+  function step(delta) {
+    selectTrack(index + delta);
+  }
+
+  function setMuted(value, save = false) {
+    muted = Boolean(value);
+    audio.muted = muted;
+    if (save) {
+      try { localStorage.setItem(muteKey, muted ? 'on' : 'off'); } catch {}
+    }
+    sync();
   }
 
   toggle.addEventListener('click', toggleMusic);
+  previous?.addEventListener('click', () => step(-1));
+  next?.addEventListener('click', () => step(1));
+  trackPicker?.addEventListener('change', () => selectTrack(trackPicker.value));
+  mute?.addEventListener('click', () => setMuted(!muted, true));
   volume.addEventListener('input', () => setVolume(volume.value, true));
   cinematicControl?.addEventListener('change', event => {
     cinematic = cinematicControl.checked;
@@ -343,10 +455,16 @@ export function createSoundtrack(rootURL) {
   });
   audio.addEventListener('error', () => {
     ++attempt;
-    phase = enabled && mediaActive ? 'suspended' : 'error';
+    enabled = false;
+    phase = 'error';
     sync();
   });
-  audio.addEventListener('ended', () => { phase = enabled && mediaActive ? 'suspended' : 'paused'; sync(); });
+  audio.addEventListener('ended', () => {
+    // The list runs in order and wraps from the last track back to the first.
+    if (enabled && !mediaActive) { selectTrack(index + 1); return; }
+    phase = enabled && mediaActive ? 'suspended' : 'paused';
+    sync();
+  });
   document.addEventListener('click', gesture);
   document.addEventListener('keydown', gesture);
 
@@ -356,11 +474,14 @@ export function createSoundtrack(rootURL) {
     if (saved !== null) initialVolume = saved;
   } catch {}
   setVolume(initialVolume);
-  audio.src = new URL('fourth-signature/assets/audio/raven-baqi-athar-320.mp3', rootURL).href;
-  audio.loop = true;
-  audio.muted = false;
-  soundtrack = { gesture, toggleMusic, state, sync, setDepth, pulse, setMediaActive };
+  // Nothing downloads until the visitor presses play. Pages never start on their own.
+  audio.loop = false;
+  audio.preload = 'none';
+  audio.muted = muted;
+  audio.src = trackURL(index);
+  trackPicker?.replaceChildren(...TRACKS.map((track, position) => new Option(`${position + 1}. ${track.title}`, String(position))));
+  setDownload();
+  soundtrack = { gesture, enter, toggleMusic, state, sync, setDepth, pulse, setMediaActive };
   sync();
-  play();
   return soundtrack;
 }
