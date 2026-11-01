@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { test, expect, boot, openEvidence, route } from './helpers.mjs';
+import { test, expect, boot, route } from './helpers.mjs';
 
 // Deterministic, real media decoding: synthetic PCM fixtures exercise playback
 // policy and continuity. They do not assert the remote film's artistic content.
@@ -47,13 +47,14 @@ test('music starts on interaction, keeps its position across routes, and remembe
   await page.locator('[data-audio-toggle]').click();
   await expect.poll(() => playing(page)).toBe(true);
   await page.evaluate(() => { window.__persistentAudio = document.querySelector('#preview-soundtrack'); window.__songPosition = window.__persistentAudio.currentTime; });
-  await page.locator('a[href*="/case-017/"]').first().click();
+  // Handoff v2: the route change now goes to the films page instead of the removed investigation.
+  await page.locator('#site-header a[href*="/raven-17/"]').first().click();
   await expect.poll(() => playing(page)).toBe(true);
   expect(await page.evaluate(() => window.__persistentAudio === document.querySelector('#preview-soundtrack') && window.__persistentAudio.currentTime >= window.__songPosition)).toBe(true);
   await page.locator('[data-audio-toggle]').click();
   await expect.poll(() => page.locator('#preview-soundtrack').evaluate(audio => audio.paused)).toBe(true);
   await page.reload();
-  await openEvidence(page, 'E01');
+  await expect(page.locator('#route-outlet h1')).toBeVisible();
   expect(await page.locator('#preview-soundtrack').evaluate(audio => audio.paused)).toBe(true);
   expect(await page.evaluate(() => JSON.parse(localStorage.getItem('raven-preview:v1:musicEnabled')))).toBe(false);
 });

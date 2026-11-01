@@ -1,6 +1,7 @@
-import { test, expect, PREVIEW, route, boot, expectNoOverflow, openEvidence, selectCaseTab } from './helpers.mjs';
+import { test, expect, PREVIEW, route, boot, expectNoOverflow } from './helpers.mjs';
 
-const paths = ['', 'raven-17/', 'raven-17/part-1/', 'raven-17/part-2/', 'raven-17/part-3/', 'zarqa/', 'case-017/'];
+// Handoff v2: 'case-017/' removed with the story; it is now a redirect to the preview home.
+const paths = ['', 'raven-17/', 'raven-17/part-1/', 'raven-17/part-2/', 'raven-17/part-3/', 'zarqa/'];
 
 test('every direct route has a static entry, noindex, and a mounted accessible page', async ({ page, request }) => {
   for (const path of paths) {
@@ -16,14 +17,12 @@ test('every direct route has a static entry, noindex, and a mounted accessible p
 });
 
 for (const width of [320, 390, 430, 1440]) {
-  test(`home and investigation fit at ${width}px`, async ({ page }, info) => {
+  // Handoff v2: the investigation half of this check was removed with the story; the home half is unchanged.
+  test(`home fits at ${width}px`, async ({ page }, info) => {
     await page.setViewportSize({ width, height: width > 500 ? 1000 : 844 });
     await boot(page);
     await expectNoOverflow(page);
     await page.screenshot({ path: info.outputPath(`home-${width}.png`), fullPage: true });
-    await boot(page, 'case-017/');
-    await expectNoOverflow(page);
-    await page.screenshot({ path: info.outputPath(`case-${width}.png`), fullPage: true });
     const visibleSmallControls = await page.locator('button').evaluateAll(buttons => buttons.filter(button => {
       const r = button.getBoundingClientRect();
       return r.width && r.height && getComputedStyle(button).visibility !== 'hidden' && (r.height < 47.5 || r.width < 47.5);
@@ -44,15 +43,16 @@ test('cold load fetches no song or episode and the reduced motion hero remains a
   expect(await page.locator('video').evaluateAll(videos => videos.every(video => video.paused))).toBe(true);
 });
 
+// Handoff v2: the five tests below used the removed investigation route. They now exercise the
+// remaining routes (films, episode, Zarqa, home) and keep their original intent.
 test('internal navigation and Back keep the exact same audio node', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
   await boot(page);
   await page.evaluate(() => { window.__previewAudio = document.querySelector('#preview-soundtrack'); });
-  const caseLink = page.locator('a[href*="/case-017/"]').first();
-  await caseLink.click();
-  await expect(page).toHaveURL(/\/case-017\//);
-  await expect(page.locator('#route-outlet h1')).toHaveText('التوقيع الرابع.');
+  await page.locator('#site-header a[href$="/raven-17/"]').click();
+  await expect(page).toHaveURL(route('raven-17/'));
+  await expect(page.locator('#route-outlet h1')).toHaveText('RAVEN 17');
   expect(await page.evaluate(() => window.__previewAudio === document.querySelector('#preview-soundtrack'))).toBe(true);
   await page.goBack();
   await expect(page).toHaveURL(PREVIEW);
@@ -62,43 +62,34 @@ test('internal navigation and Back keep the exact same audio node', async ({ pag
   expect(errors).toEqual([]);
 });
 
-test('case to films to episode to case to home mounts each destination without route cleanup errors', async ({ page }) => {
+test('films to episode to Zarqa to home mounts each destination without route cleanup errors', async ({ page }) => {
   const errors = [];
   page.on('pageerror', error => errors.push(error.message));
-  await boot(page, 'case-017/');
-  await selectCaseTab(page, 'evidence');
-  await expect(page.locator('.case-evidence-card')).toHaveCount(16);
-  await page.locator('#site-header a[href$="/raven-17/"]').click();
-  await expect(page).toHaveURL(route('raven-17/'));
+  await boot(page, 'raven-17/');
   await expect(page.locator('#route-outlet h1')).toHaveText('RAVEN 17');
   await expect(page.locator('[data-episode-card]')).toHaveCount(2);
-  await expect(page.locator('.case-page')).toHaveCount(0);
   await page.locator('[data-episode-card="1"] a').first().click();
   await expect(page).toHaveURL(route('raven-17/part-1/'));
   await expect(page.locator('#route-outlet h1')).toHaveText('RAVEN 17 — الجزء الأول');
   await expect(page.locator('[data-film-video="1"]')).toBeVisible();
-  await page.locator('#site-header a[href$="/case-017/"]').click();
-  await expect(page).toHaveURL(route('case-017/'));
-  await expect(page.locator('#route-outlet h1')).toHaveText('التوقيع الرابع.');
-  await selectCaseTab(page, 'evidence');
-  await expect(page.locator('.case-evidence-card')).toHaveCount(16);
-  await expect(page.locator('[data-film-video]')).toHaveCount(0);
+  await page.locator('#site-header a[href$="/zarqa/"]').click();
+  await expect(page).toHaveURL(route('zarqa/'));
+  await expect(page.locator('#route-outlet h1')).toBeVisible();
+  await expect(page.locator('[data-film-video="1"]')).toHaveCount(0);
   await page.locator('#site-header .brand').click();
   await expect(page).toHaveURL(PREVIEW);
   await expect(page.locator('#route-outlet h1')).toHaveText(/كل حكاية\s*تترك أثرًا\./);
   await expect(page.locator('.home-hero')).toBeVisible();
   await expect(page.locator('[data-episode-card]')).toHaveCount(2);
-  await expect(page.locator('.case-page')).toHaveCount(0);
   expect(errors).toEqual([]);
 });
 
-test('a failed soundtrack does not prevent entering the case or reading evidence', async ({ page }) => {
+test('a failed soundtrack does not prevent opening the films', async ({ page }) => {
   await page.route('**/*raven-baqi-athar*.mp3*', intercepted => intercepted.abort());
   await boot(page);
-  await page.locator('a[href*="/case-017/"]').first().click();
-  await openEvidence(page, 'E01');
-  await expect(page.locator('dialog[open]')).toBeVisible();
-  await expect(page.locator('dialog[open]')).toContainText('محضر المسؤولية');
+  await page.locator('#site-header a[href$="/raven-17/"]').click();
+  await expect(page.locator('#route-outlet h1')).toHaveText('RAVEN 17');
+  await expect(page.locator('[data-episode-card]')).toHaveCount(2);
 });
 
 test('all preview storage remains isolated from legacy progress', async ({ context, page }) => {
@@ -111,9 +102,9 @@ test('all preview storage remains isolated from legacy progress', async ({ conte
       localStorage.setItem('test:legacy-seeded', '1');
     }
   }, legacy);
-  await boot(page, 'case-017/');
-  await openEvidence(page, 'E01');
-  await expect(page.locator('dialog[open]')).toBeVisible();
+  await boot(page);
+  await boot(page, 'raven-17/part-1/');
+  await expect(page.locator('#route-outlet h1')).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('raven-case:fourth-signature-reconstruction'))).toBe(legacy);
   expect(await page.evaluate(() => localStorage.getItem('raven17_episode_1_progress'))).toBe('42');
 });
@@ -123,8 +114,7 @@ test('denied persistent storage leaves the current session usable', async ({ con
     Storage.prototype.setItem = function () { throw new DOMException('Storage disabled', 'SecurityError'); };
     Storage.prototype.getItem = function () { throw new DOMException('Storage disabled', 'SecurityError'); };
   });
-  await boot(page, 'case-017/');
-  await openEvidence(page, 'E01');
-  await expect(page.locator('dialog[open]')).toBeVisible();
-  await expect(page.locator('dialog[open]')).toContainText('محضر المسؤولية');
+  await boot(page, 'raven-17/');
+  await expect(page.locator('#route-outlet h1')).toHaveText('RAVEN 17');
+  await expect(page.locator('[data-episode-card]')).toHaveCount(2);
 });
