@@ -43,3 +43,13 @@ Each public entry includes canonical, Open Graph, Twitter and structured metadat
 ## Saved data from the removed story
 
 Visitors who played the removed story may still have its progress in their browser storage. No remaining page reads, shows or deletes it; other saved data (language, music, film progress, notes) is untouched.
+
+## Published-site design continuation (2026-11-02)
+
+The deployed website is on **`gh-pages`**, not `main`. The React creative studio on `main` is a different interface; do not replace the published RAVEN site with its build.
+
+The current presentation adds the existing series title and description below the complete hero artwork, keeps the episode action, adds a direct teaser link, and reduces the closed mobile music bar to 112 pixels at 320, 390, and 600 pixels in both languages. Its soundtrack element, 13 recordings, opening film, two episodes, saved progress/notes, translations, and original artwork are retained. `raven/assets/raven-continuation.css` contains the homepage styling; the corresponding mobile player rules are at the end of `site-player.css`.
+
+The unmerged `codex/raven-last-call` branch is separate historical work. This continuation does not merge it or restore the deliberately removed Fourth Signature/Case 017 story.
+
+Validation for this continuation: the existing homepage redesign check and legacy episode playback/resume check pass; all 8 release-asset unit tests pass. Additional browser checks cover both hero actions, both languages at six viewport widths (320–1440px), all 13 tracks, mobile audio settings, and retention of the same soundtrack element through navigation. Artwork hashes remain unchanged. Remote hero and card artwork loaded directly in the review browser; episode playback regressions use the existing temporary fixture and do not certify remote stream availability.
