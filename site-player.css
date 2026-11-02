@@ -60,3 +60,12 @@ noscript a{color:#e7c791}
 .music-track-select{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12px;color:#d1b589}
 #music-track-picker{min-height:44px;max-width:100%;width:min(100%,320px);padding:6px 8px;border:1px solid #b89a69;background:#20251e;color:#eee7da;font:inherit;font-size:13px}
 @media(max-width:480px){.music-controls{flex-basis:100%;justify-content:center;gap:6px}.music-copy{flex-basis:100%}#music-prev,#music-next{padding-inline:10px;font-size:13px}}
+
+/* Redesign v1: player bar presentation only. Ids, labels and behaviour are unchanged. */
+.site-player{background:linear-gradient(180deg,#0d1113,#080a0b);border-top-color:rgba(197,154,97,.34)}
+#music-toggle{background:#c6a475;border-color:#c6a475;color:#101410;font-weight:600}
+#music-prev,#music-next,#music-mute{background:#14181b;border-color:rgba(184,154,105,.55);color:#eadcc0}
+#music-status{font-size:11px;letter-spacing:.06em;color:#cdb28a}
+.music-settings summary{color:#eadcc0}
+.music-track{font-size:14px}
+#music-track-picker{background:#14181b;border-color:rgba(184,154,105,.55)}
