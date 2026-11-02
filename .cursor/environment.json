@@ -1,0 +1,5 @@
+{
+  "name": "Abdulrhman Creative Studio",
+  "install": "npm install",
+  "start": "exec npm run dev"
+}
