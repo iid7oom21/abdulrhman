@@ -34,7 +34,7 @@
   </header>
   <main>
     <div class="row">
-      <select id="character">
+      <select id="character" aria-label="الشخصية">
         <option value="jonas">يوناس</option>
         <option value="claire">كلير</option>
       </select>
@@ -42,7 +42,7 @@
     </div>
     <div id="log"></div>
     <div class="row" style="margin-top:12px;">
-      <textarea id="input" rows="2" style="flex:1; min-width:180px;" placeholder="اكتب سؤالك..."></textarea>
+      <textarea id="input" rows="2" maxlength="4000" aria-label="سؤالك للشخصية" style="flex:1; min-width:180px;" placeholder="اكتب سؤالك..."></textarea>
       <button id="send">إرسال</button>
     </div>
     <div id="status" class="status"></div>
@@ -54,20 +54,21 @@
     const sendBtn = document.getElementById('send');
     const statusEl = document.getElementById('status');
     const characterEl = document.getElementById('character');
-    let playerId = localStorage.getItem('raven_player') || ('p_' + Math.random().toString(36).slice(2,10));
-    localStorage.setItem('raven_player', playerId);
 
     function addMsg(who, text, isMe) {
       const div = document.createElement('div');
       div.className = 'msg ' + (isMe ? 'me' : 'them');
-      div.innerHTML = '<div class="name">' + who + '</div>' + text;
+      const name = document.createElement('div');
+      name.className = 'name';
+      name.textContent = who;
+      div.append(name, document.createTextNode(text));
       log.appendChild(div);
       log.scrollTop = log.scrollHeight;
     }
 
     async function loadHistory() {
       try {
-        const r = await fetch('/api/history?owner=' + encodeURIComponent(playerId));
+        const r = await fetch('/api/history');
         if (!r.ok) return;
         const data = await r.json();
         log.innerHTML = '';
@@ -80,7 +81,7 @@
 
     async function send() {
       const text = input.value.trim();
-      if (!text) return;
+      if (!text || sendBtn.disabled) return;
       const character = characterEl.value;
       sendBtn.disabled = true;
       statusEl.textContent = 'جاري الإرسال...';
@@ -91,7 +92,7 @@
         const r = await fetch('/api/dialogue', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ characterId: character, message: text, ownerId: playerId })
+          body: JSON.stringify({ characterId: character, message: text })
         });
         const data = await r.json();
         if (!r.ok || data.error) {
@@ -113,7 +114,8 @@
     sendBtn.onclick = send;
     input.onkeydown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
     document.getElementById('clear').onclick = () => { log.innerHTML = ''; };
-    loadHistory();
+    sendBtn.disabled = true;
+    loadHistory().finally(() => { sendBtn.disabled = false; });
   </script>
 </body>
 </html>

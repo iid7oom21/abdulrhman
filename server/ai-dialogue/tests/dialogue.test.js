@@ -1,6 +1,13 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { submitRequest, recordShare, simulateReply, makeRequestId, _reset, getRequest } from '../src/dialogue.js';
+import {
+  submitRequest,
+  recordShare,
+  simulateReply,
+  makeRequestId,
+  _reset,
+  getRequest,
+} from '../src/dialogue.js';
 
 test('TC-A01: open envelope path independent of Jonas later talk', () => {
   _reset();
@@ -28,7 +35,9 @@ test('TC-A04 / TC-A05: same request replay does not regenerate', () => {
 
 test('TC-A06: private correction not auto-spread', () => {
   _reset();
-  const claireKnows = simulateReply('claire', 'قلت إني ما راجعت', ['private_correction_shared']);
+  const claireKnows = simulateReply('claire', 'قلت إني ما راجعت', [
+    'private_correction_shared',
+  ]);
   const jonasDoesNot = simulateReply('jonas', 'صححت كلامك مع كلير', []);
   assert.equal(jonasDoesNot.refused, false);
   assert.doesNotMatch(jonasDoesNot.text, /ملاحظة|تصحيح/);
@@ -56,4 +65,26 @@ test('owner isolation: different owner cannot read request', () => {
   assert.equal(forbidden.error, 'forbidden');
   const ok = getRequest(id, 'playerA');
   assert.ok(ok.response);
+});
+
+test('same request ID with different content returns conflict', () => {
+  _reset();
+  const id = makeRequestId();
+  submitRequest(id, 'jonas', 'first message', [], 'v1', 'playerA');
+  assert.equal(
+    submitRequest(id, 'jonas', 'different message', [], 'v1', 'playerA').status,
+    'conflict',
+  );
+  assert.equal(
+    submitRequest(id, 'jonas', 'first message', ['new_fact'], 'v1', 'playerA')
+      .status,
+    'conflict',
+  );
+});
+
+test('request lookup without an owner does not expose a private record', () => {
+  _reset();
+  const id = makeRequestId();
+  submitRequest(id, 'jonas', 'private message', [], 'v1', 'playerA');
+  assert.equal(getRequest(id).error, 'forbidden');
 });

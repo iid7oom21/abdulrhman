@@ -1,14 +1,15 @@
+import { createHash, randomUUID } from 'node:crypto';
 import { buildContext } from './knowledge.js';
 
 const requests = new Map();
 const shares = new Map();
 
 export function makeRequestId() {
-  return `req_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  return `req_${randomUUID()}`;
 }
 
 export function fingerprint(content) {
-  return Buffer.from(JSON.stringify(content)).toString('base64').slice(0, 16);
+  return createHash('sha256').update(JSON.stringify(content)).digest('hex');
 }
 
 export function simulateReply(characterId, playerMessage, sharedFacts = []) {
@@ -19,14 +20,20 @@ export function simulateReply(characterId, playerMessage, sharedFacts = []) {
     ctx.forbidden.some(
       (f) =>
         lower.includes(f.replace(/_/g, ' ')) ||
-        (lower.includes('ظرف') && characterId === 'jonas' && !sharedFacts.includes('envelope_shared'))
+        (lower.includes('ظرف') &&
+          characterId === 'jonas' &&
+          !sharedFacts.includes('envelope_shared')),
     )
   ) {
     return { text: 'ما أعرف عن هالشي. ما شفته.', refused: true };
   }
 
   if (characterId === 'jonas') {
-    if (lower.includes('كنت معي') || lower.includes('شهادة') || lower.includes('صرخة')) {
+    if (
+      lower.includes('كنت معي') ||
+      lower.includes('شهادة') ||
+      lower.includes('صرخة')
+    ) {
       return {
         text: 'إيه. كنا نتكلم في الصالة لما سمعنا الصرخة. اللي صار قبل ما تجلس، ما شفته.',
         refused: false,
@@ -36,7 +43,11 @@ export function simulateReply(characterId, playerMessage, sharedFacts = []) {
   }
 
   if (characterId === 'claire') {
-    if (lower.includes('دعوة') || lower.includes('رتب') || lower.includes('ضيف')) {
+    if (
+      lower.includes('دعوة') ||
+      lower.includes('رتب') ||
+      lower.includes('ضيف')
+    ) {
       return {
         text: 'فيكتور أعطاني اسمك. قال إنك ضيفه. أقدر أوريك الرسائل إذا تبي.',
         refused: false,
@@ -54,7 +65,14 @@ export function simulateReply(characterId, playerMessage, sharedFacts = []) {
   return { text: 'ما أقدر أجاوب خارج ما أعرفه.', refused: true };
 }
 
-export function submitRequest(requestId, characterId, message, sharedFacts = [], contentVersion = 'v1', ownerId = 'anon') {
+export function submitRequest(
+  requestId,
+  characterId,
+  message,
+  sharedFacts = [],
+  contentVersion = 'v1',
+  ownerId = 'anon',
+) {
   const fp = fingerprint({ characterId, message, sharedFacts, contentVersion });
   const existing = requests.get(requestId);
   if (existing) {
@@ -91,7 +109,7 @@ export function recordShare(shareKey) {
 export function getRequest(requestId, ownerId) {
   const rec = requests.get(requestId);
   if (!rec) return null;
-  if (ownerId && rec.owner !== ownerId) return { error: 'forbidden' };
+  if (rec.owner !== ownerId) return { error: 'forbidden' };
   return rec;
 }
 
