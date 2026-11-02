@@ -13,3 +13,7 @@ STUDIO_ALLOWED_HOSTS=preview.example.com npm run dev
 ```
 
 The separate simulated dialogue preview still runs with `npm start` on port 10000. See [its README](../server/ai-dialogue/README.md).
+
+## Repository and live-site distinction
+
+The public RAVEN website at `https://iid7oom21.github.io/abdulrhman/raven/` is served from **`gh-pages`**. This React studio lives on **`main`** and is a separate application. Do not deploy this studio build over the published RAVEN website. The cinematic website's original artwork, intro, two episodes, and 13-track soundtrack are maintained on its own branch.
