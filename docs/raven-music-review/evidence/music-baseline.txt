@@ -1,0 +1,37 @@
+▶ production soundtrack module with production controls
+  ✔ late error/ended/pause events after stop leave player paused (606.75184ms)
+  ✖ queued pause/error/ended from previous source do not override new selection (623.228449ms)
+  ✔ old play promise cannot override selection; pause and mute during pending play persist (724.600055ms)
+  ✔ stale rejection ignored; waiting/stalled do not advance; actual ended wraps last to first (630.339649ms)
+  ✔ singleton, one background audio, repeat factory preserves preferences (495.75158ms)
+✖ production soundtrack module with production controls (3402.121609ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 4
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3769.020915
+
+✖ failing tests:
+
+test at tests/music-races.cjs:52:11
+✖ queued pause/error/ended from previous source do not override new selection (623.228449ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  false !== true
+  
+      at /workspace/work/raven-music/tests/music-races.cjs:56:12
+      at async check (/workspace/work/raven-music/tests/music-races.cjs:38:7)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async TestContext.<anonymous> (/workspace/work/raven-music/tests/music-races.cjs:52:3)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
