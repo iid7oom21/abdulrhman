@@ -1,0 +1,30 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { createPreviewServer } from '../src/server.js';
+
+test('HTTP sessions, concurrent idempotency, validation, private history and read-only polling', async t => {
+  const server = createPreviewServer();
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  t.after(() => new Promise(r => server.close(r)));
+  const root = `http://127.0.0.1:${server.address().port}`;
+  const session = async () => (await fetch(root)).headers.get('set-cookie').split(';')[0];
+  const a = await session(), b = await session();
+  const post = (payload, cookie = a) => fetch(root + '/api/dialogue', {method:'POST', headers:{cookie,'content-type':'application/json'}, body:JSON.stringify(payload)});
+  assert.equal((await fetch(root+'/api/history?owner=a')).status,401);
+  const payload = {requestId:'http-test',characterId:'jonas',message:'سؤال'};
+  const responses = await Promise.all(Array.from({length:8}, () => post(payload).then(r=>r.json())));
+  assert.equal(responses.filter(r=>!r.replayed).length,1);
+  assert.ok(responses.every(r=>r.id==='http-test' && r.status==='completed'));
+  assert.equal((await post({...payload,message:'آخر'})).status,409);
+  assert.equal((await post(payload,b)).status,403);
+  assert.equal((await post({...payload,requestId:'bad',message:{}})).status,400);
+  assert.equal((await post({...payload,requestId:'facts',sharedFacts:['secret']})).status,400);
+  for (let i=0;i<3;i++) assert.equal((await fetch(root+'/api/operations/http-test',{headers:{cookie:a}})).status,200);
+  assert.equal((await fetch(root+'/api/operations/http-test',{headers:{cookie:b}})).status,404);
+  assert.equal((await fetch(root+'/api/operations/unknown',{headers:{cookie:a}})).status,404);
+  const history = await (await fetch(root+'/api/history?owner=forged',{headers:{cookie:b}})).json();
+  assert.deepEqual(history.items,[]);
+  const own = await (await fetch(root+'/api/history',{headers:{cookie:a}})).json();
+  assert.equal(own.items.length,1);
+  assert.equal(own.storage,'server-memory');
+});
