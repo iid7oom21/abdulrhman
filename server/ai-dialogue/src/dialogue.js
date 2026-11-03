@@ -6,15 +6,23 @@ export const makeRequestId = () => randomUUID();
 export const fingerprint = content => createHash('sha256').update(JSON.stringify(content)).digest('hex');
 
 // This preview has no trusted story-event/share engine. Client facts are never knowledge.
-export function simulateReply(characterId, playerMessage) {
-  buildContext(characterId);
+export function simulateReply(characterId, playerMessage, received) {
+  const context = buildContext(characterId, received);
+  // Describe received materials as attributed statements, never as proven story facts.
+  const receivedFromPlayer = context.received?.materials.filter(item => item.author === 'player') || [];
+  if (/المواد|شارك|تصحيح/.test(playerMessage) && receivedFromPlayer.length) {
+    return { text:'هذه المواد وصلتني؛ تسجيل القول لا يثبت صحته:\n' + receivedFromPlayer.map(item =>
+      (item.type === 'correction' ? (item.isLatestKnownCorrection ? 'تصحيح أحدث معروف' : 'تصحيح سابق') :
+        item.type === 'report' ? 'مسودة تقرير' : item.type === 'receipt' ? 'إيصال' :
+        item.type === 'motive' ? 'تفسير دافع' : item.type === 'evidence' ? 'مادة مصدر' : 'قول أو ملاحظة مسجلة') + ': ' + item.text).join('\n'), refused:false };
+  }
   return {
     text: 'النص الأصلي لهذه الإفادة غير متاح في هذه المعاينة. لا أستطيع تأكيد تفاصيل الواقعة أو إنشاء دليل من الحوار.',
     refused: true,
   };
 }
 
-export function submitRequest(requestId, characterId, message, sharedFacts = [], contentVersion = 'deleted-name-preview-v2', ownerId) {
+export function submitRequest(requestId, characterId, message, sharedFacts = [], contentVersion = 'deleted-name-preview-v2', ownerId, received) {
   if (!ownerId || !Object.hasOwn(CHARACTERS, characterId) || typeof requestId !== 'string' ||
       !/^[\w-]{1,100}$/.test(requestId) || typeof message !== 'string' || !message.trim() || message.length > 8000) {
     return { error: 'invalid_request', status: 'error' };
@@ -34,7 +42,7 @@ export function submitRequest(requestId, characterId, message, sharedFacts = [],
   };
   requests.set(requestId, record);
   try {
-    record.response = simulateReply(characterId, message);
+    record.response = simulateReply(characterId, message, received);
     record.status = 'completed';
   } catch {
     record.status = 'error';

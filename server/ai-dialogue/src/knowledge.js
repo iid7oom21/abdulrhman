@@ -4,7 +4,9 @@ export const CHARACTERS = Object.freeze({
   jonas: Object.freeze({ id: 'jonas', name: 'يوناس', allowedKnowledge: Object.freeze([]) }),
   claire: Object.freeze({ id: 'claire', name: 'كلير', allowedKnowledge: Object.freeze([]) }),
 });
-export function buildContext(characterId) {
+export function buildContext(characterId, received) {
   if (!Object.hasOwn(CHARACTERS, characterId)) throw new Error('unknown_character');
-  return { characterId, allowed: [...CHARACTERS[characterId].allowedKnowledge] };
+  const context = { characterId, allowed: [...CHARACTERS[characterId].allowedKnowledge] };
+  if (received?.actor === characterId && Array.isArray(received.materials)) context.received = received;
+  return context;
 }

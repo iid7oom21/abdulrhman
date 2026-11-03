@@ -44,6 +44,34 @@ test('real preview page browser acceptance', async t => {
     assert.equal(await page.evaluate(()=>localStorage.getItem('raven_deleted_name_preview_v2')),'{unreadable');
     assert.match(await page.locator('#status').innerText(),/الحفظ المحلي غير مؤكد/);
   }));
+  await t.test('prior preview journal with refused metadata restores its response and draft',()=>pageFor(async page=>{
+    await page.addInitScript(()=>localStorage.setItem('raven_deleted_name_preview_v2',JSON.stringify({jonas:{draft:'مسودة محفوظة',records:[{id:'prior',characterId:'jonas',message:'سؤال سابق',status:'completed',response:{text:'رد سابق',refused:true},confirmed:true}]}})));
+    await page.goto(root);await wait(page);
+    assert.match(await page.locator('#log').innerText(),/رد سابق/);
+    assert.equal(await page.locator('#input').inputValue(),'مسودة محفوظة');
+    assert.doesNotMatch(await page.locator('#status').innerText(),/غير متوافقة/);
+  }));
+  await t.test('valid JSON with incompatible fields or records is never overwritten on initialization',async()=>{
+    for (const raw of ['[]','{"future":1}','{"jonas":{"draft":"keep","records":{}}}',
+      '{"jonas":{"draft":"keep","records":[{"id":"old","characterId":"jonas","message":"keep","status":"future"}]}}']) {
+      await pageFor(async page=>{
+        await page.addInitScript(value=>localStorage.setItem('raven_deleted_name_preview_v2',value),raw);
+        await page.goto(root);await wait(page);
+        assert.equal(await page.evaluate(()=>localStorage.getItem('raven_deleted_name_preview_v2')),raw);
+        assert.match(await page.locator('#status').innerText(),/غير متوافقة/);
+      });
+    }
+  });
+  await t.test('conflicting late history cannot replace an already received reply for the same ID',()=>pageFor(async page=>{
+    let op;
+    await page.route('**/api/dialogue',async route=>{op=route.request().postDataJSON();await route.fulfill(result(record(op,{response:{text:'الرد المعلوم الأول'}})));});
+    await page.goto(root);await wait(page);await send(page);
+    await page.locator('#status').filter({hasText:'وصل الرد'}).waitFor();
+    await page.route('**/api/history',route=>route.fulfill(result({items:[record(op,{response:{text:'رد متعارض متأخر'}})]})));
+    await page.locator('#history').click();await wait(page);
+    assert.match(await page.locator('#log').innerText(),/الرد المعلوم الأول/);
+    assert.doesNotMatch(await page.locator('#log').innerText(),/رد متعارض/);
+  }));
   await t.test('3 new browser session has no old history, and labels state the limits',()=>pageFor(async page=>{
     await page.goto(root); await wait(page);
     assert.equal(await page.locator('#log .me').count(),0);
