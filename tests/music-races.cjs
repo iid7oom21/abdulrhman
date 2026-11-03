@@ -45,6 +45,10 @@ test('production soundtrack module with production controls',async t=>{
     await p.evaluate(()=>{
       const a=document.getElementById('site-soundtrack');
       a.dispatchEvent(new Event('error'));
+    });
+    assert.equal(await phase(p),'paused');
+    await p.evaluate(()=>{
+      const a=document.getElementById('site-soundtrack');
       a.dispatchEvent(new Event('waiting'));a.dispatchEvent(new Event('playing'));
     });
     assert.equal(await phase(p),'paused');
