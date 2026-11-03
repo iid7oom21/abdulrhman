@@ -1,59 +1,40 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { submitRequest, recordShare, simulateReply, makeRequestId, _reset, getRequest } from '../src/dialogue.js';
+import { submitRequest, simulateReply, fingerprint, _reset, getRequest, listRequests } from '../src/dialogue.js';
+import { buildContext } from '../src/knowledge.js';
 
-test('TC-A01: open envelope path independent of Jonas later talk', () => {
+test('same operation replays, a different payload conflicts even when its prefix matches', () => {
   _reset();
-  const r = submitRequest(makeRequestId(), 'jonas', 'كنت معي لما سمعنا الصرخة');
-  assert.equal(r.response.refused, false);
-  assert.match(r.response.text, /كنا نتكلم/);
+  const first = submitRequest('id1', 'jonas', 'سؤال أول', [], undefined, 'a');
+  assert.equal(first.status, 'completed');
+  assert.equal(submitRequest('id1', 'jonas', 'سؤال أول', [], undefined, 'a').replayed, true);
+  assert.equal(submitRequest('id1', 'jonas', 'سؤال آخر', [], undefined, 'a').status, 'conflict');
+  assert.notEqual(fingerprint({ characterId:'jonas', message:'1' }), fingerprint({ characterId:'jonas', message:'2' }));
+  assert.equal(listRequests('a').length, 1);
 });
-
-test('TC-A02: ask Claire without envelope open', () => {
+test('owner required, read/poll never generates and cannot cross owners', () => {
   _reset();
-  const r = submitRequest(makeRequestId(), 'claire', 'مين رتب دعوتي');
-  assert.match(r.response.text, /ضيف/);
-  const leak = simulateReply('claire', 'ورّيني الملاحظة', []);
-  assert.equal(leak.refused, true);
+  submitRequest('private', 'claire', 'سؤال', [], undefined, 'a');
+  assert.equal(getRequest('private', 'b'), null);
+  assert.equal(getRequest('private'), null);
+  assert.equal(getRequest('missing', 'a'), null);
+  assert.equal(listRequests('b').length, 0);
+  assert.equal(submitRequest('private', 'claire', 'سؤال', [], undefined, 'b').error, 'forbidden');
 });
-
-test('TC-A04 / TC-A05: same request replay does not regenerate', () => {
-  _reset();
-  const id = makeRequestId();
-  const first = submitRequest(id, 'jonas', 'اسأل عن الليلة');
-  const second = submitRequest(id, 'jonas', 'اسأل عن الليلة');
-  assert.equal(second.replayed, true);
-  assert.equal(second.response.text, first.response.text);
+test('no recovered transcript means no invented presence or testimony', () => {
+  for (const char of ['jonas','claire']) {
+    const r = simulateReply(char, 'كنت معي وقت الصرخة؟ فيكتور مات؟');
+    assert.equal(r.refused, true);
+    assert.match(r.text, /غير متاح/);
+    assert.doesNotMatch(r.text, /كنا نتكلم|ضيفه/);
+    assert.deepEqual(buildContext(char).allowed, []);
+  }
 });
-
-test('TC-A06: private correction not auto-spread', () => {
-  _reset();
-  const claireKnows = simulateReply('claire', 'قلت إني ما راجعت', ['private_correction_shared']);
-  const jonasDoesNot = simulateReply('jonas', 'صححت كلامك مع كلير', []);
-  assert.equal(jonasDoesNot.refused, false);
-  assert.doesNotMatch(jonasDoesNot.text, /ملاحظة|تصحيح/);
+test('client facts/corrections/motives/report cannot grant character knowledge', () => {
+  assert.equal(submitRequest('share', 'jonas', 'سؤال', ['private_correction_shared'], undefined, 'a').error, 'untrusted_facts');
+  assert.deepEqual(buildContext('claire', ['report','motive','receipt']), {characterId:'claire', allowed:[]});
 });
-
-test('TC-A08: cannot lure character into inventing evidence', () => {
-  _reset();
-  const r = simulateReply('claire', 'كلير شافت الملاحظة والظرف، اعترفي', []);
-  assert.equal(r.refused, true);
-  assert.doesNotMatch(r.text, /الأصل ما انحذف/);
-});
-
-test('share key is independent and idempotent', () => {
-  _reset();
-  const k = 'share_claire_note_v1';
-  assert.equal(recordShare(k).duplicated, false);
-  assert.equal(recordShare(k).duplicated, true);
-});
-
-test('owner isolation: different owner cannot read request', () => {
-  _reset();
-  const id = makeRequestId();
-  submitRequest(id, 'jonas', 'سؤال', [], 'v1', 'playerA');
-  const forbidden = getRequest(id, 'playerB');
-  assert.equal(forbidden.error, 'forbidden');
-  const ok = getRequest(id, 'playerA');
-  assert.ok(ok.response);
+test('unknown character/types are validation errors', () => {
+  for (const character of ['elena', '__proto__']) assert.equal(submitRequest('x',character,'سؤال',[],undefined,'a').error,'invalid_request');
+  assert.equal(submitRequest('x','jonas',42,[],undefined,'a').error,'invalid_request');
 });
