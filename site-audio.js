@@ -331,7 +331,10 @@ export function createSoundtrack(rootURL) {
       if (audio.error) audio.load();
       const result = audio.play();
       Promise.resolve(result).then(() => {
-        if (id !== attempt) return;
+        if (id !== attempt) {
+          if (!enabled || mediaActive) audio.pause();
+          return;
+        }
         if (!enabled || mediaActive) audio.pause();
         phase = playbackPhase();
         sync();
@@ -447,6 +450,8 @@ export function createSoundtrack(rootURL) {
   audio.addEventListener('waiting', waiting);
   audio.addEventListener('stalled', () => { if (audio.readyState < 3) waiting(); });
   audio.addEventListener('pause', () => {
+    // Queued events may belong to the source that selectTrack just replaced.
+    if (!audio.paused) return;
     clearTimeout(pulseTimer);
     pulseUntil = 0;
     applyDepth();
@@ -455,12 +460,15 @@ export function createSoundtrack(rootURL) {
     sync();
   });
   audio.addEventListener('error', () => {
+    // Consult current media state instead of treating an old event as current failure.
+    if (!audio.error || !enabled) return;
     ++attempt;
     enabled = false;
     phase = 'error';
     sync();
   });
   audio.addEventListener('ended', () => {
+    if (!audio.ended || audio.currentSrc !== trackURL(index)) return;
     // The list runs in order and wraps from the last track back to the first.
     if (enabled && !mediaActive) { selectTrack(index + 1); return; }
     phase = enabled && mediaActive ? 'suspended' : 'paused';
