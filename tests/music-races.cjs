@@ -79,6 +79,56 @@ test('production soundtrack module with production controls',async t=>{
     await p.evaluate(()=>{audioState.ended=true;document.getElementById('site-soundtrack').dispatchEvent(new Event('ended'));audioState.ended=false;});
     assert.equal(await p.locator('#music-track-number').innerText(),'1 من 13');
   }));
+  await t.test('natural end while foreground media is active advances silently, then resumes next track',()=>check(async p=>{
+    await click(p,'music-toggle');
+    await p.evaluate(()=>{
+      audioState.ended=true;
+      manager.setMediaActive(true);
+      document.getElementById('site-soundtrack').dispatchEvent(new Event('ended'));
+      audioState.ended=false;
+    });
+    assert.equal(await phase(p),'suspended');
+    assert.equal(await p.locator('#music-track-number').innerText(),'2 من 13');
+    assert.equal(await p.evaluate(()=>plays.length),1);
+    assert.equal(await p.evaluate(()=>document.getElementById('site-soundtrack').paused),true);
+    await p.evaluate(()=>manager.setMediaActive(false));
+    assert.equal(await p.evaluate(()=>plays.length),2);
+    assert.match(await p.locator('#site-soundtrack').getAttribute('src'),/02\.mp3$/);
+    await p.evaluate(()=>plays[1].resolve());
+    assert.equal(await phase(p),'playing');
+  }));
+  await t.test('last track wraps silently during suspension; explicit stop prevents resume',()=>check(async p=>{
+    await click(p,'music-settings-label');await p.locator('#music-track-picker').selectOption('12');
+    await click(p,'music-toggle');
+    await p.evaluate(()=>{
+      audioState.ended=true;manager.setMediaActive(true);
+      document.getElementById('site-soundtrack').dispatchEvent(new Event('ended'));
+      audioState.ended=false;
+    });
+    assert.equal(await p.locator('#music-track-number').innerText(),'1 من 13');
+    assert.equal(await p.evaluate(()=>plays.length),1);
+    await click(p,'music-toggle');
+    await p.evaluate(()=>{manager.setMediaActive(false);plays[0].resolve();});
+    assert.equal(await phase(p),'paused');
+    assert.equal(await p.evaluate(()=>plays.length),1);
+    assert.equal(await p.evaluate(()=>document.getElementById('site-soundtrack').paused),true);
+  }));
+  await t.test('late pause with network error preserves explicit stop; active failure remains error',()=>check(async p=>{
+    await click(p,'music-toggle');await click(p,'music-toggle');
+    await p.evaluate(()=>{
+      audioState.error={code:2};
+      document.getElementById('site-soundtrack').dispatchEvent(new Event('pause'));
+    });
+    assert.equal(await phase(p),'paused');
+    await p.evaluate(()=>audioState.error=null);
+    await click(p,'music-toggle');
+    await p.evaluate(()=>{
+      audioState.error={code:2};audioState.paused=true;
+      const a=document.getElementById('site-soundtrack');
+      a.dispatchEvent(new Event('error'));a.dispatchEvent(new Event('pause'));
+    });
+    assert.equal(await phase(p),'error');
+  }));
   await t.test('singleton, one background audio, repeat factory preserves preferences',()=>check(async p=>{
     assert.equal(await p.locator('audio').count(),1);
     assert.equal(await p.locator('#music-track-picker option').count(),13);
