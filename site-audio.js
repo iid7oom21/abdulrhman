@@ -455,8 +455,12 @@ export function createSoundtrack(rootURL) {
     clearTimeout(pulseTimer);
     pulseUntil = 0;
     applyDepth();
-    if (enabled && mediaActive) phase = 'suspended';
-    else if (!enabled || !['blocked', 'error'].includes(phase)) phase = audio.error ? 'error' : 'paused';
+    if (!enabled) {
+      // A queued pause must preserve an explicit stop, even if a later load failed.
+      // A failure already reported by the active operation remains visible.
+      if (phase !== 'error') phase = 'paused';
+    } else if (mediaActive) phase = 'suspended';
+    else if (!['blocked', 'error'].includes(phase)) phase = audio.error ? 'error' : 'paused';
     sync();
   });
   audio.addEventListener('error', () => {
@@ -470,7 +474,9 @@ export function createSoundtrack(rootURL) {
   audio.addEventListener('ended', () => {
     if (!audio.ended || audio.currentSrc !== trackURL(index)) return;
     // The list runs in order and wraps from the last track back to the first.
-    if (enabled && !mediaActive) { selectTrack(index + 1); return; }
+    // Advance a completed track even while foreground media owns the speakers.
+    // selectTrack/play preserve suspension and defer actual playback until it ends.
+    if (enabled) { selectTrack(index + 1); return; }
     phase = enabled && mediaActive ? 'suspended' : 'paused';
     sync();
   });
