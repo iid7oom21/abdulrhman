@@ -1,0 +1,20 @@
+{
+  "name": "raven-ai-credit-server",
+  "version": "0.1.0-simulation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node --test tests/*.test.js",
+    "migrate": "node src/migrate.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.6.0",
+    "express": "^4.21.0",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "supertest": "^7.0.0"
+  }
+}
