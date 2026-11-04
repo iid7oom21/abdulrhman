@@ -65,3 +65,57 @@ test('chunked HTTP preserves Unicode across a split UTF-8 character and replays 
   const saved = await (await fetch(root + '/api/operations/' + payload.requestId, { headers:{ cookie } })).json();
   assert.equal(saved.message, payload.message);
 });
+
+// Request-ID contract (cases 01–08 of the request-id fixtures), executed against the real server.
+test('request-id contract cases run against the real server: replay, conflicts, key order, race, unknown poll', async t => {
+  const server = createPreviewServer();
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  t.after(() => new Promise(r => server.close(r)));
+  const root = `http://127.0.0.1:${server.address().port}`;
+  const cookie = (await fetch(root)).headers.get('set-cookie').split(';')[0];
+  const json = {cookie, 'content-type':'application/json'};
+  const raw = body => fetch(root + '/api/dialogue', {method:'POST', headers:json, body});
+  const post = payload => raw(JSON.stringify(payload));
+  const read = async id => (await fetch(root + '/api/operations/' + id, {headers:{cookie}})).json();
+  const history = async () => (await (await fetch(root + '/api/history', {headers:{cookie}})).json()).items;
+
+  // 01: a completed operation replays its stored result even after the character's knowledge changes.
+  const base = {requestId:'case-01', characterId:'jonas', message:'ما المواد التي وصلتك؟'};
+  const first = await (await post(base)).json();
+  assert.equal(first.status, 'completed');
+  await fetch(root + '/api/materials', {method:'POST', headers:json, body:JSON.stringify({id:'m-01', type:'statement', text:'قول مسجل'})});
+  await fetch(root + '/api/shares', {method:'POST', headers:json, body:JSON.stringify({eventId:'e-01', materialId:'m-01', recipients:['jonas']})});
+  const again = await (await post(base)).json();
+  assert.equal(again.replayed, true);
+  assert.deepEqual(again.response, first.response);
+
+  // 02/03/04: the same ID with another message, character or content version is 409 and keeps the original.
+  for (const change of [{message:'سؤال آخر'}, {characterId:'claire'}, {contentVersion:'deleted-name-preview-v3'}]) {
+    const res = await post({...base, ...change});
+    assert.equal(res.status, 409);
+    assert.equal((await res.json()).error, 'request_id_conflict');
+  }
+  const stored = await read('case-01');
+  assert.equal(stored.characterId, 'jonas');
+  assert.equal(stored.message, base.message);
+  assert.deepEqual(stored.response, first.response);
+
+  // 05: the same values in another key order replay instead of conflicting.
+  const reordered = await (await raw(`{"message":${JSON.stringify(base.message)},"characterId":"jonas","requestId":"case-01"}`)).json();
+  assert.equal(reordered.replayed, true);
+
+  // 07: two concurrent requests with one ID and different content: exactly one wins, without assuming which.
+  const [x, y] = await Promise.all([
+    post({requestId:'case-07', characterId:'jonas', message:'أ'}),
+    post({requestId:'case-07', characterId:'jonas', message:'ب'}),
+  ]);
+  assert.deepEqual([x.status, y.status].sort(), [200, 409]);
+  assert.equal((await read('case-07')).message, x.status === 200 ? 'أ' : 'ب');
+
+  // 08: polling an unknown operation never creates or generates one.
+  const before = (await history()).length;
+  for (let i = 0; i < 3; i++) {
+    assert.equal((await fetch(root + '/api/operations/case-08-unknown', {headers:{cookie}})).status, 404);
+  }
+  assert.equal((await history()).length, before);
+});
