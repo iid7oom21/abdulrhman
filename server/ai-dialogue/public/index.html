@@ -79,7 +79,7 @@
       <label for="share-material">المادة التي تريد مشاركتها</label><select id="share-material"></select>
       <label for="share-recipient">المستلم</label><select id="share-recipient"><option value="jonas">يوناس</option><option value="claire">كلير</option><option value="matteo">ماتيو</option><option value="elena">إيلينا</option></select>
       <p>المشاركة ترسل المادة المختارة فقط. مسودة التقرير ترسل مرفقاتها المحددة؛ لا تُرفق دوافعك أو محادثاتك تلقائيًا.</p>
-      <div class="row"><button id="material-share" type="button">مشاركة المادة المحددة</button><button id="material-check" class="secondary" type="button">متابعة الإجراء الأصلي</button><button id="material-refresh" class="secondary" type="button">تحديث المواد</button><button id="material-export" class="secondary" type="button">تنزيل نسخة</button></div>
+      <div class="row"><button id="material-share" type="button">مشاركة المادة المحددة</button><button id="material-check" class="secondary" type="button">متابعة الإجراء الأصلي</button><button id="material-resend" class="secondary" type="button" hidden>إعادة إرسال الإجراء المعلق بالمعرف نفسه</button><button id="material-refresh" class="secondary" type="button">تحديث المواد</button><button id="material-export" class="secondary" type="button">تنزيل نسخة</button></div>
       <div id="material-status" class="status" role="status" aria-live="polite"></div>
       <h2 style="font-size:1rem">المواد التي وصلت إلى المستلم المختار</h2><div id="knowledge-list"></div>
       <p>التقرير هنا مسودة. الإيداع وإيصاله ينتظران المصدر المعتمد؛ لا يوجد زر يصنع إيصالًا أو دليلًا من نص الحوار.</p>
@@ -99,7 +99,11 @@
       draft: '', records: new Map(), active: null, notice: '', localSaved: true, hidden: false,
     }]));
     const names = { jonas: 'يوناس', claire: 'كلير' };
-    function unresolved(s) { return [...s.records.values()].find(r => !['completed', 'error'].includes(r.status)); }
+    // Isolate Latin IDs inside Arabic text so a UUID renders as one left-to-right unit.
+    const iso = value => '\u2068' + value + '\u2069';
+    // 'unavailable': the server answered that this session has no such operation (restart or lost
+    // session cookie). Outcome unknown, never success or failure; it no longer blocks a new question.
+    function unresolved(s) { return [...s.records.values()].find(r => !['completed', 'error', 'unavailable'].includes(r.status)); }
     let canPersist = true;
     function persist() {
       if (!canPersist) return false;
@@ -126,7 +130,7 @@
           if (!plain(r) || !keysOnly(r, ['id','characterId','message','status','response','confirmed']) ||
               typeof r.id !== 'string' || !/^[\w-]{1,100}$/.test(r.id) || seen.has(r.id) ||
               r.characterId !== id || typeof r.message !== 'string' ||
-              !['pending','unknown','completed','error'].includes(r.status) ||
+              !['pending','unknown','unavailable','completed','error'].includes(r.status) ||
               (r.confirmed !== undefined && typeof r.confirmed !== 'boolean') ||
               (r.response !== undefined && (!plain(r.response) || !keysOnly(r.response, ['text','refused']) || typeof r.response.text !== 'string' || (r.response.refused !== undefined && typeof r.response.refused !== 'boolean'))) ||
               (r.status === 'completed' && !r.response?.text)) throw new Error('journal_schema');
@@ -162,7 +166,10 @@
         if (r.response?.text) addMsg(names[id], r.response.text, false);
         const label = r.status === 'completed'
           ? (r.confirmed ? 'سبق تأكيد تسجيل هذه العملية في ذاكرة الخادم؛ ليس حفظًا دائمًا.' : 'رد محلي؛ الحفظ الحالي على الخادم غير مؤكد.')
-          : r.status === 'error' ? 'خطأ مسجل للعملية؛ لم يثبت نجاحها.' : (r.response?.text ? 'وصل الرد؛ حفظه غير مؤكد. ' : '') + 'عملية غير محسومة؛ متابعة بالمعرف: ' + r.id;
+          : r.status === 'error' ? 'خطأ مسجل للعملية؛ لم يثبت نجاحها.'
+          : r.status === 'unavailable' ? (r.response?.text ? 'وصل هذا الرد، لكن ' : '') + 'الخادم لا يعرف هذه العملية في جلستك الحالية؛ ربما أُعيد تشغيله أو انتهت جلسة المتصفح. '
+            + (r.response?.text ? 'حفظه على الخادم غير مؤكد' : 'نتيجتها غير معروفة: لم يثبت نجاحها ولا فشلها') + '، ولم نُعد إرسالها. المعرف: ' + iso(r.id)
+          : (r.response?.text ? 'وصل الرد؛ حفظه غير مؤكد. ' : '') + 'عملية غير محسومة؛ متابعة بالمعرف: ' + iso(r.id);
         addMsg('حالة العملية', label, false);
       }
       input.value = s.draft;
@@ -186,16 +193,33 @@
         status:r.status, response:typeof r.response?.text === 'string' ? { text:r.response.text } : old?.response, confirmed:r.storage === 'server-memory' });
       return true;
     }
+    const SESSION_LOST = 'انتهت جلسة هذا المتصفح على الخادم أو أُعيد تشغيله. أعد تحميل الصفحة لبدء جلسة جديدة، ثم اضغط «متابعة العملية الأصلية». العمليات والمسودة باقية على هذا المتصفح.';
+    // Ending the browser wait (button or timeout) never proves the server cancelled or failed.
+    function stoppedNotice(controller, id) {
+      return controller.byUser
+        ? 'أوقفنا انتظار المتصفح فقط. لم نثبت إلغاء العملية على الخادم؛ المعرف ' + iso(id) + ' محفوظ للمتابعة.'
+        : 'انتهت مهلة انتظار المتصفح. هذا لا يثبت فشل العملية أو إلغاءها على الخادم؛ المعرف ' + iso(id) + ' محفوظ للمتابعة دون توليد جديد.';
+    }
     async function request(id, op, url, options = {}) {
       const s = states[id];
       if (s.active) return;
       const controller = new AbortController(); s.active = controller;
-      s.notice = 'جارٍ انتظار العملية ' + op.id; render();
+      s.notice = 'جارٍ انتظار العملية ' + iso(op.id); render();
       const timer = setTimeout(() => controller.abort(), 8000);
       try {
         const res = await fetch(url, { ...options, signal:controller.signal, credentials:'same-origin' });
         const data = await res.json();
-        if (controller.signal.aborted) return;
+        if (controller.signal.aborted) { s.notice = stoppedNotice(controller, op.id); return; }
+        if (res.status === 404 && data?.error === 'operation_unavailable' && url.startsWith('/api/operations/')) {
+          // Read-only follow-up: this session has no such operation on the server. Keep the
+          // message, ID and any known reply; do not resend, and do not call it success or failure.
+          const current = s.records.get(op.id);
+          if (current && !['completed','error'].includes(current.status)) current.status = 'unavailable';
+          s.notice = 'الخادم لا يعرف العملية ' + iso(op.id) + ' في جلستك الحالية؛ ربما أُعيد تشغيله أو انتهت جلسة المتصفح. لم نغير نتيجتها المعروفة ولم نُعد إرسالها'
+            + (unresolved(s) ? '.' : '. يمكنك إرسال سؤال جديد.');
+          return;
+        }
+        if (res.status === 401 && data?.error === 'session_unavailable') { s.notice = SESSION_LOST; return; }
         const matches = data.id === op.id && data.characterId === id && data.message === op.message;
         if (matches && typeof data.response?.text === 'string') {
           const current = s.records.get(op.id);
@@ -211,7 +235,8 @@
             : data.status === 'error' ? 'خطأ مسجل؛ الاستعلام لم يغيره إلى نجاح.' : 'ما زالت العملية معلقة.';
         }
       } catch {
-        s.notice = 'تعذرت قراءة الحالة. احتفظنا بالعملية؛ يمكن متابعة المعرف الأصلي دون إعادة توليد.';
+        s.notice = controller.signal.aborted ? stoppedNotice(controller, op.id)
+          : 'تعذرت قراءة الحالة. احتفظنا بالعملية؛ يمكن متابعة المعرف الأصلي دون إعادة توليد.';
       } finally {
         clearTimeout(timer);
         if (s.active === controller) s.active = null;
@@ -232,13 +257,18 @@
       s.notice = 'جارٍ تحميل سجل الشخصية؛ العمليات الحالية باقية.'; render();
       try {
         const res = await fetch('/api/history', { credentials:'same-origin' });
+        if (res.status === 401) throw new Error('session');
         if (!res.ok) throw new Error('history');
         const data = await res.json();
         if (!Array.isArray(data.items)) throw new Error('history');
         for (const r of data.items) merge(id, r);
         s.hidden = false; s.notice = 'دُمج سجل الشخصية حسب معرفات العمليات. الغياب عن السجل لا يحذف النسخة المحلية.';
+        const open = unresolved(s);
+        if (open && !data.items.some(r => r.id === open.id)) {
+          s.notice += ' العملية ' + iso(open.id) + ' ليست في سجل الخادم الحالي؛ اضغط «متابعة العملية الأصلية» لقراءة حالتها دون إرسال جديد.';
+        }
         persist();
-      } catch { s.notice = 'تعذر تحميل السجل؛ لم نحذف أي رسالة أو عملية.'; }
+      } catch (e) { s.notice = e?.message === 'session' ? SESSION_LOST : 'تعذر تحميل السجل؛ لم نحذف أي رسالة أو عملية.'; }
       render();
     }
     input.oninput = () => { states[characterEl.value].draft = input.value; persist(); };
@@ -252,8 +282,10 @@
     };
     stopBtn.onclick = () => {
       const s = states[characterEl.value];
+      if (!s.active) return;
+      s.active.byUser = true;
       s.notice = 'أوقفنا انتظار المتصفح فقط. لم نثبت إلغاء العملية على الخادم؛ المعرف محفوظ.';
-      s.active?.abort(); render();
+      s.active.abort(); render();
     };
     document.getElementById('history').onclick = loadHistory;
     document.getElementById('clear').onclick = () => { states[characterEl.value].hidden = true; render(); };
@@ -264,6 +296,7 @@
     const $ = id => document.getElementById(id);
     const labels = {statement:'قول أصلي', correction:'تصحيح', motive:'تفسير دافع', private_note:'ملاحظة خاصة', report:'مسودة تقرير', receipt:'إيصال', evidence:'مادة مصدر'};
     const key = 'raven_deleted_name_material_actions_v1';
+    const SESSION_LOST_MATERIALS = 'انتهت جلسة هذا المتصفح على الخادم أو أُعيد تشغيله. أعد تحميل الصفحة؛ الإجراء المعلق ومسودتك باقيان، ويمكن إعادة إرساله بالمعرف نفسه.';
     let items = [], pending = null, busy = false, writable = true, localOK = true, viewVersion = 0, listVersion = 0;
     let noteDraft = { type:'statement', text:'', originalId:'', attachments:[] };
     try {
@@ -292,6 +325,8 @@
       $('material-save').disabled = busy || !!pending;
       $('material-share').disabled = busy || !!pending || !items.length;
       $('material-check').disabled = busy || !pending;
+      $('material-resend').hidden = !pending;
+      $('material-resend').disabled = busy || !pending;
     }
     function readDraft() {
       noteDraft = {type:$('material-type').value,text:$('material-text').value,originalId:$('material-original').value,
@@ -343,35 +378,49 @@
       return event?.eventId === action.id && event.materialId === body.materialId &&
         JSON.stringify([...(event.recipients || [])].sort()) === JSON.stringify([...body.recipients].sort());
     }
-    async function refresh() {
+    // done: the confirmed result of the action that triggered this refresh; it stays visible.
+    async function refresh(done = '') {
       const version = ++listVersion;
       try {
-        const res = await fetch('/api/materials'); const data = await res.json();
+        const res = await fetch('/api/materials');
+        if (res.status === 401) throw new Error('session');
+        const data = await res.json();
         if (!res.ok || data.storage !== 'server-memory' || !Array.isArray(data.items) || !Array.isArray(data.events)) throw new Error('materials');
         if (version !== listVersion) return;
         // Never claim local material copies still exist on a restarted server.
         items = data.items;
         if (pending && (pending.path === '/api/materials' ? items.some(it => confirms(pending,it)) : data.events.some(it => confirms(pending,undefined,it)))) {
           pending = null; saveLocal();notice('تأكد تسجيل الإجراء الأصلي في ذاكرة الخادم.');
-        } else notice(pending ? 'الإجراء غير مؤكد؛ احتفظنا بمعرفه ومحتواه. لم نُعد إرساله.' : 'المواد المسجلة في ذاكرة الخادم؛ ليست حفظًا دائمًا.');
+        } else notice(done || (pending ? 'الإجراء غير مؤكد؛ احتفظنا بمعرفه ومحتواه. لم نُعد إرساله. إن لم يظهر بعد إعادة تشغيل الخادم أو انتهاء الجلسة، يمكنك إعادة إرساله بالمعرف نفسه؛ الخادم لا يكرر إجراءً سُجل بهذا المعرف.' : 'المواد المسجلة في ذاكرة الخادم؛ ليست حفظًا دائمًا.'));
         renderItems(); await knowledge();
-      } catch { notice('تعذر تحديث المواد؛ بقيت النسخة المعروضة والإجراء المعلق.'); }
+      } catch (e) {
+        notice(e?.message === 'session' ? (done ? done + ' ' : '') + SESSION_LOST_MATERIALS
+          : done ? done + ' تعذر تحديث القائمة بعده؛ بقيت النسخة المعروضة.' : 'تعذر تحديث المواد؛ بقيت النسخة المعروضة والإجراء المعلق.');
+      }
       controls();
     }
     async function action(path, body, id) {
       if (busy || pending) return;
+      pending = {path,body,id}; saveLocal();
+      await submit();
+    }
+    // Sends the stored pending action exactly as recorded (same ID and body). The server
+    // treats a repeated ID with the same content as the same action, never as a new one.
+    async function submit() {
+      if (busy || !pending) return;
+      const {path, body, id} = pending;
       ++listVersion;
-      pending = {path,body,id}; saveLocal();busy = true;controls();notice('جارٍ تسجيل الإجراء…');
+      busy = true;controls();notice('جارٍ تسجيل الإجراء…');
       const controller = new AbortController(), timer = setTimeout(() => controller.abort(),8000);
       try {
         const res = await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal});
         const data = await res.json(), confirmedId = path === '/api/materials' ? data.item?.id : data.event?.eventId;
         if (res.ok && res.status !== 202 && confirmedId === id && data.storage === 'server-memory' && confirms(pending,data.item,data.event)) {
           if (data.item) { items = [...items.filter(it => it.id !== data.item.id), data.item];renderItems(); }
-          pending = null;saveLocal();notice('تأكد تسجيل الإجراء في ذاكرة الخادم.');await refresh();
+          pending = null;saveLocal();notice('تأكد تسجيل الإجراء في ذاكرة الخادم.');await refresh('تأكد تسجيل الإجراء في ذاكرة الخادم.');
         } else if ([400,409,413,415].includes(res.status) && data.error) {
           pending = null;saveLocal();notice('لم يُقبل الإجراء: ' + data.error + '. النص ما زال في المدخل.');
-        } else notice('لم يتأكد الإجراء؛ المعرف محفوظ للمتابعة دون إرسال جديد.');
+        } else notice(res.status === 401 ? SESSION_LOST_MATERIALS : 'لم يتأكد الإجراء؛ المعرف محفوظ للمتابعة دون إرسال جديد.');
       } catch { notice('تعذر تأكيد الإجراء؛ احتفظنا بالمعرف والمحتوى للمتابعة.'); }
       finally { clearTimeout(timer);busy = false;controls(); }
     }
@@ -389,7 +438,7 @@
     $('material-type').onchange = () => { typeFields();readDraft(); };
     $('material-text').oninput = readDraft;$('material-original').onchange = readDraft;
     $('share-recipient').onchange = knowledge;
-    $('material-refresh').onclick = refresh;$('material-check').onclick = refresh;
+    $('material-refresh').onclick = () => refresh();$('material-check').onclick = () => refresh();$('material-resend').onclick = () => submit();
     $('material-export').onclick = () => {
       const blob = new Blob([JSON.stringify({version:1,storage:'browser-copy',materials:items,pending,draft:noteDraft},null,2)],{type:'application/json'});
       const url = URL.createObjectURL(blob), link = document.createElement('a');link.href = url;link.download = 'raven-materials-backup.json';link.click();setTimeout(() => URL.revokeObjectURL(url),1000);

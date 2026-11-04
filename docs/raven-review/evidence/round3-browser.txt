@@ -1,0 +1,143 @@
+TAP version 13
+# Subtest: real preview page browser acceptance
+    # Subtest: 1 initialization preserves unrelated storage and music preferences; 2 normal path and safe text
+    ok 1 - 1 initialization preserves unrelated storage and music preferences; 2 normal path and safe text
+      ---
+      duration_ms: 392.994868
+      type: 'test'
+      ...
+    # Subtest: unreadable owned journal is preserved verbatim
+    ok 2 - unreadable owned journal is preserved verbatim
+      ---
+      duration_ms: 264.31699
+      type: 'test'
+      ...
+    # Subtest: prior preview journal with refused metadata restores its response and draft
+    ok 3 - prior preview journal with refused metadata restores its response and draft
+      ---
+      duration_ms: 189.423866
+      type: 'test'
+      ...
+    # Subtest: valid JSON with incompatible fields or records is never overwritten on initialization
+    ok 4 - valid JSON with incompatible fields or records is never overwritten on initialization
+      ---
+      duration_ms: 716.956293
+      type: 'test'
+      ...
+    # Subtest: conflicting late history cannot replace an already received reply for the same ID
+    ok 5 - conflicting late history cannot replace an already received reply for the same ID
+      ---
+      duration_ms: 320.280477
+      type: 'test'
+      ...
+    # Subtest: 3 new browser session has no old history, and labels state the limits
+    ok 6 - 3 new browser session has no old history, and labels state the limits
+      ---
+      duration_ms: 172.939269
+      type: 'test'
+      ...
+    # Subtest: 4 server error then poll stays error; 10 repeated reads do not duplicate
+    ok 7 - 4 server error then poll stays error; 10 repeated reads do not duplicate
+      ---
+      duration_ms: 479.406858
+      type: 'test'
+      ...
+    # Subtest: 5 history keeps pending; 6 second send blocked; 9 character switch; 11 stop retains ID
+    ok 8 - 5 history keeps pending; 6 second send blocked; 9 character switch; 11 stop retains ID
+      ---
+      duration_ms: 526.241236
+      type: 'test'
+      ...
+    # Subtest: 7 known reply without save confirmation stays visible; no regeneration; 13 reply XSS is text
+    ok 9 - 7 known reply without save confirmation stays visible; no regeneration; 13 reply XSS is text
+      ---
+      duration_ms: 389.526323
+      type: 'test'
+      ...
+    # Subtest: 7b local save throws after a known reply, reply stays in memory
+    ok 10 - 7b local save throws after a known reply, reply stays in memory
+      ---
+      duration_ms: 228.404813
+      type: 'test'
+      ...
+    # Subtest: 8 stale history after send; 9 late character history never changes selected conversation
+    ok 11 - 8 stale history after send; 9 late character history never changes selected conversation
+      ---
+      duration_ms: 384.823264
+      type: 'test'
+      ...
+    # Subtest: late reply and late history for Jonas cannot overwrite Claire
+    ok 12 - late reply and late history for Jonas cannot overwrite Claire
+      ---
+      duration_ms: 630.837894
+      type: 'test'
+      ...
+    # Subtest: reload keeps unresolved operation and draft; 202 empty is never completed
+    ok 13 - reload keeps unresolved operation and draft; 202 empty is never completed
+      ---
+      duration_ms: 351.656938
+      type: 'test'
+      ...
+    # Subtest: lost session: a read-only 404 follow-up releases the character without resending or inventing a result
+    ok 14 - lost session: a read-only 404 follow-up releases the character without resending or inventing a result
+      ---
+      duration_ms: 433.691967
+      type: 'test'
+      ...
+    # Subtest: known reply for an operation the server no longer has stays visible and is not regenerated
+    ok 15 - known reply for an operation the server no longer has stays visible and is not regenerated
+      ---
+      duration_ms: 302.261333
+      type: 'test'
+      ...
+    # Subtest: stopping the wait says the browser stopped waiting, not that reading failed or the server cancelled
+    ok 16 - stopping the wait says the browser stopped waiting, not that reading failed or the server cancelled
+      ---
+      duration_ms: 301.587453
+      type: 'test'
+      ...
+    # Subtest: browser timeout is reported as a timeout that proves neither failure nor cancellation
+    ok 17 - browser timeout is reported as a timeout that proves neither failure nor cancellation
+      ---
+      duration_ms: 250.029927
+      type: 'test'
+      ...
+    # Subtest: expired session cookie: the page says to reload; after reload the follow-up releases the question
+    ok 18 - expired session cookie: the page says to reload; after reload the follow-up releases the question
+      ---
+      duration_ms: 399.857219
+      type: 'test'
+      ...
+    # Subtest: 320/375/390 RTL long text, focus and controls stay reachable
+    ok 19 - 320/375/390 RTL long text, focus and controls stay reachable
+      ---
+      duration_ms: 924.02907
+      type: 'test'
+      ...
+    1..19
+ok 1 - real preview page browser acceptance
+  ---
+  duration_ms: 7813.936748
+  type: 'test'
+  ...
+# Subtest: materials UI uses the real server and recipient contexts
+ok 2 - materials UI uses the real server and recipient contexts
+  ---
+  duration_ms: 2212.592916
+  type: 'test'
+  ...
+# Subtest: a material action lost with the session can be resent with the same ID, without duplicates
+ok 3 - a material action lost with the session can be resent with the same ID, without duplicates
+  ---
+  duration_ms: 1674.065657
+  type: 'test'
+  ...
+1..3
+# tests 22
+# suites 0
+# pass 22
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 8190.167991
