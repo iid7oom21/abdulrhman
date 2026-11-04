@@ -67,3 +67,15 @@ section{padding-block:var(--rvn-section-y)}
 @media(prefers-reduced-motion:reduce){
   .rvnSelectedRow>span:last-child,.rvnSelectedRow:hover>span:last-child{transition:none;transform:none}
 }
+
+/* 9. Arabic section labels follow the page direction, so they start where their heading starts
+   and keep the word order of mixed Arabic/Latin labels ("أعمال RAVEN الأصلية"). English stays LTR. */
+html[lang="ar"] .eyebrow{direction:rtl}
+
+/* 10. The contact call to action is a link: give it the same primary-button shape as "شاهد RAVEN 17". */
+.btn.primary{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:var(--rvn-btn-h);padding:10px 22px;
+  border:1px solid var(--rvn-gold);border-radius:2px;background:var(--rvn-gold);color:#080a0b;font-size:15px;font-weight:600;
+  line-height:1.5;text-decoration:none;transition:background .2s ease,border-color .2s ease}
+.btn.primary:focus-visible{outline:2px solid #dec9a9;outline-offset:4px}
+@media(hover:hover){.btn.primary:hover{background:#d5b17e;border-color:#d5b17e;color:#080a0b}}
+@media(prefers-reduced-motion:reduce){.btn.primary{transition:none}}
