@@ -83,10 +83,10 @@ test('real preview page browser acceptance', async t => {
     await page.route('**/api/dialogue',async route=>{op=route.request().postDataJSON();await route.fulfill(result(record(op,{status:'error',response:undefined,error:'server_error'})));});
     await page.route('**/api/operations/*',route=>route.fulfill(result(record(op,{status:'error',response:undefined,error:'server_error'}))));
     await page.goto(root); await wait(page); await send(page);
-    await page.locator('#status').filter({hasText:'خطأ مسجل'}).waitFor();
-    for(let i=0;i<3;i++){await page.locator('#check').click();await page.locator('#status').filter({hasText:'خطأ مسجل'}).waitFor();}
+    await page.locator('#status').filter({hasText:'سُجّل خطأ'}).waitFor();
+    for(let i=0;i<3;i++){await page.locator('#check').click();await page.locator('#status').filter({hasText:'سُجّل خطأ'}).waitFor();}
     assert.equal(await page.locator('#log .me').count(),1);
-    assert.doesNotMatch(await page.locator('#log').innerText(),/مؤكد في ذاكرة/);
+    assert.doesNotMatch(await page.locator('#log').innerText(),/تأكد سابقًا|تأكد تسجيل/);
   }));
   await t.test('5 history keeps pending; 6 second send blocked; 9 character switch; 11 stop retains ID',()=>pageFor(async page=>{
     let op, posts=0;
@@ -108,16 +108,16 @@ test('real preview page browser acceptance', async t => {
     await page.waitForFunction(()=>document.getElementById('stop').disabled);
     const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem('raven_deleted_name_preview_v2')));
     assert.equal(stored.jonas.records[0].id,op.requestId);assert.equal(posts,1);
-    assert.match(await page.locator('#status').innerText(),/احتفظنا|أوقفنا/);
+    assert.match(await page.locator('#status').innerText(),/احتفظنا|توقف انتظار المتصفح/);
   }));
   await t.test('7 known reply without save confirmation stays visible; no regeneration; 13 reply XSS is text',()=>pageFor(async page=>{
     let op,posts=0;
     await page.route('**/api/dialogue',async route=>{op=route.request().postDataJSON();posts++;await route.fulfill(result(record(op,{storage:undefined,response:{text:'<svg onload="window.injected=true">رد محفوظ؟</svg>'}})));});
     await page.route('**/api/operations/*',route=>route.fulfill({status:503,contentType:'application/json',body:'{"error":"read_failed"}'}));
     await page.goto(root);await wait(page);await send(page);
-    await page.locator('#status').filter({hasText:'لم تتأكد'}).waitFor();
+    await page.locator('#status').filter({hasText:'تعذر تأكيد الحالة'}).waitFor();
     assert.match(await page.locator('#log').innerText(),/رد محفوظ/);assert.equal(await page.locator('#log svg').count(),0);
-    await page.locator('#check').click();await page.locator('#status').filter({hasText:'لم تتأكد'}).waitFor();
+    await page.locator('#check').click();await page.locator('#status').filter({hasText:'تعذر تأكيد الحالة'}).waitFor();
     await page.locator('#history').click();await wait(page);
     assert.match(await page.locator('#log').innerText(),/رد محفوظ/);assert.equal(posts,1);
     assert.equal(await page.locator('#send').isDisabled(),true);
@@ -171,6 +171,92 @@ test('real preview page browser acceptance', async t => {
     assert.equal(await page.locator('#input').inputValue(),'مسودة تالية');
     assert.match(await page.locator('#log').innerText(),/سؤال غير محسوم/);
     assert.equal(await page.locator('#send').isDisabled(),true);
+  }));
+  await t.test('lost session: a read-only 404 follow-up releases the character without resending or inventing a result',()=>pageFor(async page=>{
+    let posts=0,firstId;
+    await page.route('**/api/dialogue',async route=>{
+      posts++;
+      if(posts===1){firstId=route.request().postDataJSON().requestId;return route.abort('failed');}
+      await route.continue();
+    });
+    await page.goto(root);await wait(page);await send(page,'سؤال قبل انقطاع الجلسة');
+    await page.locator('#status').filter({hasText:'تعذرت قراءة الحالة'}).waitFor();
+    assert.equal(await page.locator('#send').isDisabled(),true);
+    const followUp=page.waitForResponse(r=>r.url().endsWith('/api/operations/'+firstId)&&r.request().method()==='GET');
+    await page.locator('#check').click();
+    assert.equal((await followUp).status(),404);
+    await page.locator('#status').filter({hasText:'لا يعرف العملية'}).waitFor();
+    // The ID is shown as one isolated left-to-right unit inside the Arabic sentence.
+    assert.match(await page.locator('#status').innerText(),new RegExp('لا يعرف العملية ⁨'+firstId+'⁩'));
+    assert.equal(await page.locator('#send').isDisabled(),false);
+    let log=await page.locator('#log').innerText();
+    assert.match(log,/سؤال قبل انقطاع الجلسة/);assert.match(log,new RegExp('لم يثبت نجاح العملية أو فشلها[^]*'+firstId));
+    assert.doesNotMatch(log,/تأكد سابقًا|سُجّل خطأ|الرد ظاهر هنا/);assert.equal(posts,1);
+    await page.reload();await wait(page);
+    assert.match(await page.locator('#log').innerText(),new RegExp(firstId));
+    assert.equal(await page.locator('#send').isDisabled(),false);
+    assert.doesNotMatch(await page.locator('#status').innerText(),/غير متوافقة/);
+    const next=page.waitForRequest(r=>r.url().endsWith('/api/dialogue')&&r.method()==='POST');
+    await send(page,'سؤال جديد بعد الانقطاع');
+    assert.notEqual((await next).postDataJSON().requestId,firstId);
+    await page.locator('#status').filter({hasText:'تأكد تسجيل'}).waitFor();
+    log=await page.locator('#log').innerText();
+    assert.match(log,/سؤال قبل انقطاع الجلسة/);assert.match(log,/سؤال جديد بعد الانقطاع/);assert.equal(posts,2);
+  }));
+  await t.test('known reply for an operation the server no longer has stays visible and is not regenerated',()=>pageFor(async page=>{
+    let op,posts=0;
+    await page.route('**/api/dialogue',async route=>{op=route.request().postDataJSON();posts++;await route.fulfill(result(record(op,{storage:undefined,response:{text:'رد وصل قبل فقد الجلسة'}})));});
+    await page.goto(root);await wait(page);await send(page);
+    await page.locator('#status').filter({hasText:'تعذر تأكيد الحالة'}).waitFor();
+    assert.equal(await page.locator('#send').isDisabled(),true);
+    const followUp=page.waitForResponse(r=>r.url().endsWith('/api/operations/'+op.requestId));
+    await page.locator('#check').click();assert.equal((await followUp).status(),404);
+    await page.locator('#status').filter({hasText:'لا يعرف العملية'}).waitFor();
+    const log=await page.locator('#log').innerText();
+    assert.match(log,/رد وصل قبل فقد الجلسة/);assert.match(log,/حفظ الرد على الخادم غير مؤكد/);
+    assert.equal(await page.locator('#send').isDisabled(),false);assert.equal(posts,1);
+  }));
+  await t.test('stopping the wait says the browser stopped waiting, not that reading failed or the server cancelled',()=>pageFor(async page=>{
+    let op,release;const gate=new Promise(r=>release=r);
+    await page.route('**/api/dialogue',async route=>{op=route.request().postDataJSON();await gate;try{await route.fulfill(result(record(op)));}catch{}});
+    await page.goto(root);await wait(page);await send(page,'سؤال ينتظر');
+    await page.waitForFunction(()=>!document.getElementById('stop').disabled);
+    await page.locator('#stop').click();
+    await page.waitForFunction(()=>document.getElementById('stop').disabled);
+    const status=await page.locator('#status').innerText();release();
+    assert.match(status,/توقف انتظار المتصفح فقط/);assert.doesNotMatch(status,/تعذرت قراءة الحالة/);
+    const stored=await page.evaluate(()=>JSON.parse(localStorage.getItem('raven_deleted_name_preview_v2')).jonas.records.at(-1));
+    assert.equal(stored.id,op.requestId);assert.equal(stored.status,'pending');
+  }));
+  await t.test('browser timeout is reported as a timeout that proves neither failure nor cancellation',()=>pageFor(async page=>{
+    let op;
+    await page.clock.install();
+    await page.route('**/api/dialogue',async route=>{op=route.request().postDataJSON();});
+    await page.goto(root);await wait(page);await send(page,'سؤال بلا جواب');
+    await page.waitForFunction(()=>!document.getElementById('stop').disabled);
+    await page.clock.fastForward(8100);
+    await page.locator('#status').filter({hasText:'انتهت مهلة انتظار المتصفح'}).waitFor();
+    assert.doesNotMatch(await page.locator('#status').innerText(),/تعذرت قراءة الحالة/);
+    assert.match(await page.locator('#log').innerText(),new RegExp('عملية غير محسومة[^]*'+op.requestId));
+    assert.equal(await page.locator('#send').isDisabled(),true);
+  }));
+  await t.test('expired session cookie: the page says to reload; after reload the follow-up releases the question',()=>pageFor(async(page,context)=>{
+    await page.goto(root);await wait(page);
+    await send(page,'سؤال الجلسة الأولى');await page.locator('#status').filter({hasText:'تأكد تسجيل'}).waitFor();
+    await context.clearCookies();
+    const post=page.waitForResponse(r=>r.url().endsWith('/api/dialogue')&&r.request().method()==='POST');
+    await send(page,'سؤال بعد انتهاء الجلسة');assert.equal((await post).status(),401);
+    await page.locator('#status').filter({hasText:'أعد تحميل الصفحة'}).waitFor();
+    assert.equal(await page.locator('#send').isDisabled(),true);
+    const pendingId=await page.evaluate(()=>JSON.parse(localStorage.getItem('raven_deleted_name_preview_v2')).jonas.records.at(-1).id);
+    await page.reload();await page.locator('#status').filter({hasText:'ليست في سجل الخادم الحالي'}).waitFor();
+    const followUp=page.waitForResponse(r=>r.url().endsWith('/api/operations/'+pendingId));
+    await page.locator('#check').click();assert.equal((await followUp).status(),404);
+    await page.locator('#status').filter({hasText:'يمكنك إرسال سؤال جديد'}).waitFor();
+    assert.equal(await page.locator('#send').isDisabled(),false);
+    const log=await page.locator('#log').innerText();
+    assert.match(log,/سؤال الجلسة الأولى[^]*الرد ظاهر هنا، وحفظه على الخادم غير مؤكد/);
+    assert.match(log,new RegExp('سؤال بعد انتهاء الجلسة[^]*لم يثبت نجاح العملية أو فشلها[^]*'+pendingId));
   }));
   await t.test('320/375/390 RTL long text, focus and controls stay reachable',()=>pageFor(async page=>{
     await page.goto(root);await wait(page);
