@@ -49,7 +49,7 @@ test('materials UI uses the real server and recipient contexts',async t=>{
   posts++;await route.fetch();await route.fulfill({status:503,contentType:'application/json',body:'{"error":"read_failed_after_save"}'});
  });
  await page.selectOption('#material-type','statement');await page.fill('#material-text','FIXTURE إجراء محفوظ مع رد غير مؤكد');
- await page.click('#material-save');await page.locator('#material-status').filter({hasText:'لم يتأكد'}).waitFor();
+ await page.click('#material-save');await page.locator('#material-status').filter({hasText:'لم تتأكد حالة الإجراء'}).waitFor();
  assert.equal(await page.locator('#material-save').isDisabled(),true);
  const pendingId=await page.evaluate(()=>JSON.parse(localStorage.getItem('raven_deleted_name_material_actions_v1')).pending.id);
  assert.ok(pendingId);await page.click('#material-check');

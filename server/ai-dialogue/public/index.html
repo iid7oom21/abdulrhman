@@ -165,18 +165,18 @@
         addMsg('أنت', r.message, true);
         if (r.response?.text) addMsg(names[id], r.response.text, false);
         const label = r.status === 'completed'
-          ? (r.confirmed ? 'سبق تأكيد تسجيل هذه العملية في ذاكرة الخادم؛ ليس حفظًا دائمًا.' : 'رد محلي؛ الحفظ الحالي على الخادم غير مؤكد.')
-          : r.status === 'error' ? 'خطأ مسجل للعملية؛ لم يثبت نجاحها.'
-          : r.status === 'unavailable' ? (r.response?.text ? 'وصل هذا الرد، لكن ' : '') + 'الخادم لا يعرف هذه العملية في جلستك الحالية؛ ربما أُعيد تشغيله أو انتهت جلسة المتصفح. '
-            + (r.response?.text ? 'حفظه على الخادم غير مؤكد' : 'نتيجتها غير معروفة: لم يثبت نجاحها ولا فشلها') + '، ولم نُعد إرسالها. المعرف: ' + iso(r.id)
-          : (r.response?.text ? 'وصل الرد؛ حفظه غير مؤكد. ' : '') + 'عملية غير محسومة؛ متابعة بالمعرف: ' + iso(r.id);
+          ? (r.confirmed ? 'تأكد سابقًا تسجيل العملية في ذاكرة الخادم المؤقتة.' : 'الرد ظاهر هنا، وحفظه على الخادم غير مؤكد.')
+          : r.status === 'error' ? 'سُجّل خطأ للعملية، ولم يثبت نجاحها.'
+          : r.status === 'unavailable' ? (r.response?.text ? 'وصل هذا الرد، لكن ' : '') + 'العملية غير معروفة للخادم في جلستك الحالية. ربما أُعيد تشغيله أو انتهت جلسة المتصفح. '
+            + (r.response?.text ? 'حفظ الرد على الخادم غير مؤكد، ولم نُعد إرسال السؤال.' : 'لم يثبت نجاح العملية أو فشلها، ولم نُعد إرسالها.') + ' المعرف: ' + iso(r.id)
+          : (r.response?.text ? 'وصل الرد؛ حفظه غير مؤكد. ' : '') + 'حالة العملية غير محسومة. معرف المتابعة: ' + iso(r.id);
         addMsg('حالة العملية', label, false);
       }
       input.value = s.draft;
       sendBtn.disabled = !!op || !!s.active;
       checkBtn.disabled = !!s.active || !s.records.size;
       stopBtn.disabled = !s.active;
-      statusEl.textContent = s.notice + (s.localSaved ? '' : ' الحفظ المحلي غير مؤكد؛ الرد والمسودة باقيان في الصفحة.') + (canPersist ? '' : ' النسخة المخزنة غير مقروءة أو غير متوافقة؛ احتفظنا بها دون تغيير.');
+      statusEl.textContent = s.notice + (s.localSaved ? '' : ' الحفظ المحلي غير مؤكد، لكن الرد والمسودة ما زالا في الصفحة.') + (canPersist ? '' : ' تعذرت قراءة النسخة المخزنة، أو أنها غير متوافقة. احتفظنا بها كما هي.');
       log.scrollTop = log.scrollHeight;
     }
     // Merge by operation ID, never by text. Stale reads cannot downgrade a known reply/error.
@@ -193,12 +193,12 @@
         status:r.status, response:typeof r.response?.text === 'string' ? { text:r.response.text } : old?.response, confirmed:r.storage === 'server-memory' });
       return true;
     }
-    const SESSION_LOST = 'انتهت جلسة هذا المتصفح على الخادم أو أُعيد تشغيله. أعد تحميل الصفحة لبدء جلسة جديدة، ثم اضغط «متابعة العملية الأصلية». العمليات والمسودة باقية على هذا المتصفح.';
+    const SESSION_LOST = 'انتهت جلسة المتصفح على الخادم، أو أُعيد تشغيل الخادم. أعد تحميل الصفحة، ثم اضغط «متابعة العملية الأصلية». العمليات والمسودة ما زالتا على هذا المتصفح.';
     // Ending the browser wait (button or timeout) never proves the server cancelled or failed.
     function stoppedNotice(controller, id) {
       return controller.byUser
-        ? 'أوقفنا انتظار المتصفح فقط. لم نثبت إلغاء العملية على الخادم؛ المعرف ' + iso(id) + ' محفوظ للمتابعة.'
-        : 'انتهت مهلة انتظار المتصفح. هذا لا يثبت فشل العملية أو إلغاءها على الخادم؛ المعرف ' + iso(id) + ' محفوظ للمتابعة دون توليد جديد.';
+        ? 'توقف انتظار المتصفح فقط. لم نتأكد من إلغاء العملية على الخادم، ومعرفها ' + iso(id) + ' محفوظ للمتابعة.'
+        : 'انتهت مهلة انتظار المتصفح. هذا لا يعني أن العملية فشلت أو أُلغيت على الخادم. المعرف ' + iso(id) + ' محفوظ للمتابعة دون توليد رد جديد.';
     }
     async function request(id, op, url, options = {}) {
       const s = states[id];
@@ -229,14 +229,14 @@
         }
         if (!matches || !res.ok || res.status === 202 || !merge(id, data)) {
           // Even an error/202/empty response is not proof of a committed operation.
-          s.notice = 'لم تتأكد الحالة (' + res.status + '). احتفظنا بالمعرف والرد إن وجد. المتابعة لا تولد ردًا جديدًا.';
+          s.notice = 'تعذر تأكيد الحالة (' + res.status + '). احتفظنا بالمعرف وبالرد إن وُجد. المتابعة لن تولد ردًا جديدًا.';
         } else {
-          s.notice = data.status === 'completed' ? 'وصل الرد وتأكد تسجيل هذه العملية في ذاكرة الخادم.'
-            : data.status === 'error' ? 'خطأ مسجل؛ الاستعلام لم يغيره إلى نجاح.' : 'ما زالت العملية معلقة.';
+          s.notice = data.status === 'completed' ? 'وصل الرد، وتأكد تسجيل العملية في ذاكرة الخادم المؤقتة.'
+            : data.status === 'error' ? 'سُجّل خطأ، ولم يؤكد الاستعلام نجاح العملية.' : 'ما زالت العملية معلقة.';
         }
       } catch {
         s.notice = controller.signal.aborted ? stoppedNotice(controller, op.id)
-          : 'تعذرت قراءة الحالة. احتفظنا بالعملية؛ يمكن متابعة المعرف الأصلي دون إعادة توليد.';
+          : 'تعذرت قراءة الحالة. احتفظنا بالعملية، ويمكن متابعة معرفها الأصلي دون توليد رد جديد.';
       } finally {
         clearTimeout(timer);
         if (s.active === controller) s.active = null;
@@ -262,13 +262,13 @@
         const data = await res.json();
         if (!Array.isArray(data.items)) throw new Error('history');
         for (const r of data.items) merge(id, r);
-        s.hidden = false; s.notice = 'دُمج سجل الشخصية حسب معرفات العمليات. الغياب عن السجل لا يحذف النسخة المحلية.';
+        s.hidden = false; s.notice = 'دُمج سجل الشخصية باستخدام معرفات العمليات. عدم ظهور عملية في السجل لا يحذف نسختها المحلية.';
         const open = unresolved(s);
         if (open && !data.items.some(r => r.id === open.id)) {
           s.notice += ' العملية ' + iso(open.id) + ' ليست في سجل الخادم الحالي؛ اضغط «متابعة العملية الأصلية» لقراءة حالتها دون إرسال جديد.';
         }
         persist();
-      } catch (e) { s.notice = e?.message === 'session' ? SESSION_LOST : 'تعذر تحميل السجل؛ لم نحذف أي رسالة أو عملية.'; }
+      } catch (e) { s.notice = e?.message === 'session' ? SESSION_LOST : 'تعذر تحميل السجل. لم نحذف أي رسالة أو عملية.'; }
       render();
     }
     input.oninput = () => { states[characterEl.value].draft = input.value; persist(); };
@@ -284,7 +284,7 @@
       const s = states[characterEl.value];
       if (!s.active) return;
       s.active.byUser = true;
-      s.notice = 'أوقفنا انتظار المتصفح فقط. لم نثبت إلغاء العملية على الخادم؛ المعرف محفوظ.';
+      s.notice = 'توقف انتظار المتصفح فقط. لم نتأكد من إلغاء العملية على الخادم، ومعرفها محفوظ للمتابعة.';
       s.active.abort(); render();
     };
     document.getElementById('history').onclick = loadHistory;
@@ -390,8 +390,8 @@
         // Never claim local material copies still exist on a restarted server.
         items = data.items;
         if (pending && (pending.path === '/api/materials' ? items.some(it => confirms(pending,it)) : data.events.some(it => confirms(pending,undefined,it)))) {
-          pending = null; saveLocal();notice('تأكد تسجيل الإجراء الأصلي في ذاكرة الخادم.');
-        } else notice(done || (pending ? 'الإجراء غير مؤكد؛ احتفظنا بمعرفه ومحتواه. لم نُعد إرساله. إن لم يظهر بعد إعادة تشغيل الخادم أو انتهاء الجلسة، يمكنك إعادة إرساله بالمعرف نفسه؛ الخادم لا يكرر إجراءً سُجل بهذا المعرف.' : 'المواد المسجلة في ذاكرة الخادم؛ ليست حفظًا دائمًا.'));
+          pending = null; saveLocal();notice('تأكد تسجيل الإجراء الأصلي في ذاكرة الخادم المؤقتة.');
+        } else notice(done || (pending ? 'حالة الإجراء غير مؤكدة. احتفظنا بمعرفه ومحتواه، ولم نُعد إرساله. إذا لم يظهر بعد إعادة تشغيل الخادم أو انتهاء الجلسة، يمكنك إرساله مجددًا بالمعرف نفسه. لن يكرر الخادم إجراءً سبق تسجيله بهذا المعرف.' : 'المواد المسجلة في ذاكرة الخادم؛ ليست حفظًا دائمًا.'));
         renderItems(); await knowledge();
       } catch (e) {
         notice(e?.message === 'session' ? (done ? done + ' ' : '') + SESSION_LOST_MATERIALS
@@ -417,11 +417,11 @@
         const data = await res.json(), confirmedId = path === '/api/materials' ? data.item?.id : data.event?.eventId;
         if (res.ok && res.status !== 202 && confirmedId === id && data.storage === 'server-memory' && confirms(pending,data.item,data.event)) {
           if (data.item) { items = [...items.filter(it => it.id !== data.item.id), data.item];renderItems(); }
-          pending = null;saveLocal();notice('تأكد تسجيل الإجراء في ذاكرة الخادم.');await refresh('تأكد تسجيل الإجراء في ذاكرة الخادم.');
+          pending = null;saveLocal();notice('تأكد تسجيل الإجراء في ذاكرة الخادم المؤقتة.');await refresh('تأكد تسجيل الإجراء في ذاكرة الخادم المؤقتة.');
         } else if ([400,409,413,415].includes(res.status) && data.error) {
           pending = null;saveLocal();notice('لم يُقبل الإجراء: ' + data.error + '. النص ما زال في المدخل.');
-        } else notice(res.status === 401 ? SESSION_LOST_MATERIALS : 'لم يتأكد الإجراء؛ المعرف محفوظ للمتابعة دون إرسال جديد.');
-      } catch { notice('تعذر تأكيد الإجراء؛ احتفظنا بالمعرف والمحتوى للمتابعة.'); }
+        } else notice(res.status === 401 ? SESSION_LOST_MATERIALS : 'لم تتأكد حالة الإجراء. المعرف محفوظ للمتابعة دون إرسال جديد.');
+      } catch { notice('تعذر تأكيد الإجراء. احتفظنا بمعرفه ومحتواه للمتابعة.'); }
       finally { clearTimeout(timer);busy = false;controls(); }
     }
     $('material-save').onclick = () => {
