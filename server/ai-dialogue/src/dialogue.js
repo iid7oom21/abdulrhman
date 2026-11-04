@@ -2,6 +2,22 @@ import { createHash, randomUUID } from 'node:crypto';
 import { buildContext, CHARACTERS } from './knowledge.js';
 
 const requests = new Map();
+// Insertion-ordered request ids per session, so one session cannot grow memory without bound.
+// Past the cap the oldest operation is forgotten; polling it then answers 404 operation_unavailable,
+// which the page already handles as "unknown to the server".
+export const MAX_REQUESTS_PER_OWNER = 100;
+const idsByOwner = new Map();
+function remember(ownerId, requestId) {
+  const ids = idsByOwner.get(ownerId) || [];
+  ids.push(requestId);
+  while (ids.length > MAX_REQUESTS_PER_OWNER) requests.delete(ids.shift());
+  idsByOwner.set(ownerId, ids);
+}
+// Called when a session expires or is evicted: its operations go with it.
+export function forgetOwner(ownerId) {
+  for (const id of idsByOwner.get(ownerId) || []) requests.delete(id);
+  idsByOwner.delete(ownerId);
+}
 export const makeRequestId = () => randomUUID();
 export const fingerprint = content => createHash('sha256').update(JSON.stringify(content)).digest('hex');
 
@@ -41,6 +57,7 @@ export function submitRequest(requestId, characterId, message, sharedFacts = [],
     characterId, message, createdAt: new Date().toISOString(), storage: 'server-memory',
   };
   requests.set(requestId, record);
+  remember(ownerId, requestId);
   try {
     record.response = simulateReply(characterId, message, received);
     record.status = 'completed';
@@ -59,4 +76,4 @@ export function getRequest(requestId, ownerId) {
 export function listRequests(ownerId) {
   return [...requests.values()].filter(rec => ownerId && rec.owner === ownerId).map(rec => ({ ...rec }));
 }
-export function _reset() { requests.clear(); }
+export function _reset() { requests.clear(); idsByOwner.clear(); }

@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import { createPreviewServer } from '../src/server.js';
+import { MAX_REQUESTS_PER_OWNER } from '../src/dialogue.js';
 
 test('HTTP sessions, concurrent idempotency, validation, private history and read-only polling', async t => {
   const server = createPreviewServer();
@@ -118,4 +119,78 @@ test('request-id contract cases run against the real server: replay, conflicts, 
     assert.equal((await fetch(root + '/api/operations/case-08-unknown', {headers:{cookie}})).status, 404);
   }
   assert.equal((await history()).length, before);
+});
+
+// Memory bounds of the in-memory preview: idle expiry, LRU session cap, per-session caps, Secure cookie.
+const startWith = async (t, options) => {
+  const server = createPreviewServer(options);
+  await new Promise(r => server.listen(0, '127.0.0.1', r));
+  t.after(() => new Promise(r => server.close(r)));
+  return `http://127.0.0.1:${server.address().port}`;
+};
+const openSession = async root => (await fetch(root)).headers.get('set-cookie').split(';')[0];
+const historyOf = (root, cookie) => fetch(root + '/api/history', { headers:{ cookie } });
+const postDialogue = (root, cookie, requestId) => fetch(root + '/api/dialogue', {
+  method:'POST', headers:{ cookie, 'content-type':'application/json' },
+  body:JSON.stringify({ requestId, characterId:'jonas', message:'سؤال' }),
+});
+
+test('an idle session expires together with its operations, and activity keeps it alive', async t => {
+  let clock = 0;
+  const root = await startWith(t, { sessionIdleMs:1000, now:() => clock });
+  const a = await openSession(root);
+  assert.equal((await postDialogue(root, a, 'bound-ttl')).status, 200);
+  clock = 900; assert.equal((await historyOf(root, a)).status, 200);   // touch
+  clock = 1800; assert.equal((await historyOf(root, a)).status, 200);  // 900 since the last touch
+  clock = 2801; assert.equal((await historyOf(root, a)).status, 401);  // 1001 idle
+  // The page load with the stale cookie issues a fresh session, and the old operation id is free again.
+  const reissued = (await fetch(root, { headers:{ cookie:a } })).headers.get('set-cookie');
+  assert.ok(reissued && !reissued.startsWith(a));
+  assert.equal((await postDialogue(root, reissued.split(';')[0], 'bound-ttl')).status, 200);
+});
+
+test('the session cap evicts the least recently used session', async t => {
+  const root = await startWith(t, { maxSessions:2 });
+  const a = await openSession(root), b = await openSession(root);
+  assert.equal((await historyOf(root, a)).status, 200); // a is now the most recent
+  const c = await openSession(root);                    // evicts b
+  assert.equal((await historyOf(root, b)).status, 401);
+  assert.equal((await historyOf(root, a)).status, 200);
+  assert.equal((await historyOf(root, c)).status, 200);
+});
+
+test('a session keeps at most MAX_REQUESTS_PER_OWNER operations and the oldest becomes unavailable', async t => {
+  const root = await startWith(t);
+  const cookie = await openSession(root);
+  for (let i = 0; i <= MAX_REQUESTS_PER_OWNER; i++) assert.equal((await postDialogue(root, cookie, `bound-cap-${i}`)).status, 200);
+  const poll = id => fetch(root + '/api/operations/' + id, { headers:{ cookie } });
+  assert.equal((await poll('bound-cap-0')).status, 404);
+  assert.equal((await poll(`bound-cap-${MAX_REQUESTS_PER_OWNER}`)).status, 200);
+  assert.equal((await (await historyOf(root, cookie)).json()).items.length, MAX_REQUESTS_PER_OWNER);
+});
+
+test('material and share caps refuse new records but accept a resend of a registered one', async t => {
+  const root = await startWith(t, { maxMaterials:2, maxShares:1 });
+  const cookie = await openSession(root);
+  const headers = { cookie, 'content-type':'application/json' };
+  const material = id => fetch(root + '/api/materials', { method:'POST', headers, body:JSON.stringify({ id, type:'statement', text:'قول ' + id }) });
+  assert.equal((await material('m1')).status, 200);
+  assert.equal((await material('m2')).status, 200);
+  const refusedMaterial = await material('m3');
+  assert.equal(refusedMaterial.status, 400);
+  assert.equal((await refusedMaterial.json()).error, 'materials_limit');
+  assert.equal((await material('m1')).status, 200); // same id and content: an idempotent resend
+  const share = (eventId, materialId) => fetch(root + '/api/shares', { method:'POST', headers, body:JSON.stringify({ eventId, materialId, recipients:['jonas'] }) });
+  assert.equal((await share('e1', 'm1')).status, 200);
+  const refusedShare = await share('e2', 'm2');
+  assert.equal(refusedShare.status, 400);
+  assert.equal((await refusedShare.json()).error, 'shares_limit');
+  assert.equal((await share('e1', 'm1')).status, 200); // resend of the registered event
+});
+
+test('the session cookie is Secure when requested for a TLS-terminating proxy', async t => {
+  const plain = await startWith(t, { secureCookie:false });
+  assert.doesNotMatch((await fetch(plain)).headers.get('set-cookie'), /Secure/);
+  const secure = await startWith(t, { secureCookie:true });
+  assert.match((await fetch(secure)).headers.get('set-cookie'), /; Secure/);
 });
