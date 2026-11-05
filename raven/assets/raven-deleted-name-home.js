@@ -35,6 +35,13 @@
       if (t[el.dataset.dnK] !== undefined) el.textContent = t[el.dataset.dnK];
     });
     section.querySelector('#rvnDialogueFrame')?.setAttribute('title', t.frame);
+    const frame = section.querySelector('#rvnDialogueFrame');
+    if (frame) {
+      const next = './dialogue/' + (lang === 'en' ? '?lang=en' : '');
+      if (frame.getAttribute('src') !== next) frame.setAttribute('src', next);
+    }
+    const openPreview = section.querySelector('[data-dn-k="openPreview"]');
+    if (openPreview) openPreview.setAttribute('href', lang === 'en' ? './dialogue/?lang=en' : './dialogue/');
     // The case page reads ?lang=en, so the reader stays in the language they chose.
     const enter = section.querySelector('[data-dn-k="enter"]');
     if (enter) enter.setAttribute('href', lang === 'en' ? './deleted-name/?lang=en' : './deleted-name/');

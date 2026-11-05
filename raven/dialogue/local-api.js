@@ -260,13 +260,41 @@
 
   // src/backend.js
   var LOG_KEY = "raven_dialogue_static_backend_v1";
+  var STATE_KEY = "raven_dialogue_static_backend_v2";
+  var DIALOGUE_KEEP = 100;
   var owner = "local-browser";
   var materials = createMaterialStore();
   var log = [];
+  // saved: last write landed. failed: action is in memory but localStorage rejected it.
+  // incompatible: a stored copy could not be read and was left untouched.
+  // unavailable: localStorage itself could not be read.
+  var lastPersist = "saved";
   var ok = (status, data) => new Response(
     JSON.stringify(data, (k, v) => ["owner", "fingerprint"].includes(k) ? void 0 : v),
     { status, headers: { "Content-Type": "application/json; charset=utf-8" } }
   );
+  function compact(entries) {
+    var dialogues = [];
+    for (var i = 0; i < entries.length; i++) if (entries[i] && entries[i].path === "/api/dialogue") dialogues.push(entries[i]);
+    var keep = new Set(dialogues.slice(-DIALOGUE_KEEP));
+    var out = [];
+    for (var j = 0; j < entries.length; j++) {
+      var entry = entries[j];
+      if (!entry) continue;
+      if (entry.path === "/api/dialogue") { if (keep.has(entry)) out.push(entry); }
+      else if (entry.path === "/api/materials" || entry.path === "/api/shares") out.push(entry);
+    }
+    return out;
+  }
+  function persist() {
+    try {
+      localStorage.setItem(STATE_KEY, JSON.stringify({ version: 2, log: log }));
+      lastPersist = "saved";
+      try { localStorage.removeItem(LOG_KEY); } catch (e) {}
+    } catch (e) {
+      lastPersist = "failed";
+    }
+  }
   function handle(method, path, params, data, replaying) {
     if (method === "GET" && path === "/api/materials") return [200, { items: materials.listMaterials(), events: materials.listShareEvents(), storage: "server-memory" }];
     if (method === "GET" && path === "/api/knowledge") {
@@ -298,10 +326,8 @@
         }
         if (out[0] === 200 && !replaying) {
           log.push({ path, data });
-          try {
-            localStorage.setItem(LOG_KEY, JSON.stringify(log.slice(-400)));
-          } catch {
-          }
+          log = compact(log);
+          persist();
         }
         return out;
       } catch (e) {
@@ -311,13 +337,40 @@
     }
     return [404, { error: "not_found" }];
   }
-  try {
-    for (const e of JSON.parse(localStorage.getItem(LOG_KEY) || "[]")) {
+  function replay(entries) {
+    for (const e of entries) {
+      if (!e || typeof e.path !== "string") continue;
       handle("POST", e.path, null, e.data, true);
-      log.push(e);
     }
-  } catch {
   }
+  function loadState() {
+    var raw = null;
+    try { raw = localStorage.getItem(STATE_KEY); }
+    catch (e) { lastPersist = "unavailable"; return; }
+    if (raw) {
+      try {
+        var saved = JSON.parse(raw);
+        if (!saved || saved.version !== 2 || !Array.isArray(saved.log)) throw new Error("schema");
+        log = compact(saved.log);
+        replay(log);
+        return;
+      } catch (e) {
+        lastPersist = "incompatible";
+        return;
+      }
+    }
+    try {
+      var oldRaw = localStorage.getItem(LOG_KEY);
+      var old = JSON.parse(oldRaw || "[]");
+      if (!Array.isArray(old)) throw new Error("schema");
+      log = compact(old);
+      replay(log);
+      if (oldRaw) persist();
+    } catch (e) {
+      lastPersist = "incompatible";
+    }
+  }
+  loadState();
   async function localApi(input, options = {}) {
     const url = new URL(typeof input === "string" ? input : input.url, "https://local.invalid");
     if (options.signal?.aborted) throw new DOMException("Aborted", "AbortError");
@@ -326,19 +379,26 @@
       try {
         body = JSON.parse(options.body);
       } catch {
-        return ok(400, { error: "invalid_json" });
+        return ok(400, { error: "invalid_json", localPersist: lastPersist });
       }
     }
     const [status, data] = handle((options.method || "GET").toUpperCase(), url.pathname, url.searchParams, body, false);
+    if (data && typeof data === "object" && !Array.isArray(data)) data.localPersist = lastPersist;
     await new Promise((r) => setTimeout(r, 250));
     return ok(status, data);
   }
 
   // src/entry.js
-  var realFetch = window.fetch.bind(window);
-  window.fetch = (input, options) => {
-    const u = typeof input === "string" ? input : input?.url || "";
-    if (u.startsWith("/api/")) return localApi(input, options);
-    return realFetch(input, options);
-  };
+  // mode=server leaves /api/ requests to the network. The default stays a local simulation.
+  var serverMode = false;
+  try { serverMode = new URLSearchParams(location.search).get("mode") === "server"; } catch (e) {}
+  if (!serverMode) {
+    var realFetch = window.fetch.bind(window);
+    window.fetch = (input, options) => {
+      const u = typeof input === "string" ? input : input?.url || "";
+      if (u.startsWith("/api/")) return localApi(input, options);
+      return realFetch(input, options);
+    };
+  }
+  window.RAVEN_DIALOGUE_MODE = serverMode ? "server" : "local";
 })();

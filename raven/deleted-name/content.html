@@ -202,6 +202,8 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     document.title = t.docTitle;
     document.querySelectorAll('meta[name="description"],meta[property="og:description"]').forEach(m => m.setAttribute('content', t.description));
     document.querySelector('meta[property="og:title"]').setAttribute('content', t.docTitle);
+    const preview = document.querySelector('[data-k="nowBtn"]');
+    if (preview) preview.setAttribute('href', lang === 'en' ? '../dialogue/?lang=en' : '../dialogue/');
     const other = lang === 'en' ? 'ar' : 'en';
     sw.dataset.ravenLanguage = other;
     sw.lang = other;
