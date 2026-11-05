@@ -61,13 +61,19 @@ test('written opening: choices, display boundaries, language and access',async t
   const phase=()=>page.locator('#hook').getAttribute('data-phase');
   const state=()=>page.locator('#hook').evaluate(el=>({phase:el.dataset.phase,choice:el.dataset.choice||'',recipient:el.dataset.recipient||'',share:el.dataset.share||''}));
   const action=id=>page.locator('[data-hook-action="'+id+'"]');
-  const focusForPhase={start:'hook-step-heading',invite:'hook-invite-start',compare:'hook-paper-start',respond:'hook-response-start',share:'hook-draft',review:'hook-share-review',after:'hook-step-heading',done:'hook-register'};
+  const focusForPhase={start:'hook-step-heading',invite:'hook-invite-start',compare:'hook-paper-start',respond:'hook-response-start',share:'hook-choice-start',review:'hook-share-review',after:'hook-step-heading',done:'hook-register'};
+  const focusForState=value=>value.phase==='after'&&value.choice!=='precise'?'hook-choice-start':focusForPhase[value.phase];
+  // Dialogue deliberately locked by PR103 (c9a3279); presentation may change.
+  const lockedCopy={
+    ar:{precise:'أدق: أرسلت ملاحظة عن نقص الصورة. ما فحصت الأصل، وما اعتمدت النتيجة.',wait:'ما سجلت توضيح للحين.',refuse:'ما سجلت توضيح قبل ما تعرف المستلم.',draft:'تبقى مسودة. ما توصل أحد.',who:'مين بيستلمه؟',badge:'كذب صريح',order:['أنا ما راجعت الأصل.','لكنك كتبت إن الصورة ما تكفي.','وهذا مو نفس الشي.','الجملة اللي فوق منك؟','مني. النتيجة اللي تحت مو مني.','صحح النتيجة. لا تنفي الرسالة.']},
+    en:{precise:'Precise: I sent a note that the picture was not enough. I did not examine the original, and I did not approve the conclusion.',wait:'You have not recorded a clarification yet.',refuse:'You recorded nothing before knowing the recipient.',draft:'Keep it as a draft. It reaches no one.',who:'Who receives it?',badge:'Explicit lie',order:['I did not review the original.','But you wrote that the picture is not enough.','That is not the same thing.','Is the sentence above yours?','It is mine. The conclusion under it is not.','Correct the conclusion. Do not deny the message.']}
+  };
   const click=async(id,nextPhase)=>{
     await action(id).click();
     if(nextPhase)assert.equal(await phase(),nextPhase);
     const active=await page.evaluate(()=>({tag:document.activeElement.tagName,id:document.activeElement.id}));
     assert.notEqual(active.tag,'BODY','focus must survive removal of the action button');
-    if(nextPhase)assert.equal(active.id,focusForPhase[nextPhase],'focus must start at the newly revealed content');
+    if(nextPhase)assert.equal(active.id,focusForState(await state()),'focus must start at the newly revealed content');
   };
   const fresh=async(lang='ar')=>{
     await page.goto(base+'raven/deleted-name/content.html?lang='+lang,{waitUntil:'domcontentloaded'});
@@ -82,16 +88,32 @@ test('written opening: choices, display boundaries, language and access',async t
   };
 
   await run('the document is visible before the explanatory dialogue, with exact source text',async()=>{
-    await fresh();await click('open','invite');await click('enter','compare');
+    for(const lang of ['ar','en']){
+    await fresh(lang);await click('open','invite');await click('enter','compare');
     assert.equal(await page.locator('#hook-document [data-part="original"]').innerText(),await page.locator('[data-k="m2"]').innerText());
-    assert.ok((await page.locator('#hook-document [data-part="conclusion"]').innerText()).includes('اختلاف النسخ'));
+    assert.ok((await page.locator('#hook-document [data-part="conclusion"]').innerText()).length>0);
     assert.equal(await page.locator('#hook-document [data-part="signature"]').innerText(),'');
     assert.ok(!(await page.locator('#hook-log').innerText()).includes('صحح النتيجة. لا تنفي الرسالة.'));
     const before=await state();await action('compare-toggle').click();assert.equal(await action('compare-toggle').getAttribute('aria-expanded'),'true');
     assert.equal(await page.locator('#hook-comparison').isVisible(),true);assert.deepEqual(await state(),before);
     await action('compare-toggle').click();assert.equal(await page.locator('#hook-comparison').isVisible(),false);
     await click('continue','respond');assert.equal(await page.locator('#hook-actions [data-hook-action]').count(),4);
-    assert.match(await action('lie').innerText(),/كذب|أكذب/);
+    assert.equal(await action('lie').locator('.tag').innerText(),lockedCopy[lang].badge);
+    assert.equal(await action('lie').locator('.tag').isVisible(),true);
+    const spoken=await page.locator('#hook-log > li[data-kind="spoken"] > p').allTextContents();
+    assert.deepEqual(spoken.slice(-6),lockedCopy[lang].order,'the locked dialogue order must stay intact');
+    await click('precise','share');
+    assert.equal(await page.locator('#hook-choice-start > p').innerText(),lockedCopy[lang].precise);
+    assert.equal(await page.locator('#hook-choice-start').getAttribute('data-kind'),'spoken');
+    assert.equal(await page.locator('#hook-draft').getAttribute('data-kind'),'written-draft');
+    assert.equal(await action('recipient-draft').innerText(),lockedCopy[lang].draft);
+    assert.equal((await page.locator('#hook-log > li[data-kind="spoken"] > p').allTextContents()).at(-1),lockedCopy[lang].who);
+    for(const choice of ['wait','refuse']){
+      await reachRespond(lang);await click(choice,'after');
+      assert.equal(await page.locator('#hook-choice-start > p').innerText(),lockedCopy[lang][choice]);
+      assert.equal(await page.locator('#hook-choice-start').getAttribute('data-kind'),'spoken');
+    }
+    }
   });
 
   for(const route of [
@@ -144,7 +166,7 @@ test('written opening: choices, display boundaries, language and access',async t
     const check=async()=>{
       const before=await state();
       const rowsBefore=await page.locator('#hook-log > li').evaluateAll(nodes=>nodes.map(n=>n.dataset.kind||''));
-      const readingTarget=focusForPhase[before.phase];
+      const readingTarget=focusForState(before);
       await page.locator('#'+readingTarget).focus();
       await page.evaluate(()=>document.dispatchEvent(new CustomEvent('raven:language',{detail:{language:document.documentElement.lang}})));
       assert.equal(await page.evaluate(()=>document.activeElement.id),readingTarget,'language rendering must preserve focus on new content, not only buttons');
@@ -196,7 +218,7 @@ test('written opening: choices, display boundaries, language and access',async t
       await page.setViewportSize({width,height});await fresh();
       for(const [id,next] of [['open','invite'],['enter','compare'],['continue','respond'],['precise','share'],['recipient-both','review'],['confirm','after'],['record','done']]){
         await click(id,next);
-        const position=await page.locator('#'+focusForPhase[next]).evaluate(el=>({top:el.getBoundingClientRect().top,bottom:el.getBoundingClientRect().bottom,height:innerHeight,id:el.id}));
+        const position=await page.locator('#'+focusForState(await state())).evaluate(el=>({top:el.getBoundingClientRect().top,bottom:el.getBoundingClientRect().bottom,height:innerHeight,id:el.id}));
         assert.ok(position.top>=-1&&position.top<position.height,`new content start was skipped: ${JSON.stringify(position)}`);
         evidence.push({width,phase:next,...position});
       }
