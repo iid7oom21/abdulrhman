@@ -7,7 +7,8 @@ export function createEntryGate({ root, show = false, onEnter, onClose } = {}) {
   try { seen = sessionStorage.getItem('raven_studio_ident_v1') === '1'; } catch {}
   if (seen) return null;
   const reduceMotion = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let intro = !reduceMotion;
+  const saveData = !!(navigator.connection && (navigator.connection.saveData || /(^|-)2g$/.test(navigator.connection.effectiveType || '')));
+  let intro = !reduceMotion && !saveData;
   const dialog = document.createElement('dialog');
   dialog.id = 'archive-entry-gate';
   dialog.className = intro ? 'archive-entry is-intro' : 'archive-entry is-fallback';
@@ -15,7 +16,7 @@ export function createEntryGate({ root, show = false, onEnter, onClose } = {}) {
   dialog.setAttribute('aria-describedby', 'archive-entry-copy');
   // Only static editorial content is inserted; visitor input never enters HTML.
   dialog.innerHTML = `
-    <video class="archive-intro" playsinline muted preload="auto" aria-label="مقدمة رايفن"></video>
+    <video class="archive-intro" playsinline muted preload="metadata" aria-label="مقدمة رايفن"></video>
     <img class="archive-entry-art" alt="" aria-hidden="true">
     <div class="archive-entry-content">
       <p class="archive-entry-kicker">RAVEN · THE ARCHIVE</p>
@@ -84,8 +85,9 @@ export function createEntryGate({ root, show = false, onEnter, onClose } = {}) {
   sync(new URL(location.href).searchParams.get('lang') === 'en' ? 'en' : document.documentElement.lang);
   try { dialog.showModal(); } catch { dialog.remove(); return null; }
   if (intro) {
-    video.src = new URL('assets/intro/raven-intro.mp4', root).href;
-    video.poster = new URL('assets/intro/raven-intro.jpg', root).href;
+    const wide = typeof matchMedia === 'function' && matchMedia('(orientation: landscape) and (min-width: 901px)').matches;
+    video.src = new URL(wide ? 'assets/intro/raven-intro-wide.mp4' : 'assets/intro/raven-intro.mp4', root).href;
+    video.poster = new URL(wide ? 'assets/intro/raven-intro-wide.jpg' : 'assets/intro/raven-intro.jpg', root).href;
     stall = setTimeout(() => { if (video.readyState < 2) showFallback(); }, 12000);
     video.addEventListener('canplay', () => clearTimeout(stall), { once: true });
     const started = video.play();
