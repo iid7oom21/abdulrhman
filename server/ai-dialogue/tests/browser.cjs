@@ -44,10 +44,11 @@ test('real preview page browser acceptance', async t => {
     assert.equal(await page.evaluate(()=>localStorage.getItem('raven_deleted_name_preview_v2')),'{unreadable');
     assert.match(await page.locator('#status').innerText(),/الحفظ المحلي غير مؤكد/);
   }));
-  await t.test('prior preview journal with refused metadata restores its response and draft',()=>pageFor(async page=>{
-    await page.addInitScript(()=>localStorage.setItem('raven_deleted_name_preview_v2',JSON.stringify({jonas:{draft:'مسودة محفوظة',records:[{id:'prior',characterId:'jonas',message:'سؤال سابق',status:'completed',response:{text:'رد سابق',refused:true},confirmed:true}]}})));
+  await t.test('prior preview journal with refused/source metadata restores its response and draft',()=>pageFor(async page=>{
+    await page.addInitScript(()=>localStorage.setItem('raven_deleted_name_preview_v2',JSON.stringify({jonas:{draft:'مسودة محفوظة',records:[{id:'prior',characterId:'jonas',message:'سؤال سابق',status:'completed',response:{text:'رد سابق',refused:true,source:'deterministic-fallback'},confirmed:true}]}})));
     await page.goto(root);await wait(page);
     assert.match(await page.locator('#log').innerText(),/رد سابق/);
+    assert.match(await page.locator('#log').innerText(),/رفض ثابت لغياب المصدر/);
     assert.equal(await page.locator('#input').inputValue(),'مسودة محفوظة');
     assert.doesNotMatch(await page.locator('#status').innerText(),/غير متوافقة/);
   }));

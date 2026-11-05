@@ -113,6 +113,8 @@ test('health/config do not issue sessions or change the persisted file; no secre
     const health=await fetch(s.root+'/healthz');assert.equal(health.status,200);assert.equal(health.headers.get('set-cookie'),null);
     const config=await(await fetch(s.root+'/api/config')).json();assert.equal(config.persistence,'disk-file');assert.equal(config.provider,'simulation');
     assert.doesNotMatch(JSON.stringify(config),/apiKey|Bearer|owner|fingerprint/);
+    const legacy=await fetch(s.root+'/api/status');assert.equal(legacy.status,200);assert.equal(legacy.headers.get('set-cookie'),null);
+    const status=await legacy.json();assert.equal(status.mode,'simulation');assert.deepEqual(status.characters,['jonas','claire']);
   }
   assert.equal(fs.readFileSync(file,'utf8'),before);assert.equal((await s.get('/api/history')).status,200);
 });
