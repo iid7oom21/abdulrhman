@@ -162,6 +162,9 @@
   addEventListener('scroll', scheduleDepth, { passive: true });
   addEventListener('resize', scheduleDepth);
   document.addEventListener('focusin', scheduleRemember);
+  document.addEventListener('raven:theater', event => {
+    host.setWatching?.(window, Boolean(event.detail?.open));
+  });
   document.addEventListener('DOMContentLoaded', () => {
     host.ready(window);
     syncMedia();

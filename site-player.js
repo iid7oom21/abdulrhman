@@ -77,6 +77,7 @@ function restoreChild() {
 }
 
 function show(url, childState = null, view = null, force = false, focus = false) {
+  document.body.classList.remove('is-watching');
   destination = { url, childState, view, focus };
   const content = new URL(url);
   content.pathname += 'content.html';
@@ -128,6 +129,11 @@ window.RavenSite = {
   setMediaActive(child, source, active) {
     if (currentChild() && child === frame.contentWindow && source === loadedDocument) {
       soundtrack.setMediaActive(active);
+    }
+  },
+  setWatching(child, open) {
+    if (currentChild() && child === frame.contentWindow) {
+      document.body.classList.toggle('is-watching', Boolean(open));
     }
   },
   setDepth(child, value) {
