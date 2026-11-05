@@ -178,11 +178,15 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
   };
   const root = document.documentElement;
   const sw = document.getElementById('lang-switch');
+  const brand = document.querySelector('a.brand');
   function apply(lang) {
     const t = T[lang];
     root.lang = lang;
     root.dir = lang === 'en' ? 'ltr' : 'rtl';
     root.dataset.ravenLocale = lang;
+    // Same key the homepage writes, so the reader keeps one language across the site.
+    try { localStorage.setItem('raven_language', lang); } catch (_) {}
+    brand.setAttribute('href', lang === 'en' ? '../?lang=en' : '../');
     document.querySelectorAll('[data-k]').forEach(el => { if (t[el.dataset.k] !== undefined) el.textContent = t[el.dataset.k]; });
     document.title = t.docTitle;
     document.querySelectorAll('meta[name="description"],meta[property="og:description"]').forEach(m => m.setAttribute('content', t.description));
@@ -192,8 +196,21 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     sw.lang = other;
     sw.setAttribute('href', other === 'en' ? '?lang=en' : './');
   }
-  const initial = new URL(location.href).searchParams.get('lang') === 'en' ? 'en' : 'ar';
-  if (initial === 'en') apply('en');
+  // ?lang=en wins; otherwise the language the homepage last stored; otherwise Arabic.
+  const param = new URL(location.href).searchParams.get('lang');
+  let stored = null;
+  try { stored = localStorage.getItem('raven_language'); } catch (_) {}
+  const initial = param === 'en' || param === 'ar' ? param : stored === 'en' ? 'en' : 'ar';
+  if (initial === 'en') {
+    apply('en');
+    if (param !== 'en') {
+      const url = new URL(location.href);
+      url.searchParams.set('lang', 'en');
+      history.replaceState(history.state, '', url);
+    }
+  } else {
+    try { localStorage.setItem('raven_language', 'ar'); } catch (_) {}
+  }
   sw.addEventListener('click', event => {
     event.preventDefault();
     const next = sw.dataset.ravenLanguage === 'en' ? 'en' : 'ar';

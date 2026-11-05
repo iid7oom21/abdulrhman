@@ -177,16 +177,16 @@ window.ravenIntro={complete:true,finish:function(){}};
 <div class="wrap">
   <div class="sectionHead reveal" style="margin-bottom: 20px;">
     <div>
-      <div class="eyebrow" style="color: #d6b98d;">قضية تفاعلية · قيد التطوير</div>
-      <h2 style="color: #eee8de; margin-top: 6px;">RAVEN — الاسم المحذوف</h2>
+      <div class="eyebrow" style="color: #d6b98d;" data-dn-k="eyebrow">قضية تفاعلية · قيد التطوير</div>
+      <h2 style="color: #eee8de; margin-top: 6px;" data-dn-k="title">RAVEN — الاسم المحذوف</h2>
     </div>
-    <p style="color: #cdc5ba; max-width: 62ch;">خانة ممسوحة، ودعوة بعد العشاء، ومكتبة ما رجع منها صاحبها. ادخل القضية واقرأ بدايتها. وتحت تقدر تجرّب معاينة الحوار التقنية: تسجّل أقوالك وتصحيحاتك، والشخصيات ما ترد بعد بنص القصة.</p>
-    <p style="margin-top: 16px;"><a class="btn primary" href="./deleted-name/">ادخل القضية</a></p>
+    <p style="color: #cdc5ba; max-width: 62ch;" data-dn-k="blurb">خانة ممسوحة، ودعوة بعد العشاء، ومكتبة ما رجع منها صاحبها. ادخل القضية واقرأ بدايتها. وتحت تقدر تجرّب معاينة الحوار التقنية: تسجّل أقوالك وتصحيحاتك، والشخصيات ما ترد بعد بنص القصة.</p>
+    <p style="margin-top: 16px;"><a class="btn primary" href="./deleted-name/" data-dn-k="enter">ادخل القضية</a></p>
   </div>
   <div style="border: 1px solid rgba(197,154,97,.18); border-radius: 3px; background: #15120f; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.6);">
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-bottom: 1px solid rgba(197,154,97,.18); background: #100e0b; flex-wrap: wrap; gap: 10px;">
-      <span style="color: #d6b98d; font-size: 0.9rem;">معاينة الحوار التقنية</span>
-      <a href="./dialogue/" target="_blank" rel="noopener" style="color: #d6b98d; font-size: 0.85rem; text-decoration: none; border: 1px solid rgba(197,154,97,.32); display: inline-flex; align-items: center; min-height: 44px; box-sizing: border-box; padding: 4px 12px; border-radius: 3px; background: #15120f;">فتح المعاينة في نافذة مستقلة ↗</a>
+      <span style="color: #d6b98d; font-size: 0.9rem;" data-dn-k="previewLabel">معاينة الحوار التقنية</span>
+      <a href="./dialogue/" target="_blank" rel="noopener" style="color: #d6b98d; font-size: 0.85rem; text-decoration: none; border: 1px solid rgba(197,154,97,.32); display: inline-flex; align-items: center; min-height: 44px; box-sizing: border-box; padding: 4px 12px; border-radius: 3px; background: #15120f;" data-dn-k="openPreview">فتح المعاينة في نافذة مستقلة ↗</a>
     </div>
     <iframe id="rvnDialogueFrame" src="./dialogue/" title="RAVEN — الاسم المحذوف (معاينة محادثة)" style="width: 100%; height: 760px; height: min(760px, calc(100dvh - 96px)); min-height: 520px; border: 0; display: block; background: #0b0a08;" loading="lazy"></iframe>
   </div>
@@ -365,6 +365,7 @@ window.ravenIntro={complete:true,finish:function(){}};
 
 <script defer="" src="./assets/raven-enhancements-v1.js?v=story-removed-1-dlg1"></script>
 <script defer="" src="./assets/raven-refinement-v2.js?v=story-removed-1-dlg1"></script>
+<script defer="" src="./assets/raven-deleted-name-home.js?v=dn-1"></script>
 <script>
     (()=>{
       const video=document.getElementById('ravenHeroMotion');

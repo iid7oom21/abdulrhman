@@ -62,6 +62,40 @@ try {
     console.log('PASS: homepage → case → homepage stays in the shell with the same soundtrack');
   }
 
+  // 2b. An English reader stays in English: homepage section, into the case, and back.
+  {
+    const context = await newContext();
+    const page = await context.newPage();
+    await page.goto(base + 'raven/?lang=en', { waitUntil: 'domcontentloaded' });
+    const enter = frameOf(page).locator('#dialogue-preview [data-dn-k="enter"]');
+    await enter.waitFor();
+    await page.waitForFunction(() => document.documentElement.lang === 'en');
+    assert.equal(await enter.textContent(), 'Enter the case');
+    assert.equal(await frameOf(page).locator('#dialogue-preview h2').textContent(), 'RAVEN — The Deleted Name');
+    assert.equal(await enter.getAttribute('href'), './deleted-name/?lang=en');
+    await enter.click();
+    await page.waitForURL(/\/raven\/deleted-name\/\?lang=en$/);
+    await frameOf(page).locator('h1', { hasText: 'The Deleted Name' }).waitFor({ timeout: 8000 });
+    await page.waitForFunction(() => document.documentElement.lang === 'en' && document.title === 'RAVEN — The Deleted Name');
+    await frameOf(page).locator('a.brand').click();
+    await page.waitForURL(/\/raven\/\?lang=en$/);
+    await page.waitForFunction(() => document.documentElement.lang === 'en');
+    await context.close();
+    console.log('PASS: English homepage → case → homepage keeps English, section translated');
+  }
+
+  // 2c. Without ?lang, the case follows the language the site last stored.
+  {
+    const context = await newContext();
+    await context.addInitScript(() => { try { if (!sessionStorage.getItem('dn-seeded')) { localStorage.setItem('raven_language', 'en'); sessionStorage.setItem('dn-seeded', '1'); } } catch (_) {} });
+    const page = await context.newPage();
+    await page.goto(base + 'raven/deleted-name/content.html', { waitUntil: 'domcontentloaded' });
+    assert.equal(await page.locator('h1').textContent(), 'The Deleted Name');
+    assert.match(page.url(), /lang=en/);
+    await context.close();
+    console.log('PASS: stored English is used when the URL has no language');
+  }
+
   // 3. English, from the URL and from the in-page switch.
   {
     const context = await newContext();
