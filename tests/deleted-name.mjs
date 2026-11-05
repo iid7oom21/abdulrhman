@@ -161,6 +161,42 @@ try {
     console.log('PASS: the record and arrival images load at 16:9 and fit the screen');
   }
 
+  // 4c. The share card is the case's own image, as a crawler reads it (no JavaScript) and after the
+  // shell copies the og:/twitter: tags from the content page. A 1200×630 file must load.
+  {
+    const IMAGE = 'raven/deleted-name/assets/case-og-v4.jpg';
+    const context = await newContext();
+    const page = await context.newPage();
+    const tagsOf = html => {
+      const read = (attr, key) => (html.match(new RegExp(`<meta ${attr}="${key}" content="([^"]*)"`)) || [])[1];
+      return {
+        og: read('property', 'og:image'), tw: read('name', 'twitter:image'),
+        w: read('property', 'og:image:width'), h: read('property', 'og:image:height'),
+        alt: read('property', 'og:image:alt'), twAlt: read('name', 'twitter:image:alt'),
+      };
+    };
+    const wrapper = tagsOf(await (await context.request.get(base + 'raven/deleted-name/')).text());
+    const content = tagsOf(await (await context.request.get(base + 'raven/deleted-name/content.html')).text());
+    assert.deepEqual(content, wrapper, 'wrapper and content page carry the same share tags');
+    assert.ok(wrapper.og.endsWith('/abdulrhman/' + IMAGE), `og:image is the case image, got ${wrapper.og}`);
+    assert.equal(wrapper.tw, wrapper.og);
+    assert.deepEqual([wrapper.w, wrapper.h], ['1200', '630']);
+    assert.ok(wrapper.alt && wrapper.alt === wrapper.twAlt && !wrapper.alt.includes('RAVEN 17'));
+    for (const word of SPOILERS) assert.ok(!wrapper.alt.includes(word), `spoiler word in the share text: ${word}`);
+    await page.goto(base + 'raven/deleted-name/', { waitUntil: 'domcontentloaded' });
+    await frameOf(page).locator('h1').waitFor();
+    await page.waitForFunction(src => document.querySelector('meta[property="og:image"]')?.content === src, wrapper.og);
+    const size = await page.evaluate(src => new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve([img.naturalWidth, img.naturalHeight]);
+      img.onerror = reject;
+      img.src = src;
+    }), base + IMAGE);
+    assert.deepEqual(size, [1200, 630]);
+    await context.close();
+    console.log('PASS: share card is the case image (1200×630), same tags before and after the shell runs');
+  }
+
   // 5. The site copy of the dialogue preview shows Mati's help box once.
   {
     const context = await newContext();
