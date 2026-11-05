@@ -21,4 +21,4 @@ assert.ok(refine.includes("href:'/?episode=3',episode:3"));
 assert.ok(logic.includes("'raven17_episode_'+sourceEpisodeId(n)+'_progress"), 'Legacy progress remains keyed to actual source ID');
 assert.ok(refine.includes("'raven_episode_note_'+window.ravenEpisodeSourceId(current)"), 'Legacy notes remain source keyed');
 assert.ok(![logic,ui,refine,shell,root].some(t => /حلقتان|حلقتيه|حلقتين|two episodes|Two episodes/.test(t)));
-console.log('RAVEN episode 1 restore: 16 checks passed.');
+console.log('RAVEN episode 1 restore: PASS.');
