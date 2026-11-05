@@ -1,0 +1,22 @@
+<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RAVEN · لوحة التكامل</title><link rel="stylesheet" href="./css/raven.css"></head><body>
+<header><span class="brand">RAVEN</span><nav><a href="./console.html" >الكونسول</a><a href="./dashboard.html" class="on">اللوحة</a><a href="../">الموقع</a></nav><span class="spacer"></span><span id="keyBadge" class="meta"></span><button id="openSettings">الإعدادات</button></header>
+<main>
+<section class="row">
+<div class="card"><h2>المفتاح</h2><div id="kStat" class="stat"></div><div id="kMode" class="meta"></div></div>
+<div class="card"><h2>آخر طلب</h2><div id="lastStat" class="stat"></div><div id="lastMeta" class="meta"></div></div>
+<div class="card"><h2>الطلبات</h2><div id="count" class="stat"></div><div id="avg" class="meta"></div></div>
+</section>
+<section class="card"><h2>زمن الاستجابة والتوكنز (آخر 40 طلب)</h2><svg id="chart" viewBox="0 0 800 200" width="100%" height="200" style="direction:ltr"></svg><div class="meta"><span style="color:var(--accent)">■</span> زمن (ms) &nbsp; <span style="color:#6c8cff">■</span> توكنز &nbsp; <span class="bad">●</span> خطأ</div></section>
+<section class="card"><h2>سجل الأخطاء</h2><ul id="errLog" class="list"></ul><button id="clearLog" style="margin-top:8px">مسح السجل</button></section>
+<section class="card"><h2>إدارة البرومبتات</h2>
+<div class="row"><button class="primary" id="pNew">جديد</button><button id="pExport">تصدير JSON</button><label style="flex:1;margin:0"><input type="file" id="pImport" accept=".json,application/json"></label><button id="pReset">استرجاع الأصل</button></div>
+<div class="row" style="align-items:flex-start;margin-top:12px"><ul id="pList" class="list" style="max-width:320px"></ul>
+<form id="pForm" class="card" style="flex:2">
+<div class="row"><div><label>المعرف</label><input name="id" class="ltr" required></div><div><label>العنوان</label><input name="title" required></div></div>
+<label>تعليمات النظام</label><textarea name="systemInstruction"></textarea><label>قالب السؤال</label><textarea name="userTemplate"></textarea>
+<div class="row"><div><label>الموديل</label><input name="model" class="ltr"></div><div><label>Temp</label><input name="temperature" type="number" step="0.05"></div><div><label>TopP</label><input name="topP" type="number" step="0.01"></div><div><label>TopK</label><input name="topK" type="number"></div><div><label>Max</label><input name="maxOutputTokens" type="number"></div></div>
+<label>الوسوم (بفواصل)</label><input name="tags">
+<div class="row" style="margin-top:10px"><button class="primary">حفظ</button><button type="button" id="pDel">حذف</button></div><div id="pMsg" class="meta"></div></form></div>
+</section></main>
+<script type="module" src="./js/dashboard.js"></script></body></html>
