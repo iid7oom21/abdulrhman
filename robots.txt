@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://iid7oom21.github.io/abdulrhman/sitemap.xml
