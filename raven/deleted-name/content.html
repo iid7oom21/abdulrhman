@@ -78,7 +78,8 @@ h2{margin:0 0 16px;font-weight:600;font-size:clamp(20px,3.4vw,24px);color:var(--
 .choices button,.hook-next{min-height:48px;padding:10px 14px;background:var(--panel);color:var(--text);border:1px solid var(--line);font:inherit;text-align:start;cursor:pointer}
 .choices button.lie{border-color:var(--gold)}
 .hook-next{display:inline-flex;align-items:center;background:var(--gold);color:var(--ink);border-color:var(--gold);font-weight:600}
-.hook-log{display:grid;gap:12px;margin-top:16px}
+.hook-log{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:12px}
+.tag{display:inline-block;margin-inline-end:8px;padding:0 6px;border:1px solid currentColor;font-size:13px;font-weight:600}
 .hook-note{margin:12px 0 0;font-size:14px;color:var(--muted)}
 
 .choices button,.hook-next{height:auto;white-space:normal;line-height:1.45}
@@ -161,7 +162,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
   <section class="block" id="hook" aria-labelledby="t-hook"><div class="wrap">
     <h2 id="t-hook" data-k="hookTitle">الورقة</h2>
     <p class="lead" data-k="hookLead">كلامك صحيح. النتيجة مو منك.</p>
-    <div id="hook-log" class="hook-log"></div>
+    <ol id="hook-log" class="hook-log"></ol>
     <p id="hook-status" class="hook-status" role="status" aria-live="polite"></p>
     <div id="hook-actions" class="choices"></div>
     <p class="hook-note" data-k="hookNote">حوار مكتوب داخل هذا المشهد. مستقل عن معاينة الحوار. لا يُرسل، ولا يفتح دليلًا. تحديث الصفحة يعيد البداية.</p>
@@ -296,16 +297,17 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       c3: 'أرفض الآن: ما أسجل توضيح قبل ما أعرف مين يستلمه.',
       c4: 'أكذب صراحة: أنكر إني أرسلت الرسالة، وهي في محادثتي.',
       lieMark: 'كذب صريح',
-      writeDraft: 'تكتب توضيحك في المسودة.',
-      who: 'قبل ترسله، مين بيستلمه داخل المشهد؟',
+      who: 'مين بيستلمه؟',
       s1: 'يوناس فقط',
       s2: 'يوناس وكلير',
-      s3: 'تبقى مسودة. ما توصل أحد داخل المشهد.',
+      s3: 'تبقى مسودة. ما توصل أحد.',
       stWriting: 'تكتب التوضيح في المسودة. لم يُرسل.',
       stJonas: 'اخترت توجيه التصحيح إلى يوناس داخل المشهد. لم يُرسل إلى معاينة الحوار.',
       stBoth: 'اخترت توجيه التصحيح إلى يوناس وكلير داخل المشهد. لم يُرسل إلى معاينة الحوار.',
       stDraft: 'احتفظت بمسودة.',
       stNone: 'لم تُسجّل توضيحًا.',
+      waited: 'ما سجلت توضيح للحين.',
+      refused: 'ما سجلت توضيح قبل ما تعرف المستلم.',
       stLie: 'سجّلت إنكارًا صريحًا داخل المشهد.',
       askRecord: 'اطلب السجل',
       title: 'سجل استقبال بلاغات المراجعة',
@@ -354,16 +356,17 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       c3: 'Refuse for now: I will not record a clarification before I know who receives it.',
       c4: 'Lie outright: I deny sending the message, though it is in my conversation.',
       lieMark: 'Explicit lie',
-      writeDraft: 'You write your clarification in the draft.',
-      who: 'Before it is sent, who receives it inside this scene?',
+      who: 'Who receives it?',
       s1: 'Jonas only',
       s2: 'Jonas and Claire',
-      s3: 'Keep it as a draft. It reaches no one inside this scene.',
+      s3: 'Keep it as a draft. It reaches no one.',
       stWriting: 'You are writing the clarification in the draft. It has not been sent.',
       stJonas: 'You directed the correction to Jonas inside this scene. It was not sent to the dialogue preview.',
       stBoth: 'You directed the correction to Jonas and Claire inside this scene. It was not sent to the dialogue preview.',
       stDraft: 'You kept a draft.',
       stNone: 'You did not record a clarification.',
+      waited: 'You have not recorded a clarification yet.',
+      refused: 'You recorded nothing before knowing the recipient.',
       stLie: 'You recorded an explicit denial inside this scene.',
       askRecord: 'Ask for the record',
       title: 'Register of review-report intake',
@@ -420,6 +423,14 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     if (extra) b.className = extra;
     if (act) b.dataset.act = act;
     b.addEventListener('click', () => { state.focus = act || 'actions'; on(); });
+    return b;
+  }
+  function lieButton(c, on) {
+    const b = button('', on, 'lie', 'lie');
+    const tag = document.createElement('span');
+    tag.className = 'tag';
+    tag.textContent = c.lieMark;
+    b.append(tag, document.createTextNode(c.c4));
     return b;
   }
   function paperCard(c) {
@@ -488,25 +499,25 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     log.append(paperCard(c));
     add(whoName('you'), c.you1, true);
     add(whoName('jonas'), c.jonas2, false);
+    add(whoName('elena'), c.elenaSame, false);
     add(whoName('elena'), c.elenaAsk, false);
     add(whoName('you'), c.you2, true);
-    add(whoName('elena'), c.elenaSame, false);
     add(whoName('elena'), c.elena3, false);
     if (state.phase === 'draft') {
       actions.append(
         button(c.c1, () => { state.choice = 'precise'; state.phase = 'share'; render(); }, '', 'precise'),
         button(c.c2, () => { state.choice = 'wait'; state.phase = 'after'; render(); }, '', 'wait'),
         button(c.c3, () => { state.choice = 'refuse'; state.phase = 'after'; render(); }, '', 'refuse'),
-        button(c.c4, () => { state.choice = 'lie'; state.phase = 'after'; render(); }, 'lie', 'lie')
+        lieButton(c, () => { state.choice = 'lie'; state.phase = 'after'; render(); })
       );
       takeFocus();
       return;
     }
     if (state.choice === 'precise') add(whoName('you'), c.c1, true);
-    if (state.choice === 'wait' || state.choice === 'refuse') add(whoName('you'), c.stNone, true);
+    if (state.choice === 'wait') add(whoName('you'), c.waited, true);
+    if (state.choice === 'refuse') add(whoName('you'), c.refused, true);
     if (state.choice === 'lie') add(c.lieMark, c.stLie, true);
     if (state.phase === 'share') {
-      add(c.paper, c.writeDraft, false);
       add(whoName('elena'), c.who, false);
       actions.append(
         button(c.s1, () => { state.share = 'jonas'; state.phase = 'after'; render(); }, '', 'jonas'),
