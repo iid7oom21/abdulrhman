@@ -105,3 +105,5 @@ html,body{background:#0b0a08}
 .rvnArchiveExperience{padding-block:clamp(20px,3vw,36px);border-block-color:rgba(197,154,97,.1)}
 /* The upcoming-film section kept a blue gradient that now clashed with the warm page. */
 .nextPremiere{background:linear-gradient(135deg,#14110d,#0b0a08 65%)}
+/* Mobile audit 2026-11-05: footer and language toggle text stayed at 11px; floor at 12px. */
+.foot>span,.foot>a,a[data-rvn-lang],.rvnLanguage>span{font-size:12px}

@@ -65,7 +65,7 @@ noscript a{color:#e7c791}
 .site-player{background:linear-gradient(180deg,#0d1113,#080a0b);border-top-color:rgba(197,154,97,.34)}
 #music-toggle{background:#c6a475;border-color:#c6a475;color:#101410;font-weight:600}
 #music-prev,#music-next,#music-mute{background:#14181b;border-color:rgba(184,154,105,.55);color:#eadcc0}
-#music-status{font-size:11px;letter-spacing:.06em;color:#cdb28a}
+#music-status{font-size:12px;letter-spacing:.06em;color:#cdb28a}
 .music-settings summary{color:#eadcc0}
 .music-track{font-size:14px}
 #music-track-picker{background:#14181b;border-color:rgba(184,154,105,.55)}
