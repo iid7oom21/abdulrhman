@@ -16,7 +16,10 @@ export function openDb(dbPath) {
 
 export function migrate(db) {
   const sql = fs.readFileSync(path.join(__dirname, '../migrations/001_init.sql'), 'utf8');
-  db.exec(sql);
+  db.transaction(()=>{
+    db.exec(sql);
+    db.exec(fs.readFileSync(path.join(__dirname, '../migrations/002_simulation_requests.sql'), 'utf8'));
+  })();
   return db;
 }
 

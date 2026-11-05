@@ -77,3 +77,17 @@ test('another tab restores the existing pending request and keeps its rejected q
   assert.equal(await other.inputValue('#input'),'مسودة ثانية');assert.equal(await other.locator('#send').isDisabled(),true);
   assert.equal(calls,1);gate.resolve();assert.deepEqual(errors,[]);
 });
+
+test('operator-disabled provider is labeled as written dialogue; free replies and history remain available',async t=>{
+  let calls=0,enabled=true;
+  const {page,post,errors}=await setup(t,{generate:()=>{calls++;return {text:'رد رفض مكتوب',refused:true,source:'deterministic-fallback'};},providerInfo:{provider:'openai',model:'fixture'},readControls:()=>({providerCallsEnabled:enabled,controlAvailable:true,purchasesEnabled:false,entitlementUseEnabled:false,writtenDialogueAvailable:true})});
+  await page.locator('#runtime-mode').filter({hasText:'OpenAI'}).waitFor();enabled=false;
+  await page.fill('#input','ما الذي تعرفه؟');await page.click('#send');await page.locator('#status').filter({hasText:'وصل الرد'}).waitFor();
+  assert.match(await page.locator('#log').innerText(),/النص الأصلي لهذه الإفادة غير متاح/);
+  assert.match(await page.locator('#log').innerText(),/رد مكتوب من الخادم/);assert.equal(calls,0);
+  await page.locator('#runtime-mode').filter({hasText:'المزوّد متوقف'}).waitFor();
+  assert.equal((await post('/api/payments/create',{price:1,userId:'forged'})).status(),404);
+  enabled=true;await page.click('#history');await page.locator('#status').filter({hasText:'دُمج'}).waitFor();await page.locator('#runtime-mode').filter({hasText:'OpenAI'}).waitFor();assert.equal(calls,0);
+  await page.fill('#input','سؤال بعد إعادة المزوّد');await page.click('#send');await page.locator('#status').filter({hasText:'وصل الرد'}).waitFor();
+  assert.equal(calls,1);assert.match(await page.locator('#log').innerText(),/رد مكتوب من الخادم/);assert.doesNotMatch(await page.locator('#log').innerText(),/دون استدعاء النموذج/);assert.deepEqual(errors,[]);
+});
