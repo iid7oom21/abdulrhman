@@ -142,6 +142,25 @@ try {
   }
   console.log('PASS: 320/390/1366 in Arabic and English — no horizontal scroll, text ≥12px, tap targets ≥44px');
 
+  // 4b. The two scene images load, keep their ratio, and carry no text of their own.
+  {
+    const context = await newContext(390, 844);
+    const page = await context.newPage();
+    await page.goto(base + 'raven/deleted-name/content.html', { waitUntil: 'domcontentloaded' });
+    const imgs = page.locator('.dnVisual img');
+    assert.equal(await imgs.count(), 2);
+    for (let i = 0; i < 2; i++) {
+      await imgs.nth(i).scrollIntoViewIfNeeded();
+      await page.waitForFunction(el => el.complete && el.naturalWidth > 0, await imgs.nth(i).elementHandle());
+      const r = await imgs.nth(i).evaluate(el => ({ w: el.naturalWidth, h: el.naturalHeight, alt: el.getAttribute('alt'), box: el.getBoundingClientRect().width }));
+      assert.ok(Math.abs(r.w / r.h - 16 / 9) < 0.02, `image ${i} is not 16:9`);
+      assert.equal(r.alt, '', 'scene images are decorative');
+      assert.ok(r.box <= 390, 'image fits the screen');
+    }
+    await context.close();
+    console.log('PASS: the record and arrival images load at 16:9 and fit the screen');
+  }
+
   // 5. The site copy of the dialogue preview shows Mati's help box once.
   {
     const context = await newContext();
