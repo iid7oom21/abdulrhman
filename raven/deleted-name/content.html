@@ -73,6 +73,13 @@ h2{margin:0 0 16px;font-weight:600;font-size:clamp(20px,3.4vw,24px);color:var(--
 /* Scene images: decorative, the text beside them carries the meaning. */
 .dnVisual{margin:0 0 20px;border:1px solid var(--line);background:var(--panel);overflow:hidden;line-height:0}
 .dnVisual img{display:block;width:100%;height:auto}
+
+.choices{display:grid;gap:8px;margin-top:16px}
+.choices button,.hook-next{min-height:48px;padding:10px 14px;background:var(--panel);color:var(--text);border:1px solid var(--line);font:inherit;text-align:start;cursor:pointer}
+.choices button.lie{border-color:var(--gold)}
+.hook-next{display:inline-flex;align-items:center;background:var(--gold);color:var(--ink);border-color:var(--gold);font-weight:600}
+.hook-log{display:grid;gap:12px;margin-top:16px}
+.hook-note{margin:12px 0 0;font-size:14px;color:var(--muted)}
 footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);text-align:center}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -136,6 +143,15 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     </ul>
   </div></section>
 
+
+  <section class="block" id="hook" aria-labelledby="t-hook"><div class="wrap">
+    <h2 id="t-hook" data-k="hookTitle">الورقة</h2>
+    <p class="lead" data-k="hookLead">كلامك صحيح. النتيجة مو منك.</p>
+    <div id="hook-log" class="hook-log" aria-live="polite"></div>
+    <div id="hook-actions" class="choices"></div>
+    <p class="hook-note" data-k="hookNote">حوار مكتوب. ما يرسل للشخصيات، وما يفتح دليلًا.</p>
+  </div></section>
+
   <section class="block" aria-labelledby="t-now"><div class="wrap">
     <h2 id="t-now" data-k="nowTitle">المتاح الآن</h2>
     <p class="lead" data-k="nowText">القضية قيد التطوير. تقدر تجرّب معاينة الحوار التقنية: تسجّل أقوالك وتصحيحاتك، وتجرّب مشاركة المواد.</p>
@@ -162,6 +178,8 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       cJonas: 'يطلب مساعدتك.', cMateo: 'أول من وصل للمكتبة.', cGuestF: 'ضيفة على العشاء.', cGuestM: 'ضيف على العشاء.',
       rulesTitle: 'قواعد القضية', r1: 'ما تكتب اسمًا ما يثبته الأصل.', r2: 'الكذب اختيار صريح، مو فخ في الكلام.',
       r3: 'الصمت ما يدينك.', r4: 'اللي تقوله يبقى. والتصحيح يبان جنبه.', r5: 'ماضيك ثابت. اختياراتك ما تغيّره.',
+      hookTitle: 'الورقة', hookLead: 'كلامك صحيح. النتيجة مو منك.',
+      hookNote: 'حوار مكتوب. ما يرسل للشخصيات، وما يفتح دليلًا.',
       nowTitle: 'المتاح الآن', nowText: 'القضية قيد التطوير. تقدر تجرّب معاينة الحوار التقنية: تسجّل أقوالك وتصحيحاتك، وتجرّب مشاركة المواد.',
       nowBtn: 'افتح معاينة الحوار ↗', nowNote: 'الشخصيات ما ترد بعد بنص القصة. ما تكتبه يبقى في متصفحك بس.',
       footer: 'RAVEN · عبدالرحمن العتيبي', docTitle: 'RAVEN — الاسم المحذوف',
@@ -181,6 +199,8 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       cJonas: 'Asks for your help.', cMateo: 'First to reach the library.', cGuestF: 'A guest at dinner.', cGuestM: 'A guest at dinner.',
       rulesTitle: 'Case rules', r1: "You don't write a name the original can't prove.", r2: 'Lying is a clear choice, never a trap in the wording.',
       r3: "Silence doesn't convict you.", r4: 'What you say stays. A correction shows beside it.', r5: "Your past is fixed. Your choices don't rewrite it.",
+      hookTitle: 'The paper', hookLead: 'Your sentence is true. The conclusion is not yours.',
+      hookNote: 'Written dialogue. It is not sent to the characters, and it opens no evidence.',
       nowTitle: 'Available now', nowText: 'The case is in development. You can try the technical dialogue preview: record your statements and corrections, and try sharing materials.',
       nowBtn: 'Open the dialogue preview ↗', nowNote: "The characters don't answer from the story yet. What you write stays in your browser only.",
       footer: 'RAVEN · Abdulrahman Alotaibi', docTitle: 'RAVEN — The Deleted Name',
@@ -233,6 +253,181 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     history.replaceState(history.state, '', url);
     document.dispatchEvent(new CustomEvent('raven:language', { detail: { language: next } }));
   });
+})();
+</script>
+
+<script>
+(() => {
+  const log = document.getElementById('hook-log');
+  const actions = document.getElementById('hook-actions');
+  if (!log || !actions) return;
+  const state = { phase: 'start', choice: null, share: null, note: false };
+  const copy = {
+    ar: {
+      open: 'افتح الورقة',
+      inside: 'هو صاحب الملاحظة؟',
+      claire2: 'إذا تقدر… فيه ورقة نحتاج نتأكد منها قبل تمشي.',
+      enter: 'أدخل وأشوف الورقة',
+      jonas: 'اسمك هنا. أبي أعرف وش اللي اعتمدته بالضبط.',
+      draft: 'الجملة منك: «اللي وصلني ما يكفي. الاسم يحتاج الأصل، ومقارنة النسخ.» وتحتها نتيجة ما قلتها: «اختلاف النسخ لا يغير نتيجة الملف.» التوقيع فاضي.',
+      you1: 'أنا ما راجعت الأصل.',
+      jonas2: 'لكنك كتبت إن الصورة ما تكفي.',
+      elena1: 'وهذا مو نفس الشي.',
+      elena2: 'الجملة اللي فوق منك؟',
+      you2: 'مني. النتيجة اللي تحت مو مني.',
+      elena3: 'صحح النتيجة. لا تنفي الرسالة.',
+      c1: 'أدق: أرسلت ملاحظة عن نقص الصورة. ما فحصت الأصل، وما اعتمدت النتيجة.',
+      c2: 'أأجل: أحتفظ بالرد لين أشوف المراسلة والنسخة.',
+      c3: 'أرفض الآن: ما أسجل توضيح قبل ما أعرف مين يستلمه.',
+      c4: 'أكذب صراحة: أنكر إني أرسلت الرسالة، وهي في محادثتي.',
+      lieMark: 'كذب صريح',
+      who: 'مين بيستلمه؟',
+      s1: 'يوناس فقط',
+      s2: 'يوناس وكلير',
+      s3: 'تبقى مسودة. ما توصل أحد.',
+      sentJonas: 'التصحيح وصل ليوناس فقط.',
+      sentBoth: 'التصحيح وصل ليوناس وكلير.',
+      kept: 'التصحيح بقي مسودة. ما وصل أحد.',
+      waited: 'ما سجلت توضيح للحين.',
+      refused: 'ما سجلت توضيح قبل ما تعرف المستلم.',
+      lied: 'أنكرت الرسالة. الإنكار باقي في السجل.',
+      askRecord: 'اطلب السجل',
+      title: 'سجل استقبال بلاغات المراجعة',
+      you3: 'هذا سجل بلاغات؟',
+      jonas3: 'هذا عنوان الأصل اللي عندنا.',
+      elena4: 'إيه.',
+      you4: 'طيب ليش المسودة تتكلم عن اسم المسؤول؟',
+      end: 'إيلينا ما تجاوب.',
+      voice: 'من داخل البيت',
+      paper: 'المسودة',
+      margin: 'هامش الأصل'
+    },
+    en: {
+      open: 'Open the paper',
+      inside: 'Is he the one who wrote the note?',
+      claire2: 'If you can… there is a paper we need to check before you leave.',
+      enter: 'Go in and see the paper',
+      jonas: 'Your name is here. I need to know exactly what you approved.',
+      draft: 'Your sentence: “What arrived is not enough. The name needs the original, and a comparison of the copies.” Under it, a conclusion you did not write: “The difference between copies does not change the file’s result.” The signature is empty.',
+      you1: 'I did not review the original.',
+      jonas2: 'But you wrote that the picture is not enough.',
+      elena1: 'That is not the same thing.',
+      elena2: 'Is the sentence above yours?',
+      you2: 'It is mine. The conclusion under it is not.',
+      elena3: 'Correct the conclusion. Do not deny the message.',
+      c1: 'Precise: I sent a note that the picture was not enough. I did not examine the original, and I did not approve the conclusion.',
+      c2: 'Wait: I hold the reply until I see the correspondence and the copy.',
+      c3: 'Refuse for now: I will not record a clarification before I know who receives it.',
+      c4: 'Lie outright: I deny sending the message, though it is in my conversation.',
+      lieMark: 'Explicit lie',
+      who: 'Who receives it?',
+      s1: 'Jonas only',
+      s2: 'Jonas and Claire',
+      s3: 'Keep it as a draft. It reaches no one.',
+      sentJonas: 'The correction reached Jonas only.',
+      sentBoth: 'The correction reached Jonas and Claire.',
+      kept: 'The correction stayed a draft. It reached no one.',
+      waited: 'You have not recorded a clarification yet.',
+      refused: 'You recorded nothing before knowing the recipient.',
+      lied: 'You denied the message. The denial stays on the record.',
+      askRecord: 'Ask for the record',
+      title: 'Register of review-report intake',
+      you3: 'This is a reports register?',
+      jonas3: 'That is the title on the original we have.',
+      elena4: 'Yes.',
+      you4: 'Then why does the draft speak about the name of the person responsible?',
+      end: 'Elena does not answer.',
+      voice: 'From inside the house',
+      paper: 'The draft',
+      margin: 'The original’s margin'
+    }
+  };
+  const lang = () => document.documentElement.lang === 'en' ? 'en' : 'ar';
+  const t = () => copy[lang()];
+  const whoName = key => {
+    const node = document.querySelector('[data-k="' + key + '"]');
+    return node ? node.textContent : key;
+  };
+  function line(who, body, you) {
+    const li = document.createElement('li');
+    li.className = 'msg' + (you ? ' you' : '');
+    const span = document.createElement('span');
+    span.className = 'who';
+    span.textContent = who;
+    const p = document.createElement('p');
+    p.textContent = body;
+    li.append(span, p);
+    return li;
+  }
+  function button(label, on, extra) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = label;
+    if (extra) b.className = extra;
+    b.addEventListener('click', on);
+    return b;
+  }
+  function render() {
+    const c = t();
+    log.replaceChildren();
+    actions.replaceChildren();
+    const add = (who, body, you) => log.append(line(who, body, you));
+    if (state.phase === 'start') {
+      actions.append(button(c.open, () => { state.phase = 'invite'; render(); }, 'hook-next'));
+      return;
+    }
+    add(c.voice, c.inside, false);
+    add(whoName('claire'), c.claire2, false);
+    if (state.phase === 'invite') {
+      actions.append(button(c.enter, () => { state.phase = 'draft'; render(); }, 'hook-next'));
+      return;
+    }
+    add(whoName('jonas'), c.jonas, false);
+    add(c.paper, c.draft, false);
+    add(whoName('you'), c.you1, true);
+    add(whoName('jonas'), c.jonas2, false);
+    add(whoName('elena'), c.elena1, false);
+    add(whoName('elena'), c.elena2, false);
+    add(whoName('you'), c.you2, true);
+    add(whoName('elena'), c.elena3, false);
+    if (state.phase === 'draft') {
+      actions.append(
+        button(c.c1, () => { state.choice = 'precise'; state.phase = 'share'; render(); }),
+        button(c.c2, () => { state.choice = 'wait'; state.phase = 'after'; render(); }),
+        button(c.c3, () => { state.choice = 'refuse'; state.phase = 'after'; render(); }),
+        button(c.c4, () => { state.choice = 'lie'; state.phase = 'after'; render(); }, 'lie')
+      );
+      return;
+    }
+    if (state.choice === 'precise') add(whoName('you'), c.c1, true);
+    if (state.choice === 'wait') add(whoName('you'), c.waited, true);
+    if (state.choice === 'refuse') add(whoName('you'), c.refused, true);
+    if (state.choice === 'lie') add(c.lieMark, c.lied, true);
+    if (state.phase === 'share') {
+      add(whoName('elena'), c.who, false);
+      actions.append(
+        button(c.s1, () => { state.share = 'jonas'; state.phase = 'after'; render(); }),
+        button(c.s2, () => { state.share = 'both'; state.phase = 'after'; render(); }),
+        button(c.s3, () => { state.share = 'draft'; state.phase = 'after'; render(); })
+      );
+      return;
+    }
+    if (state.share === 'jonas') add(c.paper, c.sentJonas, false);
+    if (state.share === 'both') add(c.paper, c.sentBoth, false);
+    if (state.share === 'draft') add(c.paper, c.kept, false);
+    if (state.phase === 'after') {
+      actions.append(button(c.askRecord, () => { state.phase = 'done'; render(); }, 'hook-next'));
+      return;
+    }
+    add(c.margin, c.title, false);
+    add(whoName('you'), c.you3, true);
+    add(whoName('jonas'), c.jonas3, false);
+    add(whoName('elena'), c.elena4, false);
+    add(whoName('you'), c.you4, true);
+    add(c.paper, c.end, false);
+  }
+  document.addEventListener('raven:language', render);
+  render();
 })();
 </script>
 </body>
