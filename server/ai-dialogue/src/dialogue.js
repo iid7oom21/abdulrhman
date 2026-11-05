@@ -38,7 +38,7 @@ export function simulateReply(characterId, playerMessage, received) {
   };
 }
 
-export function submitRequest(requestId, characterId, message, sharedFacts = [], contentVersion = 'deleted-name-preview-v2', ownerId, received) {
+export function submitRequest(requestId, characterId, message, sharedFacts = [], contentVersion = 'deleted-name-preview-v2', ownerId, received, generate = simulateReply) {
   if (!ownerId || !Object.hasOwn(CHARACTERS, characterId) || typeof requestId !== 'string' ||
       !/^[\w-]{1,100}$/.test(requestId) || typeof message !== 'string' || !message.trim() || message.length > 8000) {
     return { error: 'invalid_request', status: 'error' };
@@ -59,7 +59,7 @@ export function submitRequest(requestId, characterId, message, sharedFacts = [],
   requests.set(requestId, record);
   remember(ownerId, requestId);
   try {
-    record.response = simulateReply(characterId, message, received);
+    record.response = generate(characterId, message, received);
     record.status = 'completed';
   } catch {
     record.status = 'error';
@@ -75,5 +75,18 @@ export function getRequest(requestId, ownerId) {
 }
 export function listRequests(ownerId) {
   return [...requests.values()].filter(rec => ownerId && rec.owner === ownerId).map(rec => ({ ...rec }));
+}
+// Disk snapshot support: records are plain JSON (owner/fingerprint stay server-side; the HTTP layer strips them).
+export function exportRequests() {
+  const out = [];
+  for (const ids of idsByOwner.values()) for (const id of ids) if (requests.has(id)) out.push({ ...requests.get(id) });
+  return out;
+}
+// Restores a stored record as-is: no regeneration, the original contentVersion and response are kept.
+export function importRequest(record) {
+  if (!record || typeof record.id !== 'string' || typeof record.owner !== 'string' || requests.has(record.id)) return false;
+  requests.set(record.id, { ...record });
+  remember(record.owner, record.id);
+  return true;
 }
 export function _reset() { requests.clear(); idsByOwner.clear(); }

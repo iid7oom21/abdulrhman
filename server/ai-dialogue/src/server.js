@@ -3,7 +3,8 @@ import fs from 'node:fs';
 import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { createMaterialStore, MaterialError } from './materials.js';
-import { submitRequest, listRequests, getRequest, forgetOwner } from './dialogue.js';
+import { submitRequest, listRequests, getRequest, forgetOwner, simulateReply, exportRequests, importRequest } from './dialogue.js';
+import { openDiskStore } from './disk-store.js';
 
 // Memory bounds for the in-memory preview. All can be overridden through createPreviewServer options.
 export const SESSION_IDLE_MS = 6 * 60 * 60 * 1000;
@@ -22,6 +23,9 @@ export function createPreviewServer({
   // Behind a TLS-terminating proxy the socket is plain HTTP, so Secure must be requested explicitly.
   secureCookie = process.env.RAVEN_COOKIE_SECURE === '1',
   now = Date.now,
+  // Optional JSON file on this machine's disk. Unset = process memory only (previous behaviour).
+  storeFile = process.env.RAVEN_STORE_FILE || null,
+  generate = simulateReply,
 } = {}) {
   // owner -> { materials, touchedAt }. Map order is least-recently-used first (re-inserted on each use).
   const sessions = new Map();
@@ -33,15 +37,39 @@ export function createPreviewServer({
     if (expired(session)) { dropSession(cookie); return null; }
     session.touchedAt = now();
     sessions.delete(cookie); sessions.set(cookie, session);
+    persist();
     return session;
   };
   const openSession = () => {
     for (const [owner, session] of sessions) { if (!expired(session)) break; dropSession(owner); }
     while (sessions.size >= maxSessions) dropSession(sessions.keys().next().value);
     const owner = randomBytes(32).toString('hex');
-    sessions.set(owner, { materials: createMaterials(), touchedAt: now() });
+    sessions.set(owner, { materials: createMaterials(), touchedAt: now(), actions: [] });
     return owner;
   };
+  // Each session keeps the accepted player actions in order; reopening replays them through the same engine.
+  const disk = storeFile ? openDiskStore(storeFile) : null;
+  const persist = () => disk?.save({
+    sessions: [...sessions].map(([owner, session]) => ({ owner, touchedAt: session.touchedAt, actions: session.actions })),
+    requests: exportRequests().filter(record => sessions.has(record.owner)),
+  });
+  if (disk) {
+    const snapshot = disk.load();
+    for (const saved of snapshot?.sessions || []) {
+      if (!/^[a-f0-9]{64}$/.test(saved.owner) || sessions.has(saved.owner)) continue;
+      const materials = createMaterials();
+      for (const action of saved.actions || []) {
+        if (action.kind === 'material') materials.createMaterial(action.input);
+        else if (action.kind === 'share') materials.share(action.input);
+      }
+      sessions.set(saved.owner, { materials, touchedAt: saved.touchedAt, actions: [...(saved.actions || [])] });
+    }
+    for (const record of snapshot?.requests || []) if (sessions.has(record.owner)) importRequest(record);
+    // Expired sessions are dropped by the same idle rule as before, not at an arbitrary boot moment.
+    for (const [owner, session] of [...sessions]) if (expired(session)) dropSession(owner);
+    persist();
+  }
+  const persistence = disk ? 'disk-file' : 'process-memory';
   const html = fs.readFileSync(new URL('../public/index.html', import.meta.url));
   return http.createServer(async (req, res) => {
     const json = (status, data) => {
@@ -56,6 +84,7 @@ export function createPreviewServer({
       if (req.method === 'GET' && ['/', '/index.html'].includes(url.pathname)) {
         if (!owner) {
           owner = openSession();
+          persist();
           res.setHeader('Set-Cookie', `raven_preview_session=${owner}; HttpOnly; SameSite=Strict; Path=/${req.socket.encrypted || secureCookie ? '; Secure' : ''}`);
         }
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
@@ -64,7 +93,7 @@ export function createPreviewServer({
       if (!owner) return json(401, { error: 'session_unavailable' });
       const materials = session.materials;
       if (req.method === 'GET' && url.pathname === '/api/materials') {
-        return json(200, { items:materials.listMaterials(), events:materials.listShareEvents(), storage:'server-memory' });
+        return json(200, { items:materials.listMaterials(), events:materials.listShareEvents(), storage:'server-memory', persistence });
       }
       if (req.method === 'GET' && url.pathname === '/api/knowledge') {
         const characterId = url.searchParams.get('characterId');
@@ -72,7 +101,7 @@ export function createPreviewServer({
         return json(200, materials.contextFor(characterId, {visibleTo:'player'}));
       }
       if (req.method === 'GET' && url.pathname === '/api/history') {
-        return json(200, { items: listRequests(owner), storage: 'server-memory' });
+        return json(200, { items: listRequests(owner), storage: 'server-memory', persistence });
       }
       if (req.method === 'GET' && url.pathname.startsWith('/api/operations/')) {
         const record = getRequest(decodeURIComponent(url.pathname.slice('/api/operations/'.length)), owner);
@@ -99,7 +128,9 @@ export function createPreviewServer({
           // A resend of an already-registered id is idempotent and must not hit the cap.
           if (materials.listMaterials().length >= maxMaterials &&
               !materials.listMaterials().some(record => record.id === data.id)) return json(400, { error:'materials_limit' });
+          const isNew = !materials.listMaterials().some(record => record.id === data.id);
           const item = materials.createMaterial({ ...data, author:'player' });
+          if (isNew) { session.actions.push({ kind:'material', input:{ ...data, author:'player' } }); persist(); }
           return json(200, { item:materials.listMaterials().find(record => record.id === item.id), storage:'server-memory' });
         }
         if (url.pathname === '/api/shares') {
@@ -108,10 +139,13 @@ export function createPreviewServer({
           }
           if (materials.listShareEvents().length >= maxShares &&
               !materials.listShareEvents().some(event => event.eventId === data.eventId)) return json(400, { error:'shares_limit' });
-          return json(200, { event:materials.share({ ...data, sender:'player' }), storage:'server-memory' });
+          const event = materials.share({ ...data, sender:'player' });
+          if (!event.duplicated) { session.actions.push({ kind:'share', input:{ ...data, sender:'player' } }); persist(); }
+          return json(200, { event, storage:'server-memory' });
         }
         if (!['jonas','claire'].includes(data.characterId)) return json(400, { error:'invalid_request' });
-        const result = submitRequest(data.requestId, data.characterId, data.message, data.sharedFacts, data.contentVersion, owner, materials.contextFor(data.characterId));
+        const result = submitRequest(data.requestId, data.characterId, data.message, data.sharedFacts, data.contentVersion, owner, materials.contextFor(data.characterId), generate);
+        if (!result.error && !result.replayed) persist();
         const status = result.error ? (result.status === 'conflict' ? 409 : result.error === 'forbidden' ? 403 : 400) : 200;
         return json(status, result);
       }
@@ -124,5 +158,5 @@ export function createPreviewServer({
   });
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  createPreviewServer().listen(process.env.PORT || 10000, '0.0.0.0', () => console.log('RAVEN preview: simulation, server-memory storage'));
+  createPreviewServer().listen(process.env.PORT || 10000, '0.0.0.0', () => console.log(`RAVEN preview: simulation, ${process.env.RAVEN_STORE_FILE ? 'disk file ' + process.env.RAVEN_STORE_FILE : 'process memory only'}`));
 }
