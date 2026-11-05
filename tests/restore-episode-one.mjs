@@ -1,0 +1,23 @@
+import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+const read = p => readFileSync(new URL('../' + p, import.meta.url), 'utf8');
+const logic = read('raven/assets/raven-enhancements-v1.js');
+const ui = read('raven/content.html');
+const refine = read('raven/assets/raven-refinement-v2.js');
+const shell = read('raven/index.html');
+const block = logic.match(/const EPISODES=\[([\s\S]*?)\];/);
+assert.ok(block, 'Episode manifest exists');
+const manifest = [...block[1].matchAll(/\{id:(\d+),sourceId:(\d+),src:'([^']+)'\}/g)]
+  .map(m => ({display:Number(m[1]),source:Number(m[2]),url:m[3]}));
+assert.deepEqual(manifest.map(x=>[x.display,x.source]), [[1,1],[2,2],[3,3]]);
+assert.ok(manifest.every((x,i)=>x.url.endsWith('/episode-'+(i+1)+'.mp4')));
+assert.deepEqual([...ui.matchAll(/data-rvn-episode="(\d+)"/g)].map(x=>Number(x[1])),[1,2,3]);
+assert.ok(ui.includes('id="ravenEpisodePlayer"') && ui.includes('v1789985712/raven17/episode-1.mp4'));
+assert.ok(!logic.includes('n===3?2'), 'Episode 3 is not redirected to 2');
+assert.ok(!logic.includes("searchParams.get('episode')==='3')writeEpisodeRoute"));
+assert.ok(refine.includes('Math.min(3,') && refine.includes('current>=3') && refine.includes('current<3'));
+assert.ok(refine.includes("href:'/?episode=3',episode:3"));
+assert.ok(logic.includes("'raven17_episode_'+sourceEpisodeId(n)+'_progress"), 'Legacy progress remains keyed to actual source ID');
+assert.ok(refine.includes("'raven_episode_note_'+window.ravenEpisodeSourceId(current)"), 'Legacy notes remain source keyed');
+assert.ok(![logic,ui,refine,shell].some(t => /حلقتان|حلقتيه|حلقتين|two episodes|Two episodes/.test(t)));
+console.log('RAVEN episode 1 restore: 15 checks passed.');
