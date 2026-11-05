@@ -1,5 +1,5 @@
 // The host owns one soundtrack while the content document changes.
-import { createSoundtrack } from './site-audio.js?v=playlist-races-3';
+import { createSoundtrack } from './site-audio.js?v=playlist-races-4';
 import { createEntryGate } from './site-entry.js?v=intro-2';
 
 const root = new URL('./', import.meta.url);

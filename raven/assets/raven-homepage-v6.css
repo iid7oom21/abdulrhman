@@ -365,3 +365,9 @@ html[lang="en"] .rvnField input,html[lang="en"] .rvnField select,html[lang="en"]
 .nextPremiere .rvnProductionLog{grid-template-columns:1fr;margin:22px 0 0;padding:16px 0}
 
 .rvnCaseSearch{margin-top:24px;max-width:720px}.rvnCaseSearch label{display:block;margin-bottom:8px;color:var(--rvn-warm);font-size:14px}.rvnCaseSearch input{width:100%;min-height:48px;padding:10px 14px;border:1px solid var(--rvn-line);border-radius:2px;background:#07090b;color:var(--rvn-warm);font:inherit}.rvnSearchStatus{color:var(--rvn-muted);font-size:13px}.rvnSearchResults{list-style:none;padding:0;margin:0}.rvnSearchResults a{display:block;padding:12px 0;border-top:1px solid var(--rvn-line);color:#d6b98d}
+/* Readability floor for Arabic labels and container focus cleanup */
+html[lang="ar"] .eyebrow,html[lang="ar"] .status,html[lang="ar"] .premiereEyebrow,html[lang="ar"] .rvnFootPrivacy{font-size:12px;letter-spacing:0}
+html[lang="ar"] .premiereMeta{font:500 12px/1.6 "IBM Plex Sans Arabic",sans-serif;letter-spacing:0}
+html[lang="ar"] .metaItem span:first-child,html[lang="ar"] .rvnStudioCard small,html[lang="ar"] .rvnPressCopy small{font-family:"IBM Plex Sans Arabic",sans-serif;font-size:12px;letter-spacing:0}
+html[lang="ar"] .rvnPressAssets strong{font-family:"IBM Plex Sans Arabic",sans-serif;font-size:12px;letter-spacing:0}
+main[tabindex="-1"]:focus{outline:none}
