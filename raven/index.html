@@ -30,12 +30,6 @@
 <link rel="alternate" hreflang="x-default" href="https://iid7oom21.github.io/abdulrhman/raven/">
 <link rel="icon" href="../fourth-signature/favicon.svg" type="image/svg+xml">
 <link rel="stylesheet" href="../site-player.css?v=redesign-1-a12">
-<style>
-.intro-dock{position:relative;z-index:6;background:#0a0908;color:#e8e0d4;padding:10px 12px 8px}
-.intro-dock button{min-height:48px;width:100%;font:inherit;background:#c4a574;color:#111;border:0}
-.intro-dock video{display:block;width:100%;max-height:72vh;margin-top:8px;background:#000}
-.intro-dock video[hidden]{display:none}
-</style>
 <script type="module" src="../site-player.js?v=music-races-4"></script>
 </head>
 <body>
@@ -47,10 +41,6 @@
     <a id="site-direct" href="./content.html">افتح الصفحة مباشرة</a>
   </div>
 </div>
-<section class="intro-dock" aria-label="إنترو رايفن">
-  <button id="intro-toggle" type="button" aria-pressed="false">تشغيل الإنترو</button>
-  <video id="intro-video" hidden playsinline preload="none" src="assets/intro/raven-intro.mp4"></video>
-</section>
 <div class="site-player" role="region" aria-label="أغنية رايفن">
   <div class="music-controls" role="group" aria-label="التحكم بالأغنية">
     <button id="music-prev" type="button">السابقة</button>
@@ -76,36 +66,5 @@
   <audio id="site-soundtrack" preload="none"></audio>
 </div>
 <noscript><h1>RAVEN — قصص سينمائية أصلية</h1><a href="./content.html">افتح الصفحة</a></noscript>
-<script>
-(() => {
-  const button = document.getElementById('intro-toggle');
-  const video = document.getElementById('intro-video');
-  const music = document.getElementById('site-soundtrack');
-  const musicToggle = document.getElementById('music-toggle');
-  if (!button || !video) return;
-  const playLabel = 'تشغيل الإنترو';
-  const stopLabel = 'إيقاف الإنترو';
-  const failLabel = 'تعذر تشغيل الإنترو. اضغط مرة ثانية.';
-  function setPlaying(on) {
-    button.setAttribute('aria-pressed', on ? 'true' : 'false');
-    button.textContent = on ? stopLabel : playLabel;
-  }
-  button.addEventListener('click', () => {
-    if (!video.paused && !video.ended) {
-      video.pause();
-      setPlaying(false);
-      return;
-    }
-    if (music && !music.paused && musicToggle) musicToggle.click();
-    video.hidden = false;
-    const pending = video.play();
-    if (pending && typeof pending.then === 'function') {
-      pending.then(() => setPlaying(true)).catch(() => { button.textContent = failLabel; });
-    } else setPlaying(true);
-  });
-  video.addEventListener('pause', () => { if (video.ended || video.paused) setPlaying(false); });
-  video.addEventListener('ended', () => setPlaying(false));
-})();
-</script>
 </body>
 </html>
