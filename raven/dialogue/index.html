@@ -72,6 +72,11 @@
     select { min-width:0; }
     .material-form select { width:100%; }
     [hidden] { display:none !important; }
+    #player-help { margin-top:12px; border:1px solid #3a342e; border-radius:10px; padding:10px 12px; font-size:0.9rem; overflow-wrap:anywhere; }
+    #player-help h2 { margin:0 0 4px; font-size:1rem; color:var(--gold); }
+    #player-help p, #player-help ol { margin:0 0 6px; }
+    #player-help ol { padding-inline-start:20px; }
+    #player-help .hint { margin:0; color:var(--gold); }
     footer { text-align:center; font-size:0.75rem; color:var(--muted); border-top:1px solid var(--line); padding:16px; }
   </style>
 </head>
@@ -90,6 +95,17 @@
     </div>
     <p>معاينة تقنية محدودة: اللاعب مرمّم سجلات وصل بعد واقعة المكتبة والاستجابة الأولى. الإفادات الأصلية الكاملة غير متاحة؛ ردود المحاكاة لا تنشئ أدلة.</p>
     <div id="log" role="log" aria-label="سجل الشخصية"></div>
+    <!-- Mati help texts, verbatim from server/ai-dialogue/src/player_help_texts_bilingual_v1.0.0.json on main. -->
+    <section id="player-help" aria-labelledby="player-help-title">
+      <h2 id="player-help-title">كيف تسأل في RAVEN</h2>
+      <p>اسأل الشخصية عما تعرفه، وتابع إجابتها بهدوء، واربط سؤالك بما ظهر لك في المشهد.</p>
+      <ol>
+        <li>اسأل عن شيء محدد ظهر لك في المشهد.</li>
+        <li>تابع إجابة الشخصية واطلب توضيحاً بسيطاً إذا احتجت.</li>
+        <li>اربط سؤالك الجديد بما عرفته من الإجابات السابقة.</li>
+      </ol>
+      <p class="hint">بدل السؤال العام، اذكر ما رأيته واسأل: ماذا تعرف عن هذا؟</p>
+    </section>
     <div class="row" style="margin-top:12px;">
       <textarea aria-label="سؤالك للشخصية" maxlength="8000" id="input" rows="2" style="flex:1; min-width:180px;" placeholder="اكتب سؤالك..."></textarea>
       <button id="send">إرسال</button>
