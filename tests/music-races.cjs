@@ -12,6 +12,7 @@ test('production soundtrack module with production controls',async t=>{
     const pathname=new URL(req.url,'http://test').pathname;
     if(pathname==='/fixture'){res.setHeader('Content-Type','text/html');res.end(fixture);return;}
     if(pathname==='/site-audio.js'){res.setHeader('Content-Type','text/javascript');res.end(fs.readFileSync(process.env.RAVEN_AUDIO_SOURCE || path.join(root,'site-audio.js')));return;}
+    if(pathname==='/assets/texts/raven-texts.js'){res.setHeader('Content-Type','text/javascript');res.end(fs.readFileSync(path.join(root,'assets/texts/raven-texts.js')));return;}
     res.writeHead(404);res.end();
   });
   await new Promise(r=>server.listen(0,'127.0.0.1',r));

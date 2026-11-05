@@ -1,0 +1,120 @@
+{
+  "version": "raven_all_texts_bilingual_merged_v1.0.1",
+  "note": "دمج للملفات الثلاثة المعتمدة دون إعادة صياغة. الربط بالواجهة مسؤولية التنفيذ.",
+  "player_help_texts_bilingual_v1.0.0": {
+    "version": "player_help_texts_bilingual_v1.0.0",
+    "note": "تسليم نصوص للدمج فقط، ليس ادعاء أنها رُبطت بالواجهة",
+    "help_title": {
+      "ar": "كيف تسأل في RAVEN",
+      "en": "How to ask in RAVEN"
+    },
+    "help_intro": {
+      "ar": "اسأل الشخصية عما تعرفه، وتابع إجابتها بهدوء، واربط سؤالك بما ظهر لك في المشهد.",
+      "en": "Ask the character what they know, follow their answer calmly, and link your question to what appeared in the scene."
+    },
+    "help_steps": [
+      {
+        "ar": "اسأل عن شيء محدد ظهر لك في المشهد.",
+        "en": "Ask about something specific you saw in the scene."
+      },
+      {
+        "ar": "تابع إجابة الشخصية واطلب توضيحاً بسيطاً إذا احتجت.",
+        "en": "Follow the character's answer and ask for a simple clarification if needed."
+      },
+      {
+        "ar": "اربط سؤالك الجديد بما عرفته من الإجابات السابقة.",
+        "en": "Link your new question to what you learned from previous answers."
+      }
+    ],
+    "question_hint": {
+      "ar": "بدل السؤال العام، اذكر ما رأيته واسأل: ماذا تعرف عن هذا؟",
+      "en": "Instead of a general question, mention what you saw and ask: What do you know about this?"
+    }
+  },
+  "music_player_texts_bilingual_v1.0.0_8songs": {
+    "version": "music_player_texts_bilingual_v1.0.0_8songs",
+    "note": "تسليم نصوص مشغل الموسيقى للدمج فقط. لا تثبت عدد الأغاني داخل العبارات - القائمة 8 حالياً وقد تتغير. أسماء الأغاني تؤخذ من ملفات المالك فقط.",
+    "choose_song": {
+      "ar": "اختيار الأغنية",
+      "en": "Choose song"
+    },
+    "current_song": {
+      "ar": "الأغنية الحالية",
+      "en": "Current song"
+    },
+    "previous": {
+      "ar": "السابقة",
+      "en": "Previous"
+    },
+    "next": {
+      "ar": "التالية",
+      "en": "Next"
+    },
+    "load_failed": {
+      "ar": "تعذر تحميل الأغنية",
+      "en": "Failed to load song"
+    },
+    "press_play_to_listen": {
+      "ar": "اضغط تشغيل للاستماع",
+      "en": "Press play to listen"
+    },
+    "conditions": {
+      "choose_while_paused": {
+        "ar": "اختيار أغنية أثناء الإيقاف لا يبدأ الصوت تلقائياً",
+        "en": "Selecting a song while paused does not auto-play"
+      },
+      "preserve_mute_volume_on_switch": {
+        "ar": "تبديل الأغنية يحافظ على الكتم ومستوى الصوت",
+        "en": "Switching songs preserves mute and volume"
+      },
+      "browser_reject_not_playing": {
+        "ar": "رفض المتصفح للتشغيل لا يظهر كحالة جارٍ التشغيل",
+        "en": "Browser play rejection must not show as playing state"
+      },
+      "single_failure_not_all": {
+        "ar": "تعذر تحميل مقطع لا يعني تعطل باقي المقاطع",
+        "en": "Failure to load one track does not mean all tracks failed"
+      }
+    }
+  },
+  "dialogue_status_texts_bilingual_v1.0.1": {
+    "version": "dialogue_status_texts_bilingual_v1.0.1",
+    "note": "تسليم نصوص فقط للدمج. الملفان المعتمدان السابقان محفوظان دون إعادة صياغة. save_confirmed مشروطة بتأكيد الحفظ للعملية نفسها.",
+    "request_sending": {
+      "ar": "جارٍ إرسال سؤالك…",
+      "en": "Sending your question…"
+    },
+    "request_pending": {
+      "ar": "طلبك قيد المعالجة…",
+      "en": "Your request is being processed…"
+    },
+    "request_unknown": {
+      "ar": "نتيجة طلبك غير مؤكدة",
+      "en": "Your request result is unclear"
+    },
+    "save_pending": {
+      "ar": "جاري حفظ الرد…",
+      "en": "Saving reply…"
+    },
+    "save_confirmed": {
+      "ar": "انحفظ الرد",
+      "en": "Reply saved"
+    },
+    "save_unconfirmed": {
+      "ar": "لم نتأكد من حفظ الرد بعد",
+      "en": "Reply save not confirmed yet"
+    },
+    "status_read_failed": {
+      "ar": "ما قدرنا نتحقق من حالة طلبك الآن",
+      "en": "We couldn't check your request status right now"
+    },
+    "check_request": {
+      "ar": "تحقق من الطلب",
+      "en": "Check request"
+    },
+    "history_load_failed": {
+      "ar": "تعذر تحميل السجل",
+      "en": "Failed to load history"
+    }
+  }
+}

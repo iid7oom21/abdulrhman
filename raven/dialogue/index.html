@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+  <script src="../../assets/texts/raven-texts.js?v=mati-1.0.1"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>RAVEN — معاينة محادثة</title>
@@ -143,8 +144,8 @@
       <p>التقرير هنا مسودة. الإيداع وإيصاله ينتظران المصدر المعتمد؛ لا يوجد زر يصنع إيصالًا أو دليلًا من نص الحوار.</p>
     </details>
   </main>
-  <footer>معاينة محاكاة — الردود ليست من نموذج ذكاء اصطناعي حقيقي. السجل في ذاكرة هذا المتصفح ويُفقد عند إعادة تشغيله. جلسة متصفح مجهولة وليست حسابًا موثقًا. نسخة محلية على هذا المتصفح إن سمح التخزين؛ لا يوجد حفظ دائم مضمون.</footer>
-  <script src="./local-api.js?v=dlg-2"></script>
+  <footer>معاينة محاكاة متصفح مستقلة — الردود ليست من نموذج ذكاء اصطناعي حقيقي. تُستعاد النسخة المحلية إذا نجح حفظها وبقيت بيانات هذا المتصفح؛ مسحها يفقدها. لا توجد مزامنة مع خادم أو حساب.</footer>
+  <script src="./local-api.js?v=preserve-backup-3"></script>
   <script>
   (() => {
     const param = new URLSearchParams(location.search).get('lang');
@@ -212,11 +213,19 @@
     const notes = document.querySelectorAll('#materials-panel > p');
     if (notes[1]) notes[1].textContent = 'Sharing sends only the selected material. A report draft sends its chosen attachments; your motives and conversations are not attached automatically.';
     if (notes[2]) notes[2].textContent = 'The report here is a draft. Deposit and its receipt wait for the approved source; no button creates a receipt or evidence from dialogue.';
-    document.querySelector('footer').textContent = 'Simulation preview — replies are not from a real AI model. The record is in this browser’s memory and is lost if that memory is cleared. This is an anonymous browser session, not an account. A local copy is kept when storage allows; there is no guaranteed permanent save.';
+    document.querySelector('footer').textContent = 'Independent browser simulation — replies are not from a real AI model. A successfully saved local copy is restored while this browser data remains; clearing it loses the copy. There is no server or account sync.';
     document.title = 'RAVEN — Dialogue preview';
   })();
   </script>
   <script>
+    const approvedTexts = window.RAVEN_ALL_TEXTS_BILINGUAL_MERGED;
+    const statusText = key => approvedTexts['dialogue_status_texts_bilingual_v1.0.1'][key][document.documentElement.lang === 'en' ? 'en' : 'ar'];
+    const helpTextPack = approvedTexts['player_help_texts_bilingual_v1.0.0'];
+    const displayLang = document.documentElement.lang === 'en' ? 'en' : 'ar';
+    document.getElementById('player-help-title').textContent = helpTextPack.help_title[displayLang];
+    const helpLines = [helpTextPack.help_intro,...helpTextPack.help_steps,helpTextPack.question_hint];
+    document.querySelectorAll('#player-help p, #player-help li').forEach((el,i) => { el.textContent = helpLines[i][displayLang]; });
+    document.getElementById('check').textContent = statusText('check_request');
     const log = document.getElementById('log');
     const input = document.getElementById('input');
     const sendBtn = document.getElementById('send');
@@ -321,7 +330,7 @@
         addMsg(t('أنت', 'You'), r.message, true);
         if (r.response?.text) addMsg(names[id], r.response.text, false);
         const label = r.status === 'completed'
-          ? (r.confirmed ? t('تأكد سابقًا تسجيل العملية في ذاكرة هذا المتصفح.', 'This operation was already recorded in this browser’s memory.') : t('الرد ظاهر هنا، وحفظه على الخادم غير مؤكد.', 'The reply is shown here. Saving it on the server is not confirmed.'))
+          ? (r.confirmed ? t('تأكد سابقًا تسجيل العملية في ذاكرة هذا المتصفح.', 'This operation was already recorded in this browser’s memory.') : t('الرد ظاهر هنا، وحفظ نسخته المحلية غير مؤكد.', 'The reply is shown here. Its local save is not confirmed.'))
           : r.status === 'error' ? t('سُجّل خطأ للعملية، ولم يثبت نجاحها.', 'An error was recorded for the operation. Success was not established.')
           : r.status === 'unavailable' ? (r.response?.text ? t('وصل هذا الرد، لكن ', 'This reply arrived, but ') : '') + t('العملية غير معروفة للخادم في جلستك الحالية. ربما أُعيد تشغيله أو انتهت جلسة المتصفح. ', 'the server does not know this operation in your current session. It may have restarted, or the browser session ended. ')
             + (r.response?.text ? t('حفظ الرد على الخادم غير مؤكد، ولم نُعد إرسال السؤال.', 'Saving the reply on the server is not confirmed, and the question was not sent again.') : t('لم يثبت نجاح العملية أو فشلها، ولم نُعد إرسالها.', 'Neither success nor failure was established, and it was not sent again.')) + t(' المعرف: ', ' Id: ') + iso(r.id)
@@ -346,7 +355,7 @@
       if (old?.response?.text && (r.status !== 'completed' || r.response?.text !== old.response.text)) return false;
       if (old?.status === 'error' && r.status !== 'error') return false;
       s.records.set(r.id, { ...old, id:r.id, characterId:id, message:r.message,
-        status:r.status, response:typeof r.response?.text === 'string' ? { text:r.response.text } : old?.response, confirmed:r.storage === 'server-memory' });
+        status:r.status, response:typeof r.response?.text === 'string' ? { text:r.response.text } : old?.response, confirmed:r.storage === 'server-memory' && (!r.localPersist || r.localPersist === 'saved') });
       return true;
     }
     const SESSION_LOST = t('انتهت جلسة المتصفح على الخادم، أو أُعيد تشغيل الخادم. أعد تحميل الصفحة، ثم اضغط «متابعة العملية الأصلية». العمليات والمسودة ما زالتا على هذا المتصفح.', 'The browser session on the server ended, or the server restarted. Reload the page, then press “Follow the original operation”. The operations and the draft are still in this browser.');
@@ -360,7 +369,7 @@
       const s = states[id];
       if (s.active) return;
       const controller = new AbortController(); s.active = controller;
-      s.notice = t('جارٍ انتظار العملية ', 'Waiting for operation ') + iso(op.id); render();
+      s.notice = (options.method === 'POST' ? statusText('request_sending') : statusText('request_unknown')) + ' ' + iso(op.id); render();
       const timer = setTimeout(() => controller.abort(), 8000);
       try {
         const res = await fetch(url, { ...options, signal:controller.signal, credentials:'same-origin' });
@@ -383,16 +392,16 @@
             current.response = { text:data.response.text }; current.status = 'unknown';
           }
         }
-        if (!matches || !res.ok || res.status === 202 || !merge(id, data)) {
+        if (!matches || !res.ok || (res.status === 202 && data.status !== 'pending') || !merge(id, data)) {
           // Even an error/202/empty response is not proof of a committed operation.
-          s.notice = t('تعذر تأكيد الحالة (', 'The status could not be confirmed (') + res.status + t('). احتفظنا بالمعرف وبالرد إن وُجد. المتابعة لن تولد ردًا جديدًا.', '). The id and any reply were kept. Follow-up will not generate a new reply.');
+          s.notice = statusText('status_read_failed') + ' — ' + t('تعذر تأكيد الحالة (', 'The status could not be confirmed (') + res.status + t('). احتفظنا بالمعرف وبالرد إن وُجد. المتابعة لن تولد ردًا جديدًا.', '). The id and any reply were kept. Follow-up will not generate a new reply.');
         } else {
-          s.notice = data.status === 'completed' ? t('وصل الرد، وتأكد تسجيل العملية في ذاكرة هذا المتصفح.', 'The reply arrived, and the operation is recorded in this browser’s memory.')
-            : data.status === 'error' ? t('سُجّل خطأ، ولم يؤكد الاستعلام نجاح العملية.', 'An error was recorded. The check did not confirm that the operation succeeded.') : t('ما زالت العملية معلقة.', 'The operation is still pending.');
+          s.notice = data.status === 'completed' ? statusText(data.localPersist && data.localPersist !== 'saved' ? 'save_unconfirmed' : 'save_confirmed') + ' — ' + t('وصل الرد، وتأكد تسجيل العملية في ذاكرة هذا المتصفح.', 'The reply arrived, and the operation is recorded in this browser’s memory.')
+            : data.status === 'error' ? t('سُجّل خطأ، ولم يؤكد الاستعلام نجاح العملية.', 'An error was recorded. The check did not confirm that the operation succeeded.') : statusText('request_pending');
         }
       } catch {
         s.notice = controller.signal.aborted ? stoppedNotice(controller, op.id)
-          : t('تعذرت قراءة الحالة. احتفظنا بالعملية، ويمكن متابعة معرفها الأصلي دون توليد رد جديد.', 'The status could not be read. The operation was kept, and its original id can be followed without generating a new reply.');
+          : statusText('status_read_failed') + ' — ' + t('تعذرت قراءة الحالة. احتفظنا بالعملية، ويمكن متابعة معرفها الأصلي دون توليد رد جديد.', 'The status could not be read. The operation was kept, and its original id can be followed without generating a new reply.');
       } finally {
         clearTimeout(timer);
         if (s.active === controller) s.active = null;
@@ -417,14 +426,14 @@
         if (!res.ok) throw new Error('history');
         const data = await res.json();
         if (!Array.isArray(data.items)) throw new Error('history');
-        for (const r of data.items) merge(id, r);
+        for (const r of data.items) merge(id, { ...r, localPersist:data.localPersist });
         s.hidden = false; s.notice = t('دُمج سجل الشخصية باستخدام معرفات العمليات. عدم ظهور عملية في السجل لا يحذف نسختها المحلية.', 'The character record was merged by operation id. An operation missing from that record is not deleted locally.');
         const open = unresolved(s);
         if (open && !data.items.some(r => r.id === open.id)) {
           s.notice += t(' العملية ', ' Operation ') + iso(open.id) + t(' ليست في سجل الخادم الحالي؛ اضغط «متابعة العملية الأصلية» لقراءة حالتها دون إرسال جديد.', ' is not in the current server record. Press “Follow the original operation” to read its status without sending again.');
         }
         persist();
-      } catch (e) { s.notice = e?.message === 'session' ? SESSION_LOST : t('تعذر تحميل السجل. لم نحذف أي رسالة أو عملية.', 'The record could not be loaded. No message or operation was deleted.'); }
+      } catch (e) { s.notice = e?.message === 'session' ? SESSION_LOST : statusText('history_load_failed') + ' — ' + t('تعذر تحميل السجل. لم نحذف أي رسالة أو عملية.', 'The record could not be loaded. No message or operation was deleted.'); }
       render();
     }
     input.oninput = () => {

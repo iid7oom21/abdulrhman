@@ -61,12 +61,11 @@ test('written opening: choices, display boundaries, language and access',async t
   const phase=()=>page.locator('#hook').getAttribute('data-phase');
   const state=()=>page.locator('#hook').evaluate(el=>({phase:el.dataset.phase,choice:el.dataset.choice||'',recipient:el.dataset.recipient||'',share:el.dataset.share||''}));
   const action=id=>page.locator('[data-hook-action="'+id+'"]');
-  const focusForPhase={start:'hook-step-heading',invite:'hook-invite-start',compare:'hook-paper-start',respond:'hook-response-start',share:'hook-choice-start',review:'hook-share-review',after:'hook-step-heading',done:'hook-register'};
-  const focusForState=value=>value.phase==='after'&&value.choice!=='precise'?'hook-choice-start':focusForPhase[value.phase];
-  // Dialogue deliberately locked by PR103 (c9a3279); presentation may change.
+  const focusForState=()=> 'hook-step-heading';
+  // Copy below follows the owner's explicit 2026-11-05 revision.
   const lockedCopy={
-    ar:{precise:'أدق: أرسلت ملاحظة عن نقص الصورة. ما فحصت الأصل، وما اعتمدت النتيجة.',wait:'ما سجلت توضيح للحين.',refuse:'ما سجلت توضيح قبل ما تعرف المستلم.',draft:'تبقى مسودة. ما توصل أحد.',who:'مين بيستلمه؟',badge:'كذب صريح',order:['أنا ما راجعت الأصل.','لكنك كتبت إن الصورة ما تكفي.','وهذا مو نفس الشي.','الجملة اللي فوق منك؟','مني. النتيجة اللي تحت مو مني.','صحح النتيجة. لا تنفي الرسالة.']},
-    en:{precise:'Precise: I sent a note that the picture was not enough. I did not examine the original, and I did not approve the conclusion.',wait:'You have not recorded a clarification yet.',refuse:'You recorded nothing before knowing the recipient.',draft:'Keep it as a draft. It reaches no one.',who:'Who receives it?',badge:'Explicit lie',order:['I did not review the original.','But you wrote that the picture is not enough.','That is not the same thing.','Is the sentence above yours?','It is mine. The conclusion under it is not.','Correct the conclusion. Do not deny the message.']}
+    ar:{precise:'توضيح دقيق: أرسلت ملاحظة عن نقص الصورة. ما فحصت الأصل، وما اعتمدت النتيجة.',wait:'أحتفظ بالرد لين أشوف المراسلة والنسخة.',refuse:'ما أسجل توضيح قبل ما أعرف مين يستلمه.',draft:'تبقى مسودة. ما توصل أحد.',who:'قبل ترسله، مين بيستلمه؟',badge:'كذب صريح',order:['أنا ما راجعت الأصل.','لكنك كتبت إن الصورة ما تكفي.','وهذا مو نفس الشي.','الجملة اللي فوق منك؟','مني. النتيجة اللي تحت مو مني.','صحح النتيجة. لا تنفي الرسالة.']},
+    en:{precise:'Precise: I sent a note that the picture was not enough. I did not examine the original, and I did not approve the conclusion.',wait:'I hold the reply until I see the correspondence and the copy.',refuse:'I will not record a clarification before I know who receives it.',draft:'Keep it as a draft. It reaches no one.',who:'Before you send it, who will receive it?',badge:'Explicit lie',order:['I did not review the original.','But you wrote that the picture is not enough.','That is not the same thing.','Is the sentence above yours?','It is mine. The conclusion under it is not.','Correct the conclusion. Do not deny the message.']}
   };
   const click=async(id,nextPhase)=>{
     await action(id).click();
@@ -92,8 +91,10 @@ test('written opening: choices, display boundaries, language and access',async t
     await fresh(lang);await click('open','invite');await click('enter','compare');
     assert.equal(await page.locator('#hook-document [data-part="original"]').innerText(),await page.locator('[data-k="m2"]').innerText());
     assert.ok((await page.locator('#hook-document [data-part="conclusion"]').innerText()).length>0);
-    assert.equal(await page.locator('#hook-document [data-part="signature"]').innerText(),'');
+    assert.match(await page.locator('#hook-document [data-part="signature"]').innerText(),/غير موقّع|unsigned/);
     assert.ok(!(await page.locator('#hook-log').innerText()).includes('صحح النتيجة. لا تنفي الرسالة.'));
+    assert.deepEqual(await page.locator('#hook').evaluate(el=>JSON.parse(el.dataset.layers).spokenAloud),[]);
+    for(const part of ['original','conclusion','signature']){await action('source-'+part).click();assert.ok((await page.locator('#hook-source-note').innerText()).length>20);}
     const before=await state();await action('compare-toggle').click();assert.equal(await action('compare-toggle').getAttribute('aria-expanded'),'true');
     assert.equal(await page.locator('#hook-comparison').isVisible(),true);assert.deepEqual(await state(),before);
     await action('compare-toggle').click();assert.equal(await page.locator('#hook-comparison').isVisible(),false);
@@ -103,51 +104,56 @@ test('written opening: choices, display boundaries, language and access',async t
     const spoken=await page.locator('#hook-log > li[data-kind="spoken"] > p').allTextContents();
     assert.deepEqual(spoken.slice(-6),lockedCopy[lang].order,'the locked dialogue order must stay intact');
     await click('precise','share');
-    assert.equal(await page.locator('#hook-choice-start > p').innerText(),lockedCopy[lang].precise);
-    assert.equal(await page.locator('#hook-choice-start').getAttribute('data-kind'),'spoken');
+    assert.equal(await page.locator('#hook-choice-start > p').innerText(),lang==='ar'?'تكتب توضيحك في المسودة.':'You write your clarification in the draft.');
+    assert.equal(await page.locator('#hook-choice-start').getAttribute('data-kind'),'narrative');
     assert.equal(await page.locator('#hook-draft').getAttribute('data-kind'),'written-draft');
     assert.equal(await action('recipient-draft').innerText(),lockedCopy[lang].draft);
     assert.equal((await page.locator('#hook-log > li[data-kind="spoken"] > p').allTextContents()).at(-1),lockedCopy[lang].who);
     for(const choice of ['wait','refuse']){
-      await reachRespond(lang);await click(choice,'after');
+      await reachRespond(lang);await click(choice,'review');await click('confirm','after');
       assert.equal(await page.locator('#hook-choice-start > p').innerText(),lockedCopy[lang][choice]);
       assert.equal(await page.locator('#hook-choice-start').getAttribute('data-kind'),'spoken');
     }
     }
   });
 
-  for(const route of [
-    {choice:'precise',recipient:'jonas'}, {choice:'precise',recipient:'both'}, {choice:'precise',recipient:'draft'},
-    {choice:'wait'}, {choice:'refuse'}, {choice:'lie'}
-  ])await run('branch '+route.choice+(route.recipient?' / '+route.recipient:''),async()=>{
-    await reachRespond();
-    await click(route.choice,route.recipient?'share':'after');
-    if(route.recipient){
-      assert.equal(await page.locator('#hook-draft').isVisible(),true);
-      assert.equal(await page.locator('#hook-actions [data-hook-action]').count(),3);
-      assert.equal(await page.locator('#hook-draft').evaluate(el=>Boolean(el.closest('.you'))),false,'private draft is not rendered as a spoken player message');
-      await click('recipient-'+route.recipient,'review');
+  for(const choice of ['precise','wait','refuse','lie']) for(const recipient of ['jonas','both','draft'])
+  await run('branch matrix '+choice+' / '+recipient,async()=>{
+    const written=['precise','lie'].includes(choice);
+    for(const lang of ['ar','en']) {
+      await reachRespond(lang);await click(choice,written?'share':'review');
+      if(written){
+        assert.equal(await page.locator('#hook-draft').isVisible(),true);
+        assert.equal(await page.locator('#hook-draft').evaluate(el=>Boolean(el.closest('.you'))),false);
+        await click('recipient-'+recipient,'review');
+      } else {
+        assert.equal(await action('recipient-'+recipient).count(),0,'defer/refuse must not invent a written material or a recipient');
+        assert.equal(await page.locator('#hook-draft').count(),0);
+      }
+      const layers=()=>page.locator('#hook').evaluate(el=>JSON.parse(el.dataset.layers));
+      const before=await layers();assert.equal(before.sceneShared,null);
+      assert.deepEqual(before.recipientKnowledge,{jonas:[],claire:[],elena:[]});
       assert.equal(await page.locator('#hook-share-review').isVisible(),true);
-      assert.equal((await state()).share,'','selecting a candidate does not confirm the action');
-      assert.ok((await page.locator('#hook-share-review [data-part="scope"]').innerText()).length>0);
+      assert.ok((await page.locator('#hook-share-review [data-part="private"]').innerText()).length>10);
       await click('confirm','after');
-      assert.equal((await state()).share,route.recipient);
+      const after=await layers();const expected=written?({jonas:['jonas'],both:['jonas','claire'],draft:[]})[recipient]:[];
+      assert.deepEqual(after.sceneShared?.recipients||[],expected);
+      for(const id of ['jonas','claire','elena']) assert.deepEqual(after.recipientKnowledge[id],expected.includes(id)?['opening-draft']:[]);
+      assert.equal(after.spokenAloud[0].lineId,'L10');assert.equal(after.spokenAloud[1].lineId,'L14');
+      assert.deepEqual(after.spokenAloud[0].listeners,['jonas','claire','elena']);
+      const status=await page.locator('#hook-state-status').innerText();
+      if(!written)assert.equal(status,lang==='ar'?'لم تُسجّل توضيحًا.':'You did not record a clarification.');
+      if(written&&recipient==='draft')assert.equal(status,lang==='ar'?'احتفظت بمسودة.':'You kept a draft.');
+      await click('record','done');
+      assert.match(await page.locator('#hook-register').innerText(),/سجل استقبال بلاغات المراجعة|Review Reports Intake Log/);
+      assert.equal(await page.locator('#hook-log > li:last-child > p').innerText(),lang==='ar'?'إيلينا ما تجاوب.':'Elena does not answer.');
+      assert.equal(await page.locator('#hook-ending').isVisible(),true);assert.equal(await action('replay').isVisible(),true);
+      if(written){const ids=await page.locator('[data-line-id]').evaluateAll(es=>[...new Set(es.map(e=>e.dataset.lineId))].sort());assert.deepEqual(ids,Array.from({length:21},(_,i)=>'L'+String(i+1).padStart(2,'0')));}
+      await page.locator('#hook-summary summary').click();assert.equal(await page.locator('[data-layer]').count(),4);
+      const stable=await layers();await page.click('#lang-switch');assert.deepEqual(await layers(),stable);
+      await page.click('#lang-switch');assert.deepEqual(await layers(),stable);await preservedStorage();
     }
-    const status=await page.locator('#hook-state-status').innerText();
-    assert.ok(status.length>0);assert.ok(!status.includes('وصل ليوناس'),'do not claim a real dialogue share');
-    if(route.choice==='lie')assert.notEqual(await page.locator('#hook-log > li').filter({hasText:'اخترت إنكار الرسالة داخل المشهد.'}).getAttribute('data-kind'),'spoken','a description of the selected action is not a spoken claim');
-    await click('record','done');
-    assert.match(await page.locator('#hook-log').innerText(),/سجل استقبال بلاغات المراجعة/);
-    assert.notEqual(await page.locator('#hook-log > li').filter({hasText:'إيلينا ما تجاوب.'}).getAttribute('data-kind'),'spoken','silence is narration, not a spoken statement');
-    assert.equal(await page.locator('#hook-ending').isVisible(),true);
-    assert.equal(await action('replay').isVisible(),true);
-    assert.equal(await page.locator('#hook-back-case').getAttribute('href'),'#title');
-    assert.equal(await page.locator('#hook-preview').getAttribute('target'),'_blank');
-    assert.match(await page.locator('#hook-preview').innerText(),/مستقل|مستقلة/);
-    await page.locator('#hook-summary summary').click();
-    const summary=await page.locator('#hook-summary').innerText();
-    assert.ok(summary.length>30);await preservedStorage();
-    return {route,status,summary};
+    return {choice,recipient,written};
   });
 
   await run('candidate recipients can be reviewed and changed without a second event',async()=>{
@@ -202,12 +208,12 @@ test('written opening: choices, display boundaries, language and access',async t
 
   await run('keyboard steps keep focus and only a short status region announces changes',async()=>{
     await fresh();await action('open').focus();await page.keyboard.press('Enter');
-    assert.equal(await phase(),'invite');assert.equal(await page.evaluate(()=>document.activeElement.id),'hook-invite-start');
+    assert.equal(await phase(),'invite');assert.equal(await page.evaluate(()=>document.activeElement.id),'hook-step-heading');
     assert.equal(await page.locator('#hook-log').getAttribute('aria-live'),null);
     assert.equal(await page.locator('#hook-announcement').getAttribute('role'),'status');
     assert.ok((await page.locator('#hook-announcement').innerText()).length<260);
     assert.equal(await page.locator('#hook-log').evaluate(el=>el.tagName),'OL');
-    const style=await page.locator('#hook-invite-start').evaluate(el=>({outline:getComputedStyle(el).outlineStyle,tabindex:el.tabIndex}));
+    const style=await page.locator('#hook-step-heading').evaluate(el=>({outline:getComputedStyle(el).outlineStyle,tabindex:el.tabIndex}));
     assert.notEqual(style.outline,'none');assert.equal(style.tabindex,-1);
     return style;
   });

@@ -269,6 +269,7 @@
   // incompatible: a stored copy could not be read and was left untouched.
   // unavailable: localStorage itself could not be read.
   var lastPersist = "saved";
+  var writableBackup = true;
   var ok = (status, data) => new Response(
     JSON.stringify(data, (k, v) => ["owner", "fingerprint"].includes(k) ? void 0 : v),
     { status, headers: { "Content-Type": "application/json; charset=utf-8" } }
@@ -287,10 +288,10 @@
     return out;
   }
   function persist() {
+    if (!writableBackup) return;
     try {
       localStorage.setItem(STATE_KEY, JSON.stringify({ version: 2, log: log }));
       lastPersist = "saved";
-      try { localStorage.removeItem(LOG_KEY); } catch (e) {}
     } catch (e) {
       lastPersist = "failed";
     }
@@ -318,6 +319,7 @@
           out = [200, { item: materials.listMaterials().find((r) => r.id === item.id), storage: "server-memory" }];
         } else if (path === "/api/shares") {
           if (Object.keys(data).some((k) => !["eventId", "materialId", "recipients"].includes(k)) || !Array.isArray(data.recipients) || data.recipients.includes("player")) return [400, { error: "invalid_share" }];
+          if (materials.listShareEvents().length >= 500 && !materials.listShareEvents().some(e => e.eventId === data.eventId)) return [400, {error:"shares_limit"}];
           out = [200, { event: materials.share({ ...data, sender: "player" }), storage: "server-memory" }];
         } else {
           if (!["jonas", "claire"].includes(data.characterId)) return [400, { error: "invalid_request" }];
@@ -338,24 +340,35 @@
     return [404, { error: "not_found" }];
   }
   function replay(entries) {
+    const beforeMaterials = materials, beforeRequests = new Map(requests), beforeIds = new Map(idsByOwner);
+    materials = createMaterialStore();
+    try {
     for (const e of entries) {
-      if (!e || typeof e.path !== "string") continue;
-      handle("POST", e.path, null, e.data, true);
+      if (!e || Object.keys(e).some(k => !['path','data'].includes(k)) || !['/api/dialogue','/api/materials','/api/shares'].includes(e.path)) throw new Error('schema');
+      const result = handle("POST", e.path, null, e.data, true);
+      if (result[0] !== 200) throw new Error('schema');
+    }
+    } catch (error) {
+      materials = beforeMaterials;
+      requests.clear(); for (const [id,value] of beforeRequests) requests.set(id,value);
+      idsByOwner.clear(); for (const [id,value] of beforeIds) idsByOwner.set(id,value);
+      throw error;
     }
   }
   function loadState() {
     var raw = null;
     try { raw = localStorage.getItem(STATE_KEY); }
-    catch (e) { lastPersist = "unavailable"; return; }
+    catch (e) { lastPersist = "unavailable"; writableBackup = false; return; }
     if (raw) {
       try {
         var saved = JSON.parse(raw);
         if (!saved || saved.version !== 2 || !Array.isArray(saved.log)) throw new Error("schema");
+        replay(saved.log);
         log = compact(saved.log);
-        replay(log);
         return;
       } catch (e) {
         lastPersist = "incompatible";
+        writableBackup = false; log = [];
         return;
       }
     }
@@ -363,11 +376,12 @@
       var oldRaw = localStorage.getItem(LOG_KEY);
       var old = JSON.parse(oldRaw || "[]");
       if (!Array.isArray(old)) throw new Error("schema");
+      replay(old);
       log = compact(old);
-      replay(log);
       if (oldRaw) persist();
     } catch (e) {
       lastPersist = "incompatible";
+      writableBackup = false; log = [];
     }
   }
   loadState();
