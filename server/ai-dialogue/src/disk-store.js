@@ -25,8 +25,17 @@ export function openDiskStore(file) {
     save(state) {
       // Write a temporary file then rename, so a crash mid-write keeps the previous complete file.
       const tmp = `${target}.${process.pid}.tmp`;
-      fs.writeFileSync(tmp, JSON.stringify({ format: DISK_FORMAT, ...state }));
-      fs.renameSync(tmp, target);
+      let fd;
+      try {
+        fd = fs.openSync(tmp, 'w', 0o600);
+        fs.writeFileSync(fd, JSON.stringify({ format: DISK_FORMAT, ...state }));
+        fs.fsyncSync(fd);
+        fs.closeSync(fd); fd = undefined;
+        fs.renameSync(tmp, target);
+      } finally {
+        if (fd !== undefined) fs.closeSync(fd);
+        try { fs.unlinkSync(tmp); } catch (error) { if (error.code !== 'ENOENT') throw error; }
+      }
     },
   };
 }

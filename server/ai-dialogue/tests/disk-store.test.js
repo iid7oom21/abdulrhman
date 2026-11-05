@@ -94,12 +94,12 @@ test('an unreadable store file is left untouched and the server refuses to start
   assert.equal(fs.readFileSync(storeFile, 'utf8'), '{broken');
 });
 
-test('a real process restart with RAVEN_STORE_FILE keeps the operation', async () => {
+test('a real process restart with RAVEN_DIALOGUE_STORAGE_PATH replays without a second reply and rejects changed content', async () => {
   const storeFile = tmpFile();
   const entry = new URL('../src/server.js', import.meta.url).pathname;
   const port = 20000 + Math.floor(Math.random() * 20000);
   const boot = () => new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [entry], { env:{ ...process.env, PORT:String(port), RAVEN_STORE_FILE:storeFile }, stdio:['ignore','pipe','inherit'] });
+    const child = spawn(process.execPath, [entry], { env:{ ...process.env, PORT:String(port), RAVEN_DIALOGUE_STORAGE_PATH:storeFile, RAVEN_AI_PROVIDER:'simulation', HOST:'127.0.0.1' }, stdio:['ignore','pipe','inherit'] });
     child.stdout.on('data', d => { if (String(d).includes('RAVEN preview')) resolve(child); });
     child.on('error', reject);
   });
@@ -113,6 +113,10 @@ test('a real process restart with RAVEN_STORE_FILE keeps the operation', async (
   try {
     const op = await (await get(root, cookie, '/api/operations/proc')).json();
     assert.equal(op.createdAt, first.createdAt);
+    const replay = await (await post(root, cookie, '/api/dialogue', {requestId:'proc',characterId:'jonas',message:'سؤال'})).json();
+    assert.equal(replay.replayed,true);assert.deepEqual(replay.response,first.response);
+    assert.equal((await post(root,cookie,'/api/dialogue',{requestId:'proc',characterId:'jonas',message:'محتوى آخر'})).status,409);
+    assert.equal((await (await get(root,cookie,'/api/history')).json()).items.length,1);
     assert.equal((await post(root, cookie, '/api/dialogue', { requestId:'proc', characterId:'elena', message:'x' })).status, 400);
   } finally { await stop(child); }
 });
