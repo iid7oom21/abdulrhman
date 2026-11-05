@@ -1,0 +1,398 @@
+{
+  "node": "v24.19.0",
+  "browser": "154.0.8037.57",
+  "source": "http://127.0.0.1:40835/",
+  "scope": "Actual static case page in desktop Chromium, controlled viewport/text sizes; no physical mobile device, screen-reader speech, provider or backend integration",
+  "results": [
+    {
+      "name": "the document is visible before the explanatory dialogue, with exact source text",
+      "status": "PASS"
+    },
+    {
+      "name": "branch matrix precise / jonas",
+      "status": "PASS",
+      "evidence": {
+        "choice": "precise",
+        "recipient": "jonas",
+        "written": true
+      }
+    },
+    {
+      "name": "branch matrix precise / both",
+      "status": "PASS",
+      "evidence": {
+        "choice": "precise",
+        "recipient": "both",
+        "written": true
+      }
+    },
+    {
+      "name": "branch matrix precise / draft",
+      "status": "PASS",
+      "evidence": {
+        "choice": "precise",
+        "recipient": "draft",
+        "written": true
+      }
+    },
+    {
+      "name": "branch matrix wait / jonas",
+      "status": "PASS",
+      "evidence": {
+        "choice": "wait",
+        "recipient": "jonas",
+        "written": false
+      }
+    },
+    {
+      "name": "branch matrix wait / both",
+      "status": "PASS",
+      "evidence": {
+        "choice": "wait",
+        "recipient": "both",
+        "written": false
+      }
+    },
+    {
+      "name": "branch matrix wait / draft",
+      "status": "PASS",
+      "evidence": {
+        "choice": "wait",
+        "recipient": "draft",
+        "written": false
+      }
+    },
+    {
+      "name": "branch matrix refuse / jonas",
+      "status": "PASS",
+      "evidence": {
+        "choice": "refuse",
+        "recipient": "jonas",
+        "written": false
+      }
+    },
+    {
+      "name": "branch matrix refuse / both",
+      "status": "PASS",
+      "evidence": {
+        "choice": "refuse",
+        "recipient": "both",
+        "written": false
+      }
+    },
+    {
+      "name": "branch matrix refuse / draft",
+      "status": "PASS",
+      "evidence": {
+        "choice": "refuse",
+        "recipient": "draft",
+        "written": false
+      }
+    },
+    {
+      "name": "branch matrix lie / jonas",
+      "status": "PASS",
+      "evidence": {
+        "choice": "lie",
+        "recipient": "jonas",
+        "written": true
+      }
+    },
+    {
+      "name": "branch matrix lie / both",
+      "status": "PASS",
+      "evidence": {
+        "choice": "lie",
+        "recipient": "both",
+        "written": true
+      }
+    },
+    {
+      "name": "branch matrix lie / draft",
+      "status": "PASS",
+      "evidence": {
+        "choice": "lie",
+        "recipient": "draft",
+        "written": true
+      }
+    },
+    {
+      "name": "candidate recipients can be reviewed and changed without a second event",
+      "status": "PASS"
+    },
+    {
+      "name": "language changes at every phase preserve choices, candidate and confirmed recipient",
+      "status": "PASS",
+      "evidence": [
+        {
+          "phase": "start",
+          "choice": "",
+          "recipient": "",
+          "share": ""
+        },
+        {
+          "phase": "invite",
+          "choice": "",
+          "recipient": "",
+          "share": ""
+        },
+        {
+          "phase": "compare",
+          "choice": "",
+          "recipient": "",
+          "share": ""
+        },
+        {
+          "phase": "respond",
+          "choice": "",
+          "recipient": "",
+          "share": ""
+        },
+        {
+          "phase": "share",
+          "choice": "precise",
+          "recipient": "",
+          "share": ""
+        },
+        {
+          "phase": "review",
+          "choice": "precise",
+          "recipient": "jonas",
+          "share": ""
+        },
+        {
+          "phase": "after",
+          "choice": "precise",
+          "recipient": "jonas",
+          "share": "jonas"
+        },
+        {
+          "phase": "done",
+          "choice": "precise",
+          "recipient": "jonas",
+          "share": "jonas"
+        }
+      ]
+    },
+    {
+      "name": "replay clears this isolated scene while reload returns to its disclosed start",
+      "status": "PASS"
+    },
+    {
+      "name": "keyboard steps keep focus and only a short status region announces changes",
+      "status": "PASS",
+      "evidence": {
+        "outline": "solid",
+        "tabindex": -1
+      }
+    },
+    {
+      "name": "new dialogue stays at the reading start in portrait and landscape",
+      "status": "PASS",
+      "evidence": [
+        {
+          "width": 390,
+          "phase": "invite",
+          "top": 361.625,
+          "bottom": 394.921875,
+          "height": 844,
+          "id": "hook-step-heading"
+        },
+        {
+          "width": 390,
+          "phase": "compare",
+          "top": 548.90625,
+          "bottom": 582.203125,
+          "height": 844,
+          "id": "hook-step-heading"
+        },
+        {
+          "width": 390,
+          "phase": "respond",
+          "top": 365.5625,
+          "bottom": 398.859375,
+          "height": 844,
+          "id": "hook-step-heading"
+        },
+        {
+          "width": 390,
+          "phase": "share",
+          "top": 355.40625,
+          "bottom": 388.703125,
+          "height": 844,
+          "id": "hook-step-heading"
+        },
+        {
+          "width": 390,
+          "phase": "review",
+          "top": 291.546875,
+          "bottom": 324.84375,
+          "height": 844,
+          "id": "hook-step-heading"
+        },
+        {
+          "width": 390,
+          "phase": "after",
+          "top": 23.625,
+          "bottom": 56.921875,
+          "height": 844,
+          "id": "hook-step-heading"
+        },
+        {
+          "width": 390,
+          "phase": "done",
+          "top": 362.953125,
+          "bottom": 396.25,
+          "height": 844,
+          "id": "hook-step-heading"
+        },
+        {
+          "width": 844,
+          "phase": "invite",
+          "top": 134.953125,
+          "bottom": 168.25,
+          "height": 390,
+          "id": "hook-step-heading"
+        },
+        {
+          "width": 844,
+          "phase": "compare",
+          "top": 309.234375,
+          "bottom": 342.53125,
+          "height": 390,
+          "id": "hook-step-heading"
+        },
+        {
+          "width": 844,
+          "phase": "respond",
+          "top": 139.109375,
+          "bottom": 172.40625,
+          "height": 390,
+          "id": "hook-step-heading"
+        },
+        {
+          "width": 844,
+          "phase": "share",
+          "top": 138.953125,
+          "bottom": 172.25,
+          "height": 390,
+          "id": "hook-step-heading"
+        },
+        {
+          "width": 844,
+          "phase": "review",
+          "top": 74.609375,
+          "bottom": 107.90625,
+          "height": 390,
+          "id": "hook-step-heading"
+        },
+        {
+          "width": 844,
+          "phase": "after",
+          "top": 23.953125,
+          "bottom": 57.25,
+          "height": 390,
+          "id": "hook-step-heading"
+        },
+        {
+          "width": 844,
+          "phase": "done",
+          "top": 146.015625,
+          "bottom": 179.3125,
+          "height": 390,
+          "id": "hook-step-heading"
+        }
+      ]
+    },
+    {
+      "name": "mobile widths, both languages, long text and 200% text enlargement remain usable",
+      "status": "PASS",
+      "evidence": [
+        {
+          "lang": "ar",
+          "width": 320,
+          "height": 844,
+          "scale": 1,
+          "scroll": 320,
+          "controls": []
+        },
+        {
+          "lang": "ar",
+          "width": 375,
+          "height": 844,
+          "scale": 1,
+          "scroll": 375,
+          "controls": []
+        },
+        {
+          "lang": "ar",
+          "width": 390,
+          "height": 844,
+          "scale": 1,
+          "scroll": 390,
+          "controls": []
+        },
+        {
+          "lang": "ar",
+          "width": 844,
+          "height": 390,
+          "scale": 1,
+          "scroll": 844,
+          "controls": []
+        },
+        {
+          "lang": "ar",
+          "width": 390,
+          "height": 844,
+          "scale": 2,
+          "scroll": 390,
+          "controls": []
+        },
+        {
+          "lang": "en",
+          "width": 320,
+          "height": 844,
+          "scale": 1,
+          "scroll": 320,
+          "controls": []
+        },
+        {
+          "lang": "en",
+          "width": 375,
+          "height": 844,
+          "scale": 1,
+          "scroll": 375,
+          "controls": []
+        },
+        {
+          "lang": "en",
+          "width": 390,
+          "height": 844,
+          "scale": 1,
+          "scroll": 390,
+          "controls": []
+        },
+        {
+          "lang": "en",
+          "width": 844,
+          "height": 390,
+          "scale": 1,
+          "scroll": 844,
+          "controls": []
+        },
+        {
+          "lang": "en",
+          "width": 390,
+          "height": 844,
+          "scale": 2,
+          "scroll": 390,
+          "controls": []
+        }
+      ]
+    },
+    {
+      "name": "comparison displays its source as text and makes no external write",
+      "status": "PASS"
+    }
+  ]
+}

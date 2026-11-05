@@ -1,0 +1,30 @@
+{
+  "version": "player_help_texts_bilingual_v1.0.0",
+  "note": "تسليم نصوص للدمج فقط، ليس ادعاء أنها رُبطت بالواجهة",
+  "help_title": {
+    "ar": "كيف تسأل في RAVEN",
+    "en": "How to ask in RAVEN"
+  },
+  "help_intro": {
+    "ar": "اسأل الشخصية عما تعرفه، وتابع إجابتها بهدوء، واربط سؤالك بما ظهر لك في المشهد.",
+    "en": "Ask the character what they know, follow their answer calmly, and link your question to what appeared in the scene."
+  },
+  "help_steps": [
+    {
+      "ar": "اسأل عن شيء محدد ظهر لك في المشهد.",
+      "en": "Ask about something specific you saw in the scene."
+    },
+    {
+      "ar": "تابع إجابة الشخصية واطلب توضيحاً بسيطاً إذا احتجت.",
+      "en": "Follow the character's answer and ask for a simple clarification if needed."
+    },
+    {
+      "ar": "اربط سؤالك الجديد بما عرفته من الإجابات السابقة.",
+      "en": "Link your new question to what you learned from previous answers."
+    }
+  ],
+  "question_hint": {
+    "ar": "بدل السؤال العام، اذكر ما رأيته واسأل: ماذا تعرف عن هذا؟",
+    "en": "Instead of a general question, mention what you saw and ask: What do you know about this?"
+  }
+}

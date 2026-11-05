@@ -96,6 +96,9 @@ h2{margin:0 0 16px;font-weight:600;font-size:clamp(20px,3.4vw,24px);color:var(--
 .hook-comparison h4{margin:0 0 8px;color:var(--gold-hi);font-size:15px}
 .hook-comparison p{margin:0;overflow-wrap:anywhere}
 .hook-document button{margin-top:16px}
+.hook-part{display:block;width:100%;white-space:normal;height:auto;min-height:44px;text-align:start}
+.hook-layers{display:grid;gap:12px;margin-top:16px}
+.hook-layers section{padding:12px;border:1px solid var(--line);overflow-wrap:anywhere}
 .hook-step{font-size:18px;color:var(--gold-hi);margin:24px 0 8px;scroll-margin-block:24px}
 .hook-state{padding-inline-start:12px;border-inline-start:2px solid var(--gold);color:var(--soft)}
 .hook-state:empty{display:none}
@@ -175,14 +178,14 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
   <section class="block" id="hook" aria-labelledby="t-hook"><div class="wrap">
     <h2 id="t-hook" data-k="hookTitle">الورقة</h2>
     <p class="lead" data-k="hookLead">كلامك صحيح. النتيجة مو منك.</p>
-    <p class="hook-note" data-k="hookNote">هذا المشهد مستقل عن معاينة الحوار. اختياراته تبقى أثناء فتح الصفحة فقط؛ تحديث الصفحة يبدأه من جديد.</p>
+    <p class="hook-note" data-k="hookNote">هذا المشهد مستقل عن معاينة الحوار — حالة محلية أثناء الجلسة الحالية فقط. تحديث الصفحة يبدأه من جديد.</p>
     <ol id="hook-log" class="hook-log" aria-label="الحوار المكتوب"></ol>
     <h3 id="hook-step-heading" class="hook-step" tabindex="-1"></h3>
     <p id="hook-state-status" class="hook-state"></p>
     <div id="hook-review-panel"></div>
     <div id="hook-actions" class="choices"></div>
     <section id="hook-ending" class="hook-ending" hidden></section>
-    <p id="hook-announcement" class="hook-sr" role="status" aria-atomic="true"></p>
+    <p id="hook-announcement" class="hook-sr" role="status" aria-live="polite" aria-atomic="true"></p>
   </div></section>
 
   <section class="block" aria-labelledby="t-now"><div class="wrap">
@@ -212,7 +215,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       rulesTitle: 'قواعد القضية', r1: 'ما تكتب اسمًا ما يثبته الأصل.', r2: 'الكذب اختيار صريح، مو فخ في الكلام.',
       r3: 'الصمت ما يدينك.', r4: 'اللي تقوله يبقى. والتصحيح يبان جنبه.', r5: 'ماضيك ثابت. اختياراتك ما تغيّره.',
       hookTitle: 'الورقة', hookLead: 'كلامك صحيح. النتيجة مو منك.',
-      hookNote: 'هذا المشهد مستقل عن معاينة الحوار. اختياراته تبقى أثناء فتح الصفحة فقط؛ تحديث الصفحة يبدأه من جديد.',
+      hookNote: 'هذا المشهد مستقل عن معاينة الحوار — حالة محلية أثناء الجلسة الحالية فقط. تحديث الصفحة يبدأه من جديد.',
       nowTitle: 'المتاح الآن', nowText: 'القضية قيد التطوير. تقدر تجرّب معاينة الحوار التقنية: تسجّل أقوالك وتصحيحاتك، وتجرّب مشاركة المواد.',
       nowBtn: 'معاينة الحوار التقنية — مستقلة عن هذا المشهد ↗', nowNote: 'الشخصيات ما ترد بعد بنص القصة. اختيارات الافتتاح لا تنتقل إلى هذه المعاينة.',
       footer: 'RAVEN · عبدالرحمن العتيبي', docTitle: 'RAVEN — الاسم المحذوف',
@@ -302,7 +305,8 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
   if (!hook || !log || !actions) return;
   // Isolated scene presentation only: no storage, API, character knowledge or game events.
   // A spoken line is distinct from the written correction and its selected recipient.
-  const fresh = () => ({phase:'start', choice:null, recipient:null, share:null, comparison:false, summary:false});
+  const fresh = () => ({phase:'start', choice:null, recipient:null, share:null, comparison:false, summary:false,
+    spokenAloud:[], draftWritten:null, sceneShared:null, recipientKnowledge:{jonas:[],claire:[],elena:[]}});
   let state = fresh();
   const copy = {
     ar: {
@@ -312,44 +316,48 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       you1:'أنا ما راجعت الأصل.', jonas2:'لكنك كتبت إن الصورة ما تكفي.',
       elena1:'وهذا مو نفس الشي.', elena2:'الجملة اللي فوق منك؟',
       you2:'مني. النتيجة اللي تحت مو مني.', elena3:'صحح النتيجة. لا تنفي الرسالة.',
-      c1:'أدق: أرسلت ملاحظة عن نقص الصورة. ما فحصت الأصل، وما اعتمدت النتيجة.',
-      c2:'أأجل: أحتفظ بالرد لين أشوف المراسلة والنسخة.',
-      c3:'أرفض الآن: ما أسجل توضيح قبل ما أعرف مين يستلمه.',
-      c4:'أكذب صراحة: أنكر إني أرسلت الرسالة، وهي في محادثتي.',
+      c1:'توضيح دقيق: أرسلت ملاحظة عن نقص الصورة. ما فحصت الأصل، وما اعتمدت النتيجة.',
+      c2:'تأجيل: أحتفظ بالرد لين أشوف المراسلة والنسخة.',
+      c3:'رفض التسجيل الآن: ما أسجل توضيح قبل ما أعرف مين يستلمه.',
+      c4:'كذب صريح: أنكر إني أرسلت الرسالة وهي في محادثتي.',
       correction:'أرسلت ملاحظة عن نقص الصورة. ما فحصت الأصل، وما اعتمدت النتيجة.',
-      lieMark:'كذب صريح', who:'مين بيستلمه؟',
+      denial:'أنكر إني أرسلت الرسالة وهي في محادثتي.', writing:'تكتب توضيحك في المسودة.',
+      lieMark:'كذب صريح', who:'قبل ترسله، مين بيستلمه؟',
       s1:'يوناس فقط', s2:'يوناس وكلير', s3:'تبقى مسودة. ما توصل أحد.',
       sentJonas:'اخترت توجيه التصحيح إلى يوناس داخل المشهد.',
       sentBoth:'اخترت توجيه التصحيح إلى يوناس وكلير داخل المشهد.',
-      kept:'احتفظت بمسودة التصحيح دون توجيهها إلى مستلم داخل المشهد.',
-      waited:'أجّلت التوضيح إلى ما بعد مراجعة المراسلة والنسخة.',
-      refused:'رفضت تسجيل توضيح قبل معرفة المستلم.',
-      waitSpoken:'ما سجلت توضيح للحين.', refuseSpoken:'ما سجلت توضيح قبل ما تعرف المستلم.',
+      kept:'احتفظت بمسودة.',
+      waited:'لم تُسجّل توضيحًا.', refused:'لم تُسجّل توضيحًا.',
+      waitSpoken:'أحتفظ بالرد لين أشوف المراسلة والنسخة.', refuseSpoken:'ما أسجل توضيح قبل ما أعرف مين يستلمه.',
       lied:'اخترت إنكار الرسالة داخل المشهد. الإنكار ظاهر في هذا السجل بوصفه كذبًا صريحًا.',
       askRecord:'اطلب السجل', title:'سجل استقبال بلاغات المراجعة',
       you3:'هذا سجل بلاغات؟', jonas3:'هذا عنوان الأصل اللي عندنا.', elena4:'إيه.',
       you4:'طيب ليش المسودة تتكلم عن اسم المسؤول؟', end:'إيلينا ما تجاوب.',
       voice:'من داخل البيت', paper:'المسودة', margin:'هامش الأصل',
       documentTitle:'مسودة البيان — غير موقعة', original:'ملاحظتك الأصلية',
-      conclusionLabel:'الاستنتاج المضاف — لم تعتمده', conclusion:'اختلاف النسخ لا يغير نتيجة الملف.',
-      signature:'موضع التوقيع — فارغ', compare:'قارن برسالتك', hideComparison:'إخفاء المقارنة',
-      originalMessage:'رسالتك في التكليف', quotedMessage:'الاقتباس في المسودة',
-      comparisonNote:'الاقتباس مطابق لرسالتك. الاستنتاج المضاف خارج نطاق ما قلته.',
+      conclusionLabel:'الاستنتاج المضاف في المسودة', conclusion:'وبناءً على هذه المراجعة، اختلاف النسخ لا يغير نتيجة الملف.',
+      signature:'موضع التوقيع — فارغ', signatureText:'الاسم: مرمّم السجلات — التوقيع: فارغ / غير موقّع', compare:'قارن برسالتك (جنبًا إلى جنب)', hideComparison:'إخفاء المقارنة',
+      originalMessage:'رسالتك الأصلية — 18:40', quotedMessage:'مسودة الطاولة — 22:20',
+      comparisonNote:'اختر جزءًا من المسودة لمراجعة مصدره.',
+      sourceOriginal:'هذا النص من رسالتك الأصلية. ينتهي الاقتباس هنا.', sourceAdded:'هذه الفقرة مضافة في المسودة؛ ليست ضمن رسالتك.', sourceSignature:'موضع التوقيع فارغ. لا توجد موافقة موقّعة منك.',
       continue:'تابع الحديث', draftTitle:'مسودة التصحيح',
       separation:'هذه مادة مكتوبة منفصلة عن الأقوال الظاهرة في الحوار. إبقاؤها مسودة لا يلغي ما قيل.',
       reviewTitle:'راجع اختيارك داخل المشهد', selectedText:'نص التصحيح المختار', recipientLabel:'المستلم داخل المشهد',
       scopeLabel:'ما يتضمنه الاختيار', scope:'نص التصحيح فقط؛ لا تُرفق الرسالة الأصلية أو الدافع أو الحوار السابق.',
+      privateLabel:'ما سيبقى خاصًا', privateText:'الدافع وملاحظاتك الخاصة لا تُشارك. الرسالة الأصلية والحوار السابق ليسا مرفقين.', privateDraft:'نص المسودة لا يصل إلى أي شخصية. الأقوال المسموعة سابقًا تبقى مسموعة.',
       confirm:'تأكيد الاختيار داخل المشهد', editRecipient:'تغيير المستلم',
       pending:'كتبت مسودة تصحيح. لم تؤكد اختيار المستلم بعد.',
       notWritten:'لم تكتب مسودة تصحيح في هذا الفرع.',
       endTitle:'نهاية الافتتاح المتاح', endNote:'يتوقف المقطع هنا. إعادة المشهد تجربة جديدة لهذا الافتتاح فقط؛ لا تغيّر بيانات معاينة الحوار.',
-      summary:'مراجعة اختياراتي', summaryWritten:'كتبت مسودة تصحيح تحدد نطاق ملاحظتك.',
+      summary:'مراجعة اختياراتي وطبقات المعرفة الأربع', summaryWritten:'كتبت مسودة توضيح.',
+      summarySpoken:'ذكرت بصوت مسموع في الصالة أنك لم تفحص الأصل ولم تعتمد النتيجة المضافة.', summaryEnd:'لم تعتمد نتيجة الملف، ووصلت إلى عنوان الأصل («سجل استقبال بلاغات المراجعة»).',
+      layers:['قول مسموع في المشهد','مسودة كتبتها','مشاركة داخل المشهد','معرفة المستلم من المادة المكتوبة'], none:'لا يوجد.', heard:'سمع يوناس وكلير وإيلينا:', noWritten:'لم تستلم نص المسودة المكتوبة.',
       previewBoundary:'هذا الاختيار داخل المشهد فقط؛ لا يرسل مادة إلى معاينة الحوار أو إلى خادم.',
-      replay:'إعادة المشهد', back:'الرجوع إلى بداية القضية',
+      replay:'إعادة المشهد (تجربة جديدة في الجلسة الحالية)', back:'الرجوع إلى صفحة القضية',
       preview:'معاينة الحوار التقنية — مستقلة عن هذا المشهد ↗',
       logLabel:'الحوار المكتوب', languageChanged:'تغيّرت لغة العرض؛ اختيارات المشهد كما هي.',
       comparisonShown:'ظهرت المقارنة بين رسالتك والاقتباس في المسودة.', comparisonHidden:'أُخفيت المقارنة.',
-      stages:{start:'ابدأ الافتتاح',invite:'الورقة في الداخل',compare:'قارن المسودة برسالتك',respond:'اختر ردك',share:'اختر مستلم المسودة داخل المشهد',review:'راجع النص والمستلم',after:'اختيارك في هذا المشهد',done:'نهاية الافتتاح المتاح'}
+      stages:{start:'ابدأ الافتتاح',invite:'الورقة في الداخل',compare:'قارن المسودة برسالتك',respond:'اختر ردك',share:'اختر مستلم التصحيح داخل المشهد',review:'راجع النص والمستلم',after:'اختيارك في هذا المشهد',done:'نهاية الافتتاح المتاح'}
     },
     en: {
       open:'Open the paper', inside:'Is he the one who wrote the note?',
@@ -363,35 +371,37 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       c3:'Refuse for now: I will not record a clarification before I know who receives it.',
       c4:'Lie outright: I deny sending the message, though it is in my conversation.',
       correction:'I sent a note that the picture was not enough. I did not examine the original, and I did not approve the conclusion.',
-      lieMark:'Explicit lie', who:'Who receives it?',
+      denial:'I deny sending the message, though it is in my conversation.', writing:'You write your clarification in the draft.',
+      lieMark:'Explicit lie', who:'Before you send it, who will receive it?',
       s1:'Jonas only', s2:'Jonas and Claire', s3:'Keep it as a draft. It reaches no one.',
-      sentJonas:'You chose Jonas as the correction recipient within this scene.',
-      sentBoth:'You chose Jonas and Claire as the correction recipients within this scene.',
-      kept:'You kept the correction as a draft without directing it to a recipient within this scene.',
-      waited:'You deferred the clarification until you review the correspondence and the copy.',
-      refused:'You declined to record a clarification before knowing the recipient.',
-      waitSpoken:'You have not recorded a clarification yet.', refuseSpoken:'You recorded nothing before knowing the recipient.',
+      sentJonas:'You chose to direct the clarification to Jonas within the scene.',
+      sentBoth:'You chose to direct the clarification to Jonas and Claire within the scene.',
+      kept:'You kept a draft.', waited:'You did not record a clarification.', refused:'You did not record a clarification.',
+      waitSpoken:'I hold the reply until I see the correspondence and the copy.', refuseSpoken:'I will not record a clarification before I know who receives it.',
       lied:'You chose to deny the message within this scene. The denial appears in this log as an explicit lie.',
-      askRecord:'Ask for the record', title:'Register of review-report intake',
+      askRecord:'Ask for the record', title:'Review Reports Intake Log',
       you3:'This is a reports register?', jonas3:'That is the title on the original we have.', elena4:'Yes.',
       you4:'Then why does the draft speak about the name of the person responsible?', end:'Elena does not answer.',
       voice:'From inside the house', paper:'The draft', margin:'The original’s margin',
       documentTitle:'Draft statement — unsigned', original:'Your original note',
-      conclusionLabel:'Added conclusion — not approved by you', conclusion:'The difference between copies does not change the file’s result.',
-      signature:'Signature space — empty', compare:'Compare with your message', hideComparison:'Hide comparison',
-      originalMessage:'Your message in the assignment', quotedMessage:'The quotation in the draft',
-      comparisonNote:'The quotation matches your message. The added conclusion goes beyond what you said.',
+      conclusionLabel:'Conclusion added to the draft', conclusion:'Based on this review, the difference between copies does not change the file’s result.',
+      signature:'Signature space — empty', signatureText:'Name: record restorer — Signature: blank / unsigned', compare:'Compare with your message', hideComparison:'Hide comparison',
+      originalMessage:'Your original message — 18:40', quotedMessage:'The draft on the table — 22:20',
+      comparisonNote:'Select a part of the draft to inspect its source.', sourceOriginal:'This text is from your original message. The quotation ends here.', sourceAdded:'This paragraph was added to the draft; it is not in your message.', sourceSignature:'The signature space is blank. There is no signed approval from you.',
       continue:'Continue the conversation', draftTitle:'Draft correction',
       separation:'This written material is separate from the spoken lines in the dialogue. Keeping it as a draft does not undo what was said.',
       reviewTitle:'Review your selection within the scene', selectedText:'Selected correction text', recipientLabel:'Recipient within the scene',
       scopeLabel:'What the selection includes', scope:'Only the correction text; the original message, motive and prior conversation are not attached.',
+      privateLabel:'What stays private', privateText:'Your motive and private notes are not shared. The original message and prior dialogue are not attached.', privateDraft:'No character receives the written draft. Previously spoken lines remain heard.',
       confirm:'Confirm the selection within the scene', editRecipient:'Change recipient',
       pending:'You wrote a draft correction. You have not confirmed the recipient selection yet.',
       notWritten:'You did not write a draft correction in this branch.',
-      endTitle:'End of the available opening', endNote:'This segment ends here. Replaying starts a new run of this opening only; it does not change dialogue-preview data.',
-      summary:'Review my choices', summaryWritten:'You wrote a draft correction specifying the scope of your note.',
+      endTitle:'End of Available Opening', endNote:'This segment ends here. Replaying starts a new run of this opening only; it does not change dialogue-preview data.',
+      summary:'Review my choices and the four knowledge layers', summaryWritten:'You wrote a draft clarification.',
+      summarySpoken:'You said aloud in the room that you had not examined the original or approved the added conclusion.', summaryEnd:'You did not approve the file’s result, and you reached the original title (Review Reports Intake Log).',
+      layers:['Spoken aloud in the scene','Your written draft','Sharing within the scene','Recipient knowledge from the written material'], none:'None.', heard:'Jonas, Claire and Elena heard:', noWritten:'Did not receive the written draft.',
       previewBoundary:'This selection is within the scene only; it sends no material to the dialogue preview or to a server.',
-      replay:'Replay this scene', back:'Return to the start of the case',
+      replay:'Replay this scene (a new run in this session)', back:'Return to the case page',
       preview:'Technical dialogue preview — separate from this scene ↗',
       logLabel:'Written dialogue', languageChanged:'The display language changed; your scene choices are unchanged.',
       comparisonShown:'The comparison of your message and the quotation in the draft is open.', comparisonHidden:'The comparison is hidden.',
@@ -400,6 +410,31 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
   };
   const lang = () => document.documentElement.lang === 'en' ? 'en' : 'ar';
   const t = () => copy[lang()];
+  // Arabic originals; English is a display translation of these same stable utterances.
+  const lineKeys = ['m1','m2','m3','a1','a2','a3','inside','claire2','jonas','you1','jonas2','elena1','elena2','you2','elena3','who','you3','jonas3','elena4','you4','end'];
+  const lineId = key => 'L' + String(lineKeys.indexOf(key) + 1).padStart(2,'0');
+  for (const key of lineKeys.slice(0,6)) document.querySelector('[data-k="'+key+'"]')?.setAttribute('data-line-id',lineId(key));
+  const writesDraft = () => ['precise','lie'].includes(state.choice);
+  const selectedText = () => t()[state.draftWritten?.textKey || ({wait:'waitSpoken',refuse:'refuseSpoken'})[state.choice]] || '';
+  const recipients = id => ({jonas:['jonas'],both:['jonas','claire'],draft:[]})[id] || [];
+  function choose(id) {
+    state.choice = id;
+    state.draftWritten = writesDraft() ? {id:'opening-draft',textKey:id === 'precise' ? 'correction' : 'denial'} : null;
+    if (!writesDraft()) state.spokenAloud.push({lineId:id === 'wait' ? 'C02' : 'C03',textKey:id === 'wait' ? 'waitSpoken' : 'refuseSpoken',listeners:['jonas','claire','elena']});
+    transition({phase:writesDraft() ? 'share' : 'review'});
+  }
+  function confirmChoice() {
+    if (state.phase !== 'review') return;
+    if (writesDraft()) {
+      state.share = state.recipient;
+      const delivered = recipients(state.recipient);
+      if (delivered.length) {
+        state.sceneShared = {id:'opening-share',materialId:state.draftWritten.id,mode:state.recipient === 'jonas' ? 'jonas_only' : 'jonas_and_claire',recipients:[...delivered]};
+        for (const id of delivered) state.recipientKnowledge[id] = [state.draftWritten.id];
+      }
+    }
+    transition({phase:'after'});
+  }
   const name = key => document.querySelector('[data-k="' + key + '"]')?.textContent || key;
   const element = (tag, text, className) => {
     const node = document.createElement(tag);
@@ -410,12 +445,13 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
   const announce = text => { announcement.textContent = text; };
   function focusStep() {
     const targets = {invite:'hook-invite-start',compare:'hook-paper-start',respond:'hook-response-start',share:'hook-choice-start',review:'hook-share-review',done:'hook-register'};
-    const targetId = state.phase === 'after' && state.choice !== 'precise' ? 'hook-choice-start' : targets[state.phase];
+    const targetId = state.phase === 'after' && !writesDraft() ? 'hook-choice-start' : targets[state.phase];
     const target = document.getElementById(targetId) || heading;
-    target.tabIndex = -1;
-    target.focus({preventScroll:true});
-    const rect = target.getBoundingClientRect();
-    if (rect.top < 0 || rect.bottom > window.innerHeight) target.scrollIntoView({block:'start',behavior:'auto'});
+    // Put the stage heading at the start of newly revealed content before moving focus.
+    if (target !== heading) target.prepend(heading);
+    heading.focus({preventScroll:true});
+    const rect = heading.getBoundingClientRect();
+    if (rect.top < 0 || rect.bottom > window.innerHeight) heading.scrollIntoView({block:'start',behavior:'auto'});
   }
   function transition(update) {
     Object.assign(state, update);
@@ -433,6 +469,8 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
   function add(who, body, you, kind = 'spoken', id) {
     const row = element('li', undefined, 'msg' + (you ? ' you' : ''));
     row.dataset.kind = kind;
+    const key = lineKeys.find(k => t()[k] === body);
+    if (key) row.dataset.lineId = lineId(key);
     if (id) { row.id = id; row.tabIndex = -1; }
     row.append(element('span', who, 'who'), element('p', body));
     log.append(row);
@@ -450,13 +488,20 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     card.id = 'hook-document'; card.dataset.kind = 'document';
     const original = name('m2'); // The exact same phrase/translation as the assignment above.
     const list = element('dl');
-    pair(list,c.original,original,'original');
-    pair(list,c.conclusionLabel,c.conclusion,'conclusion');
-    const signature = pair(list,c.signature,'','signature');
+    const parts = [[c.original,original,'original',c.sourceOriginal],[c.conclusionLabel,c.conclusion,'conclusion',c.sourceAdded],[c.signature,c.signatureText,'signature',c.sourceSignature]];
+    const sourceNote = element('p',c.comparisonNote,'hook-note');sourceNote.id = 'hook-source-note';
+    for (const [label,text,part,source] of parts) {
+      const description = pair(list,label,undefined,part);
+      description.append(button('source-'+part,text,() => {sourceNote.textContent = source;announce(source);},'hook-part hook-secondary'));
+      if (part === 'original') description.dataset.lineId = 'L02';
+    }
+    const signature = list.querySelector('[data-part="signature"]');
     const blank = element('span',undefined,'hook-signature'); blank.setAttribute('aria-hidden','true'); signature.append(blank);
     const comparison = element('div',undefined,'hook-comparison'); comparison.id = 'hook-comparison'; comparison.hidden = !state.comparison;
-    for (const label of [c.originalMessage,c.quotedMessage]) {
-      const column = element('section'); column.append(element('h4',label),element('p',original)); comparison.append(column);
+    for (const [label,table] of [[c.originalMessage,false],[c.quotedMessage,true]]) {
+      const column = element('section'); column.append(element('h4',label),element('p',original));
+      if (table) column.append(element('p',c.conclusion),element('p',c.signatureText));
+      comparison.append(column);
     }
     const toggle = button('compare-toggle',state.comparison ? c.hideComparison : c.compare,() => {
       state.comparison = !state.comparison; comparison.hidden = !state.comparison;
@@ -465,16 +510,16 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       announce(state.comparison ? c.comparisonShown : c.comparisonHidden);
     },'hook-secondary');
     toggle.setAttribute('aria-controls','hook-comparison');toggle.setAttribute('aria-expanded',String(state.comparison));
-    card.append(element('h3',c.documentTitle),list,toggle,comparison,element('p',c.comparisonNote,'hook-note'));
+    card.append(element('h3',c.documentTitle),list,toggle,comparison,sourceNote);
     log.append(card);
   }
   function choiceStatus(c) {
-    if (state.choice === 'precise') return ({jonas:c.sentJonas,both:c.sentBoth,draft:c.kept})[state.share] || c.pending;
+    if (writesDraft()) return ({jonas:c.sentJonas,both:c.sentBoth,draft:c.kept})[state.share] || c.pending;
     return ({wait:c.waited,refuse:c.refused,lie:c.lied})[state.choice] || '';
   }
   function draftCard(c) {
     const card = element('li',undefined,'hook-draft');card.id = 'hook-draft';card.tabIndex = -1;card.dataset.kind = 'written-draft';
-    card.append(element('h3',c.draftTitle),element('p',c.correction),element('p',c.separation,'hook-note'));
+    card.append(element('h3',c.draftTitle),element('p',selectedText()),element('p',c.separation,'hook-note'));
     log.append(card);
   }
   function renderEnding(c) {
@@ -483,10 +528,19 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     const summary = element('details');summary.id = 'hook-summary'; summary.open = state.summary;
     summary.append(element('summary',c.summary));
     const list = element('ul');
-    if (state.choice === 'precise') list.append(element('li',c.summaryWritten));
+    list.append(element('li',c.summarySpoken));
+    if (writesDraft()) list.append(element('li',c.summaryWritten));
     list.append(element('li',choiceStatus(c)));
-    if (state.choice !== 'precise') list.append(element('li',c.notWritten));
-    list.append(element('li',c.previewBoundary));summary.append(list);
+    if (!writesDraft()) list.append(element('li',c.notWritten));
+    list.append(element('li',c.summaryEnd),element('li',c.previewBoundary));summary.append(list);
+    const layers = element('div',undefined,'hook-layers');
+    const values = [c.heard + '\n' + state.spokenAloud.map(x=>c[x.textKey]).join('\n'),
+      state.draftWritten ? selectedText() : c.none, state.sceneShared ? state.sceneShared.recipients.map(name).join('، ') : c.none,
+      Object.entries(state.recipientKnowledge).map(([id,known])=>name(id)+': '+(known.length ? selectedText() : c.noWritten)).join('\n')];
+    ['spokenAloud','draftWritten','sceneShared','recipientKnowledge'].forEach((key,i)=>{
+      const layer = element('section');layer.dataset.layer = key;layer.append(element('h4',c.layers[i]),element('p',values[i]));layers.append(layer);
+    });
+    summary.append(layers);
     summary.addEventListener('toggle',() => { if (summary.isConnected) state.summary = summary.open; });
     const nav = element('nav');nav.setAttribute('aria-label',c.endTitle);
     nav.append(button('replay',c.replay,() => { state = fresh();render();focusStep();announce(t().stages.start); },'hook-secondary'));
@@ -497,10 +551,14 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
   }
   function render() {
     const c = t();
+    // Move the reusable heading outside the log before replacing its children.
+    log.before(heading);
     hook.dataset.phase = state.phase;
     hook.dataset.choice = state.choice || '';
     hook.dataset.recipient = state.recipient || '';
     hook.dataset.share = state.share || '';
+    hook.dataset.recipientMode = state.share ? ({draft:'draft_only',jonas:'jonas_only',both:'jonas_and_claire'})[state.share] : '';
+    hook.dataset.layers = JSON.stringify({spokenAloud:state.spokenAloud,draftWritten:state.draftWritten,sceneShared:state.sceneShared,recipientKnowledge:state.recipientKnowledge});
     log.replaceChildren();actions.replaceChildren();review.replaceChildren();ending.replaceChildren();ending.hidden = true;
     log.setAttribute('aria-label',c.logLabel);
     heading.textContent = c.stages[state.phase];status.textContent = choiceStatus(c);
@@ -508,21 +566,23 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     add(c.voice,c.inside,false,'spoken','hook-invite-start');add(name('claire'),c.claire2,false);
     if (state.phase === 'invite') { actions.append(button('enter',c.enter,() => transition({phase:'compare'}),'hook-next'));return; }
     add(name('jonas'),c.jonas,false,'spoken','hook-paper-start');documentCard(c);
-    if (state.phase === 'compare') { actions.append(button('continue',c.continue,() => transition({phase:'respond'}),'hook-next'));return; }
+    if (state.phase === 'compare') { actions.append(button('continue',c.continue,() => {
+      state.spokenAloud = [{lineId:'L10',textKey:'you1',listeners:['jonas','claire','elena']},{lineId:'L14',textKey:'you2',listeners:['jonas','claire','elena']}];
+      transition({phase:'respond'});
+    },'hook-next'));return; }
     add(name('you'),c.you1,true,'spoken','hook-response-start');add(name('jonas'),c.jonas2,false);add(name('elena'),c.elena1,false);
     add(name('elena'),c.elena2,false);add(name('you'),c.you2,true);add(name('elena'),c.elena3,false);
     if (state.phase === 'respond') {
       for (const [id,label] of [['precise',c.c1],['wait',c.c2],['refuse',c.c3],['lie',c.c4]]) {
-        const control = button(id,label,() => transition({choice:id,phase:id === 'precise' ? 'share' : 'after'}),id === 'lie' ? 'lie' : '');
+        const control = button(id,label,() => choose(id));
         if (id === 'lie') control.prepend(element('span',c.lieMark,'tag'));
         actions.append(control);
       }
       return;
     }
-    if (state.choice === 'precise') { add(name('you'),c.c1,true,'spoken','hook-choice-start');draftCard(c);add(name('elena'),c.who,false); }
+    if (writesDraft()) { add(c.paper,c.writing,false,'narrative','hook-choice-start');draftCard(c);add(name('elena'),c.who,false); }
     else if (state.choice === 'wait') add(name('you'),c.waitSpoken,true,'spoken','hook-choice-start');
     else if (state.choice === 'refuse') add(name('you'),c.refuseSpoken,true,'spoken','hook-choice-start');
-    else if (state.choice === 'lie') add(c.lieMark,c.lied,true,'choice-summary','hook-choice-start');
     if (state.phase === 'share') {
       for (const [id,label] of [['jonas',c.s1],['both',c.s2],['draft',c.s3]]) {
         actions.append(button('recipient-'+id,label,() => transition({recipient:id,phase:'review'})));
@@ -531,13 +591,18 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     }
     if (state.phase === 'review') {
       const card = element('section',undefined,'hook-review');card.id = 'hook-share-review';card.tabIndex = -1;
-      const list = element('dl');pair(list,c.selectedText,c.correction,'correction');
-      pair(list,c.recipientLabel,({jonas:c.s1,both:c.s2,draft:c.s3})[state.recipient],'recipient');pair(list,c.scopeLabel,c.scope,'scope');
+      const list = element('dl');pair(list,c.selectedText,selectedText(),'correction');
+      pair(list,c.recipientLabel,writesDraft() ? ({jonas:c.s1,both:c.s2,draft:c.s3})[state.recipient] : c.none,'recipient');pair(list,c.scopeLabel,writesDraft() ? c.scope : c.notWritten,'scope');
+      pair(list,c.privateLabel,!writesDraft() ? c.notWritten : state.recipient === 'draft' ? c.privateDraft : c.privateText,'private');
       card.append(element('h3',c.reviewTitle),list,element('p',c.previewBoundary,'hook-note'));review.append(card);
-      actions.append(button('confirm',c.confirm,() => transition({share:state.recipient,phase:'after'}),'hook-next'),button('edit-recipient',c.editRecipient,() => transition({phase:'share'})));
+      actions.append(button('confirm',c.confirm,confirmChoice,'hook-next'));
+      if (writesDraft()) actions.append(button('edit-recipient',c.editRecipient,() => transition({phase:'share'})));
       return;
     }
-    if (state.phase === 'after') { actions.append(button('record',c.askRecord,() => transition({phase:'done'}),'hook-next'));return; }
+    if (state.phase === 'after') { actions.append(button('record',c.askRecord,() => {
+      state.spokenAloud.push({lineId:'L17',textKey:'you3',listeners:['jonas','claire','elena']},{lineId:'L20',textKey:'you4',listeners:['jonas','claire','elena']});
+      transition({phase:'done'});
+    },'hook-next'));return; }
     const title = element('li',undefined,'hook-document');title.id = 'hook-register';title.tabIndex = -1;title.dataset.kind = 'document';title.append(element('span',c.margin,'who'),element('p',c.title));log.append(title);
     add(name('you'),c.you3,true);add(name('jonas'),c.jonas3,false);add(name('elena'),c.elena4,false);add(name('you'),c.you4,true);add(c.paper,c.end,false,'narrative');
     renderEnding(c);
@@ -550,7 +615,8 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     const summary = document.getElementById('hook-summary');if (summary) state.summary = summary.open;
     render();
     const replacement = action ? hook.querySelector('[data-hook-action="'+action+'"]') : wasSummary ? document.querySelector('#hook-summary > summary') : id ? document.getElementById(id) : null;
-    if (replacement) replacement.focus({preventScroll:true});
+    if (replacement === heading) focusStep();
+    else if (replacement) replacement.focus({preventScroll:true});
     announce(t().languageChanged);
   });
   render();
