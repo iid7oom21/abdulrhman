@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAVEN - أرشيف التحقيق التفاعلي</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            background-color: #0d0d0d; color: #e0e0e0; font-family: Tahoma, sans-serif;
+            margin: 0; padding: 20px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; min-height: 100vh;
+        }
+        .container {
+            width: 100%; max-width: 650px; background: #161616; border: 1px solid #262626;
+            border-radius: 12px; padding: 20px; box-shadow: 0 8px 24px rgba(0,0,0,0.8);
+        }
+        h2 { text-align: center; color: #ff9800; margin-top: 0; }
+        #chat-box {
+            width: 100%; height: 380px; background: #101010; border: 1px solid #222;
+            overflow-y: auto; padding: 15px; margin-bottom: 15px; border-radius: 8px;
+            display: flex; flex-direction: column; gap: 12px;
+        }
+        .message { line-height: 1.6; padding: 10px 14px; border-radius: 6px; max-width: 85%; overflow-wrap: anywhere; white-space: pre-wrap; }
+        .player-msg { background: #1e3a29; align-self: flex-end; border-right: 4px solid #4CAF50; }
+        .npc-msg { background: #2a2218; align-self: flex-start; border-right: 4px solid #FF9800; }
+        .sender { font-weight: bold; display: block; margin-bottom: 4px; font-size: 0.85em; }
+        .player-msg .sender { color: #4CAF50; }
+        .npc-msg .sender { color: #FF9800; }
+        .input-group { display: flex; gap: 10px; flex-wrap: wrap; }
+        input[type="text"] {
+            flex: 1 1 180px; min-width: 0; padding: 12px; background: #202020;
+            border: 1px solid #333; color: #fff; border-radius: 6px; font-size: 1em;
+        }
+        input[type="text"]:focus { border-color: #ff9800; }
+        :focus-visible { outline: 2px solid #ff9800; outline-offset: 3px; }
+        button {
+            padding: 12px 24px; background: #ff9800; border: none; color: #000;
+            font-weight: bold; cursor: pointer; border-radius: 6px; font-size: 1em;
+            transition: background 0.2s;
+        }
+        button:hover { background: #e68900; }
+        button:disabled { opacity: .65; cursor: wait; }
+        .loading { color: #aaa; font-style: italic; font-size: .9em; }
+        .notice { color: #bbb; font-size: .85em; line-height: 1.7; }
+        #request-status { min-height: 1.7em; overflow-wrap: anywhere; }
+    </style>
+</head>
+<body>
+    <div class="container" id="top">
+        <h2>RAVEN - غرفة التحقيق السرية</h2>
+        <p class="notice">معاينة مستقلة للواجهة. اتصال Grok غير مفعّل، والحوار التجريبي ليس نص «الاسم المحذوف» المعتمد.</p>
+        <div id="chat-box" role="log" aria-label="سجل المحادثة" aria-live="polite">
+            <div class="message npc-msg"><span class="sender">المحقق (NPC):</span><span>أهلاً بك في أرشيف القضية. الأجواء مظلمة والأدلة تحت المجهر... تفضل بالحديث، ما الذي تبحث عنه هنا؟</span></div>
+        </div>
+        <form class="input-group" id="dialogue-form">
+            <input type="text" id="player-input" aria-label="سؤالك أو ردك" placeholder="اكتب سؤالك أو ردك في التحقيق..." autocomplete="off">
+            <button id="send-button" type="submit">إرسال</button>
+        </form>
+        <p id="request-status" class="notice" role="status" aria-live="polite">المزود غير مربوط. لا تُرسل هذه المعاينة طلبات خارجية ولا تحفظ المحادثة بعد التحديث.</p>
+    </div>
+    <script>
+        // Configure only after an authenticated same-origin backend contract is reviewed.
+        // Provider credentials and the provider/model selection belong on that backend.
+        // No backend is created or assumed by this standalone upload.
+        const DIALOGUE_ENDPOINT = null;
+        let sending = false;
+        let unresolvedRequestId = null;
+        const inputField = document.getElementById('player-input');
+        const chatBox = document.getElementById('chat-box');
+        const sendButton = document.getElementById('send-button');
+        const status = document.getElementById('request-status');
+
+        function addMessage(sender, text, className) {
+            const message = document.createElement('div');
+            message.className = 'message ' + className;
+            const label = document.createElement('span');
+            label.className = 'sender';
+            label.textContent = sender;
+            const body = document.createElement('span');
+            body.textContent = text;
+            message.append(label, body);
+            chatBox.append(message);
+            chatBox.scrollTop = chatBox.scrollHeight;
+            return message;
+        }
+
+        async function sendToRavenStudio() {
+            const playerText = inputField.value.trim();
+            if (!playerText || sending || unresolvedRequestId) return;
+            if (!DIALOGUE_ENDPOINT) {
+                status.textContent = 'لم يُرسل السؤال: يجب ربط خادم آمن أولًا. احتفظنا بنصك في حقل الكتابة.';
+                return;
+            }
+            const endpoint = new URL(DIALOGUE_ENDPOINT, location.href);
+            if (endpoint.origin !== location.origin || !['http:', 'https:'].includes(endpoint.protocol)) {
+                status.textContent = 'لم يُرسل السؤال: يجب أن تكون خدمة الحوار على أصل التطبيق نفسه.';
+                return;
+            }
+            sending = true;
+            sendButton.disabled = true;
+            const requestId = crypto.randomUUID();
+            unresolvedRequestId = requestId;
+            addMessage('أنت:', playerText, 'player-msg');
+            inputField.value = '';
+            const loading = addMessage('النظام:', 'جارٍ انتظار الرد…', 'npc-msg loading');
+            status.textContent = 'جارٍ إرسال السؤال…';
+            try {
+                const response = await fetch(endpoint.href, {
+                    method: 'POST', credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ requestId, message: playerText })
+                });
+                if (response.status === 202) {
+                    status.textContent = 'الطلب قيد المعالجة. احتفظنا بمعرّفه؛ لا يُعاد إرساله تلقائيًا: ' + requestId;
+                    return;
+                }
+                if (!response.ok) throw new Error('HTTP ' + response.status);
+                const data = await response.json();
+                const npcReply = data.choices?.[0]?.message?.content;
+                if (typeof npcReply !== 'string' || !npcReply.trim()) throw new Error('Empty response');
+                addMessage('المحقق (NPC):', npcReply, 'npc-msg');
+                unresolvedRequestId = null;
+                status.textContent = 'وصل الرد. لا يوجد تأكيد حفظ دائم في هذه المعاينة.';
+            } catch (error) {
+                status.textContent = 'تعذر التحقق من نتيجة الطلب. بقي السؤال ومعرّف الطلب محفوظين في هذه الصفحة دون إعادة توليد: ' + requestId;
+            } finally {
+                loading.remove();
+                sending = false;
+                sendButton.disabled = Boolean(unresolvedRequestId);
+            }
+        }
+        document.getElementById('dialogue-form').addEventListener('submit', event => {
+            event.preventDefault();
+            sendToRavenStudio();
+        });
+    </script>
+</body>
+</html>
