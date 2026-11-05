@@ -83,7 +83,7 @@
 <body>
   <header>
     <h1>RAVEN — الاسم المحذوف</h1>
-    <span class="badge">محاكاة</span>
+    <span class="badge" id="mode-badge">محاكاة محلية</span>
   </header>
   <main>
     <div class="row">
@@ -136,7 +136,78 @@
     </details>
   </main>
   <footer>معاينة محاكاة — الردود ليست من نموذج ذكاء اصطناعي حقيقي. السجل في ذاكرة هذا المتصفح ويُفقد عند إعادة تشغيله. جلسة متصفح مجهولة وليست حسابًا موثقًا. نسخة محلية على هذا المتصفح إن سمح التخزين؛ لا يوجد حفظ دائم مضمون.</footer>
-  <script src="./local-api.js?v=dlg-1"></script>
+  <script src="./local-api.js?v=dlg-2"></script>
+  <script>
+  (() => {
+    const param = new URLSearchParams(location.search).get('lang');
+    let stored = null;
+    try { stored = localStorage.getItem('raven_language'); } catch (e) {}
+    const lang = param === 'en' || param === 'ar' ? param : stored === 'en' ? 'en' : 'ar';
+    const en = lang === 'en';
+    document.documentElement.lang = en ? 'en' : 'ar';
+    document.documentElement.dir = en ? 'ltr' : 'rtl';
+    window.ravenDialogueLang = en ? 'en' : 'ar';
+    window.ravenDialogueText = (ar, enText) => en ? enText : ar;
+    const badge = document.getElementById('mode-badge');
+    const server = window.RAVEN_DIALOGUE_MODE === 'server';
+    if (badge) badge.textContent = server
+      ? (en ? 'Server' : 'خادم')
+      : (en ? 'Local simulation' : 'محاكاة محلية');
+    if (!en) return;
+    const set = (sel, value, attr) => {
+      const el = document.querySelector(sel);
+      if (!el) return;
+      if (attr) el.setAttribute(attr, value); else el.textContent = value;
+    };
+    set('h1', 'RAVEN — The Deleted Name');
+    set('header + main > p', "Limited technical preview: the player is a record restorer who arrived after the library incident and the first response. The original statements are not available; simulated replies do not create evidence.");
+    set('#character', 'Character', 'aria-label');
+    set('#clear', 'Hide the view');
+    set('#player-help-title', 'How to ask in RAVEN');
+    const help = document.querySelectorAll('#player-help p, #player-help li');
+    const helpText = [
+      'Ask the character what they know, follow their answer calmly, and link your question to what appeared in the scene.',
+      'Ask about something specific you saw in the scene.',
+      "Follow the character's answer and ask for a simple clarification if needed.",
+      'Link your new question to what you learned from previous answers.',
+      'Instead of a general question, mention what you saw and ask: What do you know about this?'
+    ];
+    help.forEach((el, i) => { if (helpText[i]) el.textContent = helpText[i]; });
+    set('#input', 'Your question to the character', 'aria-label');
+    set('#input', 'Write your question...', 'placeholder');
+    set('#send', 'Send');
+    set('#check', 'Follow the original operation');
+    set('#stop', 'Stop waiting only');
+    set('#history', 'Load the record');
+    set('#log', 'Character record', 'aria-label');
+    set('#materials-panel summary', 'Statements, corrections, and shared materials');
+    set('#materials-panel > p', 'Record what you say and your drafts here. A correction stays beside the original statement and does not make it true. Materials are in this browser’s memory; download a copy to keep them.');
+    set('label[for="material-type"]', 'Material type');
+    const types = { statement: 'An original statement from me', correction: 'A correction of my statement', motive: 'A motive note', private_note: 'A private note', report: 'A report draft' };
+    document.querySelectorAll('#material-type option').forEach(opt => { if (types[opt.value]) opt.textContent = types[opt.value]; });
+    set('#original-label', 'The statement I am correcting');
+    set('label[for="material-text"]', 'Material text');
+    set('#report-fields p', 'Only the attachments explicitly chosen for this report draft:');
+    set('#material-save', 'Record the material');
+    set('#materials-list', 'My recorded materials', 'aria-label');
+    set('label[for="share-material"]', 'Material to share');
+    set('label[for="share-recipient"]', 'Recipient');
+    const names = { jonas: 'Jonas', claire: 'Claire', matteo: 'Matteo', elena: 'Elena' };
+    document.querySelectorAll('#character option, #share-recipient option').forEach(opt => { if (names[opt.value]) opt.textContent = names[opt.value]; });
+    set('#materials-panel .material-form + #materials-list + label + select + label + select + p', 'Sharing sends only the selected material. A report draft sends its chosen attachments; your motives and conversations are not attached automatically.');
+    set('#material-share', 'Share the selected material');
+    set('#material-check', 'Follow the original action');
+    set('#material-resend', 'Resend the pending action with the same id');
+    set('#material-refresh', 'Refresh materials');
+    set('#material-export', 'Download a copy');
+    set('#materials-panel h2', 'Materials that reached the selected recipient');
+    const notes = document.querySelectorAll('#materials-panel > p');
+    if (notes[1]) notes[1].textContent = 'Sharing sends only the selected material. A report draft sends its chosen attachments; your motives and conversations are not attached automatically.';
+    if (notes[2]) notes[2].textContent = 'The report here is a draft. Deposit and its receipt wait for the approved source; no button creates a receipt or evidence from dialogue.';
+    document.querySelector('footer').textContent = 'Simulation preview — replies are not from a real AI model. The record is in this browser’s memory and is lost if that memory is cleared. This is an anonymous browser session, not an account. A local copy is kept when storage allows; there is no guaranteed permanent save.';
+    document.title = 'RAVEN — Dialogue preview';
+  })();
+  </script>
   <script>
     const log = document.getElementById('log');
     const input = document.getElementById('input');
@@ -378,7 +449,9 @@
   <script>
   (() => {
     const $ = id => document.getElementById(id);
-    const labels = {statement:'قول أصلي', correction:'تصحيح', motive:'تفسير دافع', private_note:'ملاحظة خاصة', report:'مسودة تقرير', receipt:'إيصال', evidence:'مادة مصدر'};
+    const labels = window.ravenDialogueLang === 'en'
+      ? {statement:'Original statement', correction:'Correction', motive:'Motive note', private_note:'Private note', report:'Report draft', receipt:'Receipt', evidence:'Source material'}
+      : {statement:'قول أصلي', correction:'تصحيح', motive:'تفسير دافع', private_note:'ملاحظة خاصة', report:'مسودة تقرير', receipt:'إيصال', evidence:'مادة مصدر'};
     const key = 'raven_deleted_name_material_actions_v1';
     const SESSION_LOST_MATERIALS = 'انتهت جلسة هذا المتصفح على الخادم أو أُعيد تشغيله. أعد تحميل الصفحة؛ الإجراء المعلق ومسودتك باقيان، ويمكن إعادة إرساله بالمعرف نفسه.';
     let items = [], pending = null, busy = false, writable = true, localOK = true, viewVersion = 0, listVersion = 0;
@@ -411,7 +484,7 @@
       catch { localOK = false; }
     }
     function notice(text) {
-      $('material-status').textContent = text + (localOK ? '' : ' الحفظ المحلي غير مؤكد؛ نزّل نسخة قبل مغادرة الصفحة.') + (writable ? '' : ' النسخة المحلية غير متوافقة وباقية دون تغيير.');
+      $('material-status').textContent = text + (localOK ? '' : window.ravenDialogueText(' الحفظ المحلي غير مؤكد؛ نزّل نسخة قبل مغادرة الصفحة.', ' Local save is not confirmed; download a copy before leaving.')) + (writable ? '' : window.ravenDialogueText(' النسخة المحلية غير متوافقة وباقية دون تغيير.', ' The stored copy is incompatible and was left unchanged.'));
     }
     function controls() {
       $('material-save').disabled = busy || !!pending;
@@ -476,7 +549,7 @@
         if (!res.ok || data.actor !== id || !Array.isArray(data.materials)) throw new Error('knowledge');
         if (version !== viewVersion) return;
         $('knowledge-list').replaceChildren(...data.materials.map(materialLine));
-        if (!data.materials.length) $('knowledge-list').textContent = 'لم تصله مواد مسجلة في هذه الجلسة.';
+        if (!data.materials.length) $('knowledge-list').textContent = window.ravenDialogueText('لم تصله مواد مسجلة في هذه الجلسة.', 'No recorded materials have reached them in this session.');
       } catch { if (version === viewVersion) $('knowledge-list').textContent = 'تعذرت قراءة معرفة المستلم؛ لم نعتبر ذلك حذفًا أو مشاركة.'; }
     }
     function confirms(action, item, event) {
@@ -490,6 +563,7 @@
     // done: the confirmed result of the action that triggered this refresh; it stays visible.
     async function refresh(done = '') {
       const version = ++listVersion;
+      if (!done) notice(window.ravenDialogueText('جارٍ استعادة المواد…', 'Restoring materials…'));
       try {
         const res = await fetch('/api/materials');
         if (res.status === 401) throw new Error('session');
@@ -498,9 +572,14 @@
         if (version !== listVersion) return;
         // Never claim local material copies still exist on a restarted server.
         items = data.items;
+        const persistNote = data.localPersist === 'failed' || data.localPersist === 'unavailable'
+          ? window.ravenDialogueText(' الحفظ المحلي فشل؛ المواد ظاهرة في الذاكرة فقط. نزّل نسخة.', ' Local save failed; materials are only in memory. Download a copy.')
+          : data.localPersist === 'incompatible'
+          ? window.ravenDialogueText(' النسخة المحلية غير متوافقة وبقيت دون تغيير.', ' The stored copy is incompatible and was left unchanged.')
+          : '';
         if (pending && (pending.path === '/api/materials' ? items.some(it => confirms(pending,it)) : data.events.some(it => confirms(pending,undefined,it)))) {
-          pending = null; saveLocal();notice('تأكد تسجيل الإجراء الأصلي في ذاكرة هذا المتصفح.');
-        } else notice(done || (pending ? 'حالة الإجراء غير مؤكدة. احتفظنا بمعرفه ومحتواه، ولم نُعد إرساله. إذا لم يظهر بعد إعادة تشغيل الخادم أو انتهاء الجلسة، يمكنك إرساله مجددًا بالمعرف نفسه. لن يكرر الخادم إجراءً سبق تسجيله بهذا المعرف.' : 'المواد المسجلة في ذاكرة هذا المتصفح؛ ليست حفظًا دائمًا.'));
+          pending = null; saveLocal();notice(window.ravenDialogueText('تأكد تسجيل الإجراء الأصلي في ذاكرة هذا المتصفح.', 'The original action is recorded in this browser’s memory.') + persistNote);
+        } else notice((done || (pending ? window.ravenDialogueText('حالة الإجراء غير مؤكدة. احتفظنا بمعرفه ومحتواه، ولم نُعد إرساله. إذا لم يظهر بعد إعادة تشغيل الخادم أو انتهاء الجلسة، يمكنك إرساله مجددًا بالمعرف نفسه. لن يكرر الخادم إجراءً سبق تسجيله بهذا المعرف.', 'The action is not confirmed. Its id and content were kept, and it was not sent again. If it is missing after a restart or a lost session, you can send it again with the same id. A previously recorded action is not repeated.') : window.ravenDialogueText('المواد المسجلة في ذاكرة هذا المتصفح؛ ليست حفظًا دائمًا.', 'Materials recorded in this browser’s memory; this is not permanent storage.'))) + persistNote);
         renderItems(); await knowledge();
       } catch (e) {
         notice(e?.message === 'session' ? (done ? done + ' ' : '') + SESSION_LOST_MATERIALS
@@ -526,7 +605,11 @@
         const data = await res.json(), confirmedId = path === '/api/materials' ? data.item?.id : data.event?.eventId;
         if (res.ok && res.status !== 202 && confirmedId === id && data.storage === 'server-memory' && confirms(pending,data.item,data.event)) {
           if (data.item) { items = [...items.filter(it => it.id !== data.item.id), data.item];renderItems(); }
-          pending = null;saveLocal();notice('تأكد تسجيل الإجراء في ذاكرة هذا المتصفح.');await refresh('تأكد تسجيل الإجراء في ذاكرة هذا المتصفح.');
+          const failedSave = data.localPersist === 'failed' || data.localPersist === 'unavailable';
+          const savedMsg = failedSave
+            ? window.ravenDialogueText('الإجراء ظاهر في الذاكرة فقط. فشل الحفظ المحلي. نزّل نسخة قبل مغادرة الصفحة.', 'The action is only in memory. Local save failed. Download a copy before leaving.')
+            : window.ravenDialogueText('تأكد تسجيل الإجراء في ذاكرة هذا المتصفح.', 'The action is recorded in this browser’s memory.');
+          pending = null;saveLocal();notice(savedMsg);await refresh(savedMsg);
         } else if ([400,409,413,415].includes(res.status) && data.error) {
           pending = null;saveLocal();notice('لم يُقبل الإجراء: ' + data.error + '. النص ما زال في المدخل.');
         } else notice(res.status === 401 ? SESSION_LOST_MATERIALS : 'لم تتأكد حالة الإجراء. المعرف محفوظ للمتابعة دون إرسال جديد.');
@@ -553,7 +636,9 @@
     $('share-recipient').onchange = knowledge;
     $('material-refresh').onclick = () => refresh();$('material-check').onclick = () => refresh();$('material-resend').onclick = () => submit();
     $('material-export').onclick = () => {
-      const blob = new Blob([JSON.stringify({version:1,storage:'browser-copy',materials:items,pending,draft:noteDraft},null,2)],{type:'application/json'});
+      let storedRaw = null;
+      try { storedRaw = localStorage.getItem('raven_dialogue_static_backend_v2') || localStorage.getItem('raven_dialogue_static_backend_v1'); } catch (e) {}
+      const blob = new Blob([JSON.stringify({version:1,storage:'browser-copy',materials:items,pending,draft:noteDraft,storedRaw},null,2)],{type:'application/json'});
       const url = URL.createObjectURL(blob), link = document.createElement('a');link.href = url;link.download = 'raven-materials-backup.json';link.click();setTimeout(() => URL.revokeObjectURL(url),1000);
     };
     typeFields();controls();refresh();
