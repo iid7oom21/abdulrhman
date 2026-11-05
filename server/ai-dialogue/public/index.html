@@ -49,7 +49,7 @@
 <body>
   <header>
     <h1>RAVEN — الاسم المحذوف</h1>
-    <span class="badge">محاكاة</span>
+    <span class="badge" id="mode-badge">محاكاة</span>
   </header>
   <main>
     <div class="row">
@@ -101,13 +101,21 @@
       <p>التقرير هنا مسودة. الإيداع وإيصاله ينتظران المصدر المعتمد؛ لا يوجد زر يصنع إيصالًا أو دليلًا من نص الحوار.</p>
     </details>
   </main>
-  <footer>معاينة محاكاة — الردود ليست من نموذج ذكاء اصطناعي حقيقي. السجل في ذاكرة الخادم ويُفقد عند إعادة تشغيله. جلسة متصفح مجهولة وليست حسابًا موثقًا. نسخة محلية على هذا المتصفح إن سمح التخزين؛ لا يوجد حفظ دائم مضمون.</footer>
+  <footer id="mode-note">معاينة محاكاة — الردود ليست من نموذج ذكاء اصطناعي حقيقي. السجل في ذاكرة الخادم ويُفقد عند إعادة تشغيله. جلسة متصفح مجهولة وليست حسابًا موثقًا. نسخة محلية على هذا المتصفح إن سمح التخزين؛ لا يوجد حفظ دائم مضمون.</footer>
   <script>
     const log = document.getElementById('log');
     const input = document.getElementById('input');
     const sendBtn = document.getElementById('send');
     const statusEl = document.getElementById('status');
     const characterEl = document.getElementById('character');
+    fetch('/api/status', { credentials:'same-origin' }).then(r => r.json()).then(status => {
+      const badge = document.getElementById('mode-badge');
+      const note = document.getElementById('mode-note');
+      if (status?.mode === 'grounded-model') {
+        if (badge) badge.textContent = 'نموذج مقيد';
+        if (note) note.textContent = 'النموذج موصول على هذا الخادم فقط، ويرد من المعرفة المعتمدة والمواد التي وصلت الشخصية. معرفة يوناس وكلير المعتمدة فارغة الآن، فالسؤال بلا مادة مشاركة يبقى رفضًا. هذا ليس موقع الصفحات المنشور، وليس حفظًا دائمًا.';
+      }
+    }).catch(() => {});
     const checkBtn = document.getElementById('check');
     const stopBtn = document.getElementById('stop');
     const KEY = 'raven_deleted_name_preview_v2';
@@ -148,7 +156,7 @@
               r.characterId !== id || typeof r.message !== 'string' ||
               !['pending','unknown','unavailable','completed','error'].includes(r.status) ||
               (r.confirmed !== undefined && typeof r.confirmed !== 'boolean') ||
-              (r.response !== undefined && (!plain(r.response) || !keysOnly(r.response, ['text','refused']) || typeof r.response.text !== 'string' || (r.response.refused !== undefined && typeof r.response.refused !== 'boolean'))) ||
+              (r.response !== undefined && (!plain(r.response) || !keysOnly(r.response, ['text','refused','source']) || typeof r.response.text !== 'string' || (r.response.refused !== undefined && typeof r.response.refused !== 'boolean') || (r.response.source !== undefined && !['grounded-model','deterministic-fallback'].includes(r.response.source)))) ||
               (r.status === 'completed' && !r.response?.text)) throw new Error('journal_schema');
           seen.add(r.id);
         }
@@ -179,7 +187,11 @@
       log.replaceChildren();
       if (!s.hidden) for (const r of s.records.values()) {
         addMsg('أنت', r.message, true);
-        if (r.response?.text) addMsg(names[id], r.response.text, false);
+        if (r.response?.text) {
+          addMsg(names[id], r.response.text, false);
+          if (r.response.source === 'grounded-model') addMsg('المصدر', 'رد من النموذج ضمن المعرفة المسموحة والمواد التي وصلت هذه الشخصية فقط.', false);
+          else if (r.response.source === 'deterministic-fallback') addMsg('المصدر', 'رفض محاكاة: لا مصدر معتمد لهذا السؤال، ولم يُنشأ دليل.', false);
+        }
         const label = r.status === 'completed'
           ? (r.confirmed ? 'تأكد سابقًا تسجيل العملية في ذاكرة الخادم المؤقتة.' : 'الرد ظاهر هنا، وحفظه على الخادم غير مؤكد.')
           : r.status === 'error' ? 'سُجّل خطأ للعملية، ولم يثبت نجاحها.'
@@ -206,7 +218,11 @@
       if (old?.response?.text && (r.status !== 'completed' || r.response?.text !== old.response.text)) return false;
       if (old?.status === 'error' && r.status !== 'error') return false;
       s.records.set(r.id, { ...old, id:r.id, characterId:id, message:r.message,
-        status:r.status, response:typeof r.response?.text === 'string' ? { text:r.response.text } : old?.response, confirmed:r.storage === 'server-memory' });
+        status:r.status, response:typeof r.response?.text === 'string' ? {
+          text:r.response.text,
+          ...(r.response.refused === true ? { refused:true } : {}),
+          ...(['grounded-model','deterministic-fallback'].includes(r.response.source) ? { source:r.response.source } : {}),
+        } : old?.response, confirmed:r.storage === 'server-memory' });
       return true;
     }
     const SESSION_LOST = 'انتهت جلسة المتصفح على الخادم، أو أُعيد تشغيل الخادم. أعد تحميل الصفحة، ثم اضغط «متابعة العملية الأصلية». العمليات والمسودة ما زالتا على هذا المتصفح.';
