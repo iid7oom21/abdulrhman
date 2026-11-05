@@ -146,6 +146,7 @@ test('written opening: choices, display boundaries, language and access',async t
       if(written&&recipient==='draft')assert.equal(status,lang==='ar'?'احتفظت بمسودة.':'You kept a draft.');
       await click('record','done');
       assert.match(await page.locator('#hook-register').innerText(),/سجل استقبال بلاغات المراجعة|Review Reports Intake Log/);
+      assert.equal(await page.locator('#hook-log [data-line-id="L20"] > p').innerText(),lang==='ar'?'طيب ليش المسودة تقول إن اختلاف النسخ ما يغير نتيجة الملف؟':'Then why does the draft say that differences between copies do not change the file’s result?');
       assert.equal(await page.locator('#hook-log > li:last-child > p').innerText(),lang==='ar'?'إيلينا ما تجاوب.':'Elena does not answer.');
       assert.equal(await page.locator('#hook-ending').isVisible(),true);assert.equal(await action('replay').isVisible(),true);
       if(written){const ids=await page.locator('[data-line-id]').evaluateAll(es=>[...new Set(es.map(e=>e.dataset.lineId))].sort());assert.deepEqual(ids,Array.from({length:21},(_,i)=>'L'+String(i+1).padStart(2,'0')));}
@@ -262,6 +263,49 @@ test('written opening: choices, display boundaries, language and access',async t
     await page.setViewportSize({width:320,height:844});
     assert.ok(await page.locator('#hook-document').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'long source text must wrap within the actual comparison card');
     assert.deepEqual(writeRequests,[]);assert.deepEqual(pageErrors,[]);await preservedStorage();
+  });
+
+
+  await run('private notebook anchors observations to visible text without sharing or creating evidence',async()=>{
+    await fresh();await click('open','invite');await click('enter','compare');await action('source-conclusion').click();
+    assert.equal(await page.locator('#reading-source').inputValue(),'document-conclusion');
+    const before=await page.locator('#hook').getAttribute('data-layers');
+    const text='<img src=x onerror="window.notebookInjected=1"> هذه فرضيتي الخاصة';
+    await page.selectOption('#reading-kind','hypothesis');await page.fill('#reading-note',text);await page.click('#reading-add');
+    assert.equal(await page.locator('#reading-notes li').count(),1);assert.equal(await page.locator('#reading-notes img').count(),0);
+    assert.equal(await page.evaluate(()=>window.notebookInjected),undefined);assert.equal(await page.locator('#hook').getAttribute('data-layers'),before);
+    const note=await page.locator('#reading-tools').evaluate(el=>JSON.parse(el.dataset.notes).entries[0]);
+    assert.equal(note.sourceId,'document-conclusion');assert.equal(note.kind,'hypothesis');assert.equal(note.text,text);
+    await click('continue','respond');await click('precise','share');await click('recipient-jonas','review');await click('confirm','after');await click('record','done');
+    assert.deepEqual(await page.locator('#hook').evaluate(el=>JSON.parse(el.dataset.layers).recipientKnowledge),{jonas:['opening-draft'],claire:[],elena:[]});
+    assert.equal(await page.locator('#reading-notes li').count(),1);
+    const visibleIds=await page.locator('#hook-log li[data-kind="spoken"][data-line-id]').evaluateAll(nodes=>nodes.map(n=>n.dataset.lineId));
+    assert.deepEqual(await page.locator('#reading-quotes li').evaluateAll(nodes=>nodes.map(n=>n.dataset.sourceId)),visibleIds);
+    assert.deepEqual(writeRequests,[]);await preservedStorage();
+  });
+
+  await run('notebook preserves a private draft and source IDs across language, exports a version and resets only on replay',async()=>{
+    await fresh();await click('open','invite');await click('enter','compare');await action('source-original').click();
+    await page.fill('#reading-note','سؤالي الخاص');await page.locator('#reading-note').focus();
+    await page.evaluate(()=>{document.documentElement.lang='en';document.dispatchEvent(new CustomEvent('raven:language'));});
+    assert.equal(await page.inputValue('#reading-note'),'سؤالي الخاص');assert.equal(await page.inputValue('#reading-source'),'document-original');assert.equal(await page.evaluate(()=>document.activeElement.id),'reading-note');
+    await page.click('#reading-add');const promise=page.waitForEvent('download');await page.click('#reading-download');const download=await promise;
+    const exported=JSON.parse(fs.readFileSync(await download.path(),'utf8'));assert.equal(exported.contentVersion,'paper-opening-2026-11-05-r2');assert.equal(exported.scope,'private-scene-notes');assert.equal(exported.entries[0].sourceId,'document-original');assert.equal(exported.entries[0].text,'سؤالي الخاص');
+    await click('continue','respond');await click('refuse','review');await click('confirm','after');await click('record','done');
+    await click('replay','start');assert.deepEqual(await page.locator('#reading-tools').evaluate(el=>JSON.parse(el.dataset.notes).entries),[]);await preservedStorage();
+  });
+
+  await run('notebook keyboard labels and long private text fit a 390px screen in both languages',async()=>{
+    for(const language of ['ar','en']){
+      await fresh(language);await page.setViewportSize({width:390,height:844});await click('open','invite');await click('enter','compare');await action('source-signature').click();
+      await page.fill('#reading-note','LONG_UNBROKEN_'.repeat(60));await page.locator('#reading-add').focus();await page.keyboard.press('Enter');
+      assert.equal(await page.evaluate(()=>document.activeElement.id),'reading-note');
+      assert.ok(await page.locator('#reading-tools').evaluate(el=>el.scrollWidth<=el.clientWidth+1));
+      for(const id of ['reading-note','reading-source','reading-kind'])assert.equal(await page.locator('label[for="'+id+'"]').count(),1);
+      assert.equal(await page.locator('#reading-status').getAttribute('aria-live'),'polite');
+      if(process.env.SCREENSHOT_DIR){fs.mkdirSync(process.env.SCREENSHOT_DIR,{recursive:true});await page.locator('#reading-tools').screenshot({path:path.join(process.env.SCREENSHOT_DIR,'private-notebook-'+language+'.png')});}
+    }
+    assert.deepEqual(pageErrors,[]);
   });
 
   const report={node:process.version,browser:await browser.version(),source:base,scope:'Actual static case page in desktop Chromium, controlled viewport/text sizes; no physical mobile device, screen-reader speech, provider or backend integration',results};

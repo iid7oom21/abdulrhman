@@ -1,0 +1,31 @@
+▶ written opening: choices, display boundaries, language and access
+  ✔ the document is visible before the explanatory dialogue, with exact source text (3616.952829ms)
+  ✔ branch matrix precise / jonas (1580.208857ms)
+  ✔ branch matrix precise / both (1551.429959ms)
+  ✔ branch matrix precise / draft (1433.653091ms)
+  ✔ branch matrix wait / jonas (1621.914309ms)
+  ✔ branch matrix wait / both (1832.198434ms)
+  ✔ branch matrix wait / draft (1518.888906ms)
+  ✔ branch matrix refuse / jonas (1558.67224ms)
+  ✔ branch matrix refuse / both (1546.113936ms)
+  ✔ branch matrix refuse / draft (1611.990524ms)
+  ✔ branch matrix lie / jonas (1572.57362ms)
+  ✔ branch matrix lie / both (1580.923555ms)
+  ✔ branch matrix lie / draft (1415.532302ms)
+  ✔ candidate recipients can be reviewed and changed without a second event (584.893051ms)
+  ✔ language changes at every phase preserve choices, candidate and confirmed recipient (2241.738648ms)
+  ✔ replay clears this isolated scene while reload returns to its disclosed start (814.858482ms)
+  ✔ keyboard steps keep focus and only a short status region announces changes (215.239868ms)
+  ✔ new dialogue stays at the reading start in portrait and landscape (1424.150217ms)
+  ✔ mobile widths, both languages, long text and 200% text enlargement remain usable (1094.082169ms)
+{"browser":"154.0.8037.57","node":"v24.19.0","scenarios":20,"passed":20,"failed":0}
+  ✔ comparison displays its source as text and makes no external write (377.172397ms)
+✔ written opening: choices, display boundaries, language and access (29805.750039ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 30192.316745

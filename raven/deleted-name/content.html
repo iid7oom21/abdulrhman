@@ -113,6 +113,20 @@ h2{margin:0 0 16px;font-weight:600;font-size:clamp(20px,3.4vw,24px);color:var(--
 @media(max-width:560px){.hook-comparison{grid-template-columns:1fr}}
 footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);text-align:center}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+#reading-tools{margin:20px 0;padding:16px;border:1px solid var(--line);background:var(--panel);min-width:0;overflow-wrap:anywhere}
+#reading-tools summary{cursor:pointer;min-height:44px;color:var(--gold-hi);padding:8px 0}
+#reading-tools label{display:block;margin-block:14px 6px}
+#reading-tools input,#reading-tools textarea,#reading-tools select{font:inherit;color:var(--text);background:var(--ink);border:1px solid var(--line);padding:10px;width:100%;min-width:0;max-width:100%;min-height:44px;border-radius:4px}
+#reading-tools textarea{min-height:100px;resize:vertical}
+#reading-tools button{font:inherit;color:var(--gold-hi);background:transparent;border:1px solid var(--line);border-radius:4px;cursor:pointer;white-space:normal;height:auto;min-height:44px;margin:8px 0;padding:10px 14px}
+#reading-tools button:hover{background:rgba(197,154,97,.08)}
+#reading-tools button:disabled{opacity:.5;cursor:default}
+#reading-tools li>span{display:block;color:var(--muted);font-size:.9em}
+#reading-tools li{margin:12px 0;white-space:pre-wrap}
+#reading-tools .reading-source{display:block;color:var(--muted);font-size:.9em}
+#reading-tools :focus-visible{outline:2px solid var(--gold-hi);outline-offset:3px}
+#reading-tools h4{margin-block:16px 8px}
 </style>
 </head>
 <body>
@@ -305,7 +319,8 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
   if (!hook || !log || !actions) return;
   // Isolated scene presentation only: no storage, API, character knowledge or game events.
   // A spoken line is distinct from the written correction and its selected recipient.
-  const fresh = () => ({phase:'start', choice:null, recipient:null, share:null, comparison:false, summary:false,
+  let sceneRun = 0;
+  const fresh = () => ({run:++sceneRun,phase:'start', choice:null, recipient:null, share:null, comparison:false, summary:false,
     spokenAloud:[], draftWritten:null, sceneShared:null, recipientKnowledge:{jonas:[],claire:[],elena:[]}});
   let state = fresh();
   const copy = {
@@ -332,7 +347,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       lied:'اخترت إنكار الرسالة داخل المشهد. الإنكار ظاهر في هذا السجل بوصفه كذبًا صريحًا.',
       askRecord:'اطلب السجل', title:'سجل استقبال بلاغات المراجعة',
       you3:'هذا سجل بلاغات؟', jonas3:'هذا عنوان الأصل اللي عندنا.', elena4:'إيه.',
-      you4:'طيب ليش المسودة تتكلم عن اسم المسؤول؟', end:'إيلينا ما تجاوب.',
+      you4:'طيب ليش المسودة تقول إن اختلاف النسخ ما يغير نتيجة الملف؟', end:'إيلينا ما تجاوب.',
       voice:'من داخل البيت', paper:'المسودة', margin:'هامش الأصل',
       documentTitle:'مسودة البيان — غير موقعة', original:'ملاحظتك الأصلية',
       conclusionLabel:'الاستنتاج المضاف في المسودة', conclusion:'وبناءً على هذه المراجعة، اختلاف النسخ لا يغير نتيجة الملف.',
@@ -381,7 +396,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       lied:'You chose to deny the message within this scene. The denial appears in this log as an explicit lie.',
       askRecord:'Ask for the record', title:'Review Reports Intake Log',
       you3:'This is a reports register?', jonas3:'That is the title on the original we have.', elena4:'Yes.',
-      you4:'Then why does the draft speak about the name of the person responsible?', end:'Elena does not answer.',
+      you4:'Then why does the draft say that differences between copies do not change the file’s result?', end:'Elena does not answer.',
       voice:'From inside the house', paper:'The draft', margin:'The original’s margin',
       documentTitle:'Draft statement — unsigned', original:'Your original note',
       conclusionLabel:'Conclusion added to the draft', conclusion:'Based on this review, the difference between copies does not change the file’s result.',
@@ -471,6 +486,8 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     row.dataset.kind = kind;
     const key = lineKeys.find(k => t()[k] === body);
     if (key) row.dataset.lineId = lineId(key);
+    else if (body === t().waitSpoken) row.dataset.lineId = 'C02';
+    else if (body === t().refuseSpoken) row.dataset.lineId = 'C03';
     if (id) { row.id = id; row.tabIndex = -1; }
     row.append(element('span', who, 'who'), element('p', body));
     log.append(row);
@@ -492,7 +509,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     const sourceNote = element('p',c.comparisonNote,'hook-note');sourceNote.id = 'hook-source-note';
     for (const [label,text,part,source] of parts) {
       const description = pair(list,label,undefined,part);
-      description.append(button('source-'+part,text,() => {sourceNote.textContent = source;announce(source);},'hook-part hook-secondary'));
+      description.append(button('source-'+part,text,() => {sourceNote.textContent = source;announce(source);hook.dispatchEvent(new CustomEvent('raven:inspect-part',{detail:{part}}));},'hook-part hook-secondary'));
       if (part === 'original') description.dataset.lineId = 'L02';
     }
     const signature = list.querySelector('[data-part="signature"]');
@@ -549,11 +566,13 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     const preview = element('a',c.preview);preview.id = 'hook-preview';preview.href = lang() === 'en' ? '../dialogue/?lang=en' : '../dialogue/';preview.target = '_blank';preview.rel = 'noopener';
     nav.append(back,preview);ending.append(summary,nav);
   }
-  function render() {
+  function renderScene() {
     const c = t();
     // Move the reusable heading outside the log before replacing its children.
     log.before(heading);
     hook.dataset.phase = state.phase;
+    hook.dataset.sceneRun = String(state.run);
+    hook.dataset.contentVersion = 'paper-opening-2026-11-05-r2';
     hook.dataset.choice = state.choice || '';
     hook.dataset.recipient = state.recipient || '';
     hook.dataset.share = state.share || '';
@@ -607,6 +626,10 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     add(name('you'),c.you3,true);add(name('jonas'),c.jonas3,false);add(name('elena'),c.elena4,false);add(name('you'),c.you4,true);add(c.paper,c.end,false,'narrative');
     renderEnding(c);
   }
+  function render() {
+    renderScene();
+    hook.dispatchEvent(new CustomEvent('raven:opening-render'));
+  }
   document.addEventListener('raven:language',() => {
     const focused = document.activeElement;
     const action = hook.contains(focused) ? focused.dataset.hookAction : null;
@@ -623,5 +646,6 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
 })();
 
 </script>
+<script src="reading-tools.js?v=1"></script>
 </body>
 </html>
