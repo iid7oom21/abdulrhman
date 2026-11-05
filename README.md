@@ -26,7 +26,7 @@ Public page identities and sharing:
 
 Navigation, dialogs and scrolling never pause or reconstruct the audio. Audible films and teasers temporarily pause the song so their dialogue stays clear; it resumes from the same position unless the visitor paused it. Reloading the browser document or leaving this host is outside uninterrupted playback.
 
-«باقي أثر» was removed from the site on 2026-11-05 at the owner's request: both of its files (`raven-baqi-athar-320.mp3`, `raven-baqi-athar.mp3`) are gone, and it must not come back as a 14th track. The older recording «Dark Pop Intimate - Revised» stays at its original path under `fourth-signature/assets/audio/`. That folder now holds only that recording, the Noto Sans Arabic font and the RAVEN favicon.
+On 2026-11-05 the owner had a former 14th track and its files deleted from the site. The player keeps exactly 13 tracks; do not add a 14th. The older recording «Dark Pop Intimate - Revised» stays at its original path under `fourth-signature/assets/audio/`. That folder now holds only that recording, the Noto Sans Arabic font and the RAVEN favicon.
 
 ## Entry gate
 
