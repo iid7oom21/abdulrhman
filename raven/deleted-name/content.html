@@ -64,6 +64,9 @@ h2{margin:0 0 16px;font-weight:600;font-size:clamp(20px,3.4vw,24px);color:var(--
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 20px;border:1px solid var(--gold);color:var(--ink);background:var(--gold);font-weight:600;text-decoration:none}
 @media(hover:hover){.btn:hover{background:var(--gold-hi);border-color:var(--gold-hi)}}
 .note{margin:12px 0 0;font-size:14px;color:var(--muted)}
+/* Scene images: decorative, the text beside them carries the meaning. */
+.dnVisual{margin:0 0 20px;border:1px solid var(--line);background:var(--panel);overflow:hidden;line-height:0}
+.dnVisual img{display:block;width:100%;height:auto}
 footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);text-align:center}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -85,6 +88,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
   <section class="block" aria-labelledby="t-assign"><div class="wrap">
     <h2 id="t-assign" data-k="assignTitle">التكليف</h2>
     <p class="lead" data-k="assignLead">أنت مرمّم سجلات. بينك وبين فيكتور شغل قديم على سجل ناقص. الليلة يرسل لك جزءًا منه.</p>
+    <figure class="dnVisual"><img src="./assets/case-record.webp" width="1672" height="941" alt="" loading="lazy" decoding="async"></figure>
     <ol class="thread">
       <li class="msg"><span class="who" data-k="victor">فيكتور</span><p data-k="m1">أرسلت لك جزء من السجل. خانة المُحيل. أبي فيها اسم الليلة.</p></li>
       <li class="msg you"><span class="who" data-k="you">أنت</span><p data-k="m2">اللي وصلني ما يكفي. الاسم يحتاج الأصل، ومقارنة النسخ.</p></li>
@@ -95,6 +99,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
   <section class="block" aria-labelledby="t-arrive"><div class="wrap">
     <h2 id="t-arrive" data-k="arriveTitle">الوصول</h2>
     <p class="scene" data-k="arriveScene">22:20. أضواء الإسعاف تبتعد عن البوابة. كلير عند الباب.</p>
+    <figure class="dnVisual"><img src="./assets/case-arrival.webp" width="1350" height="759" alt="" loading="lazy" decoding="async"></figure>
     <ol class="thread">
       <li class="msg"><span class="who" data-k="claire">كلير</span><p data-k="a1">فيكتور عطاني اسمك. قال إنك ضيفه.</p></li>
       <li class="msg you"><span class="who" data-k="you">أنت</span><p data-k="a2">جيت للمقارنة.</p></li>
