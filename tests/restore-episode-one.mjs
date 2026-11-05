@@ -5,6 +5,7 @@ const logic = read('raven/assets/raven-enhancements-v1.js');
 const ui = read('raven/content.html');
 const refine = read('raven/assets/raven-refinement-v2.js');
 const shell = read('raven/index.html');
+const root = read('index.html');
 const block = logic.match(/const EPISODES=\[([\s\S]*?)\];/);
 assert.ok(block, 'Episode manifest exists');
 const manifest = [...block[1].matchAll(/\{id:(\d+),sourceId:(\d+),src:'([^']+)'\}/g)]
@@ -19,5 +20,5 @@ assert.ok(refine.includes('Math.min(3,') && refine.includes('current>=3') && ref
 assert.ok(refine.includes("href:'/?episode=3',episode:3"));
 assert.ok(logic.includes("'raven17_episode_'+sourceEpisodeId(n)+'_progress"), 'Legacy progress remains keyed to actual source ID');
 assert.ok(refine.includes("'raven_episode_note_'+window.ravenEpisodeSourceId(current)"), 'Legacy notes remain source keyed');
-assert.ok(![logic,ui,refine,shell].some(t => /حلقتان|حلقتيه|حلقتين|two episodes|Two episodes/.test(t)));
-console.log('RAVEN episode 1 restore: 15 checks passed.');
+assert.ok(![logic,ui,refine,shell,root].some(t => /حلقتان|حلقتيه|حلقتين|two episodes|Two episodes/.test(t)));
+console.log('RAVEN episode 1 restore: 16 checks passed.');
