@@ -1,0 +1,29 @@
+
+> raven-ai-credit-server@0.1.0-simulation test
+> node --test tests/*.test.js
+
+▶ Credit system simulation
+  ✔ lists packages with cost estimate (22.763648ms)
+  ✔ creates payment intent and prevents double creation with same idempotency key (13.707561ms)
+  ✔ rejects webhook with bad signature (2.838764ms)
+  ✔ credits only once on repeated valid webhook (12.639689ms)
+  ✔ falls back to written mode when credit is depleted (3.428853ms)
+  ✔ consumes credit for AI dialogue and keeps progress (9.555178ms)
+✔ Credit system simulation (66.842166ms)
+▶ Simulator safety gates and failure accounting
+  ✔ is disabled by default and cannot be configured as a live gateway (124.616459ms)
+  ✔ rejects the historical signature-prefix bypass and tampered payloads (13.396072ms)
+  ✔ purchase idempotency conflicts on another owner/package and snapshots the entitlement (10.601194ms)
+  ✔ replaying a dialogue operation neither generates nor debits again; changed payload conflicts (10.841926ms)
+  ✔ two requests on the final simulated entitlement cannot overdraw it (10.383315ms)
+  ✔ schema migration is repeatable and preserves existing orders and balances (44.713155ms)
+  ✔ failed response persistence rolls back the local debit and progress (9.903333ms)
+✔ Simulator safety gates and failure accounting (225.507307ms)
+ℹ tests 13
+ℹ suites 2
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 461.773722

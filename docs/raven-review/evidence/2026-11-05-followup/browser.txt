@@ -1,0 +1,35 @@
+▶ real preview page browser acceptance
+  ✔ 1 initialization preserves unrelated storage and music preferences; 2 normal path and safe text (836.35401ms)
+  ✔ unreadable owned journal is preserved verbatim (573.681612ms)
+  ✔ prior preview journal with refused/source metadata restores its response and draft (518.834858ms)
+  ✔ valid JSON with incompatible fields or records is never overwritten on initialization (1881.591838ms)
+  ✔ conflicting late history cannot replace an already received reply for the same ID (714.660864ms)
+  ✔ 3 new browser session has no old history, and labels state the limits (500.085697ms)
+  ✔ 4 server error then poll stays error; 10 repeated reads do not duplicate (798.622688ms)
+  ✔ 5 history keeps pending; 6 second send blocked; 9 character switch; 11 stop retains ID (855.179627ms)
+  ✔ 7 known reply without save confirmation stays visible; no regeneration; 13 reply XSS is text (662.166242ms)
+  ✔ 7b local save throws after a known reply, reply stays in memory (580.342686ms)
+  ✔ 8 stale history after send; 9 late character history never changes selected conversation (721.839763ms)
+  ✔ late reply and late history for Jonas cannot overwrite Claire (937.591555ms)
+  ✔ reload keeps unresolved operation and draft; 202 empty is never completed (724.625955ms)
+  ✔ lost session: a read-only 404 follow-up releases the character without resending or inventing a result (874.098624ms)
+  ✔ known reply for an operation the server no longer has stays visible and is not regenerated (827.171213ms)
+  ✔ stopping the wait says the browser stopped waiting, not that reading failed or the server cancelled (854.237559ms)
+  ✔ browser timeout is reported as a timeout that proves neither failure nor cancellation (782.126566ms)
+  ✔ expired session cookie: the page says to reload; after reload the follow-up releases the question (914.962923ms)
+  ✔ 320/375/390 RTL long text, focus and controls stay reachable (915.160075ms)
+✔ real preview page browser acceptance (15795.739297ms)
+✔ materials UI uses the real server and recipient contexts (2296.996058ms)
+✔ a material action lost with the session can be resent with the same ID, without duplicates (3618.597537ms)
+✔ real browser + HTTP + provider adapter: accepted pending, recipient scope, switch, safe response, one generation (1210.093496ms)
+✔ disk save failure retains known reply in browser after poll/reload and never claims disk confirmation (1179.803507ms)
+✔ another tab restores the existing pending request and keeps its rejected question as a draft (1208.167505ms)
+✔ operator-disabled provider is labeled as written dialogue; free replies and history remain available (1116.504446ms)
+ℹ tests 26
+ℹ suites 0
+ℹ pass 26
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 27535.691511

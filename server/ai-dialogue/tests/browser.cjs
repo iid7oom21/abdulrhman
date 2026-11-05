@@ -48,7 +48,7 @@ test('real preview page browser acceptance', async t => {
     await page.addInitScript(()=>localStorage.setItem('raven_deleted_name_preview_v2',JSON.stringify({jonas:{draft:'مسودة محفوظة',records:[{id:'prior',characterId:'jonas',message:'سؤال سابق',status:'completed',response:{text:'رد سابق',refused:true,source:'deterministic-fallback'},confirmed:true}]}})));
     await page.goto(root);await wait(page);
     assert.match(await page.locator('#log').innerText(),/رد سابق/);
-    assert.match(await page.locator('#log').innerText(),/رفض ثابت لغياب المصدر/);
+    assert.match(await page.locator('#log').innerText(),/رد مكتوب من الخادم/);
     assert.equal(await page.locator('#input').inputValue(),'مسودة محفوظة');
     assert.doesNotMatch(await page.locator('#status').innerText(),/غير متوافقة/);
   }));

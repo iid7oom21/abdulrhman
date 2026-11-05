@@ -3,9 +3,11 @@ import fs from 'node:fs';
 import { randomBytes, createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { createMaterialStore, MaterialError } from './materials.js';
-import { submitRequest, listRequests, getRequest, forgetOwner, simulateReply, exportRequests, importRequest, markSaveStatus, fingerprint, MAX_REQUESTS_PER_OWNER } from './dialogue.js';
+import { submitRequest, listRequests, getRequest, forgetOwner, simulateReply, exportRequests, importRequest, markSaveStatus } from './dialogue.js';
 import { openDiskStore } from './disk-store.js';
 import { providerFromEnv } from './provider.js';
+import { validateSnapshot } from './snapshot.js';
+import {runtimeControls} from './runtime-controls.js';
 
 // Memory bounds for the in-memory preview. All can be overridden through createPreviewServer options.
 export const SESSION_IDLE_MS = 6 * 60 * 60 * 1000;
@@ -33,6 +35,7 @@ export function createPreviewServer({
   generate = simulateReply,
   providerInfo = {provider:'simulation',model:null},
   openStore = openDiskStore,
+  readControls = runtimeControls(),
 } = {}) {
   // owner -> { materials, touchedAt }. Map order is least-recently-used first (re-inserted on each use).
   const sessions = new Map();
@@ -71,42 +74,14 @@ export function createPreviewServer({
   const persistSafely = () => { try { persist(); } catch { /* Keep the known result in memory. */ } };
   if (disk) {
     const snapshot = disk.load();
-    // Validate/replay the ENTIRE snapshot before touching live operation maps or writing.
-    // A valid JSON header with corrupt nested content is still a damaged backup.
-    try {
-      if ((snapshot?.sessions.length || 0) > maxSessions) throw new Error();
-      for (const saved of snapshot?.sessions || []) {
-        if (!saved || !/^[a-f0-9]{64}$/.test(saved.owner) || sessions.has(saved.owner) ||
-            !Number.isFinite(saved.touchedAt) || !Array.isArray(saved.actions) || saved.actions.length > maxMaterials + maxShares) throw new Error();
-        const materials = createMaterials();
-        for (const action of saved.actions) {
-          if (action?.kind === 'material' && action.input?.author === 'player' &&
-              ['statement','correction','motive','private_note','report'].includes(action.input.type)) materials.createMaterial(action.input);
-          else if (action?.kind === 'share' && action.input?.sender === 'player' &&
-              Array.isArray(action.input.recipients) && !action.input.recipients.includes('player')) materials.share(action.input);
-          else throw new Error();
-        }
-        if (materials.listMaterials().length > maxMaterials || materials.listShareEvents().length > maxShares) throw new Error();
-        sessions.set(saved.owner, { materials, touchedAt:saved.touchedAt, actions:structuredClone(saved.actions) });
-      }
-      const seen = new Set(), counts = new Map();
-      for (const record of snapshot?.requests || []) {
-        if (!record || !sessions.has(record.owner) || typeof record.id !== 'string' || !/^[\w-]{1,100}$/.test(record.id) || seen.has(record.id) ||
-            !['jonas','claire'].includes(record.characterId) || typeof record.message !== 'string' || !record.message.trim() || record.message.length > 8000 ||
-            typeof record.contentVersion !== 'string' || !/^[\w.-]{1,100}$/.test(record.contentVersion) ||
-            record.fingerprint !== fingerprint({characterId:record.characterId,message:record.message,contentVersion:record.contentVersion}) ||
-            !['pending','unknown','completed','error'].includes(record.status) || record.storage !== 'server-memory' ||
-            typeof record.createdAt !== 'string' || !Number.isFinite(Date.parse(record.createdAt)) ||
-            (record.response !== undefined && (typeof record.response?.text !== 'string' || !record.response.text.trim() || record.response.text.length > 40000 || typeof record.response.refused !== 'boolean')) ||
-            (record.status === 'completed' && !record.response)) throw new Error();
-        seen.add(record.id); counts.set(record.owner, (counts.get(record.owner) || 0) + 1);
-        if (counts.get(record.owner) > MAX_REQUESTS_PER_OWNER) throw new Error();
-      }
-    } catch { throw new Error('incompatible_store_file: snapshot was left untouched'); }
+    const restored = validateSnapshot(snapshot,{maxSessions,maxMaterials,maxShares,createMaterials});
+    for(const [owner,session] of restored)sessions.set(owner,session);
     for (const record of snapshot?.requests || []) importRequest(record);
     for (const [owner, session] of [...sessions]) if (expired(session)) dropSession(owner);
     // Do not rewrite on boot: valid but stale snapshots and damaged backups stay inspectable.
   }
+  const controlledGenerate = (...args) => readControls().providerCallsEnabled
+    ? generate(...args) : {...simulateReply(...args),source:'deterministic-fallback'};
   const persistence = disk ? 'disk-file' : 'process-memory';
   const storageInfo = () => ({storage:'server-memory',persistence,saveStatus});
   const html = fs.readFileSync(new URL('../public/index.html', import.meta.url));
@@ -128,15 +103,14 @@ export function createPreviewServer({
       }
       // Readiness checks never create/evict sessions, generate, or write storage.
       if (req.method === 'GET' && url.pathname === '/healthz') return json(200,{status:'ok'});
-      if (req.method === 'GET' && url.pathname === '/api/config') return json(200,{
-        ...storageInfo(), ...providerInfo, mode:providerInfo.provider !== 'simulation' ? 'received-material-assistance' : 'simulation',
-        sourceKnowledgeAvailable:false,
-      });
-      // Keep the existing status route for callers from the earlier model integration.
-      if (req.method === 'GET' && url.pathname === '/api/status') return json(200,{
-        mode:providerInfo.provider === 'simulation' ? 'simulation' : 'grounded-model',
-        persistence, characters:['jonas','claire'], ...providerInfo,
-      });
+      if (req.method === 'GET' && ['/api/config','/api/status'].includes(url.pathname)) {
+        const controls=readControls(),enabled=controls.providerCallsEnabled&&providerInfo.provider!=='simulation';
+        return json(200,{
+          ...storageInfo(),...providerInfo,controls,
+          mode:enabled ? (url.pathname==='/api/status'?'grounded-model':'received-material-assistance') : 'simulation',
+          characters:['jonas','claire'],sourceKnowledgeAvailable:false,contentVersion:'deleted-name-preview-v2',
+        });
+      }
       const cookie = /(?:^|;\s*)raven_preview_session=([a-f0-9]{64})(?:;|$)/.exec(req.headers.cookie || '')?.[1];
       const session = cookie ? liveSession(cookie) : null;
       let owner = session ? cookie : null;
@@ -205,7 +179,7 @@ export function createPreviewServer({
           return json(200, { event, ...storageInfo() });
         }
         if (!['jonas','claire'].includes(data.characterId) || Object.keys(data).some(k => !['requestId','characterId','message','sharedFacts','contentVersion'].includes(k))) return json(400, { error:'invalid_request' });
-        const result = submitRequest(data.requestId, data.characterId, data.message, data.sharedFacts, data.contentVersion, owner, materials.contextFor(data.characterId), generate,
+        const result = submitRequest(data.requestId, data.characterId, data.message, data.sharedFacts, data.contentVersion, owner, materials.contextFor(data.characterId), controlledGenerate,
           {beforeGenerate:persist,onSettled:persistSafely});
         const status = result.id ? (result.status === 'pending' ? 202 : 200) :
           result.status === 'conflict' ? 409 : result.error === 'forbidden' ? 403 : result.error === 'requests_limit' ? 429 : 400;

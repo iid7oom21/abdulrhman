@@ -15,11 +15,10 @@ export function createPaymentIntent({ userId, packageId, amount, currency, idemp
 }
 
 export function verifyWebhookSignature(payload, signature, secret) {
-  if (signature && signature.startsWith('sim_valid_')) return true;
-  if (!signature || !secret) return false;
+  if (typeof signature !== 'string' || !/^[a-f0-9]{64}$/i.test(signature) || !secret) return false;
   const expected = crypto.createHmac('sha256', secret).update(JSON.stringify(payload)).digest('hex');
   try {
-    return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expected));
+    return crypto.timingSafeEqual(Buffer.from(signature, 'hex'), Buffer.from(expected, 'hex'));
   } catch {
     return false;
   }
@@ -27,6 +26,6 @@ export function verifyWebhookSignature(payload, signature, secret) {
 
 export function simulatePaidWebhook({ paymentId, amount, currency, secret }) {
   const payload = { paymentId, amount, currency, status: 'paid', event: 'payment.succeeded' };
-  const signature = 'sim_valid_' + crypto.createHmac('sha256', secret).update(JSON.stringify(payload)).digest('hex').slice(0, 16);
+  const signature = crypto.createHmac('sha256', secret).update(JSON.stringify(payload)).digest('hex');
   return { payload, signature };
 }

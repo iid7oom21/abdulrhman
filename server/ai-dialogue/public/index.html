@@ -112,22 +112,29 @@
     function replySavedNotice() {
       return runtime.persistence === 'disk-file' ? 'تأكد تسجيل العملية على قرص الخادم الحالي.' : 'تأكد تسجيل العملية في ذاكرة الخادم المؤقتة.';
     }
-    fetch('/api/config', {credentials:'same-origin'}).then(async res => {
+    let runtimeRead=0;
+    function refreshRuntime(){
+    const read=++runtimeRead;
+    return fetch('/api/config', {credentials:'same-origin'}).then(async res => {
       if (!res.ok) throw new Error('config');
       const info = await res.json();
+      if(read!==runtimeRead)return;
       if (!['simulation','openai','compatible'].includes(info.provider) || !['disk-file','process-memory'].includes(info.persistence)) throw new Error('config');
       runtime.persistence = info.persistence;
-      document.getElementById('runtime-mode').textContent = info.provider === 'openai' ? 'مساعدة OpenAI محدودة بالمصادر' : info.provider === 'compatible' ? 'مساعدة نموذج محدودة بالمصادر' : 'محاكاة محلية على الخادم';
-      document.getElementById('runtime-description').textContent = info.provider !== 'simulation'
+      document.getElementById('runtime-mode').textContent = info.controls?.providerCallsEnabled === false ? 'الحوار المكتوب — المزوّد متوقف' : info.provider === 'openai' ? 'مساعدة OpenAI محدودة بالمصادر' : info.provider === 'compatible' ? 'مساعدة نموذج محدودة بالمصادر' : 'محاكاة محلية على الخادم';
+      document.getElementById('runtime-description').textContent = info.controls?.providerCallsEnabled !== false && info.provider !== 'simulation'
         ? 'يختار الذكاء المواد ذات الصلة من كلامك الذي شاركته مع هذه الشخصية. يظهر الرد اقتباسات منسوبة إليك؛ لا يؤلف إفادة للشخصية. يُرسل سؤالك والمواد التي وصلتها إلى ' + (info.provider === 'openai' ? 'OpenAI' : 'المزوّد المضبوط على الخادم') + ' عند الحاجة، ولا تُرسل ملاحظاتك غير المشتركة.'
         : 'الردود محاكاة مكتوبة؛ لا يوجد اتصال بنموذج ذكاء اصطناعي في هذا الوضع.';
       document.getElementById('runtime-storage').textContent = (info.persistence === 'disk-file'
         ? 'يبقى السجل بعد إعادة التشغيل ما دام القرص نفسه موجودًا، ضمن حدود الجلسة. يضيع إذا مُسح القرص أو تغيّرت الآلة. هذا ليس حفظ إنتاج سحابي.'
         : 'السجل في ذاكرة الخادم ويُفقد عند إعادة تشغيله.') + ' جلسة متصفح مجهولة وليست حسابًا موثقًا؛ تنتهي بعد 6 ساعات خمول وقد تُستبعد عند بلوغ حد الجلسات. نسخة محلية على هذا المتصفح إن سمح التخزين.';
     }).catch(() => {
+      if(read!==runtimeRead)return;
       document.getElementById('runtime-mode').textContent = 'وضع الحوار غير مؤكد';
       document.getElementById('runtime-description').textContent = 'تعذرت قراءة إعدادات الحوار والحفظ. لم نحذف بياناتك.';
     });
+    }
+    refreshRuntime();
   </script>
   <script>
     const approvedTexts = window.RAVEN_ALL_TEXTS_BILINGUAL_MERGED;
@@ -217,7 +224,7 @@
         if (r.response?.text) {
           addMsg(names[id], r.response.text, false);
           if (r.response.source === 'grounded-model') addMsg('المصدر', 'اختار النموذج مواد وصلت هذه الشخصية؛ عرض الخادم نصوصها منسوبة للاعب، وليست شهادة جديدة.', false);
-          else if (r.response.source === 'deterministic-fallback') addMsg('المصدر', 'رفض ثابت لغياب المصدر؛ لم يُنشأ دليل.', false);
+          else if (r.response.source === 'deterministic-fallback') addMsg('المصدر', 'رد مكتوب من الخادم؛ لم يُنشأ دليل.', false);
         }
         const label = r.status === 'completed'
           ? (r.confirmed ? replySavedNotice() : 'الرد ظاهر هنا، وحفظه على الخادم غير مؤكد.')
@@ -258,6 +265,7 @@
         : 'انتهت مهلة انتظار المتصفح. هذا لا يعني أن العملية فشلت أو أُلغيت على الخادم. المعرف ' + iso(id) + ' محفوظ للمتابعة دون توليد رد جديد.';
     }
     async function request(id, op, url, options = {}) {
+      refreshRuntime();
       const s = states[id];
       if (s.active) return;
       const controller = new AbortController(); s.active = controller;
@@ -324,6 +332,7 @@
         body:JSON.stringify({ requestId:op.id, characterId:id, message:text }) });
     }
     async function loadHistory() {
+      refreshRuntime();
       const id = characterEl.value, s = states[id];
       s.notice = 'جارٍ تحميل سجل الشخصية؛ العمليات الحالية باقية.'; render();
       try {

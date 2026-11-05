@@ -1,0 +1,12 @@
+{
+  "scope": "Pure local signature check; no HTTP payment, database or real money",
+  "payload": {
+    "paymentId": "untrusted",
+    "amount": 1,
+    "currency": "SAR",
+    "status": "paid"
+  },
+  "signature": "sim_valid_forged",
+  "before": true,
+  "after": false
+}
