@@ -80,25 +80,5 @@ html[lang="ar"] .eyebrow{direction:rtl}
 @media(hover:hover){.btn.primary:hover{background:#d5b17e;border-color:#d5b17e;color:#080a0b}}
 @media(prefers-reduced-motion:reduce){.btn.primary{transition:none}}
 
-/* ── Palette v3 (2026-11-05) ─────────────────────────────────────────────
-   Warm charcoal that matches the hero's #050505 black, the gold and the posters,
-   instead of the earlier blue-black. Two alternating tones only, so sections no
-   longer meet at faint seams. The first screen (top bar, hero, «شاهد RAVEN 17»)
-   is deliberately not touched. */
-:root{
-  --rvn-ink:#0b0a08;        /* page base */
-  --rvn-panel:#15120f;      /* cards and boxes */
-  --rvn-muted:#aaa196;      /* secondary text, warm grey (7.5:1 on the alt tone) */
-  --rvn-body-soft:#cdc5ba;  /* body copy on dark panels */
-}
-html,body{background:#0b0a08}
-#films,.rvnArchiveExperience,#about,#watch{background:#0b0a08}
-.rvnSelectedWorks,.rvnStudio,.rvnStudioRail,.manifesto{background:#100e0b}
-.film.raven,.filmContent{background:#13110e}
-.rvnContactForm{background:#15120f}
-.rvnVaultGrid a{background-color:#1a1612}
-.rvnAfterCredits{background:#1a1612}
-/* The archive search row was a tall empty band for a single line. */
-.rvnArchiveExperience{padding-block:clamp(20px,3vw,36px);border-block-color:rgba(197,154,97,.1)}
-/* The upcoming-film section kept a blue gradient that now clashed with the warm page. */
-.nextPremiere{background:linear-gradient(135deg,#14110d,#0b0a08 65%)}
+/* tap target: >=44px without changing visual size */
+@media (max-width:900px){.ravenWordmark{display:inline-flex;align-items:center;min-height:44px;min-width:44px;padding-block:11px;margin-block:-11px;box-sizing:border-box}}
