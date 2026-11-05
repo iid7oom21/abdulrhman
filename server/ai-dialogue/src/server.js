@@ -4,6 +4,7 @@ import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { createMaterialStore, MaterialError } from './materials.js';
 import { submitRequest, listRequests, getRequest, forgetOwner, simulateReply, exportRequests, importRequest } from './dialogue.js';
+import { createGroundedReply } from './model.js';
 import { openDiskStore } from './disk-store.js';
 
 // Memory bounds for the in-memory preview. All can be overridden through createPreviewServer options.
@@ -25,7 +26,7 @@ export function createPreviewServer({
   now = Date.now,
   // Optional JSON file on this machine's disk. Unset = process memory only (previous behaviour).
   storeFile = process.env.RAVEN_STORE_FILE || null,
-  generate = simulateReply,
+  generate = defaultGenerate(),
 } = {}) {
   // owner -> { materials, touchedAt }. Map order is least-recently-used first (re-inserted on each use).
   const sessions = new Map();
@@ -92,6 +93,9 @@ export function createPreviewServer({
       }
       if (!owner) return json(401, { error: 'session_unavailable' });
       const materials = session.materials;
+      if (req.method === 'GET' && url.pathname === '/api/status') {
+        return json(200, { mode: generate === simulateReply ? 'simulation' : 'grounded-model', persistence, characters: ['jonas', 'claire'] });
+      }
       if (req.method === 'GET' && url.pathname === '/api/materials') {
         return json(200, { items:materials.listMaterials(), events:materials.listShareEvents(), storage:'server-memory', persistence });
       }
@@ -144,7 +148,7 @@ export function createPreviewServer({
           return json(200, { event, storage:'server-memory' });
         }
         if (!['jonas','claire'].includes(data.characterId)) return json(400, { error:'invalid_request' });
-        const result = submitRequest(data.requestId, data.characterId, data.message, data.sharedFacts, data.contentVersion, owner, materials.contextFor(data.characterId), generate);
+        const result = await submitRequest(data.requestId, data.characterId, data.message, data.sharedFacts, data.contentVersion, owner, materials.contextFor(data.characterId), generate);
         if (!result.error && !result.replayed) persist();
         const status = result.error ? (result.status === 'conflict' ? 409 : result.error === 'forbidden' ? 403 : 400) : 200;
         return json(status, result);
@@ -158,5 +162,15 @@ export function createPreviewServer({
   });
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  createPreviewServer().listen(process.env.PORT || 10000, '0.0.0.0', () => console.log(`RAVEN preview: simulation, ${process.env.RAVEN_STORE_FILE ? 'disk file ' + process.env.RAVEN_STORE_FILE : 'process memory only'}`));
+  const mode = process.env.RAVEN_MODEL_KEY ? 'grounded model (key present, not printed)' : 'simulation';
+  createPreviewServer().listen(process.env.PORT || 10000, '0.0.0.0', () => console.log(`RAVEN preview: ${mode}, ${process.env.RAVEN_STORE_FILE ? 'disk file ' + process.env.RAVEN_STORE_FILE : 'process memory only'}`));
+}
+
+function defaultGenerate() {
+  if (!process.env.RAVEN_MODEL_KEY) return simulateReply;
+  return createGroundedReply({
+    apiKey: process.env.RAVEN_MODEL_KEY,
+    baseUrl: process.env.RAVEN_MODEL_BASE || 'https://api.x.ai/v1',
+    model: process.env.RAVEN_MODEL_NAME || 'grok-3',
+  });
 }

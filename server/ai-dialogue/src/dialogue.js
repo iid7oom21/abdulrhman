@@ -38,7 +38,7 @@ export function simulateReply(characterId, playerMessage, received) {
   };
 }
 
-export function submitRequest(requestId, characterId, message, sharedFacts = [], contentVersion = 'deleted-name-preview-v2', ownerId, received, generate = simulateReply) {
+export async function submitRequest(requestId, characterId, message, sharedFacts = [], contentVersion = 'deleted-name-preview-v2', ownerId, received, generate = simulateReply) {
   if (!ownerId || !Object.hasOwn(CHARACTERS, characterId) || typeof requestId !== 'string' ||
       !/^[\w-]{1,100}$/.test(requestId) || typeof message !== 'string' || !message.trim() || message.length > 8000) {
     return { error: 'invalid_request', status: 'error' };
@@ -59,7 +59,8 @@ export function submitRequest(requestId, characterId, message, sharedFacts = [],
   requests.set(requestId, record);
   remember(ownerId, requestId);
   try {
-    record.response = generate(characterId, message, received);
+    const produced = generate(characterId, message, received);
+    record.response = produced && typeof produced.then === 'function' ? await produced : produced;
     record.status = 'completed';
   } catch {
     record.status = 'error';
