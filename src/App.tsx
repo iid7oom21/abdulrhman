@@ -140,7 +140,8 @@ export const App: React.FC = () => {
     );
   });
 
-  const apiSnippet = `const response = await fetch('https://api.dev.runwayml.com/v1/generate/video', {
+  const apiSnippet = `// Illustrative UI snippet only; this is not a verified provider API contract.
+const response = await fetch('https://api.dev.runwayml.com/v1/generate/video', {
   method: 'POST',
   headers: {
     'Authorization': 'Bearer YOUR_API_KEY',
@@ -178,8 +179,8 @@ console.log(result);`;
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
             <span className="font-semibold">
               {isAr
-                ? 'أرشيف RAVEN السري — قضية «على الجانب الآخر» متاحة الآن للتجربة التفاعلية'
-                : 'RAVEN Secret Archive — Interactive Case "On The Other Side" is live'}
+                ? 'نموذج الاستوديو منفصل عن قضية «الاسم المحذوف» وخادم الحوار. إضافة مشهد تستخدم فيديو تجريبيًا موجودًا.'
+                : 'This studio demo is separate from The Deleted Name and the dialogue server. New scenes reuse a sample video.'}
             </span>
           </div>
           <a
@@ -337,7 +338,7 @@ console.log(result);`;
                 className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20 transition-all cursor-pointer"
               >
                 <Sparkles className="w-4 h-4" />
-                <span>{isAr ? 'توليد المشهد الآن' : 'Generate Cinematic Video'}</span>
+                <span>{isAr ? 'إضافة مشهد تجريبي' : 'Add demo scene'}</span>
               </button>
             </div>
 

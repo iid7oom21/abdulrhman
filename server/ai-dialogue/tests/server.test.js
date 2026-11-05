@@ -159,13 +159,15 @@ test('the session cap evicts the least recently used session', async t => {
   assert.equal((await historyOf(root, c)).status, 200);
 });
 
-test('a session keeps at most MAX_REQUESTS_PER_OWNER operations and the oldest becomes unavailable', async t => {
+test('the operation cap refuses new IDs but keeps accepted IDs replayable without a second generation', async t => {
   const root = await startWith(t);
   const cookie = await openSession(root);
-  for (let i = 0; i <= MAX_REQUESTS_PER_OWNER; i++) assert.equal((await postDialogue(root, cookie, `bound-cap-${i}`)).status, 200);
+  for (let i = 0; i < MAX_REQUESTS_PER_OWNER; i++) assert.equal((await postDialogue(root, cookie, `bound-cap-${i}`)).status, 200);
+  assert.equal((await postDialogue(root, cookie, 'over-cap')).status, 429);
   const poll = id => fetch(root + '/api/operations/' + id, { headers:{ cookie } });
-  assert.equal((await poll('bound-cap-0')).status, 404);
-  assert.equal((await poll(`bound-cap-${MAX_REQUESTS_PER_OWNER}`)).status, 200);
+  assert.equal((await poll('bound-cap-0')).status, 200);
+  assert.equal((await poll('over-cap')).status, 404);
+  assert.equal((await (await postDialogue(root, cookie, 'bound-cap-0')).json()).replayed, true);
   assert.equal((await (await historyOf(root, cookie)).json()).items.length, MAX_REQUESTS_PER_OWNER);
 });
 

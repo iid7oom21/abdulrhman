@@ -1,0 +1,40 @@
+{
+  "version": "dialogue_status_texts_bilingual_v1.0.1",
+  "note": "تسليم نصوص فقط للدمج. الملفان المعتمدان السابقان محفوظان دون إعادة صياغة. save_confirmed مشروطة بتأكيد الحفظ للعملية نفسها.",
+  "request_sending": {
+    "ar": "جارٍ إرسال سؤالك…",
+    "en": "Sending your question…"
+  },
+  "request_pending": {
+    "ar": "طلبك قيد المعالجة…",
+    "en": "Your request is being processed…"
+  },
+  "request_unknown": {
+    "ar": "نتيجة طلبك غير مؤكدة",
+    "en": "Your request result is unclear"
+  },
+  "save_pending": {
+    "ar": "جاري حفظ الرد…",
+    "en": "Saving reply…"
+  },
+  "save_confirmed": {
+    "ar": "انحفظ الرد",
+    "en": "Reply saved"
+  },
+  "save_unconfirmed": {
+    "ar": "لم نتأكد من حفظ الرد بعد",
+    "en": "Reply save not confirmed yet"
+  },
+  "status_read_failed": {
+    "ar": "ما قدرنا نتحقق من حالة طلبك الآن",
+    "en": "We couldn't check your request status right now"
+  },
+  "check_request": {
+    "ar": "تحقق من الطلب",
+    "en": "Check request"
+  },
+  "history_load_failed": {
+    "ar": "تعذر تحميل السجل",
+    "en": "Failed to load history"
+  }
+}

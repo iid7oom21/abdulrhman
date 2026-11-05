@@ -1,0 +1,5 @@
+{
+  "scope": "URL construction only; no external request",
+  "old": "https://api.x.ai/chat/completions",
+  "fixed": "https://api.x.ai/v1/chat/completions"
+}

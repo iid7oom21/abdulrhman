@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+  <script src="/texts/raven-texts.js?v=mati-1.0.1"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>RAVEN — معاينة محادثة</title>
@@ -49,7 +50,7 @@
 <body>
   <header>
     <h1>RAVEN — الاسم المحذوف</h1>
-    <span class="badge" id="mode-badge">محاكاة</span>
+    <span class="badge" id="runtime-mode">جارٍ التحقق من وضع الحوار…</span>
   </header>
   <main>
     <div class="row">
@@ -59,7 +60,8 @@
       </select>
       <button id="clear" class="secondary">مسح العرض</button>
     </div>
-    <p>معاينة تقنية محدودة: اللاعب مرمّم سجلات وصل بعد واقعة المكتبة والاستجابة الأولى. الإفادات الأصلية الكاملة غير متاحة؛ ردود المحاكاة لا تنشئ أدلة.</p>
+    <p>معاينة تقنية محدودة: اللاعب مرمّم سجلات وصل بعد واقعة المكتبة والاستجابة الأولى. الإفادات الأصلية الكاملة غير متاحة؛ الحوار لا ينشئ أدلة. هذه المعاينة مستقلة عن افتتاح القضية المنشور.</p>
+    <p id="runtime-description" role="status">جارٍ قراءة إعدادات الخادم…</p>
     <div id="log" role="log" aria-label="سجل الشخصية"></div>
     <!-- Mati help texts, verbatim from src/player_help_texts_bilingual_v1.0.0.json (tests/player-help.test.js). -->
     <section id="player-help" aria-labelledby="player-help-title">
@@ -80,7 +82,7 @@
     <div id="status" class="status" role="status" aria-live="polite"></div>
     <details id="materials-panel">
       <summary>الأقوال والتصحيحات ومواد المشاركة</summary>
-      <p>تسجل هنا كلامك ومسوداتك. التصحيح يبقى إلى جانب القول الأصلي، ولا يجعل مضمونه حقيقة مثبتة. المواد في ذاكرة الخادم؛ نزّل نسخة للاحتفاظ بها.</p>
+      <p>تسجل هنا كلامك ومسوداتك. التصحيح يبقى إلى جانب القول الأصلي، ولا يجعل مضمونه حقيقة مثبتة. نزّل نسخة من المواد للاحتفاظ بها.</p>
       <div class="material-form">
         <label for="material-type">نوع المادة</label>
         <select id="material-type"><option value="statement">قول أصلي مني</option><option value="correction">تصحيح لقول مني</option><option value="motive">تفسير دافع</option><option value="private_note">ملاحظة خاصة</option><option value="report">مسودة تقرير</option></select>
@@ -101,21 +103,46 @@
       <p>التقرير هنا مسودة. الإيداع وإيصاله ينتظران المصدر المعتمد؛ لا يوجد زر يصنع إيصالًا أو دليلًا من نص الحوار.</p>
     </details>
   </main>
-  <footer id="mode-note">معاينة محاكاة — الردود ليست من نموذج ذكاء اصطناعي حقيقي. السجل في ذاكرة الخادم ويُفقد عند إعادة تشغيله. جلسة متصفح مجهولة وليست حسابًا موثقًا. نسخة محلية على هذا المتصفح إن سمح التخزين؛ لا يوجد حفظ دائم مضمون.</footer>
+  <footer id="runtime-storage">جلسة متصفح مجهولة وليست حسابًا موثقًا. جارٍ التحقق من نوع الحفظ.</footer>
   <script>
+    const runtime = {persistence:null};
+    function savedNotice() {
+      return runtime.persistence === 'disk-file' ? 'تأكد تسجيل الإجراء على قرص الخادم الحالي.' : 'تأكد تسجيل الإجراء في ذاكرة الخادم المؤقتة.';
+    }
+    function replySavedNotice() {
+      return runtime.persistence === 'disk-file' ? 'تأكد تسجيل العملية على قرص الخادم الحالي.' : 'تأكد تسجيل العملية في ذاكرة الخادم المؤقتة.';
+    }
+    fetch('/api/config', {credentials:'same-origin'}).then(async res => {
+      if (!res.ok) throw new Error('config');
+      const info = await res.json();
+      if (!['simulation','openai','compatible'].includes(info.provider) || !['disk-file','process-memory'].includes(info.persistence)) throw new Error('config');
+      runtime.persistence = info.persistence;
+      document.getElementById('runtime-mode').textContent = info.provider === 'openai' ? 'مساعدة OpenAI محدودة بالمصادر' : info.provider === 'compatible' ? 'مساعدة نموذج محدودة بالمصادر' : 'محاكاة محلية على الخادم';
+      document.getElementById('runtime-description').textContent = info.provider !== 'simulation'
+        ? 'يختار الذكاء المواد ذات الصلة من كلامك الذي شاركته مع هذه الشخصية. يظهر الرد اقتباسات منسوبة إليك؛ لا يؤلف إفادة للشخصية. يُرسل سؤالك والمواد التي وصلتها إلى ' + (info.provider === 'openai' ? 'OpenAI' : 'المزوّد المضبوط على الخادم') + ' عند الحاجة، ولا تُرسل ملاحظاتك غير المشتركة.'
+        : 'الردود محاكاة مكتوبة؛ لا يوجد اتصال بنموذج ذكاء اصطناعي في هذا الوضع.';
+      document.getElementById('runtime-storage').textContent = (info.persistence === 'disk-file'
+        ? 'يبقى السجل بعد إعادة التشغيل ما دام القرص نفسه موجودًا، ضمن حدود الجلسة. يضيع إذا مُسح القرص أو تغيّرت الآلة. هذا ليس حفظ إنتاج سحابي.'
+        : 'السجل في ذاكرة الخادم ويُفقد عند إعادة تشغيله.') + ' جلسة متصفح مجهولة وليست حسابًا موثقًا؛ تنتهي بعد 6 ساعات خمول وقد تُستبعد عند بلوغ حد الجلسات. نسخة محلية على هذا المتصفح إن سمح التخزين.';
+    }).catch(() => {
+      document.getElementById('runtime-mode').textContent = 'وضع الحوار غير مؤكد';
+      document.getElementById('runtime-description').textContent = 'تعذرت قراءة إعدادات الحوار والحفظ. لم نحذف بياناتك.';
+    });
+  </script>
+  <script>
+    const approvedTexts = window.RAVEN_ALL_TEXTS_BILINGUAL_MERGED;
+    const statusText = key => approvedTexts['dialogue_status_texts_bilingual_v1.0.1'][key][document.documentElement.lang === 'en' ? 'en' : 'ar'];
+    const helpTextPack = approvedTexts['player_help_texts_bilingual_v1.0.0'];
+    const displayLang = document.documentElement.lang === 'en' ? 'en' : 'ar';
+    document.getElementById('player-help-title').textContent = helpTextPack.help_title[displayLang];
+    const helpLines = [helpTextPack.help_intro,...helpTextPack.help_steps,helpTextPack.question_hint];
+    document.querySelectorAll('#player-help p, #player-help li').forEach((el,i) => { el.textContent = helpLines[i][displayLang]; });
+    document.getElementById('check').textContent = statusText('check_request');
     const log = document.getElementById('log');
     const input = document.getElementById('input');
     const sendBtn = document.getElementById('send');
     const statusEl = document.getElementById('status');
     const characterEl = document.getElementById('character');
-    fetch('/api/status', { credentials:'same-origin' }).then(r => r.json()).then(status => {
-      const badge = document.getElementById('mode-badge');
-      const note = document.getElementById('mode-note');
-      if (status?.mode === 'grounded-model') {
-        if (badge) badge.textContent = 'نموذج مقيد';
-        if (note) note.textContent = 'النموذج موصول على هذا الخادم فقط، ويرد من المعرفة المعتمدة والمواد التي وصلت الشخصية. معرفة يوناس وكلير المعتمدة فارغة الآن، فالسؤال بلا مادة مشاركة يبقى رفضًا. هذا ليس موقع الصفحات المنشور، وليس حفظًا دائمًا.';
-      }
-    }).catch(() => {});
     const checkBtn = document.getElementById('check');
     const stopBtn = document.getElementById('stop');
     const KEY = 'raven_deleted_name_preview_v2';
@@ -189,11 +216,11 @@
         addMsg('أنت', r.message, true);
         if (r.response?.text) {
           addMsg(names[id], r.response.text, false);
-          if (r.response.source === 'grounded-model') addMsg('المصدر', 'رد من النموذج ضمن المعرفة المسموحة والمواد التي وصلت هذه الشخصية فقط.', false);
-          else if (r.response.source === 'deterministic-fallback') addMsg('المصدر', 'رفض محاكاة: لا مصدر معتمد لهذا السؤال، ولم يُنشأ دليل.', false);
+          if (r.response.source === 'grounded-model') addMsg('المصدر', 'اختار النموذج مواد وصلت هذه الشخصية؛ عرض الخادم نصوصها منسوبة للاعب، وليست شهادة جديدة.', false);
+          else if (r.response.source === 'deterministic-fallback') addMsg('المصدر', 'رفض ثابت لغياب المصدر؛ لم يُنشأ دليل.', false);
         }
         const label = r.status === 'completed'
-          ? (r.confirmed ? 'تأكد سابقًا تسجيل العملية في ذاكرة الخادم المؤقتة.' : 'الرد ظاهر هنا، وحفظه على الخادم غير مؤكد.')
+          ? (r.confirmed ? replySavedNotice() : 'الرد ظاهر هنا، وحفظه على الخادم غير مؤكد.')
           : r.status === 'error' ? 'سُجّل خطأ للعملية، ولم يثبت نجاحها.'
           : r.status === 'unavailable' ? (r.response?.text ? 'وصل هذا الرد، لكن ' : '') + 'العملية غير معروفة للخادم في جلستك الحالية. ربما أُعيد تشغيله أو انتهت جلسة المتصفح. '
             + (r.response?.text ? 'حفظ الرد على الخادم غير مؤكد، ولم نُعد إرسال السؤال.' : 'لم يثبت نجاح العملية أو فشلها، ولم نُعد إرسالها.') + ' المعرف: ' + iso(r.id)
@@ -211,18 +238,16 @@
     function merge(id, r) {
       const s = states[id];
       if (!r || r.characterId !== id || typeof r.id !== 'string' || !/^[\w-]{1,100}$/.test(r.id) || typeof r.message !== 'string' ||
-          !['pending','error','completed'].includes(r.status)) return false;
+          !['pending','unknown','error','completed'].includes(r.status)) return false;
       const old = s.records.get(r.id);
       if (old && old.message !== r.message) return false;
       if (r.status === 'completed' && (r.storage !== 'server-memory' || typeof r.response?.text !== 'string' || !r.response.text)) return false;
       if (old?.response?.text && (r.status !== 'completed' || r.response?.text !== old.response.text)) return false;
       if (old?.status === 'error' && r.status !== 'error') return false;
       s.records.set(r.id, { ...old, id:r.id, characterId:id, message:r.message,
-        status:r.status, response:typeof r.response?.text === 'string' ? {
-          text:r.response.text,
-          ...(r.response.refused === true ? { refused:true } : {}),
-          ...(['grounded-model','deterministic-fallback'].includes(r.response.source) ? { source:r.response.source } : {}),
-        } : old?.response, confirmed:r.storage === 'server-memory' });
+        status:r.status, response:typeof r.response?.text === 'string' ? { text:r.response.text,
+          ...(typeof r.response.refused === 'boolean' ? {refused:r.response.refused} : {}),
+          ...(['grounded-model','deterministic-fallback'].includes(r.response.source) ? {source:r.response.source} : {}) } : old?.response, confirmed:r.storage === 'server-memory' && r.saveStatus !== 'unconfirmed' });
       return true;
     }
     const SESSION_LOST = 'انتهت جلسة المتصفح على الخادم، أو أُعيد تشغيل الخادم. أعد تحميل الصفحة، ثم اضغط «متابعة العملية الأصلية». العمليات والمسودة ما زالتا على هذا المتصفح.';
@@ -236,7 +261,7 @@
       const s = states[id];
       if (s.active) return;
       const controller = new AbortController(); s.active = controller;
-      s.notice = 'جارٍ انتظار العملية ' + iso(op.id); render();
+      s.notice = (options.method === 'POST' ? statusText('request_sending') : statusText('request_unknown')) + ' ' + iso(op.id); render();
       const timer = setTimeout(() => controller.abort(), 8000);
       try {
         const res = await fetch(url, { ...options, signal:controller.signal, credentials:'same-origin' });
@@ -252,6 +277,18 @@
           return;
         }
         if (res.status === 401 && data?.error === 'session_unavailable') { s.notice = SESSION_LOST; return; }
+        if (options.method === 'POST' && !data.id && (res.status === 400 || res.status === 429 || data.error === 'character_busy')) {
+          const current = s.records.get(op.id);
+          if (current && !current.response) current.status = 'error';
+          s.draft = s.draft || op.message;
+          s.notice = data.error === 'requests_limit' ? 'وصلت هذه الجلسة إلى حد 100 عملية. بقي السجل محفوظًا؛ لم نرسل طلبًا للنموذج.' : 'لم يُقبل السؤال. بقي نصه في المسودة.';
+          if (data.error === 'character_busy' && typeof data.activeRequestId === 'string') {
+            s.notice = 'لهذه الشخصية عملية سابقة لم تُحسم. جارٍ استعادتها دون توليد جديد.';
+            const prior = await fetch('/api/operations/' + encodeURIComponent(data.activeRequestId), {credentials:'same-origin',signal:controller.signal});
+            if (prior.ok) merge(id, await prior.json());
+          }
+          return;
+        }
         const matches = data.id === op.id && data.characterId === id && data.message === op.message;
         if (matches && typeof data.response?.text === 'string') {
           const current = s.records.get(op.id);
@@ -259,16 +296,18 @@
             current.response = { text:data.response.text }; current.status = 'unknown';
           }
         }
-        if (!matches || !res.ok || res.status === 202 || !merge(id, data)) {
+        if (!matches || !res.ok || (res.status === 202 && data.status !== 'pending') || !merge(id, data)) {
           // Even an error/202/empty response is not proof of a committed operation.
-          s.notice = 'تعذر تأكيد الحالة (' + res.status + '). احتفظنا بالمعرف وبالرد إن وُجد. المتابعة لن تولد ردًا جديدًا.';
+          s.notice = statusText('status_read_failed') + ' — تعذر تأكيد الحالة (' + res.status + '). احتفظنا بالمعرف وبالرد إن وُجد. المتابعة لن تولد ردًا جديدًا.';
         } else {
-          s.notice = data.status === 'completed' ? 'وصل الرد، وتأكد تسجيل العملية في ذاكرة الخادم المؤقتة.'
-            : data.status === 'error' ? 'سُجّل خطأ، ولم يؤكد الاستعلام نجاح العملية.' : 'ما زالت العملية معلقة.';
+          s.notice = data.status === 'completed' ? 'وصل الرد. ' + (data.saveStatus === 'unconfirmed' ? statusText('save_unconfirmed') + ' — حفظه على القرص غير مؤكد؛ احتفظنا بالرد ولن نولده مجددًا.' : statusText('save_confirmed') + ' — ' + replySavedNotice())
+            : data.status === 'error' ? 'سُجّل خطأ، ولم يؤكد الاستعلام نجاح العملية.'
+            : data.status === 'unknown' ? 'الخادم لا يملك نتيجة مؤكدة للعملية الأصلية. لم يُعد توليدها؛ يحتفظ بمعرفها.'
+            : statusText('request_pending') + ' تابع العملية الأصلية لقراءة النتيجة.';
         }
       } catch {
         s.notice = controller.signal.aborted ? stoppedNotice(controller, op.id)
-          : 'تعذرت قراءة الحالة. احتفظنا بالعملية، ويمكن متابعة معرفها الأصلي دون توليد رد جديد.';
+          : statusText('status_read_failed') + ' — تعذرت قراءة الحالة. احتفظنا بالعملية، ويمكن متابعة معرفها الأصلي دون توليد رد جديد.';
       } finally {
         clearTimeout(timer);
         if (s.active === controller) s.active = null;
@@ -300,7 +339,7 @@
           s.notice += ' العملية ' + iso(open.id) + ' ليست في سجل الخادم الحالي؛ اضغط «متابعة العملية الأصلية» لقراءة حالتها دون إرسال جديد.';
         }
         persist();
-      } catch (e) { s.notice = e?.message === 'session' ? SESSION_LOST : 'تعذر تحميل السجل. لم نحذف أي رسالة أو عملية.'; }
+      } catch (e) { s.notice = e?.message === 'session' ? SESSION_LOST : statusText('history_load_failed') + ' — تعذر تحميل السجل. لم نحذف أي رسالة أو عملية.'; }
       render();
     }
     input.oninput = () => { states[characterEl.value].draft = input.value; persist(); };
@@ -421,9 +460,11 @@
         if (version !== listVersion) return;
         // Never claim local material copies still exist on a restarted server.
         items = data.items;
-        if (pending && (pending.path === '/api/materials' ? items.some(it => confirms(pending,it)) : data.events.some(it => confirms(pending,undefined,it)))) {
-          pending = null; saveLocal();notice('تأكد تسجيل الإجراء الأصلي في ذاكرة الخادم المؤقتة.');
-        } else notice(done || (pending ? 'حالة الإجراء غير مؤكدة. احتفظنا بمعرفه ومحتواه، ولم نُعد إرساله. إذا لم يظهر بعد إعادة تشغيل الخادم أو انتهاء الجلسة، يمكنك إرساله مجددًا بالمعرف نفسه. لن يكرر الخادم إجراءً سبق تسجيله بهذا المعرف.' : 'المواد المسجلة في ذاكرة الخادم؛ ليست حفظًا دائمًا.'));
+        if (data.saveStatus === 'unconfirmed') {
+          notice('المواد موجودة في ذاكرة الخادم، لكن حفظها على القرص غير مؤكد. نزّل نسخة؛ الإجراء يحتفظ بمعرفه.');
+        } else if (pending && (pending.path === '/api/materials' ? items.some(it => confirms(pending,it)) : data.events.some(it => confirms(pending,undefined,it)))) {
+          pending = null; saveLocal();notice('تأكد تسجيل الإجراء الأصلي. ' + savedNotice());
+        } else notice(done || (pending ? 'حالة الإجراء غير مؤكدة. احتفظنا بمعرفه ومحتواه، ولم نُعد إرساله. إذا لم يظهر بعد إعادة تشغيل الخادم أو انتهاء الجلسة، يمكنك إرساله مجددًا بالمعرف نفسه. لن يكرر الخادم إجراءً سبق تسجيله بهذا المعرف.' : 'المواد المسجلة على الخادم معروضة. نزّل نسخة للاحتفاظ بها.'));
         renderItems(); await knowledge();
       } catch (e) {
         notice(e?.message === 'session' ? (done ? done + ' ' : '') + SESSION_LOST_MATERIALS
@@ -447,9 +488,9 @@
       try {
         const res = await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal});
         const data = await res.json(), confirmedId = path === '/api/materials' ? data.item?.id : data.event?.eventId;
-        if (res.ok && res.status !== 202 && confirmedId === id && data.storage === 'server-memory' && confirms(pending,data.item,data.event)) {
+        if (res.ok && res.status !== 202 && confirmedId === id && data.storage === 'server-memory' && data.saveStatus !== 'unconfirmed' && confirms(pending,data.item,data.event)) {
           if (data.item) { items = [...items.filter(it => it.id !== data.item.id), data.item];renderItems(); }
-          pending = null;saveLocal();notice('تأكد تسجيل الإجراء في ذاكرة الخادم المؤقتة.');await refresh('تأكد تسجيل الإجراء في ذاكرة الخادم المؤقتة.');
+          pending = null;saveLocal();notice(savedNotice());await refresh(savedNotice());
         } else if ([400,409,413,415].includes(res.status) && data.error) {
           pending = null;saveLocal();notice('لم يُقبل الإجراء: ' + data.error + '. النص ما زال في المدخل.');
         } else notice(res.status === 401 ? SESSION_LOST_MATERIALS : 'لم تتأكد حالة الإجراء. المعرف محفوظ للمتابعة دون إرسال جديد.');

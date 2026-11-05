@@ -1,0 +1,38 @@
+
+> abdulrhman-creative-studio@1.0.0 test:browser
+> node --test server/ai-dialogue/tests/browser.cjs server/ai-dialogue/tests/materials-browser.cjs server/ai-dialogue/tests/reliability-browser.cjs
+
+▶ real preview page browser acceptance
+  ✔ 1 initialization preserves unrelated storage and music preferences; 2 normal path and safe text (1232.00704ms)
+  ✔ unreadable owned journal is preserved verbatim (945.429707ms)
+  ✔ prior preview journal with refused/source metadata restores its response and draft (833.489082ms)
+  ✔ valid JSON with incompatible fields or records is never overwritten on initialization (2159.357324ms)
+  ✔ conflicting late history cannot replace an already received reply for the same ID (612.801558ms)
+  ✔ 3 new browser session has no old history, and labels state the limits (435.213052ms)
+  ✔ 4 server error then poll stays error; 10 repeated reads do not duplicate (857.596768ms)
+  ✔ 5 history keeps pending; 6 second send blocked; 9 character switch; 11 stop retains ID (886.854487ms)
+  ✔ 7 known reply without save confirmation stays visible; no regeneration; 13 reply XSS is text (859.007599ms)
+  ✔ 7b local save throws after a known reply, reply stays in memory (689.452962ms)
+  ✔ 8 stale history after send; 9 late character history never changes selected conversation (826.851875ms)
+  ✔ late reply and late history for Jonas cannot overwrite Claire (947.188885ms)
+  ✔ reload keeps unresolved operation and draft; 202 empty is never completed (873.701627ms)
+  ✔ lost session: a read-only 404 follow-up releases the character without resending or inventing a result (1060.557662ms)
+  ✔ known reply for an operation the server no longer has stays visible and is not regenerated (812.140657ms)
+  ✔ stopping the wait says the browser stopped waiting, not that reading failed or the server cancelled (772.352968ms)
+  ✔ browser timeout is reported as a timeout that proves neither failure nor cancellation (695.281826ms)
+  ✔ expired session cookie: the page says to reload; after reload the follow-up releases the question (843.233788ms)
+  ✔ 320/375/390 RTL long text, focus and controls stay reachable (1551.663118ms)
+✔ real preview page browser acceptance (18300.346635ms)
+✔ materials UI uses the real server and recipient contexts (3183.062849ms)
+✔ a material action lost with the session can be resent with the same ID, without duplicates (3756.536742ms)
+✔ real browser + HTTP + provider adapter: accepted pending, recipient scope, switch, safe response, one generation (1398.937329ms)
+✔ disk save failure retains known reply in browser after poll/reload and never claims disk confirmation (1330.461885ms)
+✔ another tab restores the existing pending request and keeps its rejected question as a draft (1444.052079ms)
+ℹ tests 25
+ℹ suites 0
+ℹ pass 25
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 30784.312362

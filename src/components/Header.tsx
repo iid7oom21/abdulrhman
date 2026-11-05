@@ -36,12 +36,12 @@ export const Header: React.FC<HeaderProps> = ({
               <h1 className="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
                 {isAr ? 'استوديو عبد الرحمن' : 'Abdulrhman'}
                 <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 font-medium">
-                  Studio AI
+                  {isAr ? 'نموذج تجريبي' : 'Demo'}
                 </span>
               </h1>
             </div>
             <p className="text-xs text-zinc-400 font-sans">
-              {isAr ? 'منصة توليد وتوجيه الفيديو السينمائي الذكي' : 'Cinematic AI Video & Creative Director Suite'}
+              {isAr ? 'تصور واجهة استوديو — دون توليد فيديو فعلي' : 'Studio UI concept — no live video generation'}
             </p>
           </div>
         </div>

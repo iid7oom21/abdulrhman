@@ -1,20 +1,24 @@
 import http from 'node:http';
 import fs from 'node:fs';
-import { randomBytes } from 'node:crypto';
+import { randomBytes, createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { createMaterialStore, MaterialError } from './materials.js';
-import { submitRequest, listRequests, getRequest, forgetOwner, simulateReply, exportRequests, importRequest } from './dialogue.js';
-import { createGroundedReply } from './model.js';
+import { submitRequest, listRequests, getRequest, forgetOwner, simulateReply, exportRequests, importRequest, markSaveStatus, fingerprint, MAX_REQUESTS_PER_OWNER } from './dialogue.js';
 import { openDiskStore } from './disk-store.js';
+import { providerFromEnv } from './provider.js';
 
 // Memory bounds for the in-memory preview. All can be overridden through createPreviewServer options.
 export const SESSION_IDLE_MS = 6 * 60 * 60 * 1000;
 export const MAX_SESSIONS = 100;
 export const MAX_MATERIALS_PER_SESSION = 200;
 export const MAX_SHARES_PER_SESSION = 500;
+export const DEFAULT_STORAGE_PATH = fileURLToPath(new URL('../.data/preview-store.json', import.meta.url));
+export function storagePathFromEnv(env = process.env) {
+  return env.RAVEN_DIALOGUE_STORAGE_PATH || env.RAVEN_STORE_FILE || DEFAULT_STORAGE_PATH;
+}
 
 // Session capability issued by the server, not an ownerId supplied in JSON/query strings.
-// Anonymous browser session, NOT an authenticated account or durable storage.
+// Anonymous browser session, not an authenticated account. CLI uses a local disk file.
 export function createPreviewServer({
   createMaterials = createMaterialStore,
   sessionIdleMs = SESSION_IDLE_MS,
@@ -25,8 +29,10 @@ export function createPreviewServer({
   secureCookie = process.env.RAVEN_COOKIE_SECURE === '1',
   now = Date.now,
   // Optional JSON file on this machine's disk. Unset = process memory only (previous behaviour).
-  storeFile = process.env.RAVEN_STORE_FILE || null,
-  generate = defaultGenerate(),
+  storeFile = null, // embedded tests explicitly choose storage; CLI uses storagePathFromEnv()
+  generate = simulateReply,
+  providerInfo = {provider:'simulation',model:null},
+  openStore = openDiskStore,
 } = {}) {
   // owner -> { materials, touchedAt }. Map order is least-recently-used first (re-inserted on each use).
   const sessions = new Map();
@@ -38,7 +44,6 @@ export function createPreviewServer({
     if (expired(session)) { dropSession(cookie); return null; }
     session.touchedAt = now();
     sessions.delete(cookie); sessions.set(cookie, session);
-    persist();
     return session;
   };
   const openSession = () => {
@@ -49,36 +54,89 @@ export function createPreviewServer({
     return owner;
   };
   // Each session keeps the accepted player actions in order; reopening replays them through the same engine.
-  const disk = storeFile ? openDiskStore(storeFile) : null;
-  const persist = () => disk?.save({
-    sessions: [...sessions].map(([owner, session]) => ({ owner, touchedAt: session.touchedAt, actions: session.actions })),
-    requests: exportRequests().filter(record => sessions.has(record.owner)),
-  });
+  const disk = storeFile ? openStore(storeFile) : null;
+  let saveStatus = disk ? 'confirmed' : 'memory';
+  const persist = () => {
+    markSaveStatus(sessions, disk ? 'confirmed' : 'memory');
+    try {
+      disk?.save({
+        sessions: [...sessions].map(([owner, session]) => ({ owner, touchedAt: session.touchedAt, actions: session.actions })),
+        requests: exportRequests().filter(record => sessions.has(record.owner)),
+      });
+      saveStatus = disk ? 'confirmed' : 'memory';
+    } catch (error) {
+      saveStatus = 'unconfirmed'; markSaveStatus(sessions, 'unconfirmed'); throw error;
+    }
+  };
+  const persistSafely = () => { try { persist(); } catch { /* Keep the known result in memory. */ } };
   if (disk) {
     const snapshot = disk.load();
-    for (const saved of snapshot?.sessions || []) {
-      if (!/^[a-f0-9]{64}$/.test(saved.owner) || sessions.has(saved.owner)) continue;
-      const materials = createMaterials();
-      for (const action of saved.actions || []) {
-        if (action.kind === 'material') materials.createMaterial(action.input);
-        else if (action.kind === 'share') materials.share(action.input);
+    // Validate/replay the ENTIRE snapshot before touching live operation maps or writing.
+    // A valid JSON header with corrupt nested content is still a damaged backup.
+    try {
+      if ((snapshot?.sessions.length || 0) > maxSessions) throw new Error();
+      for (const saved of snapshot?.sessions || []) {
+        if (!saved || !/^[a-f0-9]{64}$/.test(saved.owner) || sessions.has(saved.owner) ||
+            !Number.isFinite(saved.touchedAt) || !Array.isArray(saved.actions) || saved.actions.length > maxMaterials + maxShares) throw new Error();
+        const materials = createMaterials();
+        for (const action of saved.actions) {
+          if (action?.kind === 'material' && action.input?.author === 'player' &&
+              ['statement','correction','motive','private_note','report'].includes(action.input.type)) materials.createMaterial(action.input);
+          else if (action?.kind === 'share' && action.input?.sender === 'player' &&
+              Array.isArray(action.input.recipients) && !action.input.recipients.includes('player')) materials.share(action.input);
+          else throw new Error();
+        }
+        if (materials.listMaterials().length > maxMaterials || materials.listShareEvents().length > maxShares) throw new Error();
+        sessions.set(saved.owner, { materials, touchedAt:saved.touchedAt, actions:structuredClone(saved.actions) });
       }
-      sessions.set(saved.owner, { materials, touchedAt: saved.touchedAt, actions: [...(saved.actions || [])] });
-    }
-    for (const record of snapshot?.requests || []) if (sessions.has(record.owner)) importRequest(record);
-    // Expired sessions are dropped by the same idle rule as before, not at an arbitrary boot moment.
+      const seen = new Set(), counts = new Map();
+      for (const record of snapshot?.requests || []) {
+        if (!record || !sessions.has(record.owner) || typeof record.id !== 'string' || !/^[\w-]{1,100}$/.test(record.id) || seen.has(record.id) ||
+            !['jonas','claire'].includes(record.characterId) || typeof record.message !== 'string' || !record.message.trim() || record.message.length > 8000 ||
+            typeof record.contentVersion !== 'string' || !/^[\w.-]{1,100}$/.test(record.contentVersion) ||
+            record.fingerprint !== fingerprint({characterId:record.characterId,message:record.message,contentVersion:record.contentVersion}) ||
+            !['pending','unknown','completed','error'].includes(record.status) || record.storage !== 'server-memory' ||
+            typeof record.createdAt !== 'string' || !Number.isFinite(Date.parse(record.createdAt)) ||
+            (record.response !== undefined && (typeof record.response?.text !== 'string' || !record.response.text.trim() || record.response.text.length > 40000 || typeof record.response.refused !== 'boolean')) ||
+            (record.status === 'completed' && !record.response)) throw new Error();
+        seen.add(record.id); counts.set(record.owner, (counts.get(record.owner) || 0) + 1);
+        if (counts.get(record.owner) > MAX_REQUESTS_PER_OWNER) throw new Error();
+      }
+    } catch { throw new Error('incompatible_store_file: snapshot was left untouched'); }
+    for (const record of snapshot?.requests || []) importRequest(record);
     for (const [owner, session] of [...sessions]) if (expired(session)) dropSession(owner);
-    persist();
+    // Do not rewrite on boot: valid but stale snapshots and damaged backups stay inspectable.
   }
   const persistence = disk ? 'disk-file' : 'process-memory';
+  const storageInfo = () => ({storage:'server-memory',persistence,saveStatus});
   const html = fs.readFileSync(new URL('../public/index.html', import.meta.url));
-  return http.createServer(async (req, res) => {
+  const scriptHashes = [...html.toString().matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => `'sha256-${createHash('sha256').update(m[1]).digest('base64')}'`).join(' ');
+  const server = http.createServer(async (req, res) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('Content-Security-Policy', `default-src 'none'; script-src 'self' ${scriptHashes}; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'; form-action 'self'`);
     const json = (status, data) => {
       res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(JSON.stringify(data, (key, value) => ['owner', 'fingerprint'].includes(key) ? undefined : value));
     };
     try {
       const url = new URL(req.url, 'http://preview.local');
+      if (req.method === 'GET' && url.pathname === '/texts/raven-texts.js') {
+        res.writeHead(200, {'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});
+        return res.end(fs.readFileSync(new URL('../public/texts/raven-texts.js',import.meta.url)));
+      }
+      // Readiness checks never create/evict sessions, generate, or write storage.
+      if (req.method === 'GET' && url.pathname === '/healthz') return json(200,{status:'ok'});
+      if (req.method === 'GET' && url.pathname === '/api/config') return json(200,{
+        ...storageInfo(), ...providerInfo, mode:providerInfo.provider !== 'simulation' ? 'received-material-assistance' : 'simulation',
+        sourceKnowledgeAvailable:false,
+      });
+      // Keep the existing status route for callers from the earlier model integration.
+      if (req.method === 'GET' && url.pathname === '/api/status') return json(200,{
+        mode:providerInfo.provider === 'simulation' ? 'simulation' : 'grounded-model',
+        persistence, characters:['jonas','claire'], ...providerInfo,
+      });
       const cookie = /(?:^|;\s*)raven_preview_session=([a-f0-9]{64})(?:;|$)/.exec(req.headers.cookie || '')?.[1];
       const session = cookie ? liveSession(cookie) : null;
       let owner = session ? cookie : null;
@@ -93,11 +151,8 @@ export function createPreviewServer({
       }
       if (!owner) return json(401, { error: 'session_unavailable' });
       const materials = session.materials;
-      if (req.method === 'GET' && url.pathname === '/api/status') {
-        return json(200, { mode: generate === simulateReply ? 'simulation' : 'grounded-model', persistence, characters: ['jonas', 'claire'] });
-      }
       if (req.method === 'GET' && url.pathname === '/api/materials') {
-        return json(200, { items:materials.listMaterials(), events:materials.listShareEvents(), storage:'server-memory', persistence });
+        return json(200, { items:materials.listMaterials(), events:materials.listShareEvents(), ...storageInfo() });
       }
       if (req.method === 'GET' && url.pathname === '/api/knowledge') {
         const characterId = url.searchParams.get('characterId');
@@ -105,14 +160,14 @@ export function createPreviewServer({
         return json(200, materials.contextFor(characterId, {visibleTo:'player'}));
       }
       if (req.method === 'GET' && url.pathname === '/api/history') {
-        return json(200, { items: listRequests(owner), storage: 'server-memory', persistence });
+        return json(200, { items: listRequests(owner), ...storageInfo() });
       }
       if (req.method === 'GET' && url.pathname.startsWith('/api/operations/')) {
         const record = getRequest(decodeURIComponent(url.pathname.slice('/api/operations/'.length)), owner);
         return record ? json(200, record) : json(404, { error: 'operation_unavailable' });
       }
       if (req.method === 'POST' && ['/api/dialogue','/api/materials','/api/shares'].includes(url.pathname)) {
-        if (!req.headers['content-type']?.startsWith('application/json')) return json(415, { error: 'json_required' });
+        if (req.headers['content-type']?.split(';')[0].trim().toLowerCase() !== 'application/json') return json(415, { error: 'json_required' });
         if (req.headers['sec-fetch-site'] === 'cross-site') return json(403, { error: 'cross_site' });
         const bodyChunks = [];
         let bodyBytes = 0;
@@ -134,8 +189,9 @@ export function createPreviewServer({
               !materials.listMaterials().some(record => record.id === data.id)) return json(400, { error:'materials_limit' });
           const isNew = !materials.listMaterials().some(record => record.id === data.id);
           const item = materials.createMaterial({ ...data, author:'player' });
-          if (isNew) { session.actions.push({ kind:'material', input:{ ...data, author:'player' } }); persist(); }
-          return json(200, { item:materials.listMaterials().find(record => record.id === item.id), storage:'server-memory' });
+          if (isNew) session.actions.push({ kind:'material', input:{ ...data, author:'player' } });
+          persistSafely();
+          return json(200, { item:materials.listMaterials().find(record => record.id === item.id), ...storageInfo() });
         }
         if (url.pathname === '/api/shares') {
           if (Object.keys(data).some(key => !['eventId','materialId','recipients'].includes(key)) || !Array.isArray(data.recipients) || data.recipients.includes('player')) {
@@ -144,13 +200,15 @@ export function createPreviewServer({
           if (materials.listShareEvents().length >= maxShares &&
               !materials.listShareEvents().some(event => event.eventId === data.eventId)) return json(400, { error:'shares_limit' });
           const event = materials.share({ ...data, sender:'player' });
-          if (!event.duplicated) { session.actions.push({ kind:'share', input:{ ...data, sender:'player' } }); persist(); }
-          return json(200, { event, storage:'server-memory' });
+          if (!event.duplicated) session.actions.push({ kind:'share', input:{ ...data, sender:'player' } });
+          persistSafely();
+          return json(200, { event, ...storageInfo() });
         }
-        if (!['jonas','claire'].includes(data.characterId)) return json(400, { error:'invalid_request' });
-        const result = await submitRequest(data.requestId, data.characterId, data.message, data.sharedFacts, data.contentVersion, owner, materials.contextFor(data.characterId), generate);
-        if (!result.error && !result.replayed) persist();
-        const status = result.error ? (result.status === 'conflict' ? 409 : result.error === 'forbidden' ? 403 : 400) : 200;
+        if (!['jonas','claire'].includes(data.characterId) || Object.keys(data).some(k => !['requestId','characterId','message','sharedFacts','contentVersion'].includes(k))) return json(400, { error:'invalid_request' });
+        const result = submitRequest(data.requestId, data.characterId, data.message, data.sharedFacts, data.contentVersion, owner, materials.contextFor(data.characterId), generate,
+          {beforeGenerate:persist,onSettled:persistSafely});
+        const status = result.id ? (result.status === 'pending' ? 202 : 200) :
+          result.status === 'conflict' ? 409 : result.error === 'forbidden' ? 403 : result.error === 'requests_limit' ? 429 : 400;
         return json(status, result);
       }
       json(404, { error: 'not_found' });
@@ -160,17 +218,14 @@ export function createPreviewServer({
       else res.end();
     }
   });
+  // Session activity is checkpointed independently; GET/poll never mutates operation outcomes.
+  const checkpoint = disk ? setInterval(persistSafely, 60000) : null;
+  checkpoint?.unref();
+  server.on('close', () => clearInterval(checkpoint));
+  return server;
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const mode = process.env.RAVEN_MODEL_KEY ? 'grounded model (key present, not printed)' : 'simulation';
-  createPreviewServer().listen(process.env.PORT || 10000, '0.0.0.0', () => console.log(`RAVEN preview: ${mode}, ${process.env.RAVEN_STORE_FILE ? 'disk file ' + process.env.RAVEN_STORE_FILE : 'process memory only'}`));
-}
-
-function defaultGenerate() {
-  if (!process.env.RAVEN_MODEL_KEY) return simulateReply;
-  return createGroundedReply({
-    apiKey: process.env.RAVEN_MODEL_KEY,
-    baseUrl: process.env.RAVEN_MODEL_BASE || 'https://api.x.ai/v1',
-    model: process.env.RAVEN_MODEL_NAME || 'grok-3',
-  });
+  const {generate,info} = providerFromEnv();
+  createPreviewServer({storeFile:storagePathFromEnv(),generate,providerInfo:info})
+    .listen(process.env.PORT || 10000, process.env.HOST || '127.0.0.1', () => console.log(`RAVEN preview: ${info.provider}, local disk file`));
 }
