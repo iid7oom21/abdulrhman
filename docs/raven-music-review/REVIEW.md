@@ -48,9 +48,8 @@
 | `assets/audio/raven/13.mp3` | RAVEN — Keep Me Guessing | 254.832000 |
 
 تفاصيل الحجم والترميز والبصمة SHA-256 وبصمة الصوت المفكوك في `asset-inventory.json`.
-توجد ثلاثة ملفات أخرى تحت `fourth-signature/assets/audio/`؛ لم نعتمدها تكملة للقائمة أو للقصة:
-`raven-baqi-athar.mp3` و`raven-baqi-athar-320.mp3` و`raven-dark-pop-intimate-revised.mp3`.
-وجودها لا يثبت أنها الأغنية الرابعة عشرة المقصودة.
+يوجد ملف آخر واحد تحت `fourth-signature/assets/audio/`، وهو `raven-dark-pop-intimate-revised.mp3`، ولم نعتمده تكملة للقائمة أو للقصة.
+المشغل 13 أغنية، ولا تُضاف أغنية رابعة عشرة.
 
 ## الصور والحفاظ على الأصل
 

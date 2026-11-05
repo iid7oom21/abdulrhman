@@ -379,27 +379,6 @@
     "decode_exit": 0
   },
   {
-    "path": "fourth-signature/assets/audio/raven-baqi-athar-320.mp3",
-    "bytes": 7383579,
-    "sha256": "0d0c017891e418684667f5c9242e1d53e1a5acbf4fa69ad186b143feb88f9f2f",
-    "probe": {
-      "programs": [],
-      "stream_groups": [],
-      "streams": [
-        {
-          "codec_name": "mp3",
-          "sample_rate": "48000",
-          "channels": 2,
-          "bit_rate": "320000"
-        }
-      ],
-      "format": {
-        "duration": "184.560000",
-        "tags": {}
-      }
-    }
-  },
-  {
     "path": "fourth-signature/assets/audio/raven-dark-pop-intimate-revised.mp3",
     "bytes": 3571437,
     "sha256": "05cc47916015d015d080bc48d354d10fa8189cff817101d96a91da039700325e",
@@ -422,27 +401,6 @@
         "tags": {
           "title": "RAVEN (Dark Pop Intimate - Revised)"
         }
-      }
-    }
-  },
-  {
-    "path": "fourth-signature/assets/audio/raven-baqi-athar.mp3",
-    "bytes": 2953935,
-    "sha256": "b88c47de596d03c6eaa2f21c3d7eef7dd6580f981b9ec3df18df06ef654ddd0d",
-    "probe": {
-      "programs": [],
-      "stream_groups": [],
-      "streams": [
-        {
-          "codec_name": "mp3",
-          "sample_rate": "44100",
-          "channels": 2,
-          "bit_rate": "128000"
-        }
-      ],
-      "format": {
-        "duration": "184.581224",
-        "tags": {}
       }
     }
   },
