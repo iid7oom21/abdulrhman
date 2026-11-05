@@ -1,6 +1,8 @@
 # RAVEN — continuous soundtrack
 
 > Handoff v2 (2026-11-01): the story «التوقيع الرابع» (The Fourth Signature) and its Case 017 expansion were removed from this copy. No story replaces them. Old `/fourth-signature/` and `/raven/terminal-preview/case-017/` links redirect to the homepage. Everything below describes the remaining interface.
+>
+> 2026-11-05: the old interface under `/raven/terminal-preview/` was retired. Its pages are now redirects to the homepage (`raven-17/` to `#films`, `zarqa/` to `#next-premiere`). Only `raven/terminal-preview/assets/` stays, because the homepage and `raven/dialogue/` still use its posters, opening film and fonts.
 
 Serve this directory as the web root. `/raven/` is the homepage. The root redirects to the homepage. `raven/index.html` keeps one audio element alive through `site-player.js` while `site-bridge.js` routes the content frame (`raven/content.html`).
 
@@ -24,7 +26,7 @@ Public page identities and sharing:
 
 Navigation, dialogs and scrolling never pause or reconstruct the audio. Audible films and teasers temporarily pause the song so their dialogue stays clear; it resumes from the same position unless the visitor paused it. Reloading the browser document or leaving this host is outside uninterrupted playback.
 
-The older recordings «باقي أثر» (`raven-baqi-athar-320.mp3`, `raven-baqi-athar.mp3`) and «Dark Pop Intimate - Revised» stay at their original paths under `fourth-signature/assets/audio/` so existing links keep working. That folder now holds only shared audio, the Noto Sans Arabic font and the RAVEN favicon.
+«باقي أثر» was removed from the site on 2026-11-05 at the owner's request: both of its files (`raven-baqi-athar-320.mp3`, `raven-baqi-athar.mp3`) are gone, and it must not come back as a 14th track. The older recording «Dark Pop Intimate - Revised» stays at its original path under `fourth-signature/assets/audio/`. That folder now holds only that recording, the Noto Sans Arabic font and the RAVEN favicon.
 
 ## Entry gate
 
