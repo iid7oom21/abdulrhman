@@ -80,6 +80,20 @@ h2{margin:0 0 16px;font-weight:600;font-size:clamp(20px,3.4vw,24px);color:var(--
 .hook-next{display:inline-flex;align-items:center;background:var(--gold);color:var(--ink);border-color:var(--gold);font-weight:600}
 .hook-log{display:grid;gap:12px;margin-top:16px}
 .hook-note{margin:12px 0 0;font-size:14px;color:var(--muted)}
+
+.choices button,.hook-next{height:auto;white-space:normal;line-height:1.45}
+.paper-card{display:grid;gap:8px;margin-top:8px}
+.paper-part{padding:8px 10px;background:#1c1813;border:1px solid var(--line)}
+.paper-part.added{border-color:var(--gold)}
+.paper-part p{margin:2px 0 0}
+.lbl{display:block;font-size:13px;color:var(--gold)}
+.paper-card.compare .paper-part p{margin:0}
+@media(min-width:720px){
+  .paper-card.compare{grid-template-columns:1fr 1fr}
+  .paper-card.compare .paper-part:nth-child(3){grid-column:1 / -1}
+}
+.hook-status{margin:12px 0 0;min-height:1.4em;font-size:14px;color:var(--soft)}
+.hook-link{margin-top:8px}
 footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:var(--muted);text-align:center}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
@@ -147,9 +161,10 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
   <section class="block" id="hook" aria-labelledby="t-hook"><div class="wrap">
     <h2 id="t-hook" data-k="hookTitle">الورقة</h2>
     <p class="lead" data-k="hookLead">كلامك صحيح. النتيجة مو منك.</p>
-    <div id="hook-log" class="hook-log" aria-live="polite"></div>
+    <div id="hook-log" class="hook-log"></div>
+    <p id="hook-status" class="hook-status" role="status" aria-live="polite"></p>
     <div id="hook-actions" class="choices"></div>
-    <p class="hook-note" data-k="hookNote">حوار مكتوب. ما يرسل للشخصيات، وما يفتح دليلًا.</p>
+    <p class="hook-note" data-k="hookNote">حوار مكتوب داخل هذا المشهد. مستقل عن معاينة الحوار. لا يُرسل، ولا يفتح دليلًا. تحديث الصفحة يعيد البداية.</p>
   </div></section>
 
   <section class="block" aria-labelledby="t-now"><div class="wrap">
@@ -179,9 +194,9 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       rulesTitle: 'قواعد القضية', r1: 'ما تكتب اسمًا ما يثبته الأصل.', r2: 'الكذب اختيار صريح، مو فخ في الكلام.',
       r3: 'الصمت ما يدينك.', r4: 'اللي تقوله يبقى. والتصحيح يبان جنبه.', r5: 'ماضيك ثابت. اختياراتك ما تغيّره.',
       hookTitle: 'الورقة', hookLead: 'كلامك صحيح. النتيجة مو منك.',
-      hookNote: 'حوار مكتوب. ما يرسل للشخصيات، وما يفتح دليلًا.',
+      hookNote: 'حوار مكتوب داخل هذا المشهد. مستقل عن معاينة الحوار. لا يُرسل، ولا يفتح دليلًا. تحديث الصفحة يعيد البداية.',
       nowTitle: 'المتاح الآن', nowText: 'القضية قيد التطوير. تقدر تجرّب معاينة الحوار التقنية: تسجّل أقوالك وتصحيحاتك، وتجرّب مشاركة المواد.',
-      nowBtn: 'افتح معاينة الحوار ↗', nowNote: 'الشخصيات ما ترد بعد بنص القصة. ما تكتبه يبقى في متصفحك بس.',
+      nowBtn: 'افتح معاينة الحوار التقنية ↗', nowNote: 'الشخصيات ما ترد بعد بنص القصة. ما تكتبه يبقى في متصفحك بس.',
       footer: 'RAVEN · عبدالرحمن العتيبي', docTitle: 'RAVEN — الاسم المحذوف',
       description: 'خانة ممسوحة، ودعوة بعد العشاء، ومكتبة ما رجع منها صاحبها. قضية تفاعلية من RAVEN، قيد التطوير.'
     },
@@ -200,9 +215,9 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       rulesTitle: 'Case rules', r1: "You don't write a name the original can't prove.", r2: 'Lying is a clear choice, never a trap in the wording.',
       r3: "Silence doesn't convict you.", r4: 'What you say stays. A correction shows beside it.', r5: "Your past is fixed. Your choices don't rewrite it.",
       hookTitle: 'The paper', hookLead: 'Your sentence is true. The conclusion is not yours.',
-      hookNote: 'Written dialogue. It is not sent to the characters, and it opens no evidence.',
+      hookNote: 'Written dialogue inside this scene. It is separate from the dialogue preview. It is not sent, and it opens no evidence. Refreshing starts it over.',
       nowTitle: 'Available now', nowText: 'The case is in development. You can try the technical dialogue preview: record your statements and corrections, and try sharing materials.',
-      nowBtn: 'Open the dialogue preview ↗', nowNote: "The characters don't answer from the story yet. What you write stays in your browser only.",
+      nowBtn: 'Open the technical dialogue preview ↗', nowNote: "The characters don't answer from the story yet. What you write stays in your browser only.",
       footer: 'RAVEN · Abdulrahman Alotaibi', docTitle: 'RAVEN — The Deleted Name',
       description: 'An erased field, an invitation after dinner, and a library its owner never came back from. An interactive RAVEN case, in development.'
     }
@@ -260,8 +275,9 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
 (() => {
   const log = document.getElementById('hook-log');
   const actions = document.getElementById('hook-actions');
-  if (!log || !actions) return;
-  const state = { phase: 'start', choice: null, share: null, note: false };
+  const status = document.getElementById('hook-status');
+  if (!log || !actions || !status) return;
+  const state = { phase: 'start', choice: null, share: null, compare: false, review: false, focus: false };
   const copy = {
     ar: {
       open: 'افتح الورقة',
@@ -269,28 +285,28 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       claire2: 'إذا تقدر… فيه ورقة نحتاج نتأكد منها قبل تمشي.',
       enter: 'أدخل وأشوف الورقة',
       jonas: 'اسمك هنا. أبي أعرف وش اللي اعتمدته بالضبط.',
-      draft: 'الجملة منك: «اللي وصلني ما يكفي. الاسم يحتاج الأصل، ومقارنة النسخ.» وتحتها نتيجة ما قلتها: «اختلاف النسخ لا يغير نتيجة الملف.» التوقيع فاضي.',
       you1: 'أنا ما راجعت الأصل.',
       jonas2: 'لكنك كتبت إن الصورة ما تكفي.',
-      elena1: 'وهذا مو نفس الشي.',
-      elena2: 'الجملة اللي فوق منك؟',
+      elenaAsk: 'الجملة اللي فوق منك؟',
       you2: 'مني. النتيجة اللي تحت مو مني.',
+      elenaSame: 'وهذا مو نفس الشي.',
       elena3: 'صحح النتيجة. لا تنفي الرسالة.',
       c1: 'أدق: أرسلت ملاحظة عن نقص الصورة. ما فحصت الأصل، وما اعتمدت النتيجة.',
       c2: 'أأجل: أحتفظ بالرد لين أشوف المراسلة والنسخة.',
       c3: 'أرفض الآن: ما أسجل توضيح قبل ما أعرف مين يستلمه.',
       c4: 'أكذب صراحة: أنكر إني أرسلت الرسالة، وهي في محادثتي.',
       lieMark: 'كذب صريح',
-      who: 'مين بيستلمه؟',
+      writeDraft: 'تكتب توضيحك في المسودة.',
+      who: 'قبل ترسله، مين بيستلمه داخل المشهد؟',
       s1: 'يوناس فقط',
       s2: 'يوناس وكلير',
-      s3: 'تبقى مسودة. ما توصل أحد.',
-      sentJonas: 'التصحيح وصل ليوناس فقط.',
-      sentBoth: 'التصحيح وصل ليوناس وكلير.',
-      kept: 'التصحيح بقي مسودة. ما وصل أحد.',
-      waited: 'ما سجلت توضيح للحين.',
-      refused: 'ما سجلت توضيح قبل ما تعرف المستلم.',
-      lied: 'أنكرت الرسالة. الإنكار باقي في السجل.',
+      s3: 'تبقى مسودة. ما توصل أحد داخل المشهد.',
+      stWriting: 'تكتب التوضيح في المسودة. لم يُرسل.',
+      stJonas: 'اخترت توجيه التصحيح إلى يوناس داخل المشهد. لم يُرسل إلى معاينة الحوار.',
+      stBoth: 'اخترت توجيه التصحيح إلى يوناس وكلير داخل المشهد. لم يُرسل إلى معاينة الحوار.',
+      stDraft: 'احتفظت بمسودة.',
+      stNone: 'لم تُسجّل توضيحًا.',
+      stLie: 'سجّلت إنكارًا صريحًا داخل المشهد.',
       askRecord: 'اطلب السجل',
       title: 'سجل استقبال بلاغات المراجعة',
       you3: 'هذا سجل بلاغات؟',
@@ -298,9 +314,28 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       elena4: 'إيه.',
       you4: 'طيب ليش المسودة تتكلم عن اسم المسؤول؟',
       end: 'إيلينا ما تجاوب.',
+      endLead: 'نهاية الافتتاح المتاح. التحديث أو الإعادة تبدأ المشهد من جديد. لا يُحفظ تقدم.',
+      replay: 'إعادة المشهد',
+      reviewOn: 'مراجعة اختياراتي',
+      reviewOff: 'أخفِ المراجعة',
+      rcPrecise: 'كتبت توضيحًا داخل المشهد.',
+      rcNone: 'لم تُسجّل توضيحًا.',
+      rcLie: 'سجّلت إنكارًا صريحًا داخل المشهد.',
+      rcJonas: 'اخترت يوناس مستلمًا داخل المشهد.',
+      rcBoth: 'اخترت يوناس وكلير داخل المشهد.',
+      rcDraft: 'احتفظت بمسودة.',
+      tech: 'فتح معاينة الحوار التقنية — مستقلة عن هذا المشهد.',
       voice: 'من داخل البيت',
       paper: 'المسودة',
-      margin: 'هامش الأصل'
+      margin: 'هامش الأصل',
+      lblYours: 'ملاحظتك',
+      lblAdded: 'النتيجة المضافة',
+      lblSign: 'التوقيع',
+      yourLine: 'اللي وصلني ما يكفي. الاسم يحتاج الأصل، ومقارنة النسخ.',
+      addedLine: 'اختلاف النسخ لا يغير نتيجة الملف.',
+      signLine: 'فاضي.',
+      compareOn: 'قارن برسالتك',
+      compareOff: 'أخفِ المقارنة'
     },
     en: {
       open: 'Open the paper',
@@ -308,28 +343,28 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       claire2: 'If you can… there is a paper we need to check before you leave.',
       enter: 'Go in and see the paper',
       jonas: 'Your name is here. I need to know exactly what you approved.',
-      draft: 'Your sentence: “What arrived is not enough. The name needs the original, and a comparison of the copies.” Under it, a conclusion you did not write: “The difference between copies does not change the file’s result.” The signature is empty.',
       you1: 'I did not review the original.',
       jonas2: 'But you wrote that the picture is not enough.',
-      elena1: 'That is not the same thing.',
-      elena2: 'Is the sentence above yours?',
+      elenaAsk: 'Is the sentence above yours?',
       you2: 'It is mine. The conclusion under it is not.',
+      elenaSame: 'That is not the same thing.',
       elena3: 'Correct the conclusion. Do not deny the message.',
       c1: 'Precise: I sent a note that the picture was not enough. I did not examine the original, and I did not approve the conclusion.',
       c2: 'Wait: I hold the reply until I see the correspondence and the copy.',
       c3: 'Refuse for now: I will not record a clarification before I know who receives it.',
       c4: 'Lie outright: I deny sending the message, though it is in my conversation.',
       lieMark: 'Explicit lie',
-      who: 'Who receives it?',
+      writeDraft: 'You write your clarification in the draft.',
+      who: 'Before it is sent, who receives it inside this scene?',
       s1: 'Jonas only',
       s2: 'Jonas and Claire',
-      s3: 'Keep it as a draft. It reaches no one.',
-      sentJonas: 'The correction reached Jonas only.',
-      sentBoth: 'The correction reached Jonas and Claire.',
-      kept: 'The correction stayed a draft. It reached no one.',
-      waited: 'You have not recorded a clarification yet.',
-      refused: 'You recorded nothing before knowing the recipient.',
-      lied: 'You denied the message. The denial stays on the record.',
+      s3: 'Keep it as a draft. It reaches no one inside this scene.',
+      stWriting: 'You are writing the clarification in the draft. It has not been sent.',
+      stJonas: 'You directed the correction to Jonas inside this scene. It was not sent to the dialogue preview.',
+      stBoth: 'You directed the correction to Jonas and Claire inside this scene. It was not sent to the dialogue preview.',
+      stDraft: 'You kept a draft.',
+      stNone: 'You did not record a clarification.',
+      stLie: 'You recorded an explicit denial inside this scene.',
       askRecord: 'Ask for the record',
       title: 'Register of review-report intake',
       you3: 'This is a reports register?',
@@ -337,9 +372,28 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       elena4: 'Yes.',
       you4: 'Then why does the draft speak about the name of the person responsible?',
       end: 'Elena does not answer.',
+      endLead: 'End of the available opening. Refreshing or replaying starts the scene over. Progress is not saved.',
+      replay: 'Replay the scene',
+      reviewOn: 'Review my choices',
+      reviewOff: 'Hide the review',
+      rcPrecise: 'You wrote a clarification inside the scene.',
+      rcNone: 'You did not record a clarification.',
+      rcLie: 'You recorded an explicit denial inside the scene.',
+      rcJonas: 'You chose Jonas as the recipient inside the scene.',
+      rcBoth: 'You chose Jonas and Claire inside the scene.',
+      rcDraft: 'You kept a draft.',
+      tech: 'Open the technical dialogue preview — separate from this scene.',
       voice: 'From inside the house',
       paper: 'The draft',
-      margin: 'The original’s margin'
+      margin: 'The original’s margin',
+      lblYours: 'Your note',
+      lblAdded: 'The added conclusion',
+      lblSign: 'The signature',
+      yourLine: 'What arrived is not enough. The name needs the original, and a comparison of the copies.',
+      addedLine: 'The difference between copies does not change the file’s result.',
+      signLine: 'Empty.',
+      compareOn: 'Compare with your message',
+      compareOff: 'Hide the comparison'
     }
   };
   const lang = () => document.documentElement.lang === 'en' ? 'en' : 'ar';
@@ -359,64 +413,115 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     li.append(span, p);
     return li;
   }
-  function button(label, on, extra) {
+  function button(label, on, extra, act) {
     const b = document.createElement('button');
     b.type = 'button';
     b.textContent = label;
     if (extra) b.className = extra;
-    b.addEventListener('click', on);
+    if (act) b.dataset.act = act;
+    b.addEventListener('click', () => { state.focus = act || 'actions'; on(); });
     return b;
+  }
+  function paperCard(c) {
+    const li = document.createElement('li');
+    li.className = 'msg';
+    const span = document.createElement('span');
+    span.className = 'who';
+    span.textContent = c.paper;
+    const box = document.createElement('div');
+    box.className = 'paper-card' + (state.compare ? ' compare' : '');
+    [['lblYours', 'yourLine', ''], ['lblAdded', 'addedLine', 'added'], ['lblSign', 'signLine', '']].forEach(([label, body, extra]) => {
+      const part = document.createElement('div');
+      part.className = 'paper-part' + (extra ? ' ' + extra : '');
+      const lbl = document.createElement('span');
+      lbl.className = 'lbl';
+      lbl.textContent = c[label];
+      const p = document.createElement('p');
+      p.textContent = c[body];
+      part.append(lbl, p);
+      box.append(part);
+    });
+    box.append(button(state.compare ? c.compareOff : c.compareOn, () => { state.compare = !state.compare; render(); }, '', 'compare'));
+    li.append(span, box);
+    return li;
+  }
+  function statusText(c) {
+    if (state.phase === 'done') return c.endLead;
+    if (state.choice === 'lie') return c.stLie;
+    if (state.choice === 'wait' || state.choice === 'refuse') return c.stNone;
+    if (state.share === 'jonas') return c.stJonas;
+    if (state.share === 'both') return c.stBoth;
+    if (state.share === 'draft') return c.stDraft;
+    if (state.choice === 'precise') return c.stWriting;
+    return '';
+  }
+  function recap(c) {
+    const lines = [];
+    if (state.choice === 'precise') lines.push(c.rcPrecise);
+    if (state.choice === 'wait' || state.choice === 'refuse') lines.push(c.rcNone);
+    if (state.choice === 'lie') lines.push(c.rcLie);
+    if (state.share === 'jonas') lines.push(c.rcJonas);
+    if (state.share === 'both') lines.push(c.rcBoth);
+    if (state.share === 'draft') lines.push(c.rcDraft);
+    return lines;
   }
   function render() {
     const c = t();
     log.replaceChildren();
     actions.replaceChildren();
     const add = (who, body, you) => log.append(line(who, body, you));
+    const nextStatus = statusText(c);
+    if (status.textContent !== nextStatus) status.textContent = nextStatus;
     if (state.phase === 'start') {
-      actions.append(button(c.open, () => { state.phase = 'invite'; render(); }, 'hook-next'));
+      actions.append(button(c.open, () => { state.phase = 'invite'; render(); }, 'hook-next', 'open'));
+      takeFocus();
       return;
     }
     add(c.voice, c.inside, false);
     add(whoName('claire'), c.claire2, false);
     if (state.phase === 'invite') {
-      actions.append(button(c.enter, () => { state.phase = 'draft'; render(); }, 'hook-next'));
+      actions.append(button(c.enter, () => { state.phase = 'draft'; render(); }, 'hook-next', 'enter'));
+      takeFocus();
       return;
     }
     add(whoName('jonas'), c.jonas, false);
-    add(c.paper, c.draft, false);
+    log.append(paperCard(c));
     add(whoName('you'), c.you1, true);
     add(whoName('jonas'), c.jonas2, false);
-    add(whoName('elena'), c.elena1, false);
-    add(whoName('elena'), c.elena2, false);
+    add(whoName('elena'), c.elenaAsk, false);
     add(whoName('you'), c.you2, true);
+    add(whoName('elena'), c.elenaSame, false);
     add(whoName('elena'), c.elena3, false);
     if (state.phase === 'draft') {
       actions.append(
-        button(c.c1, () => { state.choice = 'precise'; state.phase = 'share'; render(); }),
-        button(c.c2, () => { state.choice = 'wait'; state.phase = 'after'; render(); }),
-        button(c.c3, () => { state.choice = 'refuse'; state.phase = 'after'; render(); }),
-        button(c.c4, () => { state.choice = 'lie'; state.phase = 'after'; render(); }, 'lie')
+        button(c.c1, () => { state.choice = 'precise'; state.phase = 'share'; render(); }, '', 'precise'),
+        button(c.c2, () => { state.choice = 'wait'; state.phase = 'after'; render(); }, '', 'wait'),
+        button(c.c3, () => { state.choice = 'refuse'; state.phase = 'after'; render(); }, '', 'refuse'),
+        button(c.c4, () => { state.choice = 'lie'; state.phase = 'after'; render(); }, 'lie', 'lie')
       );
+      takeFocus();
       return;
     }
     if (state.choice === 'precise') add(whoName('you'), c.c1, true);
-    if (state.choice === 'wait') add(whoName('you'), c.waited, true);
-    if (state.choice === 'refuse') add(whoName('you'), c.refused, true);
-    if (state.choice === 'lie') add(c.lieMark, c.lied, true);
+    if (state.choice === 'wait' || state.choice === 'refuse') add(whoName('you'), c.stNone, true);
+    if (state.choice === 'lie') add(c.lieMark, c.stLie, true);
     if (state.phase === 'share') {
+      add(c.paper, c.writeDraft, false);
       add(whoName('elena'), c.who, false);
       actions.append(
-        button(c.s1, () => { state.share = 'jonas'; state.phase = 'after'; render(); }),
-        button(c.s2, () => { state.share = 'both'; state.phase = 'after'; render(); }),
-        button(c.s3, () => { state.share = 'draft'; state.phase = 'after'; render(); })
+        button(c.s1, () => { state.share = 'jonas'; state.phase = 'after'; render(); }, '', 'jonas'),
+        button(c.s2, () => { state.share = 'both'; state.phase = 'after'; render(); }, '', 'both'),
+        button(c.s3, () => { state.share = 'draft'; state.phase = 'after'; render(); }, '', 'draft')
       );
+      takeFocus();
       return;
     }
-    if (state.share === 'jonas') add(c.paper, c.sentJonas, false);
-    if (state.share === 'both') add(c.paper, c.sentBoth, false);
-    if (state.share === 'draft') add(c.paper, c.kept, false);
+    if (state.share === 'jonas') add(c.paper, c.stJonas, false);
+    if (state.share === 'both') add(c.paper, c.stBoth, false);
+    if (state.share === 'draft') add(c.paper, c.stDraft, false);
     if (state.phase === 'after') {
-      actions.append(button(c.askRecord, () => { state.phase = 'done'; render(); }, 'hook-next'));
+      actions.append(button(c.askRecord, () => { state.phase = 'done'; render(); }, 'hook-next', 'record'));
+      takeFocus();
       return;
     }
     add(c.margin, c.title, false);
@@ -425,6 +530,38 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     add(whoName('elena'), c.elena4, false);
     add(whoName('you'), c.you4, true);
     add(c.paper, c.end, false);
+    if (state.review) recap(c).forEach(text => add(c.paper, text, false));
+    actions.append(
+      button(c.replay, () => {
+        state.phase = 'start';
+        state.choice = null;
+        state.share = null;
+        state.compare = false;
+        state.review = false;
+        render();
+      }, 'hook-next', 'replay'),
+      button(state.review ? c.reviewOff : c.reviewOn, () => { state.review = !state.review; render(); }, '', 'review')
+    );
+    const link = document.createElement('a');
+    link.className = 'btn hook-link';
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.href = lang() === 'en' ? '../dialogue/?lang=en' : '../dialogue/';
+    link.textContent = c.tech;
+    actions.append(link);
+    takeFocus();
+  }
+  function takeFocus() {
+    if (!state.focus) return;
+    const which = state.focus;
+    state.focus = false;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const target = which === 'compare'
+      ? log.querySelector('[data-act="compare"]')
+      : (actions.querySelector('button') || status);
+    if (!target || typeof target.focus !== 'function') return;
+    target.focus({ preventScroll: true });
+    if (!reduce && target.scrollIntoView) target.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   }
   document.addEventListener('raven:language', render);
   render();
