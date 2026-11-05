@@ -14,8 +14,7 @@ export const TRACKS = [
   { title: 'Raven, Keep Me Guessing', file: 'assets/audio/raven/10.mp3' },
   { title: 'Raven', file: 'assets/audio/raven/11.mp3' },
   { title: 'Raven, Keep Me Guessing', file: 'assets/audio/raven/12.mp3' },
-  { title: 'RAVEN — Keep Me Guessing', file: 'assets/audio/raven/13.mp3' },
-  { title: 'RAVEN — باقي أثر', file: 'fourth-signature/assets/audio/raven-baqi-athar.mp3' }
+  { title: 'RAVEN — Keep Me Guessing', file: 'assets/audio/raven/13.mp3' }
 ];
 
 // The outer document owns this one player throughout navigation.
