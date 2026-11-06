@@ -1,0 +1,157 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+import http from 'node:http';
+import {createPreviewServer} from '../src/server.js';
+import {createOpenAIReply} from '../src/provider.js';
+import {_reset} from '../src/dialogue.js';
+
+function fixture(t) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'raven-site-'));
+  t.after(() => fs.rmSync(dir, {recursive:true, force:true}));
+  const root = path.join(dir, 'public'); fs.mkdirSync(root);
+  const write = (name, text) => { const file = path.join(root, name); fs.mkdirSync(path.dirname(file), {recursive:true}); fs.writeFileSync(file, text); return file; };
+  write('raven/index.html', '<!doctype html><iframe src="content.html"></iframe>');
+  write('raven/content.html', '<!doctype html><script>window.testReady=true;</script><button onclick="closeEpisodes()">close</button>');
+  write('raven/deleted-name/index.html', '<!doctype html><a href="../dialogue/">Dialogue</a>');
+  write('site-player.js', 'export const loaded = true;');
+  write('assets/audio/raven/01.mp3', '0123456789');
+  write('assets/audio/raven/13.mp3', 'TRACK THIRTEEN');
+  write('assets/audio/raven/14.mp3', 'NOT PUBLIC');
+  // A mounted dialogue must use the server UI, never this simulator or its journal.
+  write('raven/dialogue/index.html', '<script src="local-api.js">LOCAL_ONLY_SIMULATOR</script>');
+  write('raven/dialogue/local-api.js', 'SECRET_LOCAL_OVERRIDE');
+  return {dir, root, write};
+}
+async function start(t, options = {}) {
+  const app = createPreviewServer(options);
+  await new Promise(resolve => app.listen(0, '127.0.0.1', resolve));
+  let closed = false;
+  const close = async () => { if (!closed) { closed = true; await new Promise(resolve => app.close(resolve)); } };
+  t.after(close);
+  return {root:'http://127.0.0.1:' + app.address().port, close};
+}
+const rawGet = (root, target, cookie) => new Promise((resolve, reject) => {
+  const request = http.request(root, {path:target, headers:cookie ? {cookie} : {}}, response => {
+    const chunks = []; response.on('data', chunk => chunks.push(chunk));
+    response.on('end', () => resolve({status:response.statusCode, body:Buffer.concat(chunks).toString()}));
+  }); request.on('error', reject); request.end();
+});
+
+test('site mount is opt-in and preserves standalone UI, config and API headers', async t => {
+  const s = await start(t);
+  const home = await fetch(s.root);
+  assert.equal(home.status, 200); assert.equal(home.headers.get('x-frame-options'), 'DENY');
+  assert.doesNotMatch(await home.text(), /raven-dialogue-transport/);
+  assert.notEqual((await fetch(s.root + '/raven/')).status, 200);
+  const config = await fetch(s.root + '/api/config');
+  assert.equal(config.headers.get('set-cookie'), null);
+  assert.equal(config.headers.get('x-frame-options'), 'DENY');
+  assert.equal((await config.json()).sourceKnowledgeAvailable, false);
+});
+
+test('mounted public files are read-only, media ranges work, and only dialogue GET issues a session', async t => {
+  const f = fixture(t), s = await start(t, {siteRoot:f.root, secureCookie:true});
+  const redirect = await fetch(s.root + '/raven?lang=en', {redirect:'manual'});
+  assert.equal(redirect.status, 308); assert.equal(redirect.headers.get('location'), '/raven/?lang=en');
+  const page = await fetch(s.root + '/raven/content.html');
+  assert.equal(page.status, 200); assert.equal(page.headers.get('set-cookie'), null);
+  assert.equal(page.headers.get('cache-control'), 'no-store');
+  assert.equal(page.headers.get('x-frame-options'), 'SAMEORIGIN');
+  const csp = page.headers.get('content-security-policy');
+  assert.match(csp, /script-src 'self' 'sha256-/); assert.match(csp, /frame-src 'self'/);
+  assert.match(csp, /frame-ancestors 'self'/); assert.match(csp, /script-src-attr 'unsafe-hashes' 'sha256-/);
+  assert.doesNotMatch(csp.split('script-src ')[1].split(';')[0], /unsafe-inline/);
+  assert.equal((await fetch(s.root + '/site-player.js')).headers.get('content-type'), 'text/javascript; charset=utf-8');
+  const audio = await fetch(s.root + '/assets/audio/raven/01.mp3', {headers:{range:'bytes=2-5'}});
+  assert.equal(audio.status, 206); assert.equal(audio.headers.get('content-range'), 'bytes 2-5/10'); assert.equal(await audio.text(), '2345');
+  const suffix = await fetch(s.root + '/assets/audio/raven/01.mp3', {headers:{range:'bytes=-2'}});
+  assert.equal(await suffix.text(), '89');
+  assert.equal((await fetch(s.root + '/assets/audio/raven/01.mp3', {headers:{range:'bytes=99-'}})).status, 416);
+  const head = await fetch(s.root + '/assets/audio/raven/13.mp3', {method:'HEAD',headers:{range:'bytes=99-'}});
+  assert.equal(head.status, 200); assert.equal(head.headers.get('content-length'), '14'); assert.equal(await head.text(), '');
+  assert.equal((await fetch(s.root + '/assets/audio/raven/14.mp3')).status, 404);
+  const dialogue = await fetch(s.root + '/raven/dialogue/?mode=local');
+  const cookie = dialogue.headers.get('set-cookie');
+  assert.match(cookie, /HttpOnly; SameSite=Strict; Path=\/; Secure/);
+  assert.equal(dialogue.headers.get('cache-control'), 'no-store');
+  assert.equal(dialogue.headers.get('x-frame-options'), 'SAMEORIGIN');
+  const html = await dialogue.text();
+  assert.match(html, /name="raven-dialogue-transport" content="same-origin-server"/);
+  assert.match(html, /fetch\('\/api\/config'/); assert.doesNotMatch(html, /local-api\.js|LOCAL_ONLY_SIMULATOR/);
+  assert.match(html, /raven_deleted_name_hosted_server_preview_v2/);
+  assert.match(html, /raven_deleted_name_hosted_server_material_actions_v1/);
+  assert.doesNotMatch(html, /'raven_deleted_name_preview_v2'|'raven_deleted_name_material_actions_v1'/);
+  assert.equal((await fetch(s.root + '/raven/dialogue/index.html', {headers:{cookie:cookie.split(';')[0]}})).headers.get('set-cookie'), null);
+  assert.equal((await fetch(s.root + '/raven/dialogue/local-api.js')).status, 404);
+  const english = await (await fetch(s.root + '/raven/dialogue/?lang=en')).text();
+  assert.match(english, /role="note" lang="en" dir="ltr">This technical server preview is currently available in Arabic/);
+  assert.match(english, /href="\/raven\/deleted-name\/\?lang=en"/);
+  assert.doesNotMatch(html, /This technical server preview is currently available in Arabic/);
+  assert.match(await (await fetch(s.root + '/texts/raven-texts.js')).text(), /dialogue_status_texts/);
+  assert.match(fs.readFileSync(path.join(f.root, 'raven/dialogue/index.html'), 'utf8'), /LOCAL_ONLY_SIMULATOR/);
+});
+
+test('hosted dialogue uses real HTTP recipient context, mocked provider, and durable replay after restart', async t => {
+  _reset(); const f = fixture(t), storeFile = path.join(f.dir, 'private-store.json'); let calls = 0;
+  const generate = createOpenAIReply({apiKey:'TEST_ONLY',model:'mock',fetchImpl:async (_url, options) => {
+    calls++; assert.doesNotMatch(options.body, /PRIVATE_NOTE/);
+    assert.deepEqual(JSON.parse(JSON.parse(options.body).input).receivedPlayerMaterials.map(m => m.id), ['shared']);
+    return new Response(JSON.stringify({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify({action:'received_materials',materialIds:['shared']})}]}]}));
+  }});
+  const a = await start(t, {siteRoot:f.root, storeFile, generate, providerInfo:{provider:'openai',model:'mock'}});
+  assert.equal((await fetch(a.root + '/raven/deleted-name/')).headers.get('set-cookie'), null);
+  const cookie = (await fetch(a.root + '/raven/dialogue/')).headers.get('set-cookie').split(';')[0];
+  const post = (root, url, body, session = cookie) => fetch(root + url, {method:'POST',headers:{cookie:session,'content-type':'application/json'},body:JSON.stringify(body)});
+  for (const material of [{id:'private',type:'private_note',text:'PRIVATE_NOTE'}, {id:'shared',type:'statement',text:'PUBLIC_PLAYER_CLAIM'}]) {
+    assert.equal((await post(a.root, '/api/materials', material)).status, 200);
+  }
+  assert.equal((await post(a.root, '/api/shares', {eventId:'share',materialId:'shared',recipients:['jonas']})).status, 200);
+  const payload = {requestId:'hosted-request',characterId:'jonas',message:'ما القول الذي وصلك؟'};
+  const submitted = await post(a.root, '/api/dialogue', payload); assert.equal(submitted.status, 202);
+  let result;
+  for (let n = 0; n < 20; n++) { result = await (await fetch(a.root + '/api/operations/hosted-request', {headers:{cookie}})).json(); if (result.status !== 'pending') break; }
+  assert.equal(result.status, 'completed'); assert.match(result.response.text, /PUBLIC_PLAYER_CLAIM/); assert.equal(result.saveStatus, 'confirmed');
+  const otherCookie = (await fetch(a.root + '/raven/dialogue/')).headers.get('set-cookie').split(';')[0];
+  assert.equal((await post(a.root, '/api/dialogue', payload, otherCookie)).status, 403);
+  assert.equal((await fetch(a.root + '/api/operations/hosted-request', {headers:{cookie:otherCookie}})).status, 404);
+  await a.close(); _reset();
+  const b = await start(t, {siteRoot:f.root, storeFile, generate:() => { throw new Error('must not generate'); }});
+  const replay = await (await post(b.root, '/api/dialogue', payload)).json();
+  assert.equal(replay.replayed, true); assert.deepEqual(replay.response, result.response); assert.equal(calls, 1);
+  assert.equal((await fetch(b.root + '/api/history', {headers:{cookie}})).headers.get('x-frame-options'), 'DENY');
+  assert.equal((await fetch(b.root + '/api/history')).status, 401);
+  assert.equal((await (await fetch(b.root + '/api/knowledge?characterId=claire', {headers:{cookie}})).json()).materials.length, 0);
+});
+
+test('private files and raw traversal never reach the public mount, with or without a session', async t => {
+  const f = fixture(t), s = await start(t, {siteRoot:f.root});
+  for (const file of ['.env', '.git/config', 'PRIVATE-content-review-not-published.md', 'docs/review.html',
+    'server/ai-dialogue/.data/preview-store.json', 'raven/assets/secret.js', 'raven/deleted-name/backup.html']) f.write(file, 'PRIVATE_SENTINEL');
+  const paths = ['/.env', '/.git/config', '/PRIVATE-content-review-not-published.md', '/docs/review.html',
+    '/server/ai-dialogue/.data/preview-store.json', '/raven/assets/secret.js', '/raven/deleted-name/backup.html',
+    '/raven/assets/', '/raven/../.env', '/raven/./content.html', '/raven/%2e%2e/.env', '/%72aven/content.html',
+    '/raven/%252e%252e/.env', '/raven%2fcontent.html', '/raven\\..\\.env', '/raven//content.html',
+    '/raven/%00', '/raven/%', '//raven/content.html', 'http://preview.local/raven/content.html'];
+  const cookie = (await fetch(s.root)).headers.get('set-cookie').split(';')[0];
+  for (const session of [undefined, cookie]) for (const target of paths) {
+    const response = await rawGet(s.root, target, session); assert.equal(response.status, 404, target); assert.doesNotMatch(response.body, /PRIVATE_SENTINEL|public|workspace/);
+  }
+});
+
+test('allowlisted paths reject file and directory symlinks, including links within the root', async t => {
+  const f = fixture(t), s = await start(t, {siteRoot:f.root});
+  const outside = path.join(f.dir, 'outside.js'); fs.writeFileSync(outside, 'PRIVATE_SENTINEL');
+  const allowed = path.join(f.root, 'site-player.js'); fs.unlinkSync(allowed); fs.symlinkSync(outside, allowed);
+  assert.equal((await fetch(s.root + '/site-player.js')).status, 404);
+  fs.unlinkSync(allowed); f.write('local-copy.js', 'PRIVATE_SENTINEL'); fs.symlinkSync(path.join(f.root, 'local-copy.js'), allowed);
+  assert.equal((await fetch(s.root + '/site-player.js')).status, 404);
+  fs.renameSync(path.join(f.root, 'raven/deleted-name'), path.join(f.dir, 'outside-case'));
+  fs.symlinkSync(path.join(f.dir, 'outside-case'), path.join(f.root, 'raven/deleted-name'));
+  assert.equal((await fetch(s.root + '/raven/deleted-name/')).status, 404);
+  const rootLink = path.join(f.dir, 'public-link'); fs.symlinkSync(f.root, rootLink);
+  assert.throws(() => createPreviewServer({siteRoot:rootLink}), /invalid_site_root/);
+  assert.throws(() => createPreviewServer({siteRoot:'relative/path'}), /site_root_must_be_absolute/);
+});
