@@ -308,6 +308,63 @@ test('written opening: choices, display boundaries, language and access',async t
     assert.deepEqual(pageErrors,[]);
   });
 
+  await run('notebook disclosure focus and expanded statements survive language changes and note edits',async()=>{
+    for(const language of ['ar','en']){
+      await reachRespond(language);await page.locator('#reading-details > summary').click();
+      await page.locator('#reading-quotes > summary').click();
+      await page.evaluate(()=>{
+        // Make disclosure and language changes in the same task, before toggle fires.
+        for(const isOpen of [false,true]){
+          document.getElementById('reading-details').open=isOpen;
+          document.getElementById('reading-quotes').open=isOpen;
+          document.dispatchEvent(new CustomEvent('raven:language'));
+          if(document.getElementById('reading-details').open!==isOpen || document.getElementById('reading-quotes').open!==isOpen)throw new Error('disclosure state lost before toggle event');
+        }
+      });
+      for(const selector of ['#reading-details > summary','#reading-quotes > summary']){
+        await page.locator(selector).focus();
+        await page.evaluate(()=>{document.documentElement.lang=document.documentElement.lang==='ar'?'en':'ar';document.dispatchEvent(new CustomEvent('raven:language'));});
+        assert.equal(await page.locator(selector).evaluate(el=>el===document.activeElement),true,'the focused disclosure must survive the shell language event');
+        assert.equal(await page.locator('#reading-details').evaluate(el=>el.open),true);
+        assert.equal(await page.locator('#reading-quotes').evaluate(el=>el.open),true);
+      }
+      await page.selectOption('#reading-source','document-conclusion');await page.fill('#reading-note','FIXTURE سؤال عن الاستنتاج');await page.click('#reading-add');
+      assert.equal(await page.locator('#reading-quotes').evaluate(el=>el.open),true,'adding a note must not close the statements being reviewed');
+      await page.click('#remove-note-1');assert.equal(await page.locator('#reading-quotes').evaluate(el=>el.open),true);
+      await click('refuse','review');await click('confirm','after');await click('record','done');
+      assert.equal(await page.locator('#reading-quotes').evaluate(el=>el.open),true);
+      await click('replay','start');await click('open','invite');await click('enter','compare');
+      assert.equal(await page.locator('#reading-details').evaluate(el=>el.open),false);
+      assert.equal(await page.locator('#reading-quotes').evaluate(el=>el.open),false);
+    }
+    await preservedStorage();
+  });
+
+  await run('reviewing a note returns to its exact passage without replacing a private draft or sharing it',async()=>{
+    for(const language of ['ar','en']){
+      await reachRespond(language);await page.locator('#reading-details > summary').click();
+      await page.selectOption('#reading-source','document-original');await page.fill('#reading-note','FIXTURE مراجعة رسالة التكليف');await page.click('#reading-add');
+      await page.selectOption('#reading-source','L10');await page.selectOption('#reading-kind','hypothesis');
+      const draft='PRIVATE_DRAFT <img src=x onerror="window.reviewInjected=1">';await page.fill('#reading-note',draft);
+      const layers=await page.locator('#hook').getAttribute('data-layers');
+      assert.equal(await page.locator('#passage-note-1').count(),0);
+      await page.locator('#review-note-1').focus();await page.keyboard.press('Enter');
+      assert.equal(await page.inputValue('#reading-source'),'L10','reviewing another source must not reassign the note being drafted');assert.equal(await page.inputValue('#reading-note'),draft);
+      assert.equal(await page.inputValue('#reading-kind'),'hypothesis');
+      assert.equal(await page.evaluate(()=>document.activeElement.id),'passage-note-1');
+      assert.equal(await page.locator('#passage-note-1').innerText(),await page.locator('#hook-document [data-part="original"] .hook-part').innerText());
+      assert.equal(await page.locator('#hook').getAttribute('data-layers'),layers);
+      const position=await page.locator('#passage-note-1').evaluate(el=>({top:el.getBoundingClientRect().top,bottom:el.getBoundingClientRect().bottom,height:innerHeight}));
+      assert.ok(position.bottom>0&&position.top<position.height,'the reviewed passage must be visible');
+      await page.locator('#lang-switch').click();
+      assert.equal(await page.locator('#passage-note-1').innerText(),await page.locator('#hook-document [data-part="original"] .hook-part').innerText());
+      assert.equal(await page.inputValue('#reading-note'),draft);assert.equal(await page.inputValue('#reading-source'),'L10');
+      assert.equal(await page.locator('#reading-notes li').count(),1);assert.equal(await page.locator('#reading-tools img').count(),0);
+      assert.equal(await page.evaluate(()=>window.reviewInjected),undefined);
+    }
+    assert.deepEqual(writeRequests,[]);assert.deepEqual(pageErrors,[]);await preservedStorage();
+  });
+
   const report={node:process.version,browser:await browser.version(),source:base,scope:'Actual static case page in desktop Chromium, controlled viewport/text sizes; no physical mobile device, screen-reader speech, provider or backend integration',results};
   if(process.env.RAVEN_OPENING_REPORT)fs.writeFileSync(process.env.RAVEN_OPENING_REPORT,JSON.stringify(report,null,2));
   console.log(JSON.stringify({browser:report.browser,node:report.node,scenarios:results.length,passed:results.filter(r=>r.status==='PASS').length,failed:results.filter(r=>r.status==='FAIL').length}));

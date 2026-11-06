@@ -3,7 +3,7 @@
   if (!hook) return;
   const panel = document.createElement('section'); panel.id = 'reading-tools';
   document.getElementById('hook-actions').before(panel);
-  let run, entries = [], sourceId = '', draft = '', kind = 'question', open = false, sequence = 0;
+  let run, entries = [], sourceId = '', draft = '', kind = 'question', open = false, quotesOpen = false, reviewedId = '', sequence = 0;
   let sources = new Map();
   const copy = {
     ar:{title:'دفتر المقارنة والأقوال',scope:'دفترك خاص في هذا المشهد فقط. لا يصل إلى الشخصيات ولا يغيّر اختياراتك. إعادة المشهد أو تحديث الصفحة يبدأ دفترًا جديدًا؛ نزّل نسخة إذا أردت الاحتفاظ بها.',
@@ -11,6 +11,8 @@
     en:{title:'Comparison and statements notebook',scope:'This notebook is private to this scene. It reaches no character and does not change your choices. Replaying or reloading starts a new notebook; download a copy if you want to keep it.',
       task:'Compare your message with what was added to the draft. Select a passage and write an observation or a question to check.',source:'Passage I am reviewing',kind:'Note type',question:'Open question',observation:'Text observation',hypothesis:'Hypothesis to check',text:'My private note',add:'Add to my notebook',empty:'Your notebook is empty. No note is written on your behalf.',saved:'Added to your private notebook on this page only.',invalid:'Select a visible passage and write a note (up to 1000 characters).',limit:'The notebook has 30 notes; download your copy before starting another run.',remove:'Delete my note',download:'Download my notebook',quotes:'Statements shown in the dialogue',original:'Your message — L02',conclusion:'Conclusion added to the draft',signature:'Signature space',none:'Select a passage',select:'Selected this passage for review; write what you noticed in the notebook.',removed:'Your private note was deleted; the original statement remains.'}
   };
+  Object.assign(copy.ar,{review:'راجع العبارة',downloadScope:'النسخة تشمل الملاحظات المضافة فقط. النص الجاري لا يدخل فيها قبل الضغط على «أضف إلى دفتري».'});
+  Object.assign(copy.en,{review:'Review passage',downloadScope:'The download includes added notes only. Text you are still writing is not included until you select “Add to my notebook”.'});
   const lang = () => document.documentElement.lang === 'en' ? 'en' : 'ar';
   const el = (tag,text) => {const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
   const button = (id,text,fn) => {const b=el('button',text);b.type='button';b.id=id;b.addEventListener('click',fn);return b;};
@@ -34,13 +36,19 @@
     const c=copy[lang()];
     collect(c);
     panel.hidden=['start','invite'].includes(hook.dataset.phase);
-    if(run!==hook.dataset.sceneRun){run=hook.dataset.sceneRun;entries=[];draft='';sourceId='';kind='question';open=false;sequence=0;}
+    if(run!==hook.dataset.sceneRun){run=hook.dataset.sceneRun;entries=[];draft='';sourceId='';kind='question';open=false;quotesOpen=false;reviewedId='';sequence=0;}
+    else {
+      // Read the current disclosure directly: its queued toggle event may not have fired yet.
+      const previousQuotes=document.getElementById('reading-quotes');
+      if(previousQuotes)quotesOpen=previousQuotes.open;
+    }
     panel.replaceChildren(); panel.dataset.notes = JSON.stringify(snapshot());
-    const details=el('details');details.open=open;details.id='reading-details';details.append(el('summary',c.title),el('p',c.scope),el('p',c.task));
+    const summary=el('summary',c.title);summary.id='reading-summary';
+    const details=el('details');details.open=open;details.id='reading-details';details.append(summary,el('p',c.scope),el('p',c.task));
     details.addEventListener('toggle',()=>{if(details.isConnected)open=details.open;});
     const select=el('select');select.id='reading-source';select.append(new Option(c.none,''));
     for(const s of sources.values())select.append(new Option(s.label,s.id));select.value=sourceId;
-    const preview=el('p',sources.get(sourceId)?.text || '');preview.id='reading-source-preview';preview.className='reading-source';
+    const preview=el('p',sources.get(sourceId)?.text || '');preview.id='reading-source-preview';preview.className='reading-source';preview.tabIndex=-1;
     select.addEventListener('change',()=>{sourceId=select.value;preview.textContent=sources.get(sourceId)?.text||'';});
     const types=el('select');types.id='reading-kind';for(const k of ['question','observation','hypothesis'])types.append(new Option(c[k],k));types.value=kind;types.addEventListener('change',()=>{kind=types.value;});
     const input=el('textarea');input.id='reading-note';input.maxLength=1000;input.value=draft;input.dir='auto';input.addEventListener('input',()=>{draft=input.value;});
@@ -53,17 +61,40 @@
     }),status);
     const list=el('ol');list.id='reading-notes';
     if(!entries.length)details.append(el('p',c.empty));
-    for(const n of entries){const row=el('li');row.dataset.noteId=n.id;row.append(el('strong',c[n.kind]),el('p',n.text),el('span',sources.get(n.sourceId)?.label||n.sourceId));row.append(button('remove-'+n.id,c.remove,()=>{entries=entries.filter(x=>x.id!==n.id);render('reading-note');announce(c.removed);}));list.append(row);}
+    for(const n of entries){
+      const row=el('li');row.dataset.noteId=n.id;
+      row.append(el('strong',c[n.kind]),el('p',n.text),el('span',sources.get(n.sourceId)?.label||n.sourceId));
+      row.append(button('review-'+n.id,c.review,()=>{
+        if(!sources.has(n.sourceId))return;
+        reviewedId=n.id;render('passage-'+n.id);
+        const passage=document.getElementById('passage-'+n.id),bounds=passage.getBoundingClientRect();
+        if(bounds.top<0||bounds.bottom>window.innerHeight)passage.scrollIntoView({block:'nearest',behavior:'instant'});
+      }));
+      row.append(button('remove-'+n.id,c.remove,()=>{entries=entries.filter(x=>x.id!==n.id);render('reading-note');announce(c.removed);}));
+      if(reviewedId===n.id){
+        const passage=el('blockquote',sources.get(n.sourceId)?.text||'');passage.id='passage-'+n.id;
+        passage.className='reading-source';passage.tabIndex=-1;row.append(passage);
+      }
+      list.append(row);
+    }
     details.append(list);
     const download=button('reading-download',c.download,()=>{
       const blob=new Blob([JSON.stringify(snapshot(),null,2)+'\n'],{type:'application/json'}),url=URL.createObjectURL(blob),a=el('a');a.href=url;a.download='raven-private-notebook.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
-    });download.disabled=!entries.length;details.append(download);
-    const quotes=el('details');quotes.id='reading-quotes';quotes.append(el('summary',c.quotes));const statements=el('ul');
+    });download.disabled=!entries.length;
+    const downloadScope=el('p',c.downloadScope);downloadScope.id='reading-download-note';
+    download.setAttribute('aria-describedby',downloadScope.id);details.append(download,downloadScope);
+    const quotesSummary=el('summary',c.quotes);quotesSummary.id='reading-quotes-summary';
+    const quotes=el('details');quotes.id='reading-quotes';quotes.open=quotesOpen;quotes.append(quotesSummary);const statements=el('ul');
     for(const s of sources.values())if(s.type==='statement'){const li=el('li');li.dataset.sourceId=s.id;li.append(el('strong',s.label),el('p',s.text));statements.append(li);}
     quotes.append(statements);details.append(quotes);panel.append(details);
     if(focusId)document.getElementById(focusId)?.focus({preventScroll:true});
   }
-  hook.addEventListener('raven:opening-render',()=>{const id=panel.contains(document.activeElement)?document.activeElement.id:null;render(id);});
+  hook.addEventListener('raven:opening-render',()=>{
+    // A language event can arrive before the disclosure's queued toggle event.
+    const details=document.getElementById('reading-details');
+    if(details)open=details.open;
+    const id=panel.contains(document.activeElement)?document.activeElement.id:null;render(id);
+  });
   hook.addEventListener('raven:inspect-part',event=>{
     const id='document-'+event.detail?.part;if(!sources.has(id))return;
     sourceId=id;open=true;render();
