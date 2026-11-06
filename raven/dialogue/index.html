@@ -145,7 +145,7 @@
     </details>
   </main>
   <footer>معاينة محاكاة متصفح مستقلة — الردود ليست من نموذج ذكاء اصطناعي حقيقي. تُستعاد النسخة المحلية إذا نجح حفظها وبقيت بيانات هذا المتصفح؛ مسحها يفقدها. لا توجد مزامنة مع خادم أو حساب.</footer>
-  <script src="./local-api.js?v=preserve-backup-3"></script>
+  <script src="./local-api.js?v=bilingual-preview-4"></script>
   <script>
   (() => {
     const param = new URLSearchParams(location.search).get('lang');
@@ -320,7 +320,7 @@
       div.className = 'msg ' + (isMe ? 'me' : 'them');
       const name = document.createElement('div');
       name.className = 'name'; name.textContent = who;
-      const content = document.createElement('div'); content.textContent = text;
+      const content = document.createElement('div'); content.dir = 'auto'; content.textContent = text;
       div.append(name, content); log.appendChild(div);
     }
     function render() {
@@ -415,7 +415,8 @@
       s.records.set(op.id, op); s.draft = ''; s.hidden = false;
       persist(); render();
       await request(id, op, '/api/dialogue', { method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ requestId:op.id, characterId:id, message:text }) });
+        body:JSON.stringify({ requestId:op.id, characterId:id, message:text,
+          ...(window.RAVEN_DIALOGUE_MODE === 'local' ? { language:displayLang } : {}) }) });
     }
     async function loadHistory() {
       const id = characterEl.value, s = states[id];

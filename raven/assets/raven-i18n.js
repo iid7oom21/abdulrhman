@@ -26,9 +26,10 @@
     // Forms stay on their original host, including when their link is translated.
     if (url.origin === originalOrigin && url.hash === '#raven-collaborate') return path;
     const page = pagePath(url.pathname);
-    if (page === '/case' || publicPath(url.pathname) === casePath) {
+    if (page === '/case') {
       url.pathname = casePath;
-      url.searchParams.delete('lang');
+      if (chosen === 'en') url.searchParams.set('lang', 'en');
+      else url.searchParams.delete('lang');
       return url.pathname + url.search + url.hash;
     }
     if (page === '/' || publicPath(url.pathname) === homepage) {

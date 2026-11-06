@@ -6,6 +6,8 @@
   if (!section) return;
   const TEXT = {
     ar: {
+      menu: 'محاكاة الحوار',
+      hero: 'محاكاة الحوار — الاسم المحذوف',
       label: 'معاينة محادثة RAVEN — الاسم المحذوف',
       eyebrow: 'قضية تفاعلية · قيد التطوير',
       title: 'RAVEN — الاسم المحذوف',
@@ -16,6 +18,8 @@
       frame: 'RAVEN — الاسم المحذوف (معاينة محادثة)'
     },
     en: {
+      menu: 'Dialogue simulation',
+      hero: 'Dialogue simulation — The Deleted Name',
       label: 'RAVEN — The Deleted Name, dialogue preview',
       eyebrow: 'Interactive case · In development',
       title: 'RAVEN — The Deleted Name',
@@ -30,6 +34,9 @@
   function apply() {
     const lang = language();
     const t = TEXT[lang];
+    document.querySelectorAll('[data-dn-link]').forEach(el => {
+      if (t[el.dataset.dnLink] !== undefined) el.textContent = t[el.dataset.dnLink];
+    });
     section.setAttribute('aria-label', t.label);
     section.querySelectorAll('[data-dn-k]').forEach(el => {
       if (t[el.dataset.dnK] !== undefined) el.textContent = t[el.dataset.dnK];

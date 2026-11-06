@@ -204,23 +204,35 @@
     idsByOwner.set(ownerId, ids);
   }
   var fingerprint = (content) => createHash("sha256").update(JSON.stringify(content)).digest("hex");
-  function simulateReply(characterId, playerMessage, received) {
+  function simulateReply(characterId, playerMessage, received, language) {
     const context = buildContext(characterId, received);
     const receivedFromPlayer = context.received?.materials.filter((item) => item.author === "player") || [];
-    if (/المواد|شارك|تصحيح/.test(playerMessage) && receivedFromPlayer.length) {
-      return { text: "\u0647\u0630\u0647 \u0627\u0644\u0645\u0648\u0627\u062F \u0648\u0635\u0644\u062A\u0646\u064A\u061B \u062A\u0633\u062C\u064A\u0644 \u0627\u0644\u0642\u0648\u0644 \u0644\u0627 \u064A\u062B\u0628\u062A \u0635\u062D\u062A\u0647:\n" + receivedFromPlayer.map((item) => (item.type === "correction" ? item.isLatestKnownCorrection ? "\u062A\u0635\u062D\u064A\u062D \u0623\u062D\u062F\u062B \u0645\u0639\u0631\u0648\u0641" : "\u062A\u0635\u062D\u064A\u062D \u0633\u0627\u0628\u0642" : item.type === "report" ? "\u0645\u0633\u0648\u062F\u0629 \u062A\u0642\u0631\u064A\u0631" : item.type === "receipt" ? "\u0625\u064A\u0635\u0627\u0644" : item.type === "motive" ? "\u062A\u0641\u0633\u064A\u0631 \u062F\u0627\u0641\u0639" : item.type === "evidence" ? "\u0645\u0627\u062F\u0629 \u0645\u0635\u062F\u0631" : "\u0642\u0648\u0644 \u0623\u0648 \u0645\u0644\u0627\u062D\u0638\u0629 \u0645\u0633\u062C\u0644\u0629") + ": " + item.text).join("\n"), refused: false };
+    const en = language === "en";
+    // Old logs have no language. Replay those with the original matching/copy so
+    // changing the display language never rewrites a previously recorded reply.
+    const asksAboutMaterials = language === undefined
+      ? /المواد|شارك|تصحيح/.test(playerMessage)
+      : /المواد|شارك|تصحيح|\b(?:materials?|shar(?:e|ed|ing)|corrections?)\b/i.test(playerMessage);
+    if (asksAboutMaterials && receivedFromPlayer.length) {
+      const labels = en
+        ? { correction: "Latest known correction", previous: "Earlier correction", report: "Report draft", receipt: "Receipt", motive: "Motive note", evidence: "Source material", other: "Recorded statement or note" }
+        : { correction: "تصحيح أحدث معروف", previous: "تصحيح سابق", report: "مسودة تقرير", receipt: "إيصال", motive: "تفسير دافع", evidence: "مادة مصدر", other: "قول أو ملاحظة مسجلة" };
+      return { text: (en ? "These materials reached me; recording a statement does not prove it true:\n" : "هذه المواد وصلتني؛ تسجيل القول لا يثبت صحته:\n") + receivedFromPlayer.map((item) =>
+        (item.type === "correction" ? item.isLatestKnownCorrection ? labels.correction : labels.previous : labels[item.type] || labels.other) + ": " + item.text).join("\n"), refused: false };
     }
     return {
-      text: "\u0627\u0644\u0646\u0635 \u0627\u0644\u0623\u0635\u0644\u064A \u0644\u0647\u0630\u0647 \u0627\u0644\u0625\u0641\u0627\u062F\u0629 \u063A\u064A\u0631 \u0645\u062A\u0627\u062D \u0641\u064A \u0647\u0630\u0647 \u0627\u0644\u0645\u0639\u0627\u064A\u0646\u0629. \u0644\u0627 \u0623\u0633\u062A\u0637\u064A\u0639 \u062A\u0623\u0643\u064A\u062F \u062A\u0641\u0627\u0635\u064A\u0644 \u0627\u0644\u0648\u0627\u0642\u0639\u0629 \u0623\u0648 \u0625\u0646\u0634\u0627\u0621 \u062F\u0644\u064A\u0644 \u0645\u0646 \u0627\u0644\u062D\u0648\u0627\u0631.",
+      text: en
+        ? "The original text of this statement is not available in this preview. I cannot confirm details of the incident or create evidence from dialogue."
+        : "النص الأصلي لهذه الإفادة غير متاح في هذه المعاينة. لا أستطيع تأكيد تفاصيل الواقعة أو إنشاء دليل من الحوار.",
       refused: true
     };
   }
-  function submitRequest(requestId, characterId, message, sharedFacts = [], contentVersion = "deleted-name-preview-v2", ownerId, received) {
-    if (!ownerId || !Object.hasOwn(CHARACTERS, characterId) || typeof requestId !== "string" || !/^[\w-]{1,100}$/.test(requestId) || typeof message !== "string" || !message.trim() || message.length > 8e3) {
+  function submitRequest(requestId, characterId, message, sharedFacts = [], contentVersion = "deleted-name-preview-v2", ownerId, received, language) {
+    if ((language !== undefined && !["ar", "en"].includes(language)) || !ownerId || !Object.hasOwn(CHARACTERS, characterId) || typeof requestId !== "string" || !/^[\w-]{1,100}$/.test(requestId) || typeof message !== "string" || !message.trim() || message.length > 8e3) {
       return { error: "invalid_request", status: "error" };
     }
     if (!Array.isArray(sharedFacts) || sharedFacts.length) return { error: "untrusted_facts", status: "error" };
-    const fp = fingerprint({ characterId, message, contentVersion });
+    const fp = fingerprint({ characterId, message, contentVersion, ...(language === undefined ? {} : { language }) });
     const existing = requests.get(requestId);
     if (existing) {
       if (existing.owner !== ownerId) return { error: "forbidden", status: "error" };
@@ -241,7 +253,7 @@
     requests.set(requestId, record);
     remember(ownerId, requestId);
     try {
-      record.response = simulateReply(characterId, message, received);
+      record.response = simulateReply(characterId, message, received, language);
       record.status = "completed";
     } catch {
       record.status = "error";
@@ -323,7 +335,7 @@
           out = [200, { event: materials.share({ ...data, sender: "player" }), storage: "server-memory" }];
         } else {
           if (!["jonas", "claire"].includes(data.characterId)) return [400, { error: "invalid_request" }];
-          const r = submitRequest(data.requestId, data.characterId, data.message, data.sharedFacts, data.contentVersion, owner, materials.contextFor(data.characterId));
+          const r = submitRequest(data.requestId, data.characterId, data.message, data.sharedFacts, data.contentVersion, owner, materials.contextFor(data.characterId), data.language);
           out = [r.error ? r.status === "conflict" ? 409 : r.error === "forbidden" ? 403 : 400 : 200, r];
         }
         if (out[0] === 200 && !replaying) {
