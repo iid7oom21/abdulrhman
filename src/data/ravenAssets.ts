@@ -1,6 +1,11 @@
 import type { VideoProject } from "../types";
 
-const ROOT = "/visual-lab";
+const ROOT = `${import.meta.env.BASE_URL}visual-lab`;
+
+export const RAVEN_HOME_URL = new URL(
+  '../raven/index.html',
+  new URL(import.meta.env.BASE_URL, window.location.origin),
+).pathname;
 
 export interface RavenScene {
   id: string;
