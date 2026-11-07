@@ -17,7 +17,7 @@ import {
 import { Header } from './components/Header';
 import { StudioPreview, type PreviewCue } from './components/StudioPreview';
 import { RavenSceneLibrary } from './components/RavenSceneLibrary';
-import { RAVEN_PROJECTS, RAVEN_SCENES, type RavenScene } from './data/ravenAssets';
+import { RAVEN_HOME_URL, RAVEN_PROJECTS, RAVEN_SCENES, type RavenScene } from './data/ravenAssets';
 import {
   INITIAL_STORYBOARD,
 } from './data/mockData';
@@ -45,7 +45,7 @@ const ASPECT_RATIOS: AspectRatio[] = ['16:9', '9:16', '21:9', '1:1', '4:3'];
 export const App: React.FC = () => {
   const [currentTab, setCurrentTab] = useState<'studio' | 'storyboard' | 'pexafy' | 'code'>('studio');
   const [activeModel, setActiveModel] = useState<ModelType>('raven');
-  const [lang, setLang] = useState<'en' | 'ar'>('ar');
+  const [lang, setLang] = useState<'en' | 'ar'>(() => new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'ar');
 
   const [projects, setProjects] = useState<VideoProject[]>(RAVEN_PROJECTS);
   const [selectedProject, setSelectedProject] = useState<VideoProject>(RAVEN_PROJECTS[0]);
@@ -200,7 +200,7 @@ console.log(result);`;
               <span>{isAr ? 'مشاهد RAVEN والفيلم' : 'RAVEN scenes & film'}</span>
             </button>
             <a
-              href="/raven/index.html"
+              href={`${RAVEN_HOME_URL}${isAr ? '' : '?lang=en'}`}
               className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-medium transition-colors"
             >
               <Eye className="w-3.5 h-3.5" />
