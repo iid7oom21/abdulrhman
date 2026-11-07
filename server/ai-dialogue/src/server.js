@@ -8,6 +8,7 @@ import { openDiskStore } from './disk-store.js';
 import { providerFromEnv } from './provider.js';
 import { validateSnapshot } from './snapshot.js';
 import {runtimeControls} from './runtime-controls.js';
+import {createSiteMount, HOSTED_DIALOGUE_PATHS, siteRequestPath, serveSiteFile} from './site-mount.js';
 
 // Memory bounds for the in-memory preview. All can be overridden through createPreviewServer options.
 export const SESSION_IDLE_MS = 6 * 60 * 60 * 1000;
@@ -36,7 +37,10 @@ export function createPreviewServer({
   providerInfo = {provider:'simulation',model:null},
   openStore = openDiskStore,
   readControls = runtimeControls(),
+  // Explicit reviewed static export; unset preserves the standalone server exactly.
+  siteRoot = null,
 } = {}) {
+  const site = siteRoot ? createSiteMount(siteRoot) : null;
   // owner -> { materials, touchedAt }. Map order is least-recently-used first (re-inserted on each use).
   const sessions = new Map();
   const dropSession = owner => { sessions.delete(owner); forgetOwner(owner); };
@@ -85,7 +89,16 @@ export function createPreviewServer({
   const persistence = disk ? 'disk-file' : 'process-memory';
   const storageInfo = () => ({storage:'server-memory',persistence,saveStatus});
   const html = fs.readFileSync(new URL('../public/index.html', import.meta.url));
-  const scriptHashes = [...html.toString().matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => `'sha256-${createHash('sha256').update(m[1]).digest('base64')}'`).join(' ');
+  // Use the server UI, which understands disk saveStatus and provider configuration.
+  // Never transplant the static browser simulator or its local operation history.
+  const hostedHtml = english => Buffer.from(html.toString()
+    .replace("'raven_deleted_name_preview_v2'", "'raven_deleted_name_hosted_server_preview_v2'")
+    .replace("'raven_deleted_name_material_actions_v1'", "'raven_deleted_name_hosted_server_material_actions_v1'")
+    .replace('</head>', '<meta name="raven-dialogue-transport" content="same-origin-server">\n</head>')
+    .replace('</header>', '<a href="/raven/deleted-name/' + (english ? '?lang=en' : '') + '">الرجوع إلى القضية · Return to case</a></header>')
+    .replace('<main>', '<main>' + (english ? '<p role="note" lang="en" dir="ltr">This technical server preview is currently available in Arabic. Your opening choices are not transferred here.</p>' : '')));
+  const scriptHashesFor = page => [...page.toString().matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => `'sha256-${createHash('sha256').update(m[1]).digest('base64')}'`).join(' ');
+  const scriptHashes = scriptHashesFor(html), hostedScriptHashes = scriptHashesFor(hostedHtml(false));
   const server = http.createServer(async (req, res) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Referrer-Policy', 'no-referrer');
@@ -96,6 +109,8 @@ export function createPreviewServer({
       res.end(JSON.stringify(data, (key, value) => ['owner', 'fingerprint'].includes(key) ? undefined : value));
     };
     try {
+      // The URL parser normalizes dot segments; reject unsafe raw targets first.
+      if (site && siteRequestPath(req.url) === null) return json(404, {error:'not_found'});
       const url = new URL(req.url, 'http://preview.local');
       if (req.method === 'GET' && url.pathname === '/texts/raven-texts.js') {
         res.writeHead(200, {'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});
@@ -111,17 +126,35 @@ export function createPreviewServer({
           characters:['jonas','claire'],sourceKnowledgeAvailable:false,contentVersion:'deleted-name-preview-v2',
         });
       }
+      const hostedDialogue = site && HOSTED_DIALOGUE_PATHS.has(url.pathname);
+      if (site && ['GET','HEAD'].includes(req.method) && !hostedDialogue) {
+        const redirect = site.redirect(url.pathname);
+        if (redirect) {
+          res.writeHead(308, {'Location':redirect + url.search,'Cache-Control':'no-store'});
+          return res.end();
+        }
+        const asset = site.open(url.pathname);
+        if (asset) return serveSiteFile(req, res, asset);
+      }
+      if (site && !hostedDialogue && !['/','/index.html'].includes(url.pathname) && !url.pathname.startsWith('/api/')) {
+        return json(404, {error:'not_found'});
+      }
       const cookie = /(?:^|;\s*)raven_preview_session=([a-f0-9]{64})(?:;|$)/.exec(req.headers.cookie || '')?.[1];
       const session = cookie ? liveSession(cookie) : null;
       let owner = session ? cookie : null;
-      if (req.method === 'GET' && ['/', '/index.html'].includes(url.pathname)) {
+      if (req.method === 'GET' && (['/', '/index.html'].includes(url.pathname) || hostedDialogue)) {
         if (!owner) {
           owner = openSession();
           persist();
           res.setHeader('Set-Cookie', `raven_preview_session=${owner}; HttpOnly; SameSite=Strict; Path=/${req.socket.encrypted || secureCookie ? '; Secure' : ''}`);
         }
+        if (hostedDialogue) {
+          res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+          res.setHeader('Content-Security-Policy', res.getHeader('Content-Security-Policy')
+            .replace(scriptHashes, hostedScriptHashes).replace("frame-ancestors 'none'", "frame-ancestors 'self'"));
+        }
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
-        return res.end(html);
+        return res.end(hostedDialogue ? hostedHtml(url.searchParams.get('lang') === 'en') : html);
       }
       if (!owner) return json(401, { error: 'session_unavailable' });
       const materials = session.materials;
@@ -200,6 +233,6 @@ export function createPreviewServer({
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const {generate,info} = providerFromEnv();
-  createPreviewServer({storeFile:storagePathFromEnv(),generate,providerInfo:info})
+  createPreviewServer({storeFile:storagePathFromEnv(),generate,providerInfo:info,siteRoot:process.env.RAVEN_SITE_ROOT || null})
     .listen(process.env.PORT || 10000, process.env.HOST || '127.0.0.1', () => console.log(`RAVEN preview: ${info.provider}, local disk file`));
 }
