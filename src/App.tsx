@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Play,
   Sparkles,
@@ -10,23 +10,21 @@ import {
   Copy,
   Check,
   ExternalLink,
-  Search,
   Layers,
   Wand2,
   Eye,
 } from 'lucide-react';
 import { Header } from './components/Header';
+import { StudioPreview, type PreviewCue } from './components/StudioPreview';
+import { RavenSceneLibrary } from './components/RavenSceneLibrary';
+import { RAVEN_PROJECTS, RAVEN_SCENES, type RavenScene } from './data/ravenAssets';
 import {
-  INITIAL_PROJECTS,
-  PEXAFY_GALLERY,
   INITIAL_STORYBOARD,
-  PROMPT_PRESETS,
 } from './data/mockData';
 import {
   AspectRatio,
   CameraMotion,
   ModelType,
-  PexafyPhoto,
   StoryboardScene,
   VideoProject,
 } from './types';
@@ -49,16 +47,16 @@ export const App: React.FC = () => {
   const [activeModel, setActiveModel] = useState<ModelType>('raven');
   const [lang, setLang] = useState<'en' | 'ar'>('ar');
 
-  const [projects, setProjects] = useState<VideoProject[]>(INITIAL_PROJECTS);
-  const [selectedProject, setSelectedProject] = useState<VideoProject>(INITIAL_PROJECTS[0]);
-  const [promptText, setPromptText] = useState<string>(INITIAL_PROJECTS[0].promptText);
+  const [projects, setProjects] = useState<VideoProject[]>(RAVEN_PROJECTS);
+  const [selectedProject, setSelectedProject] = useState<VideoProject>(RAVEN_PROJECTS[0]);
+  const [promptText, setPromptText] = useState<string>(RAVEN_PROJECTS[0].promptText);
   const [negativePrompt, setNegativePrompt] = useState<string>(
-    INITIAL_PROJECTS[0].negativePrompt || ''
+    RAVEN_PROJECTS[0].negativePrompt || ''
   );
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9');
-  const [duration, setDuration] = useState<number>(8);
-  const [cameraMotion, setCameraMotion] = useState<CameraMotion>('drone-aerial');
-  const [cameraSpeed, setCameraSpeed] = useState<number>(4);
+  const [duration, setDuration] = useState<number>(24);
+  const [cameraMotion, setCameraMotion] = useState<CameraMotion>('dolly-zoom');
+  const [cameraSpeed, setCameraSpeed] = useState<number>(2);
 
   const [storyboard, setStoryboard] = useState<StoryboardScene[]>(INITIAL_STORYBOARD);
   const [newSceneTitle, setNewSceneTitle] = useState('');
@@ -68,8 +66,27 @@ export const App: React.FC = () => {
   const [copiedCode, setCopiedCode] = useState(false);
 
   const isAr = lang === 'ar';
+  const [previewCue, setPreviewCue] = useState<PreviewCue | null>(null);
+  const [draftThumbnail, setDraftThumbnail] = useState(RAVEN_SCENES[0].preview);
 
-  const handleGenerateVideo = () => {
+  useEffect(() => {
+    document.documentElement.lang = lang;
+    document.documentElement.dir = isAr ? 'rtl' : 'ltr';
+  }, [lang, isAr]);
+
+  const selectProject = (project: VideoProject) => {
+    setSelectedProject(project);
+    setPromptText(project.promptText);
+    setNegativePrompt(project.negativePrompt || '');
+    setAspectRatio(project.aspectRatio);
+    setDuration(project.duration);
+    setCameraMotion(project.camera.motion);
+    setCameraSpeed(project.camera.speed);
+    setActiveModel(project.model);
+    setDraftThumbnail(project.thumbnailUrl);
+  };
+
+  const handleAddDraft = () => {
     if (!promptText.trim()) return;
     const newProj: VideoProject = {
       id: `proj-${Date.now()}`,
@@ -87,11 +104,9 @@ export const App: React.FC = () => {
         smoothness: 92,
       },
       keyframes: [],
-      videoUrl: selectedProject.videoUrl,
-      thumbnailUrl:
-        'https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=800&q=80',
-      status: 'completed',
-      progress: 100,
+      thumbnailUrl: draftThumbnail,
+      status: 'idle',
+      progress: 0,
       createdAt: new Date().toISOString(),
       musicMood: 'Cinematic Noir',
     };
@@ -99,8 +114,11 @@ export const App: React.FC = () => {
     setSelectedProject(newProj);
   };
 
-  const handleUsePexafyAsset = (photo: PexafyPhoto) => {
-    setPromptText(photo.suggestedPrompt);
+  const handleUseRavenScene = (scene: RavenScene) => {
+    selectProject(RAVEN_PROJECTS.find(film => film.aspectRatio === selectedProject.aspectRatio) || RAVEN_PROJECTS[0]);
+    setPromptText(scene.prompt);
+    setDraftThumbnail(scene.preview);
+    setPreviewCue(previous => ({ time: scene.seek, requestId: (previous?.requestId || 0) + 1 }));
     setCurrentTab('studio');
   };
 
@@ -113,8 +131,7 @@ export const App: React.FC = () => {
       prompt: newScenePrompt.trim(),
       duration: 5,
       camera: cameraMotion,
-      thumbnail:
-        'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=600&q=80',
+      thumbnail: draftThumbnail,
       transition: 'dissolve',
     };
     setStoryboard([...storyboard, nextScene]);
@@ -129,16 +146,6 @@ export const App: React.FC = () => {
         .map((s, idx) => ({ ...s, sceneNumber: idx + 1 }))
     );
   };
-
-  const filteredGallery = PEXAFY_GALLERY.filter((item) => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      item.title.toLowerCase().includes(q) ||
-      item.suggestedPrompt.toLowerCase().includes(q) ||
-      item.tags.some((t) => t.toLowerCase().includes(q))
-    );
-  });
 
   const apiSnippet = `// Illustrative UI snippet only; this is not a verified provider API contract.
 const response = await fetch('https://api.dev.runwayml.com/v1/generate/video', {
@@ -174,23 +181,33 @@ console.log(result);`;
     <div dir={isAr ? 'rtl' : 'ltr'} className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
       {/* Top RAVEN Archive Quick Banner */}
       <div className="bg-gradient-to-r from-zinc-900 via-indigo-950/60 to-zinc-900 border-b border-amber-500/20 px-4 py-2 text-xs">
-        <div className="max-w-7xl mx-auto flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-amber-300/90">
-            <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
+        <div className="max-w-7xl mx-auto flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+          <div className="flex min-w-0 items-center gap-2 text-amber-300/90">
+            <span className="w-2 h-2 shrink-0 rounded-full bg-amber-400 animate-pulse" />
             <span className="font-semibold">
               {isAr
-                ? 'نموذج الاستوديو منفصل عن قضية «الاسم المحذوف» وخادم الحوار. إضافة مشهد تستخدم فيديو تجريبيًا موجودًا.'
-                : 'This studio demo is separate from The Deleted Name and the dialogue server. New scenes reuse a sample video.'}
+                ? 'مشاهد RAVEN وفيلمه داخل المشروع. يمكنك إضافة مسودات مؤقتة للجلسة من إعدادات اللقطة.'
+                : 'RAVEN scenes and film are integrated here. Shot settings can be added as temporary session drafts.'}
             </span>
           </div>
-          <a
-            href="/raven/index.html"
-            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-medium transition-colors"
-          >
-            <Eye className="w-3.5 h-3.5" />
-            <span>{isAr ? 'دخول أرشيف RAVEN' : 'Open RAVEN Archive'}</span>
-            <ExternalLink className="w-3 h-3" />
-          </a>
+          <div className="flex max-w-full shrink-0 flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => { setCurrentTab('studio'); selectProject(RAVEN_PROJECTS[0]); }}
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-400 text-zinc-950 hover:bg-amber-300 font-medium transition-colors"
+            >
+              <Camera className="w-3.5 h-3.5" />
+              <span>{isAr ? 'مشاهد RAVEN والفيلم' : 'RAVEN scenes & film'}</span>
+            </button>
+            <a
+              href="/raven/index.html"
+              className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-medium transition-colors"
+            >
+              <Eye className="w-3.5 h-3.5" />
+              <span>{isAr ? 'دخول أرشيف RAVEN' : 'Open RAVEN Archive'}</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          </div>
         </div>
       </div>
 
@@ -208,7 +225,7 @@ console.log(result);`;
         {currentTab === 'studio' && (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
             {/* Prompt & Controls Panel */}
-            <div className="lg:col-span-5 space-y-5 bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5">
+            <div className="order-2 self-start lg:col-span-4 space-y-5 bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5">
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
                   {isAr ? 'وصف المشهد السينمائي (Prompt)' : 'Cinematic Scene Prompt'}
@@ -230,21 +247,17 @@ console.log(result);`;
               <div>
                 <div className="text-xs font-medium text-zinc-400 mb-2 flex items-center gap-1.5">
                   <Wand2 className="w-3.5 h-3.5 text-indigo-400" />
-                  <span>{isAr ? 'قوالب جاهزة سريعة:' : 'Quick Prompt Presets:'}</span>
+                  <span>{isAr ? 'استخدم وصف مشهد من المشروع:' : 'Use a project scene description:'}</span>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {PROMPT_PRESETS.map((preset) => (
+                  {RAVEN_SCENES.map((scene) => (
                     <button
-                      key={preset.title}
+                      key={scene.id}
                       type="button"
-                      onClick={() => {
-                        setPromptText(preset.prompt);
-                        setCameraMotion(preset.camera);
-                        setCameraSpeed(preset.speed);
-                      }}
+                      onClick={() => handleUseRavenScene(scene)}
                       className="text-xs px-3 py-1.5 rounded-lg bg-zinc-950 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 transition-colors"
                     >
-                      {preset.title}
+                      {isAr ? scene.title : scene.titleEn}
                     </button>
                   ))}
                 </div>
@@ -280,7 +293,7 @@ console.log(result);`;
                     onChange={(e) => setDuration(Number(e.target.value))}
                     className="w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-xs text-zinc-200"
                   >
-                    {[4, 8, 12, 16].map((d) => (
+                    {[4, 8, 12, 16, 24].map((d) => (
                       <option key={d} value={d}>
                         {d}s
                       </option>
@@ -334,62 +347,29 @@ console.log(result);`;
 
               <button
                 type="button"
-                onClick={handleGenerateVideo}
+                onClick={handleAddDraft}
                 className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold text-sm flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20 transition-all cursor-pointer"
               >
                 <Sparkles className="w-4 h-4" />
-                <span>{isAr ? 'إضافة مشهد تجريبي' : 'Add demo scene'}</span>
+                <span>{isAr ? 'إضافة مسودة للجلسة' : 'Add session draft'}</span>
               </button>
             </div>
 
-            {/* Active Preview & Recent Generations */}
-            <div className="lg:col-span-7 space-y-6">
-              <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl overflow-hidden">
-                <div className="aspect-video bg-black relative">
-                  {selectedProject.videoUrl ? (
-                    <video
-                      key={selectedProject.id}
-                      src={selectedProject.videoUrl}
-                      poster={selectedProject.thumbnailUrl}
-                      controls
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <img
-                      src={selectedProject.thumbnailUrl}
-                      alt={selectedProject.title}
-                      className="w-full h-full object-cover"
-                    />
-                  )}
-                  <div className="absolute top-3 left-3 flex gap-2">
-                    <span className="px-2.5 py-1 rounded-md bg-black/70 backdrop-blur-md text-xs font-mono text-indigo-300 border border-white/10">
-                      {selectedProject.model.toUpperCase()}
-                    </span>
-                    <span className="px-2.5 py-1 rounded-md bg-black/70 backdrop-blur-md text-xs font-mono text-zinc-300 border border-white/10">
-                      {selectedProject.aspectRatio} · {selectedProject.duration}s
-                    </span>
-                  </div>
-                </div>
-                <div className="p-4">
-                  <h2 className="font-bold text-base text-white mb-1">{selectedProject.title}</h2>
-                  <p className="text-xs text-zinc-400 line-clamp-2">{selectedProject.promptText}</p>
-                </div>
-              </div>
+            {/* Integrated project film and scene navigation. */}
+            <div className="order-1 lg:col-span-8 space-y-6">
+              <StudioPreview project={selectedProject} isAr={isAr} cue={previewCue} onSelectProject={selectProject} />
 
               {/* Project History Grid */}
               <div>
                 <h3 className="text-sm font-semibold text-zinc-300 mb-3">
-                  {isAr ? 'المشاريع المولّدة حديثاً' : 'Recent Studio Generations'}
+                  {isAr ? 'أفلام المشروع ومسوداته' : 'Project films and drafts'}
                 </h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {projects.map((proj) => (
                     <button
                       key={proj.id}
                       type="button"
-                      onClick={() => {
-                        setSelectedProject(proj);
-                        setPromptText(proj.promptText);
-                      }}
+                      onClick={() => { setPreviewCue(null); selectProject(proj); }}
                       className={`text-start rounded-xl overflow-hidden border transition-all cursor-pointer ${
                         selectedProject.id === proj.id
                           ? 'border-indigo-500 bg-zinc-900 ring-1 ring-indigo-500/40'
@@ -399,7 +379,7 @@ console.log(result);`;
                       <div className="aspect-video relative bg-zinc-950">
                         <img
                           src={proj.thumbnailUrl}
-                          alt={proj.title}
+                          alt={!isAr && proj.titleEn ? proj.titleEn : proj.title}
                           className="w-full h-full object-cover opacity-85"
                         />
                         <div className="absolute inset-0 flex items-center justify-center bg-black/20">
@@ -408,10 +388,10 @@ console.log(result);`;
                       </div>
                       <div className="p-2.5">
                         <div className="text-xs font-semibold text-zinc-200 truncate">
-                          {proj.title}
+                          {!isAr && proj.titleEn ? proj.titleEn : proj.title}
                         </div>
                         <div className="text-[11px] text-zinc-500 font-mono mt-0.5">
-                          {proj.model} · {proj.duration}s
+                          {proj.status === 'idle' ? (isAr ? 'مسودة' : 'Draft') : 'RAVEN'} · {proj.duration}s
                         </div>
                       </div>
                     </button>
@@ -506,83 +486,7 @@ console.log(result);`;
         )}
 
         {currentTab === 'pexafy' && (
-          <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5">
-              <div>
-                <h2 className="text-lg font-bold text-white">
-                  {isAr ? 'مكتبة Pexafy المرجعية للإلهام البصري' : 'Pexafy Visual Reference Library'}
-                </h2>
-                <p className="text-xs text-zinc-400 mt-1">
-                  {isAr
-                    ? 'اختر أي لقطة مرجعية لتحويلها فوراً إلى Prompt وإعدادات إضاءة داخل الاستوديو.'
-                    : 'Select any curated reference frame to load its lighting & prompt into the studio.'}
-                </p>
-              </div>
-              <div className="relative">
-                <Search className="w-4 h-4 text-zinc-500 absolute top-2.5 start-3" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder={isAr ? 'ابحث في الصور والوسوم...' : 'Search photos or tags...'}
-                  className="ps-9 pe-4 py-2 rounded-xl bg-zinc-950 border border-zinc-800 text-xs text-zinc-100 focus:outline-none focus:border-emerald-500"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {filteredGallery.map((photo) => (
-                <div
-                  key={photo.id}
-                  className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl overflow-hidden flex flex-col"
-                >
-                  <div className="aspect-video relative bg-zinc-950">
-                    <img
-                      src={photo.url}
-                      alt={photo.title}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute bottom-2 right-2 flex gap-1">
-                      {photo.colorPalette.map((hex) => (
-                        <span
-                          key={hex}
-                          style={{ backgroundColor: hex }}
-                          className="w-4 h-4 rounded-full border border-white/30 shadow"
-                          title={hex}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-bold text-sm text-white">{photo.title}</h3>
-                        <span className="text-[11px] text-emerald-400">{photo.lighting}</span>
-                      </div>
-                      <p className="text-xs text-zinc-400 mt-1.5">{photo.suggestedPrompt}</p>
-                      <div className="flex flex-wrap gap-1.5 mt-2.5">
-                        {photo.tags.map((tag) => (
-                          <span
-                            key={tag}
-                            className="text-[11px] px-2 py-0.5 rounded bg-zinc-950 text-zinc-400 border border-zinc-800"
-                          >
-                            #{tag}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => handleUsePexafyAsset(photo)}
-                      className="w-full py-2 rounded-lg bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 text-xs font-semibold transition-colors cursor-pointer"
-                    >
-                      {isAr ? 'استخدام في استوديو التوليد' : 'Load into Video Studio'}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          <RavenSceneLibrary isAr={isAr} search={searchQuery} onSearch={setSearchQuery} onUseScene={handleUseRavenScene} />
         )}
 
         {currentTab === 'code' && (

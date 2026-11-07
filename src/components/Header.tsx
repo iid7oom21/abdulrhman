@@ -25,7 +25,7 @@ export const Header: React.FC<HeaderProps> = ({
 
   return (
     <header className="border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md sticky top-0 z-40 px-4 lg:px-8 py-3.5">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+      <div className="max-w-7xl mx-auto flex flex-col xl:flex-row items-center justify-between gap-4">
         {/* Brand & Studio Name */}
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-violet-600 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/20 ring-1 ring-white/20">
@@ -34,20 +34,20 @@ export const Header: React.FC<HeaderProps> = ({
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
-                {isAr ? 'استوديو عبد الرحمن' : 'Abdulrhman'}
+                {isAr ? 'استوديو RAVEN' : 'RAVEN Studio'}
                 <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 font-medium">
-                  {isAr ? 'نموذج تجريبي' : 'Demo'}
+                  {isAr ? 'المشروع' : 'Project'}
                 </span>
               </h1>
             </div>
             <p className="text-xs text-zinc-400 font-sans">
-              {isAr ? 'تصور واجهة استوديو — دون توليد فيديو فعلي' : 'Studio UI concept — no live video generation'}
+              {isAr ? 'المشاهد والفيلم ومسودات الإنتاج' : 'Scenes, film and production drafts'}
             </p>
           </div>
         </div>
 
         {/* Navigation Tabs */}
-        <nav className="flex items-center bg-zinc-900/90 p-1 rounded-xl border border-zinc-800 text-sm">
+        <nav className="flex max-w-full flex-wrap justify-center items-center bg-zinc-900/90 p-1 rounded-xl border border-zinc-800 text-sm">
           <button
             onClick={() => setCurrentTab('studio')}
             className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg font-medium transition-all ${
@@ -57,7 +57,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <Sparkles className="w-4 h-4 text-indigo-400" />
-            <span>{isAr ? 'استوديو التوليد' : 'Video Studio'}</span>
+            <span>{isAr ? 'المشروع' : 'Project'}</span>
           </button>
 
           <button
@@ -81,7 +81,7 @@ export const Header: React.FC<HeaderProps> = ({
             }`}
           >
             <ImageIcon className="w-4 h-4 text-emerald-400" />
-            <span>{isAr ? 'مكتبة Pexafy' : 'Pexafy Assets'}</span>
+            <span>{isAr ? 'مكتبة الصور' : 'Scene library'}</span>
           </button>
 
           <button
@@ -98,7 +98,7 @@ export const Header: React.FC<HeaderProps> = ({
         </nav>
 
         {/* Action Controls & Settings */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex max-w-full flex-wrap justify-center items-center gap-2.5">
           {/* Active Model Selector */}
           <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1">
             <span className="text-[11px] text-zinc-500 uppercase tracking-wider font-semibold">

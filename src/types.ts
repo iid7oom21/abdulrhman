@@ -31,6 +31,7 @@ export interface Keyframe {
 export interface VideoProject {
   id: string;
   title: string;
+  titleEn?: string;
   promptText: string;
   negativePrompt?: string;
   model: ModelType;
