@@ -1,0 +1,118 @@
+{
+  "name": "RAVEN — Visual Study 01",
+  "created": "2026-11-06",
+  "version": 1,
+  "narrative_status": "Independent visual concepts. No story or character canon has been changed.",
+  "image_provenance": "New images generated using the native OpenAI image generation tool; original PNGs retained.",
+  "art_direction": "Photorealistic cinematic mystery. Charcoal and olive blacks, aged brass, amber practical light, cool gray rain. No people, readable text, or additional narrative events.",
+  "images": [
+    {
+      "id": "01-manor",
+      "title_ar": "القصر تحت المطر",
+      "generation_brief": "Rainy blue-hour manor exterior, wet stone, iron gate, warm windows, central raven.",
+      "original_width": 1672,
+      "original_height": 941,
+      "original": {
+        "path": "assets/01-manor.png",
+        "bytes": 2889774,
+        "sha256": "f4d4ac6a014566b6d74775a1914d7ea589256e62ce2294442f2524367c4748bb"
+      },
+      "web_preview": {
+        "path": "assets/01-manor.webp",
+        "bytes": 275850,
+        "sha256": "c626e99d7d6b95737b590de22acb99325b070212e3ea00616847f983b653149b"
+      }
+    },
+    {
+      "id": "02-archive",
+      "title_ar": "قاعة الأرشيف",
+      "generation_brief": "Double-height dark oak archive, reading table, brass lamp, tall rain-streaked arched window.",
+      "original_width": 1672,
+      "original_height": 941,
+      "original": {
+        "path": "assets/02-archive.png",
+        "bytes": 2078852,
+        "sha256": "8f551a5255608e183e3c6c581d7845e65a60775df9b4a70459efae724c20ce7f"
+      },
+      "web_preview": {
+        "path": "assets/02-archive.webp",
+        "bytes": 131784,
+        "sha256": "1b50c08158c00da977e2fd1407549dff80226f3090de6e46e76d6b8420221803"
+      }
+    },
+    {
+      "id": "03-desk",
+      "title_ar": "على ضوء المصباح",
+      "generation_brief": "Walnut desk, blank paper and unmarked sealed envelope, brass magnifier, fountain pen, raven feather.",
+      "original_width": 1672,
+      "original_height": 941,
+      "original": {
+        "path": "assets/03-desk.png",
+        "bytes": 2330750,
+        "sha256": "d3cd06cf6862293b50be529fc4a4fc89702ffb9d7321d2aa8b3810bf442dec70"
+      },
+      "web_preview": {
+        "path": "assets/03-desk.webp",
+        "bytes": 175942,
+        "sha256": "0e42a69fb882bbb78f46bf49d4c92f7f90d09300897280571ca1413359f1ca82"
+      }
+    },
+    {
+      "id": "04-corridor",
+      "title_ar": "الممر الحجري",
+      "generation_brief": "Old stone corridor, arches, worn limestone, ajar door emitting amber light, rainy windows.",
+      "original_width": 1672,
+      "original_height": 941,
+      "original": {
+        "path": "assets/04-corridor.png",
+        "bytes": 2316562,
+        "sha256": "a612998ca081b5b86b3dcda47e01c15863f6b670aec21e531096f828f0664301"
+      },
+      "web_preview": {
+        "path": "assets/04-corridor.webp",
+        "bytes": 140262,
+        "sha256": "4a6fef106292db0d2f8c1e896b7209b53909daf37d98f4d6456dfa6017b64a63"
+      }
+    }
+  ],
+  "videos": [
+    {
+      "path": "media/raven-landscape.mp4",
+      "bytes": 13211903,
+      "sha256": "44e74f70518f89fc7a94c3401de6e09f85873d5be416b05a380e790f342c88c2",
+      "layout": "landscape",
+      "duration_seconds": 24.0,
+      "width": 1920,
+      "height": 1080,
+      "fps": "24/1",
+      "codec": "h264",
+      "audio_codec": "aac",
+      "production": "Animated still-image montage: slow zooms, one-second dissolves, RAVEN end title; not generative motion video.",
+      "poster": {
+        "path": "media/poster-landscape.webp",
+        "bytes": 383684,
+        "sha256": "1158d029b5d1ba9c64e4cd93abd15f02f2a648b0a46af574c726627d17e0c427"
+      }
+    },
+    {
+      "path": "media/raven-portrait.mp4",
+      "bytes": 10170951,
+      "sha256": "0f5282fe7c803b8a2dbe500a3e517ab615d477d35788d982178f70713bbd3123",
+      "layout": "portrait",
+      "duration_seconds": 24.0,
+      "width": 1080,
+      "height": 1920,
+      "fps": "24/1",
+      "codec": "h264",
+      "audio_codec": "aac",
+      "production": "Animated still-image montage: slow zooms, one-second dissolves, RAVEN end title; not generative motion video.",
+      "poster": {
+        "path": "media/poster-portrait.webp",
+        "bytes": 251028,
+        "sha256": "d54e907ac1cacaebb7bc4e32b6c93364f62d54be439dfef8158c53eea241939a"
+      }
+    }
+  ],
+  "audio_provenance": "Locally synthesized filtered pink noise and two low sine tones, with fades. No external samples or music.",
+  "fonts": "Cinzel and IBM Plex Arabic, reused from existing RAVEN project assets."
+}
