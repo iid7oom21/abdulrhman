@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b0e0d" />
+    <meta
+      name="description"
+      content="أربع دراسات بصرية سينمائية لـ RAVEN، مع فيلم قصير بنسختين وصور أصلية قابلة للتحميل."
+    />
+    <title>RAVEN — ملامح من الظل</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230b0e0d'/%3E%3Ctext x='32' y='45' text-anchor='middle' fill='%23d6b98d' font-size='45' font-family='serif'%3ER%3C/text%3E%3C/svg%3E"
+    />
+    <link
+      rel="preload"
+      href="assets/01-manor.webp"
+      as="image"
+      fetchpriority="high"
+    />
+    <link
+      rel="preload"
+      href="assets/ibm-plex-arabic.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+    <link rel="stylesheet" href="style.css" />
+    <script src="gallery.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#film">انتقل إلى الفيلم</a>
+    <svg
+      class="icon-library"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <symbol id="arrow" viewBox="0 0 24 24">
+        <path d="M19 12H5m7-7-7 7 7 7" />
+      </symbol>
+      <symbol id="download" viewBox="0 0 24 24">
+        <path d="M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5" />
+      </symbol>
+      <symbol id="expand" viewBox="0 0 24 24">
+        <path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5" />
+      </symbol>
+      <symbol id="play" viewBox="0 0 24 24">
+        <path d="m9 5 11 7-11 7Z" />
+      </symbol>
+      <symbol id="close" viewBox="0 0 24 24">
+        <path d="m5 5 14 14M19 5 5 19" />
+      </symbol>
+      <symbol id="external" viewBox="0 0 24 24">
+        <path d="M6 18 18 6M6 6h12v12" />
+      </symbol>
+    </svg>
+
+    <header class="masthead">
+      <a class="wordmark" href="#top" lang="en"
+        >RAVEN<span>VISUAL ATELIER</span></a
+      >
+      <nav aria-label="التنقل الرئيسي">
+        <a href="#film">الفيلم القصير</a>
+        <a href="#scenes">المشاهد</a>
+        <a class="nav-download" href="#downloads"
+          >التحميلات <svg><use href="#download" /></svg
+        ></a>
+      </nav>
+      <a class="back-link" href="../../"
+        >الاستوديو <svg aria-hidden="true"><use href="#external" /></svg
+      ></a>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <img
+          class="hero-image"
+          src="assets/01-manor.webp"
+          alt="قصر قديم تحت المطر، تنعكس إضاءة نوافذه الدافئة على الممر الحجري"
+          width="1440"
+          height="810"
+          fetchpriority="high"
+        />
+        <div class="hero-shade"></div>
+        <div class="hero-content">
+          <p class="eyebrow">
+            <span class="small-line"></span> دراسة بصرية — المجموعة الأولى
+          </p>
+          <h1 id="hero-title">ملامحٌ<br />من <em>الظل.</em></h1>
+          <p class="hero-description">
+            مطرٌ بارد. ضوءٌ خافت. وتفاصيل تستحق<br class="desktop-break" />
+            أن تقترب منها.
+          </p>
+          <a class="button primary" href="#film"
+            ><svg><use href="#play" /></svg> شاهد الفيلم القصير
+            <span class="button-time" dir="ltr">00:24</span></a
+          >
+        </div>
+        <div class="hero-caption" lang="en" dir="ltr">
+          <span>01 / 04</span
+          ><span>THE MANOR<br /><small>RAIN. STONE. AMBER.</small></span>
+        </div>
+        <a class="scroll-link" href="#scenes"
+          >استكشف المشاهد <span aria-hidden="true">↓</span></a
+        >
+      </section>
+
+      <section class="film section-wrap" id="film" aria-labelledby="film-title">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow" lang="en">01 — MOTION STUDY</p>
+            <h2 id="film-title">للصمت إيقاعه.</h2>
+          </div>
+          <p>
+            أربع صور، بحركة كاميرا هادئة وانتقالات ناعمة.<br />مع أجواء صوتية
+            أصلية مستوحاة من المطر.
+          </p>
+        </div>
+        <div class="film-toolbar">
+          <div class="format-switch" role="group" aria-label="اتجاه الفيديو">
+            <button type="button" data-format="landscape" aria-pressed="true">
+              أفقي <span dir="ltr">16:9</span>
+            </button>
+            <button type="button" data-format="portrait" aria-pressed="false">
+              عمودي <span dir="ltr">9:16</span>
+            </button>
+          </div>
+          <span class="film-specs" dir="ltr"
+            >24 SEC <i></i> 1080p <i></i> 24 FPS</span
+          >
+        </div>
+        <div class="film-stage" data-layout="landscape">
+          <video
+            id="film-player"
+            poster="media/poster-landscape.webp"
+            preload="none"
+            playsinline
+            muted
+            controls
+            aria-label="فيلم RAVEN القصير، النسخة الأفقية"
+          >
+            <source src="media/raven-landscape.mp4" type="video/mp4" />
+            متصفحك لا يدعم تشغيل الفيديو. يمكنك تحميله من الرابط أدناه.
+          </video>
+          <button
+            class="film-play"
+            type="button"
+            aria-label="تشغيل الفيلم القصير"
+          >
+            <svg><use href="#play" /></svg><span>شغّل الفيلم</span>
+          </button>
+        </div>
+        <div class="film-footer">
+          <button
+            id="sound-toggle"
+            class="text-button"
+            type="button"
+            aria-pressed="false"
+          >
+            تفعيل الصوت <span aria-hidden="true">＋</span>
+          </button>
+          <p id="playback-status" role="status" aria-live="polite">
+            الصوت مغلق عند بدء التشغيل.
+          </p>
+          <a
+            id="film-download"
+            class="text-link"
+            href="media/raven-landscape.mp4"
+            download
+            >تحميل النسخة الأفقية <svg><use href="#download" /></svg
+          ></a>
+        </div>
+      </section>
+
+      <section
+        class="scenes section-wrap"
+        id="scenes"
+        aria-labelledby="scenes-title"
+      >
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow" lang="en">02 — THE STILL COLLECTION</p>
+            <h2 id="scenes-title">كل لقطة، عالم.</h2>
+          </div>
+          <p>
+            إضاءة موحّدة. خامات واقعية. تفاصيل سينمائية.<br />افتح أي مشهد
+            لمشاهدته بالحجم الكامل.
+          </p>
+        </div>
+        <div class="scene-grid">
+          <article class="scene-card">
+            <button
+              class="scene-open"
+              type="button"
+              data-scene="0"
+              aria-label="فتح مشهد القصر تحت المطر"
+            >
+              <img
+                src="assets/01-manor.webp"
+                alt="بوابة حديدية وممر مبتل يقودان إلى قصر مظلم بنوافذ مضيئة، وغراب في المقدمة"
+                loading="lazy"
+                width="1440"
+                height="810"
+              />
+              <span class="image-index" dir="ltr">FRAME 01</span
+              ><span class="expand-icon"
+                ><svg><use href="#expand" /></svg
+              ></span>
+            </button>
+            <div class="scene-caption">
+              <div>
+                <p lang="en">THE MANOR</p>
+                <h3>القصر تحت المطر</h3>
+              </div>
+              <a
+                href="assets/01-manor.png"
+                download
+                aria-label="تحميل صورة القصر الأصلية"
+                >PNG <svg><use href="#download" /></svg
+              ></a>
+            </div>
+            <p class="scene-description">
+              حجر مبتل، سماء رمادية، ودفء يتسلل من النوافذ.
+            </p>
+          </article>
+          <article class="scene-card">
+            <button
+              class="scene-open"
+              type="button"
+              data-scene="1"
+              aria-label="فتح مشهد قاعة الأرشيف"
+            >
+              <img
+                src="assets/02-archive.webp"
+                alt="قاعة أرشيف مرتفعة برفوف خشبية وطاولة قراءة، يضيئها مصباح نحاسي ونافذة مقوّسة"
+                loading="lazy"
+                width="1440"
+                height="810"
+              />
+              <span class="image-index" dir="ltr">FRAME 02</span
+              ><span class="expand-icon"
+                ><svg><use href="#expand" /></svg
+              ></span>
+            </button>
+            <div class="scene-caption">
+              <div>
+                <p lang="en">THE ARCHIVE</p>
+                <h3>قاعة الأرشيف</h3>
+              </div>
+              <a
+                href="assets/02-archive.png"
+                download
+                aria-label="تحميل صورة الأرشيف الأصلية"
+                >PNG <svg><use href="#download" /></svg
+              ></a>
+            </div>
+            <p class="scene-description">
+              خشب داكن وضوء بارد، تتوسطهما بقعة من الكهرمان.
+            </p>
+          </article>
+          <article class="scene-card">
+            <button
+              class="scene-open"
+              type="button"
+              data-scene="2"
+              aria-label="فتح مشهد المكتب"
+            >
+              <img
+                src="assets/03-desk.webp"
+                alt="مكتب من خشب الجوز عليه ورق فارغ ومظروف مختوم وريشة غراب تحت ضوء مصباح دافئ"
+                loading="lazy"
+                width="1440"
+                height="810"
+              />
+              <span class="image-index" dir="ltr">FRAME 03</span
+              ><span class="expand-icon"
+                ><svg><use href="#expand" /></svg
+              ></span>
+            </button>
+            <div class="scene-caption">
+              <div>
+                <p lang="en">THE DESK</p>
+                <h3>على ضوء المصباح</h3>
+              </div>
+              <a
+                href="assets/03-desk.png"
+                download
+                aria-label="تحميل صورة المكتب الأصلية"
+                >PNG <svg><use href="#download" /></svg
+              ></a>
+            </div>
+            <p class="scene-description">
+              ورق كريمي، شمع داكن، ولمعة نحاس معتّق.
+            </p>
+          </article>
+          <article class="scene-card">
+            <button
+              class="scene-open"
+              type="button"
+              data-scene="3"
+              aria-label="فتح مشهد الممر الحجري"
+            >
+              <img
+                src="assets/04-corridor.webp"
+                alt="ممر حجري طويل بأقواس ونوافذ ممطرة ينتهي بباب موارب يتسلل منه ضوء ذهبي"
+                loading="lazy"
+                width="1440"
+                height="810"
+              />
+              <span class="image-index" dir="ltr">FRAME 04</span
+              ><span class="expand-icon"
+                ><svg><use href="#expand" /></svg
+              ></span>
+            </button>
+            <div class="scene-caption">
+              <div>
+                <p lang="en">THE CORRIDOR</p>
+                <h3>الممر الحجري</h3>
+              </div>
+              <a
+                href="assets/04-corridor.png"
+                download
+                aria-label="تحميل صورة الممر الأصلية"
+                >PNG <svg><use href="#download" /></svg
+              ></a>
+            </div>
+            <p class="scene-description">
+              تتابع من الأقواس، وظلال طويلة تحيط بخيط من الضوء.
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section
+        class="downloads section-wrap"
+        id="downloads"
+        aria-labelledby="downloads-title"
+      >
+        <div class="download-intro">
+          <p class="eyebrow" lang="en">03 — TAKE IT WITH YOU</p>
+          <h2 id="downloads-title">
+            جاهزة للمشاهدة.<br /><em>وجاهزة للعمل.</em>
+          </h2>
+          <p>الأصول الأصلية والفيلم بنسختيه، محفوظة معًا في حزمة واحدة.</p>
+          <a class="button primary" href="raven-visual-kit.zip" download
+            >تحميل الحزمة الكاملة <svg><use href="#download" /></svg
+          ></a>
+        </div>
+        <div class="download-list">
+          <a href="media/raven-landscape.mp4" download
+            ><span class="download-number">01</span
+            ><span
+              ><strong>الفيلم الأفقي</strong
+              ><small dir="ltr">1920 × 1080 · MP4 · 24s</small></span
+            ><svg><use href="#download" /></svg
+          ></a>
+          <a href="media/raven-portrait.mp4" download
+            ><span class="download-number">02</span
+            ><span
+              ><strong>الفيلم العمودي</strong
+              ><small dir="ltr">1080 × 1920 · MP4 · 24s</small></span
+            ><svg><use href="#download" /></svg
+          ></a>
+          <a href="raven-visual-kit.zip" download
+            ><span class="download-number">03</span
+            ><span
+              ><strong>الصور والفيديوهات والصفحة</strong
+              ><small>٤ صور PNG أصلية + نسخ خفيفة للويب</small></span
+            ><svg><use href="#download" /></svg
+          ></a>
+        </div>
+      </section>
+      <aside class="production-note section-wrap">
+        <span class="note-mark" aria-hidden="true">✦</span>
+        <p>
+          دراسات بصرية مولّدة بالذكاء الاصطناعي. الفيلم مركّب من الصور بحركة
+          وانتقالات؛ هذه الأصول مقترحات فنية مستقلة عن أحداث القصة المعتمدة.
+        </p>
+      </aside>
+    </main>
+
+    <footer class="footer section-wrap">
+      <a class="wordmark" href="#top" lang="en">RAVEN</a
+      ><span lang="en" dir="ltr">VISUAL STUDY / VOL. 01 / 2026</span
+      ><a href="../../"
+        >العودة إلى الاستوديو
+        <svg aria-hidden="true"><use href="#external" /></svg
+      ></a>
+    </footer>
+
+    <dialog id="scene-viewer" aria-labelledby="viewer-title">
+      <div class="viewer-heading">
+        <div>
+          <p id="viewer-count" dir="ltr">01 / 04</p>
+          <h2 id="viewer-title">القصر تحت المطر</h2>
+        </div>
+        <button
+          id="viewer-close"
+          class="icon-button"
+          type="button"
+          aria-label="إغلاق الصورة"
+          autofocus
+        >
+          <svg><use href="#close" /></svg>
+        </button>
+      </div>
+      <img
+        id="viewer-image"
+        src="assets/01-manor.webp"
+        alt=""
+        width="1672"
+        height="941"
+      />
+      <div class="viewer-footer">
+        <button id="viewer-prev" class="text-button" type="button">
+          <span aria-hidden="true">→</span> السابق</button
+        ><a
+          id="viewer-download"
+          class="text-link"
+          href="assets/01-manor.png"
+          download
+          >تحميل الأصل <svg><use href="#download" /></svg></a
+        ><button id="viewer-next" class="text-button" type="button">
+          التالي <span aria-hidden="true">←</span>
+        </button>
+      </div>
+      <p class="viewer-help">
+        استخدم أسهم لوحة المفاتيح للتنقّل، وEsc للإغلاق.
+      </p>
+    </dialog>
+  </body>
+</html>

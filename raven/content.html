@@ -66,6 +66,8 @@ window.ravenIntro={complete:true,finish:function(){}};
 #ravenNavPanel .ravenMenuMedia button[hidden]{display:none!important}
 #ravenNavPanel .ravenMenuMedia button:focus-visible{outline:2px solid #dec9a9;outline-offset:3px}
 </style>
+<link rel="stylesheet" href="./assets/raven-visual-scenes.css?v=20261107">
+<script defer src="./assets/raven-visual-scenes.js?v=20261107"></script>
 </head>
 <body>
 <a class="rvnSkipLink" data-rvn-v2="skipContent" href="#main-content">انتقل إلى المحتوى</a>
@@ -245,6 +247,20 @@ window.ravenIntro={complete:true,finish:function(){}};
 <article class="rvnStudioCard reveal"><small>01 · ثبات الشخصية</small><h3>هوية لا تتبدّل</h3><p>ملامح الوجه، الشعر، الهيئة والملابس مرجع ثابت. نضبط الإكسسوارات والإضاءة وما يُسمح بتغييره قبل بناء المشهد.</p></article>
 <article class="rvnStudioCard reveal"><small>02 · الحركة السينمائية</small><h3>الحركة لها سبب</h3><p>كل حركة كاميرا تكشف معلومة أو تبني توترًا. الإيقاع يخدم المشهد، والانتقال يكمل معناه.</p></article>
 <article class="rvnStudioCard reveal"><small>03 · الخداع العادل</small><h3>الخداع العادل</h3><p>الدليل يسبق الكشف. وفي النهاية، يتغيّر تفسير ما رأيته منذ البداية.</p></article>
+</div>
+<!-- RAVEN visual release 20261107: presentation only; existing story content is preserved. -->
+<div class="rvnVisualStudy" id="raven-visual-scenes" data-raven-visual-release="20261107">
+  <div class="rvnVisualHeading"><div><h3 data-visual-text="title">مشاهد من عالم RAVEN</h3><p data-visual-text="description">أربع دراسات بصرية وفيلم قصير، بحركة كاميرا هادئة وأجواء صوتية أصلية.</p></div><a class="rvnVisualStudioLink" href="../studio/" target="_top" data-visual-text="studio">افتح استوديو المشاهد</a></div>
+  <div class="rvnVisualToolbar"><div class="rvnVisualFormats" role="group" aria-label="Film format"><button type="button" data-visual-format="landscape" data-visual-text="landscape" aria-pressed="true">أفقي 16:9</button><button type="button" data-visual-format="portrait" data-visual-text="portrait" aria-pressed="false">عمودي 9:16</button></div><span class="rvnVisualSpec" dir="ltr">24 SEC · 1080p · 24 FPS</span></div>
+  <div class="rvnVisualStage" data-format="landscape"><video id="ravenVisualFilm" src="../studio/visual-lab/media/raven-landscape.mp4" poster="../studio/visual-lab/media/poster-landscape.webp" controls muted playsinline preload="none" aria-label="فيلم RAVEN — دراسة بصرية"></video></div>
+  <div class="rvnVisualFoot"><button type="button" data-visual-sound aria-pressed="false">تفعيل الصوت</button><p data-visual-status role="status" aria-live="polite">اختر صورة للانتقال إلى مشهدها في الفيلم.</p></div>
+  <div class="rvnVisualFrames">
+    <button type="button" class="rvnVisualFrame" data-visual-name="manor" data-visual-seek="1" data-visual-start="0" aria-pressed="true"><img src="../studio/visual-lab/assets/01-manor.webp" alt="القصر تحت المطر" width="1440" height="810" loading="lazy"><span data-visual-text="manor">القصر تحت المطر</span></button>
+    <button type="button" class="rvnVisualFrame" data-visual-name="archive" data-visual-seek="6.75" data-visual-start="5.75" aria-pressed="false"><img src="../studio/visual-lab/assets/02-archive.webp" alt="قاعة الأرشيف" width="1440" height="810" loading="lazy"><span data-visual-text="archive">قاعة الأرشيف</span></button>
+    <button type="button" class="rvnVisualFrame" data-visual-name="desk" data-visual-seek="12.5" data-visual-start="11.5" aria-pressed="false"><img src="../studio/visual-lab/assets/03-desk.webp" alt="على ضوء المصباح" width="1440" height="810" loading="lazy"><span data-visual-text="desk">على ضوء المصباح</span></button>
+    <button type="button" class="rvnVisualFrame" data-visual-name="corridor" data-visual-seek="18.25" data-visual-start="17.25" aria-pressed="false"><img src="../studio/visual-lab/assets/04-corridor.webp" alt="الممر الحجري" width="1440" height="810" loading="lazy"><span data-visual-text="corridor">الممر الحجري</span></button>
+  </div>
+  <p class="rvnVisualNote" data-visual-text="note">صور مولّدة بالذكاء الاصطناعي، ومونتاج متحرك من الصور. هذه دراسات فنية مستقلة عن أحداث القصة.</p>
 </div>
 </div>
 </section>
