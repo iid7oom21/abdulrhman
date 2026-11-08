@@ -126,23 +126,39 @@ test('hosted dialogue uses real HTTP recipient context, mocked provider, and dur
   assert.equal((await (await fetch(b.root + '/api/knowledge?characterId=claire', {headers:{cookie}})).json()).materials.length, 0);
 });
 
-test('character atlas is served as PNG while unlisted and symlinked character images stay private', async t => {
-  const f = fixture(t), asset = 'raven/deleted-name/assets/characters/cast-portraits-v1.png';
+test('reviewed character and scene atlases and CSS are served while unlisted or symlinked files stay private', async t => {
+  const f = fixture(t), assets = [
+    'raven/deleted-name/assets/characters/cast-portraits-v1.png',
+    'raven/deleted-name/assets/scenes/case-scenes-v1.png',
+    'raven/deleted-name/assets/scenes/investigation-scenes-v1.png',
+  ];
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jC2kAAAAASUVORK5CYII=', 'base64');
-  const publicFile = f.write(asset, png);
-  const privateAsset = 'raven/deleted-name/assets/characters/private-reference.png';
-  const privateFile = f.write(privateAsset, 'PRIVATE_IMAGE_SENTINEL');
+  const publicFiles = assets.map(asset => f.write(asset, png));
+  const cssAsset = 'raven/assets/raven-scene-art.css', css = '.scene-art { background-size: cover; }';
+  f.write(cssAsset, css);
+  const privateAssets = ['raven/deleted-name/assets/characters/private-reference.png',
+    'raven/deleted-name/assets/scenes/private-reference.png', 'raven/assets/private-scene-art.css'];
+  const privateFiles = privateAssets.map(asset => f.write(asset, 'PRIVATE_ASSET_SENTINEL'));
   const s = await start(t, {siteRoot:f.root});
-  const response = await fetch(s.root + '/' + asset + '?v=1');
-  assert.equal(response.status, 200); assert.equal(response.headers.get('content-type'), 'image/png');
-  assert.equal(response.headers.get('content-length'), String(png.length));
-  assert.equal(response.headers.get('set-cookie'), null);
-  assert.deepEqual(Buffer.from(await response.arrayBuffer()), png);
-  const privateResponse = await fetch(s.root + '/' + privateAsset);
-  assert.equal(privateResponse.status, 404); assert.doesNotMatch(await privateResponse.text(), /PRIVATE_IMAGE_SENTINEL/);
-  fs.unlinkSync(publicFile); fs.symlinkSync(privateFile, publicFile);
-  const linked = await fetch(s.root + '/' + asset);
-  assert.equal(linked.status, 404); assert.doesNotMatch(await linked.text(), /PRIVATE_IMAGE_SENTINEL/);
+  for (const asset of assets) {
+    const response = await fetch(s.root + '/' + asset + '?v=1');
+    assert.equal(response.status, 200); assert.equal(response.headers.get('content-type'), 'image/png');
+    assert.equal(response.headers.get('content-length'), String(png.length));
+    assert.equal(response.headers.get('set-cookie'), null);
+    assert.deepEqual(Buffer.from(await response.arrayBuffer()), png);
+  }
+  const stylesheet = await fetch(s.root + '/' + cssAsset);
+  assert.equal(stylesheet.status, 200); assert.equal(stylesheet.headers.get('content-type'), 'text/css; charset=utf-8');
+  assert.equal(await stylesheet.text(), css);
+  for (const asset of privateAssets) {
+    const response = await fetch(s.root + '/' + asset);
+    assert.equal(response.status, 404); assert.doesNotMatch(await response.text(), /PRIVATE_ASSET_SENTINEL/);
+  }
+  for (const [index, publicFile] of publicFiles.entries()) {
+    fs.unlinkSync(publicFile); fs.symlinkSync(privateFiles[0], publicFile);
+    const linked = await fetch(s.root + '/' + assets[index]);
+    assert.equal(linked.status, 404); assert.doesNotMatch(await linked.text(), /PRIVATE_ASSET_SENTINEL/);
+  }
 });
 
 test('private files and raw traversal never reach the public mount, with or without a session', async t => {
