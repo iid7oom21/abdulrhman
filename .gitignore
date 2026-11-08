@@ -8,3 +8,9 @@ server/ai-dialogue/.data/
 
 server/data/
 server/config.json
+
+# The written story and player saves are private inputs, never a public bundle.
+**/raven-case-content.json
+**/case-store.json
+**/case-store.json.lock
+**/PRIVATE-QA-*.json

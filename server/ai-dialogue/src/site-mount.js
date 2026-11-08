@@ -7,6 +7,9 @@ const files = [
   'site-player.js', 'site-audio.js', 'site-entry.js', 'site-bridge.js', 'site-player.css',
   'raven/index.html', 'raven/content.html',
   'raven/deleted-name/index.html', 'raven/deleted-name/content.html', 'raven/deleted-name/reading-tools.js',
+  'raven/deleted-name/case-entry.js', 'raven/release.json',
+  'raven/deleted-name/play/index.html', 'raven/deleted-name/play/content.html',
+  'raven/deleted-name/play/app.js', 'raven/deleted-name/play/style.css',
   'raven/deleted-name/assets/case-record.webp', 'raven/deleted-name/assets/case-arrival.webp',
   'raven/deleted-name/assets/case-og-v4.jpg',
   'raven/deleted-name/assets/characters/cast-portraits-v1.png',
@@ -15,6 +18,10 @@ const files = [
   'raven/deleted-name/assets/scenes/case-scenes-v1.webp',
   'raven/deleted-name/assets/scenes/investigation-scenes-v1.png',
   'raven/deleted-name/assets/scenes/investigation-scenes-v1.webp',
+  'raven/deleted-name/assets/scenes/case-investigation-v2.png',
+  'raven/deleted-name/assets/scenes/case-investigation-v2.webp',
+  'raven/deleted-name/assets/scenes/case-tools-v1.png',
+  'raven/deleted-name/assets/scenes/case-tools-v1.webp',
   'raven/assets/raven-scene-art.css',
   'raven/assets/raven-studio-ident-v1.js', 'raven/assets/raven-story-card.js',
   'raven/assets/raven-archive.js', 'raven/assets/raven-home-focus.css',
@@ -37,7 +44,7 @@ const files = [
 ];
 const routes = new Map(files.map(file => ['/' + file, file]));
 for (const file of files) if (file.endsWith('/index.html')) routes.set('/' + file.slice(0, -10), file);
-const mime = {'.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8',
+const mime = {'.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.json':'application/json; charset=utf-8',
   '.css':'text/css; charset=utf-8', '.svg':'image/svg+xml', '.jpg':'image/jpeg', '.webp':'image/webp', '.png':'image/png',
   '.woff2':'font/woff2', '.ttf':'font/ttf', '.mp3':'audio/mpeg', '.mp4':'video/mp4'};
 export const HOSTED_DIALOGUE_PATHS = new Set(['/raven/dialogue/', '/raven/dialogue/index.html']);

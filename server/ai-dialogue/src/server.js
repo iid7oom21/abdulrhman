@@ -9,6 +9,7 @@ import { providerFromEnv } from './provider.js';
 import { validateSnapshot } from './snapshot.js';
 import {runtimeControls} from './runtime-controls.js';
 import {createSiteMount, HOSTED_DIALOGUE_PATHS, siteRequestPath, serveSiteFile} from './site-mount.js';
+import {createCaseService, DEFAULT_CASE_STORAGE_PATH} from './case-service.js';
 
 // Memory bounds for the in-memory preview. All can be overridden through createPreviewServer options.
 export const SESSION_IDLE_MS = 6 * 60 * 60 * 1000;
@@ -39,8 +40,15 @@ export function createPreviewServer({
   readControls = runtimeControls(),
   // Explicit reviewed static export; unset preserves the standalone server exactly.
   siteRoot = null,
+  // Written case is independent of provider, preview sessions and preview storage.
+  caseContentPath = null,
+  caseStoragePath = null,
+  casePack = null, // injected fictional fixtures; CLI only loads a private file
+  openCaseStore = undefined,
 } = {}) {
   const site = siteRoot ? createSiteMount(siteRoot) : null;
+  const writtenCase = createCaseService({contentPath:caseContentPath,storagePath:caseStoragePath,
+    pack:casePack,siteRoot,secureCookie,...(openCaseStore ? {openStore:openCaseStore} : {})});
   // owner -> { materials, touchedAt }. Map order is least-recently-used first (re-inserted on each use).
   const sessions = new Map();
   const dropSession = owner => { sessions.delete(owner); forgetOwner(owner); };
@@ -104,14 +112,15 @@ export function createPreviewServer({
     res.setHeader('Referrer-Policy', 'no-referrer');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('Content-Security-Policy', `default-src 'none'; script-src 'self' ${scriptHashes}; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'; form-action 'self'`);
-    const json = (status, data) => {
+    const json = (status, data, stripPreviewInternals = true) => {
       res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
-      res.end(JSON.stringify(data, (key, value) => ['owner', 'fingerprint'].includes(key) ? undefined : value));
+      res.end(JSON.stringify(data, stripPreviewInternals ? (key, value) => ['owner', 'fingerprint'].includes(key) ? undefined : value : undefined));
     };
     try {
       // The URL parser normalizes dot segments; reject unsafe raw targets first.
       if (site && siteRequestPath(req.url) === null) return json(404, {error:'not_found'});
       const url = new URL(req.url, 'http://preview.local');
+      if (await writtenCase.handle(req,res,url,(status,data) => json(status,data,false))) return;
       if (req.method === 'GET' && url.pathname === '/texts/raven-texts.js') {
         res.writeHead(200, {'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});
         return res.end(fs.readFileSync(new URL('../public/texts/raven-texts.js',import.meta.url)));
@@ -233,6 +242,8 @@ export function createPreviewServer({
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const {generate,info} = providerFromEnv();
-  createPreviewServer({storeFile:storagePathFromEnv(),generate,providerInfo:info,siteRoot:process.env.RAVEN_SITE_ROOT || null})
+  createPreviewServer({storeFile:storagePathFromEnv(),generate,providerInfo:info,siteRoot:process.env.RAVEN_SITE_ROOT || null,
+    caseContentPath:process.env.RAVEN_CASE_CONTENT_PATH || null,
+    caseStoragePath:process.env.RAVEN_CASE_STORAGE_PATH || (process.env.RAVEN_CASE_CONTENT_PATH ? DEFAULT_CASE_STORAGE_PATH : null)})
     .listen(process.env.PORT || 10000, process.env.HOST || '127.0.0.1', () => console.log(`RAVEN preview: ${info.provider}, local disk file`));
 }
