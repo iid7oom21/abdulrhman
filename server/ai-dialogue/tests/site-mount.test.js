@@ -126,26 +126,33 @@ test('hosted dialogue uses real HTTP recipient context, mocked provider, and dur
   assert.equal((await (await fetch(b.root + '/api/knowledge?characterId=claire', {headers:{cookie}})).json()).materials.length, 0);
 });
 
-test('reviewed character and scene atlases and CSS are served while unlisted or symlinked files stay private', async t => {
-  const f = fixture(t), assets = [
+test('reviewed PNG and WebP atlases and CSS are served while unlisted or symlinked files stay private', async t => {
+  const f = fixture(t), pngAssets = [
     'raven/deleted-name/assets/characters/cast-portraits-v1.png',
     'raven/deleted-name/assets/scenes/case-scenes-v1.png',
     'raven/deleted-name/assets/scenes/investigation-scenes-v1.png',
   ];
   const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jC2kAAAAASUVORK5CYII=', 'base64');
-  const publicFiles = assets.map(asset => f.write(asset, png));
+  const webp = Buffer.from('UklGRiIAAABXRUJQVlA4IBYAAAAwAQCdASoBAAEADsD+JaQAA3AAAAAA', 'base64');
+  const assets = pngAssets.flatMap(asset => [
+    {path:asset, bytes:png, type:'image/png'},
+    {path:asset.replace(/\.png$/, '.webp'), bytes:webp, type:'image/webp'},
+  ]);
+  const publicFiles = assets.map(asset => f.write(asset.path, asset.bytes));
   const cssAsset = 'raven/assets/raven-scene-art.css', css = '.scene-art { background-size: cover; }';
   f.write(cssAsset, css);
   const privateAssets = ['raven/deleted-name/assets/characters/private-reference.png',
-    'raven/deleted-name/assets/scenes/private-reference.png', 'raven/assets/private-scene-art.css'];
+    'raven/deleted-name/assets/characters/private-reference.webp',
+    'raven/deleted-name/assets/scenes/private-reference.png',
+    'raven/deleted-name/assets/scenes/private-reference.webp', 'raven/assets/private-scene-art.css'];
   const privateFiles = privateAssets.map(asset => f.write(asset, 'PRIVATE_ASSET_SENTINEL'));
   const s = await start(t, {siteRoot:f.root});
   for (const asset of assets) {
-    const response = await fetch(s.root + '/' + asset + '?v=1');
-    assert.equal(response.status, 200); assert.equal(response.headers.get('content-type'), 'image/png');
-    assert.equal(response.headers.get('content-length'), String(png.length));
+    const response = await fetch(s.root + '/' + asset.path + '?v=1');
+    assert.equal(response.status, 200); assert.equal(response.headers.get('content-type'), asset.type);
+    assert.equal(response.headers.get('content-length'), String(asset.bytes.length));
     assert.equal(response.headers.get('set-cookie'), null);
-    assert.deepEqual(Buffer.from(await response.arrayBuffer()), png);
+    assert.deepEqual(Buffer.from(await response.arrayBuffer()), asset.bytes);
   }
   const stylesheet = await fetch(s.root + '/' + cssAsset);
   assert.equal(stylesheet.status, 200); assert.equal(stylesheet.headers.get('content-type'), 'text/css; charset=utf-8');
@@ -156,7 +163,7 @@ test('reviewed character and scene atlases and CSS are served while unlisted or 
   }
   for (const [index, publicFile] of publicFiles.entries()) {
     fs.unlinkSync(publicFile); fs.symlinkSync(privateFiles[0], publicFile);
-    const linked = await fetch(s.root + '/' + assets[index]);
+    const linked = await fetch(s.root + '/' + assets[index].path);
     assert.equal(linked.status, 404); assert.doesNotMatch(await linked.text(), /PRIVATE_ASSET_SENTINEL/);
   }
 });
