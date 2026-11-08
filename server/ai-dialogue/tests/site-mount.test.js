@@ -183,6 +183,68 @@ test('reviewed PNG and WebP atlases and CSS are served while unlisted or symlink
   }
 });
 
+test('visual scenes and linked studio serve reviewed assets across root and legacy URLs without exposing adjacent files', async t => {
+  const f = fixture(t);
+  const assets = [
+    ['raven/assets/raven-visual-scenes.js', 'text/javascript; charset=utf-8', 'SCENE_SCRIPT'],
+    ['raven/assets/raven-visual-scenes.css', 'text/css; charset=utf-8', '.scene { display:block; }'],
+    ['studio/index.html', 'text/html; charset=utf-8', '<!doctype html><div id="root"></div>'],
+    ['studio/assets/index-BvmsDJTf.js', 'text/javascript; charset=utf-8', 'STUDIO_SCRIPT'],
+    ['studio/assets/index-DO0lVgqN.css', 'text/css; charset=utf-8', '.studio { display:block; }'],
+    ['studio/visual-lab/assets/ibm-plex-arabic.woff2', 'font/woff2', 'FONT_FIXTURE'],
+    ['studio/visual-lab/assets/01-manor.webp', 'image/webp', 'MANOR_PREVIEW'],
+    ['studio/visual-lab/assets/02-archive.png', 'image/png', 'ARCHIVE_DOWNLOAD'],
+    ['studio/visual-lab/media/poster-landscape.webp', 'image/webp', 'LANDSCAPE_POSTER'],
+    ['studio/visual-lab/media/poster-portrait.webp', 'image/webp', 'PORTRAIT_POSTER'],
+    ['studio/visual-lab/media/raven-landscape.mp4', 'video/mp4', '0123456789'],
+    ['studio/visual-lab/media/raven-portrait.mp4', 'video/mp4', 'abcdefghij'],
+  ];
+  for (const [name, , body] of assets) f.write(name, body);
+  const s = await start(t, {siteRoot:f.root});
+  for (const [name, type, body] of assets) {
+    const prefixes = name.startsWith('studio/') ? ['', '/abdulrhman'] : [''];
+    for (const prefix of prefixes) for (const method of ['GET', 'HEAD']) {
+      const response = await fetch(`${s.root}${prefix}/${name}?v=20261107`, {method});
+      assert.equal(response.status, 200, `${method} ${prefix}/${name}`);
+      assert.equal(response.headers.get('content-type'), type);
+      assert.equal(response.headers.get('set-cookie'), null);
+      assert.equal(await response.text(), method === 'HEAD' ? '' : body);
+    }
+  }
+  for (const prefix of ['', '/abdulrhman']) {
+    const redirect = await fetch(s.root + prefix + '/studio?lang=en', {redirect:'manual'});
+    assert.equal(redirect.status, 308);
+    assert.equal(redirect.headers.get('location'), prefix + '/studio/?lang=en');
+    assert.equal((await fetch(s.root + prefix + '/studio/')).status, 200);
+    const movie = await fetch(s.root + prefix + '/studio/visual-lab/media/raven-portrait.mp4', {headers:{range:'bytes=2-5'}});
+    assert.equal(movie.status, 206); assert.equal(movie.headers.get('content-range'), 'bytes 2-5/10');
+    assert.equal(await movie.text(), 'cdef');
+  }
+  const back = await fetch(s.root + '/abdulrhman/raven/index.html?lang=en', {redirect:'manual'});
+  assert.equal(back.status, 308); assert.equal(back.headers.get('location'), '/raven/?lang=en');
+  assert.equal(back.headers.get('set-cookie'), null);
+
+  const privateFiles = ['studio/visual-lab/README.md', 'studio/visual-lab/assets.json',
+    'studio/visual-lab/raven-visual-kit.zip', 'studio/visual-lab/scripts/render-visual-lab.py',
+    'studio/visual-lab/assets/private-reference.png', 'studio/visual-lab/media/private.mp4',
+    'studio/assets/private.js', 'studio/raven-case-content.json'];
+  for (const name of privateFiles) f.write(name, 'PRIVATE_STUDIO_SENTINEL');
+  for (const prefix of ['', '/abdulrhman']) {
+    for (const name of [...privateFiles, 'studio/visual-lab/', 'studio/assets/',
+      'studio/visual-lab/assets/../private-reference.png', 'studio/%2e%2e/.env']) {
+      const response = await rawGet(s.root, prefix + '/' + name);
+      assert.equal(response.status, 404); assert.doesNotMatch(response.body, /PRIVATE_STUDIO_SENTINEL/);
+    }
+  }
+  // An allowed legacy URL must use the same symlink checks as a root-hosted URL.
+  const linked = path.join(f.root, 'studio/visual-lab/media/poster-portrait.webp');
+  fs.unlinkSync(linked); fs.symlinkSync(path.join(f.root, privateFiles[0]), linked);
+  for (const prefix of ['', '/abdulrhman']) {
+    const response = await fetch(s.root + prefix + '/studio/visual-lab/media/poster-portrait.webp');
+    assert.equal(response.status, 404); assert.doesNotMatch(await response.text(), /PRIVATE_STUDIO_SENTINEL/);
+  }
+});
+
 test('private files and raw traversal never reach the public mount, with or without a session', async t => {
   const f = fixture(t), s = await start(t, {siteRoot:f.root});
   for (const file of ['.env', '.git/config', 'PRIVATE-content-review-not-published.md', 'docs/review.html',

@@ -28,6 +28,15 @@ const files = [
   'raven/assets/raven-enhancements-v1.js', 'raven/assets/raven-archive.css',
   'raven/assets/raven-deleted-name-home.js', 'raven/assets/raven-refinement-v2.js',
   'raven/assets/raven-homepage-v6.css', 'raven/assets/raven-redesign-v1.css', 'raven/assets/raven-i18n.js',
+  'raven/assets/raven-visual-scenes.js', 'raven/assets/raven-visual-scenes.css',
+  // Runtime files used by the pinned homepage and its linked studio, not the source/download bundle.
+  'studio/index.html', 'studio/assets/index-BvmsDJTf.js', 'studio/assets/index-DO0lVgqN.css',
+  'studio/visual-lab/assets/ibm-plex-arabic.woff2',
+  ...['01-manor', '02-archive', '03-desk', '04-corridor'].flatMap(name =>
+    ['webp', 'png'].map(extension => `studio/visual-lab/assets/${name}.${extension}`)),
+  ...['landscape', 'portrait'].flatMap(format => [
+    `studio/visual-lab/media/raven-${format}.mp4`, `studio/visual-lab/media/poster-${format}.webp`,
+  ]),
   'raven/terminal-preview/index.html', 'raven/terminal-preview/favicon.svg',
   'raven/terminal-preview/case-017/index.html', 'raven/terminal-preview/zarqa/index.html',
   'raven/terminal-preview/raven-17/index.html',
@@ -44,6 +53,8 @@ const files = [
 ];
 const routes = new Map(files.map(file => ['/' + file, file]));
 for (const file of files) if (file.endsWith('/index.html')) routes.set('/' + file.slice(0, -10), file);
+// The pinned studio build retains its GitHub Pages base. Alias only reviewed studio routes.
+for (const [route, file] of [...routes]) if (route.startsWith('/studio/')) routes.set('/abdulrhman' + route, file);
 const mime = {'.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.json':'application/json; charset=utf-8',
   '.css':'text/css; charset=utf-8', '.svg':'image/svg+xml', '.jpg':'image/jpeg', '.webp':'image/webp', '.png':'image/png',
   '.woff2':'font/woff2', '.ttf':'font/ttf', '.mp3':'audio/mpeg', '.mp4':'video/mp4'};
@@ -76,6 +87,7 @@ export function createSiteMount(directory) {
   const sameFile = (a, b) => a.dev === b.dev && a.ino === b.ino;
   return {
     redirect(pathname) {
+      if (pathname === '/abdulrhman/raven/index.html') return '/raven/';
       return !pathname.endsWith('/') && (routes.has(pathname + '/') || pathname === '/raven/dialogue')
         ? pathname + '/' : null;
     },
