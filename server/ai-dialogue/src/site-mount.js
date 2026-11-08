@@ -9,6 +9,7 @@ const files = [
   'raven/deleted-name/index.html', 'raven/deleted-name/content.html', 'raven/deleted-name/reading-tools.js',
   'raven/deleted-name/assets/case-record.webp', 'raven/deleted-name/assets/case-arrival.webp',
   'raven/deleted-name/assets/case-og-v4.jpg',
+  'raven/deleted-name/assets/characters/cast-portraits-v1.png',
   'raven/assets/raven-studio-ident-v1.js', 'raven/assets/raven-story-card.js',
   'raven/assets/raven-archive.js', 'raven/assets/raven-home-focus.css',
   'raven/assets/raven-enhancements-v1.js', 'raven/assets/raven-archive.css',
@@ -31,7 +32,7 @@ const files = [
 const routes = new Map(files.map(file => ['/' + file, file]));
 for (const file of files) if (file.endsWith('/index.html')) routes.set('/' + file.slice(0, -10), file);
 const mime = {'.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8',
-  '.css':'text/css; charset=utf-8', '.svg':'image/svg+xml', '.jpg':'image/jpeg', '.webp':'image/webp',
+  '.css':'text/css; charset=utf-8', '.svg':'image/svg+xml', '.jpg':'image/jpeg', '.webp':'image/webp', '.png':'image/png',
   '.woff2':'font/woff2', '.ttf':'font/ttf', '.mp3':'audio/mpeg', '.mp4':'video/mp4'};
 export const HOSTED_DIALOGUE_PATHS = new Set(['/raven/dialogue/', '/raven/dialogue/index.html']);
 
