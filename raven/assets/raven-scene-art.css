@@ -1,0 +1,22 @@
+/* Decorative details from unchanged three-panel atlases. Text remains in the page. */
+.raven-scene-art{
+  display:block;
+  position:relative;
+  width:100%;
+  max-width:360px;
+  aspect-ratio:2/1;
+  margin:16px 0;
+  overflow:hidden;
+  background:#0b0a08;
+  direction:ltr;
+}
+.raven-scene-art--cover{max-width:none}
+.raven-scene-art img{
+  display:block;
+  position:absolute;
+  width:100%;
+  height:300%;
+  max-width:none;
+  left:0;
+  top:var(--raven-scene-top,0%);
+}

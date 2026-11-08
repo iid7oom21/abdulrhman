@@ -45,6 +45,8 @@
     panel.replaceChildren(); panel.dataset.notes = JSON.stringify(snapshot());
     const summary=el('summary',c.title);summary.id='reading-summary';
     const details=el('details');details.open=open;details.id='reading-details';details.append(summary,el('p',c.scope),el('p',c.task));
+    const artwork=el('figure');artwork.className='raven-scene-art';artwork.dataset.sceneArt='private-notebook';artwork.setAttribute('aria-hidden','true');
+    const image=el('img');image.src='./assets/scenes/investigation-scenes-v1.png';image.width=1024;image.height=1536;image.alt='';image.loading='lazy';image.decoding='async';artwork.append(image);details.append(artwork);
     details.addEventListener('toggle',()=>{if(details.isConnected)open=details.open;});
     const select=el('select');select.id='reading-source';select.append(new Option(c.none,''));
     for(const s of sources.values())select.append(new Option(s.label,s.id));select.value=sourceId;

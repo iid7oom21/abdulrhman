@@ -28,6 +28,7 @@
 <link href="https://fonts.googleapis.com" rel="preconnect">
 <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&amp;family=IBM+Plex+Sans+Arabic:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/raven-scene-art.css?v=scene-art-1">
 <style>
 /* Same warm palette as the homepage (raven-redesign-v1.css, Palette v3). */
 :root{
@@ -144,6 +145,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
   <section class="wrap hero" aria-labelledby="title">
     <p class="eyebrow" data-k="eyebrow">RAVEN · قضية تفاعلية</p>
     <h1 id="title" data-k="title" tabindex="-1">الاسم المحذوف</h1>
+    <figure class="raven-scene-art raven-scene-art--cover" data-scene-art="case-cover" aria-hidden="true"><img src="./assets/scenes/case-scenes-v1.png" width="1024" height="1536" alt="" decoding="async"></figure>
     <p class="tagline" data-k="tagline">خانة ممسوحة، ودعوة بعد العشاء، ومكتبة ما رجع منها صاحبها.</p>
     <p class="status" data-k="status">قيد التطوير</p>
   </section>
@@ -462,6 +464,14 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     if (className) node.className = className;
     return node;
   };
+  function sceneArt(id, atlas, row) {
+    const figure = element('figure',undefined,'raven-scene-art');
+    figure.dataset.sceneArt = id;figure.setAttribute('aria-hidden','true');
+    figure.style.setProperty('--raven-scene-top',String(-100 * row) + '%');
+    const image = element('img');image.src = './assets/scenes/' + atlas + '-scenes-v1.png';
+    image.width = 1024;image.height = 1536;image.alt = '';image.loading = 'lazy';image.decoding = 'async';
+    figure.append(image);return figure;
+  }
   const announce = text => { announcement.textContent = text; };
   function focusStep() {
     const targets = {invite:'hook-invite-start',compare:'hook-paper-start',respond:'hook-response-start',share:'hook-choice-start',review:'hook-share-review',done:'hook-register'};
@@ -532,7 +542,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       announce(state.comparison ? c.comparisonShown : c.comparisonHidden);
     },'hook-secondary');
     toggle.setAttribute('aria-controls','hook-comparison');toggle.setAttribute('aria-expanded',String(state.comparison));
-    card.append(element('h3',c.documentTitle),list,toggle,comparison,sourceNote);
+    card.append(element('h3',c.documentTitle),sceneArt('unsigned-paper','case',2),list,toggle,comparison,sourceNote);
     log.append(card);
   }
   function choiceStatus(c) {
@@ -546,7 +556,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
   }
   function renderEnding(c) {
     ending.hidden = false;
-    ending.append(element('h3',c.endTitle),element('p',c.endNote));
+    ending.append(element('h3',c.endTitle),element('p',c.endNote),sceneArt('quiet-ending','investigation',2));
     const summary = element('details');summary.id = 'hook-summary'; summary.open = state.summary;
     summary.append(element('summary',c.summary));
     const list = element('ul');
@@ -588,7 +598,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     heading.textContent = c.stages[state.phase];status.textContent = choiceStatus(c);
     if (state.phase === 'start') { actions.append(button('open',c.open,() => transition({phase:'invite'}),'hook-next'));return; }
     add(c.voice,c.inside,false,'spoken','hook-invite-start');add(name('claire'),c.claire2,false);
-    if (state.phase === 'invite') { actions.append(button('enter',c.enter,() => transition({phase:'compare'}),'hook-next'));return; }
+    if (state.phase === 'invite') { log.lastElementChild.append(sceneArt('doorway-threshold','case',1));actions.append(button('enter',c.enter,() => transition({phase:'compare'}),'hook-next'));return; }
     add(name('jonas'),c.jonas,false,'spoken','hook-paper-start');documentCard(c);
     if (state.phase === 'compare') { actions.append(button('continue',c.continue,() => {
       state.spokenAloud = [{lineId:'L10',textKey:'you1',listeners:['jonas','claire','elena']},{lineId:'L14',textKey:'you2',listeners:['jonas','claire','elena']}];
@@ -651,6 +661,6 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
 })();
 
 </script>
-<script src="reading-tools.js?v=3"></script>
+<script src="reading-tools.js?v=4"></script>
 </body>
 </html>
