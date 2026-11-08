@@ -52,6 +52,21 @@ test('site mount is opt-in and preserves standalone UI, config and API headers',
   assert.equal((await config.json()).sourceKnowledgeAvailable, false);
 });
 
+test('hosting can land on RAVEN without creating a preview session or accepting an external redirect', async t => {
+  const f = fixture(t), s = await start(t, {siteRoot:f.root,hostedRootRedirect:'/raven/'});
+  for (const method of ['GET','HEAD']) for (const target of ['/?lang=en','/index.html?lang=ar']) {
+    const response = await fetch(s.root + target, {method,redirect:'manual'});
+    assert.equal(response.status,307);
+    assert.equal(response.headers.get('location'),'/raven/' + target.slice(target.indexOf('?')));
+    assert.equal(response.headers.get('set-cookie'),null);
+    assert.equal(await response.text(),'');
+  }
+  assert.equal((await fetch(s.root + '/raven/')).status,200);
+  assert.equal((await fetch(s.root + '/raven/dialogue/')).status,200);
+  assert.throws(() => createPreviewServer({hostedRootRedirect:'/raven/'}),/invalid_hosted_root_redirect/);
+  assert.throws(() => createPreviewServer({siteRoot:f.root,hostedRootRedirect:'https://example.com/'}),/invalid_hosted_root_redirect/);
+});
+
 test('mounted public files are read-only, media ranges work, and only dialogue GET issues a session', async t => {
   const f = fixture(t), s = await start(t, {siteRoot:f.root, secureCookie:true});
   const redirect = await fetch(s.root + '/raven?lang=en', {redirect:'manual'});

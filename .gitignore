@@ -14,3 +14,8 @@ server/config.json
 **/case-store.json
 **/case-store.json.lock
 **/PRIVATE-QA-*.json
+
+# Reviewed Render export and incomplete export transactions are build output.
+.render-site/
+.render-build-*/
+.render-site.build-lock/

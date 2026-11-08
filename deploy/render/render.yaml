@@ -1,0 +1,29 @@
+# Reviewed deployment template. Applying this creates a paid service and disk.
+# Inspect the connected account and confirm the current charge before creation.
+services:
+  - type: web
+    name: raven-case
+    runtime: node
+    repo: https://github.com/iid7oom21/abdulrhman
+    branch: main
+    plan: starter
+    numInstances: 1
+    autoDeploy: false
+    buildCommand: node deploy/render/build.mjs
+    startCommand: node deploy/render/start.mjs
+    healthCheckPath: /healthz
+    disk:
+      name: raven-private-data
+      mountPath: /var/data
+      sizeGB: 1
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: NODE_ENV
+        value: production
+      - key: RAVEN_RENDER_DATA_DIR
+        value: /var/data/raven
+      - key: RAVEN_CASE_CONTENT_GZIP_BASE64
+        sync: false
+      - key: RAVEN_CASE_CONTENT_SHA256
+        sync: false

@@ -40,6 +40,8 @@ export function createPreviewServer({
   readControls = runtimeControls(),
   // Explicit reviewed static export; unset preserves the standalone server exactly.
   siteRoot = null,
+  // Hosted releases land on the reviewed site, without creating a preview session.
+  hostedRootRedirect = null,
   // Written case is independent of provider, preview sessions and preview storage.
   caseContentPath = null,
   caseStoragePath = null,
@@ -47,6 +49,7 @@ export function createPreviewServer({
   openCaseStore = undefined,
 } = {}) {
   const site = siteRoot ? createSiteMount(siteRoot) : null;
+  if (hostedRootRedirect !== null && (!site || hostedRootRedirect !== '/raven/')) throw new Error('invalid_hosted_root_redirect');
   const writtenCase = createCaseService({contentPath:caseContentPath,storagePath:caseStoragePath,
     pack:casePack,siteRoot,secureCookie,...(openCaseStore ? {openStore:openCaseStore} : {})});
   // owner -> { materials, touchedAt }. Map order is least-recently-used first (re-inserted on each use).
@@ -120,6 +123,10 @@ export function createPreviewServer({
       // The URL parser normalizes dot segments; reject unsafe raw targets first.
       if (site && siteRequestPath(req.url) === null) return json(404, {error:'not_found'});
       const url = new URL(req.url, 'http://preview.local');
+      if (hostedRootRedirect && ['GET','HEAD'].includes(req.method) && ['/', '/index.html'].includes(url.pathname)) {
+        res.writeHead(307, {'Location':hostedRootRedirect + url.search,'Cache-Control':'no-store'});
+        return res.end();
+      }
       if (await writtenCase.handle(req,res,url,(status,data) => json(status,data,false))) return;
       if (req.method === 'GET' && url.pathname === '/texts/raven-texts.js') {
         res.writeHead(200, {'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});
