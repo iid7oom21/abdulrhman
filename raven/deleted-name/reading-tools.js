@@ -11,8 +11,8 @@
     en:{title:'Comparison and statements notebook',scope:'This notebook is private to this scene. It reaches no character and does not change your choices. Replaying or reloading starts a new notebook; download a copy if you want to keep it.',
       task:'Compare your message with what was added to the draft. Select a passage and write an observation or a question to check.',source:'Passage I am reviewing',kind:'Note type',question:'Open question',observation:'Text observation',hypothesis:'Hypothesis to check',text:'My private note',add:'Add to my notebook',empty:'Your notebook is empty. No note is written on your behalf.',saved:'Added to your private notebook on this page only.',invalid:'Select a visible passage and write a note (up to 1000 characters).',limit:'The notebook has 30 notes; download your copy before starting another run.',remove:'Delete my note',download:'Download my notebook',quotes:'Statements shown in the dialogue',original:'Your message — L02',conclusion:'Conclusion added to the draft',signature:'Signature space',none:'Select a passage',select:'Selected this passage for review; write what you noticed in the notebook.',removed:'Your private note was deleted; the original statement remains.'}
   };
-  Object.assign(copy.ar,{review:'راجع العبارة',downloadScope:'النسخة تشمل الملاحظات المضافة فقط. النص الجاري لا يدخل فيها قبل الضغط على «أضف إلى دفتري».'});
-  Object.assign(copy.en,{review:'Review passage',downloadScope:'The download includes added notes only. Text you are still writing is not included until you select “Add to my notebook”.'});
+  Object.assign(copy.ar,{review:'راجع العبارة',downloadScope:'النسخة تشمل الملاحظات المضافة فقط. النص الجاري لا يدخل فيها قبل الضغط على «أضف إلى دفتري».',draftKept:'استعراض العبارة لا يغيّر مسودتك أو مصدرها. لتغيير مصدر الملاحظة استخدم قائمة «العبارة التي أراجعها». العبارة المعروضة:'});
+  Object.assign(copy.en,{review:'Review passage',downloadScope:'The download includes added notes only. Text you are still writing is not included until you select “Add to my notebook”.',draftKept:'Inspecting a passage keeps your draft and its source unchanged. To change the note’s source, use “Passage I am reviewing”. Inspected passage:'});
   const lang = () => document.documentElement.lang === 'en' ? 'en' : 'ar';
   const el = (tag,text) => {const n=document.createElement(tag);if(text!==undefined)n.textContent=text;return n;};
   const button = (id,text,fn) => {const b=el('button',text);b.type='button';b.id=id;b.addEventListener('click',fn);return b;};
@@ -97,7 +97,11 @@
   });
   hook.addEventListener('raven:inspect-part',event=>{
     const id='document-'+event.detail?.part;if(!sources.has(id))return;
-    sourceId=id;open=true;render();
+    const keepDraft=draft.length>0;
+    if(!keepDraft)sourceId=id;
+    open=true;render();
+    const c=copy[lang()];
+    announce(keepDraft ? c.draftKept+' '+sources.get(id).text : c.select);
   });
   render();
 })();

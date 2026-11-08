@@ -365,6 +365,43 @@ test('written opening: choices, display boundaries, language and access',async t
     assert.deepEqual(writeRequests,[]);assert.deepEqual(pageErrors,[]);await preservedStorage();
   });
 
+  await run('inspecting another document part preserves a typed private note and its source',async()=>{
+    for(const language of ['ar','en']){
+      await fresh(language);await click('open','invite');await click('enter','compare');
+      await action('source-original').focus();await page.keyboard.press('Enter');
+      assert.equal(await page.inputValue('#reading-source'),'document-original');
+      await page.selectOption('#reading-kind','hypothesis');
+      const draft='PRIVATE_ORIGINAL_NOTE <img src=x onerror="window.inspectInjected=1">';
+      await page.fill('#reading-note',draft);
+      const layers=await page.locator('#hook').getAttribute('data-layers'),before=await state();
+      await action('source-conclusion').focus();await page.keyboard.press('Enter');
+      assert.equal(await action('source-conclusion').evaluate(el=>el===document.activeElement),true,'inspection keeps keyboard focus on the document');
+      assert.equal(await page.inputValue('#reading-source'),'document-original');
+      assert.equal(await page.inputValue('#reading-kind'),'hypothesis');
+      assert.equal(await page.inputValue('#reading-note'),draft);
+      const inspected=await page.locator('#hook-document [data-part="conclusion"] .hook-part').innerText();
+      assert.ok((await page.locator('#reading-status').innerText()).includes(inspected),'the inspected quote is shown separately from the draft source');
+      assert.equal(await page.locator('#reading-source-preview').innerText(),await page.locator('#hook-document [data-part="original"] .hook-part').innerText());
+      await page.locator('#reading-note').focus();
+      await page.evaluate(()=>{document.documentElement.lang=document.documentElement.lang==='ar'?'en':'ar';document.dispatchEvent(new CustomEvent('raven:language'));});
+      assert.equal(await page.evaluate(()=>document.activeElement.id),'reading-note');
+      assert.equal(await page.inputValue('#reading-note'),draft);assert.equal(await page.inputValue('#reading-source'),'document-original');
+      assert.equal(await page.inputValue('#reading-kind'),'hypothesis');
+      // An explicit source selection still changes which passage the note belongs to.
+      await page.selectOption('#reading-source','document-signature');
+      await action('source-original').click();
+      assert.equal(await page.inputValue('#reading-source'),'document-signature');
+      await page.click('#reading-add');
+      const entry=await page.locator('#reading-tools').evaluate(el=>JSON.parse(el.dataset.notes).entries[0]);
+      assert.equal(entry.sourceId,'document-signature');assert.equal(entry.kind,'hypothesis');assert.equal(entry.text,draft);
+      assert.equal(await page.locator('#hook').getAttribute('data-layers'),layers);assert.deepEqual(await state(),before);
+      // With no draft, selecting a document part continues to start a note for that part.
+      await action('source-conclusion').click();assert.equal(await page.inputValue('#reading-source'),'document-conclusion');
+      assert.equal(await page.locator('#reading-tools img').count(),0);assert.equal(await page.evaluate(()=>window.inspectInjected),undefined);
+    }
+    assert.deepEqual(writeRequests,[]);assert.deepEqual(pageErrors,[]);await preservedStorage();
+  });
+
   const report={node:process.version,browser:await browser.version(),source:base,scope:'Actual static case page in desktop Chromium, controlled viewport/text sizes; no physical mobile device, screen-reader speech, provider or backend integration',results};
   if(process.env.RAVEN_OPENING_REPORT)fs.writeFileSync(process.env.RAVEN_OPENING_REPORT,JSON.stringify(report,null,2));
   console.log(JSON.stringify({browser:report.browser,node:report.node,scenarios:results.length,passed:results.filter(r=>r.status==='PASS').length,failed:results.filter(r=>r.status==='FAIL').length}));
