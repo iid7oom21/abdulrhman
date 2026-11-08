@@ -76,7 +76,7 @@ test('character portraits stay paired with approved names across language and sc
         if (initialSources) assert.deepEqual(sources, initialSources, 'changing language must retain the same portraits');
         else initialSources = sources;
         assert.equal(new Set(sources).size, 1, 'all faces share the single local atlas');
-        assert.match(sources[0], /\/raven\/deleted-name\/assets\/characters\/cast-portraits-v1\.png$/);
+        assert.match(sources[0], /\/raven\/deleted-name\/assets\/characters\/cast-portraits-v1\.webp$/);
         assert.equal(await page.locator('audio').count(), 1);
         assert.equal(await frame.locator('audio').count(), 0);
         assert.equal(await page.locator('#music-track-picker option').count(), 13);

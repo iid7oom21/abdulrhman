@@ -8,12 +8,12 @@ const http = require('node:http');
 const {chromium} = require(process.env.PLAYWRIGHT_TEST_MODULE || 'playwright');
 const root = path.resolve(__dirname, '..');
 const artwork = {
-  'case-cover': {file:'case-scenes-v1.png', row:0, cover:true},
-  'doorway-threshold': {file:'case-scenes-v1.png', row:1},
-  'unsigned-paper': {file:'case-scenes-v1.png', row:2},
-  'private-notebook': {file:'investigation-scenes-v1.png', row:0},
-  'materials-before-sharing': {file:'investigation-scenes-v1.png', row:1},
-  'quiet-ending': {file:'investigation-scenes-v1.png', row:2}
+  'case-cover': {file:'case-scenes-v1.webp', row:0, cover:true},
+  'doorway-threshold': {file:'case-scenes-v1.webp', row:1},
+  'unsigned-paper': {file:'case-scenes-v1.webp', row:2},
+  'private-notebook': {file:'investigation-scenes-v1.webp', row:0},
+  'materials-before-sharing': {file:'investigation-scenes-v1.webp', row:1},
+  'quiet-ending': {file:'investigation-scenes-v1.webp', row:2}
 };
 
 test('scene illustrations load, crop correctly and remain separate from player evidence', async t => {

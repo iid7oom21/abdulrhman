@@ -259,7 +259,7 @@ test('written opening: choices, display boundaries, language and access',async t
     await page.locator('[data-k="m2"]').evaluate((el,text)=>{el.textContent=text;},payload);
     await click('open','invite');await click('enter','compare');
     assert.equal(await page.locator('#hook-document [data-part="original"]').innerText(),payload);
-    assert.equal(await page.locator('#hook-document img').count(),1);assert.equal(await page.locator('#hook-document img').getAttribute('src'),'./assets/scenes/case-scenes-v1.png');assert.equal(await page.evaluate(()=>window.openingInjected),undefined);
+    assert.equal(await page.locator('#hook-document img').count(),1);assert.equal(await page.locator('#hook-document img').getAttribute('src'),'./assets/scenes/case-scenes-v1.webp');assert.equal(await page.evaluate(()=>window.openingInjected),undefined);
     await page.setViewportSize({width:320,height:844});
     assert.ok(await page.locator('#hook-document').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'long source text must wrap within the actual comparison card');
     assert.deepEqual(writeRequests,[]);assert.deepEqual(pageErrors,[]);await preservedStorage();
@@ -359,7 +359,7 @@ test('written opening: choices, display boundaries, language and access',async t
       await page.locator('#lang-switch').click();
       assert.equal(await page.locator('#passage-note-1').innerText(),await page.locator('#hook-document [data-part="original"] .hook-part').innerText());
       assert.equal(await page.inputValue('#reading-note'),draft);assert.equal(await page.inputValue('#reading-source'),'L10');
-      assert.equal(await page.locator('#reading-notes li').count(),1);assert.equal(await page.locator('#reading-tools img').count(),1);assert.equal(await page.locator('#reading-tools img').getAttribute('src'),'./assets/scenes/investigation-scenes-v1.png');
+      assert.equal(await page.locator('#reading-notes li').count(),1);assert.equal(await page.locator('#reading-tools img').count(),1);assert.equal(await page.locator('#reading-tools img').getAttribute('src'),'./assets/scenes/investigation-scenes-v1.webp');
       assert.equal(await page.evaluate(()=>window.reviewInjected),undefined);
     }
     assert.deepEqual(writeRequests,[]);assert.deepEqual(pageErrors,[]);await preservedStorage();
@@ -397,7 +397,7 @@ test('written opening: choices, display boundaries, language and access',async t
       assert.equal(await page.locator('#hook').getAttribute('data-layers'),layers);assert.deepEqual(await state(),before);
       // With no draft, selecting a document part continues to start a note for that part.
       await action('source-conclusion').click();assert.equal(await page.inputValue('#reading-source'),'document-conclusion');
-      assert.equal(await page.locator('#reading-tools img').count(),1);assert.equal(await page.locator('#reading-tools img').getAttribute('src'),'./assets/scenes/investigation-scenes-v1.png');assert.equal(await page.evaluate(()=>window.inspectInjected),undefined);
+      assert.equal(await page.locator('#reading-tools img').count(),1);assert.equal(await page.locator('#reading-tools img').getAttribute('src'),'./assets/scenes/investigation-scenes-v1.webp');assert.equal(await page.evaluate(()=>window.inspectInjected),undefined);
     }
     assert.deepEqual(writeRequests,[]);assert.deepEqual(pageErrors,[]);await preservedStorage();
   });

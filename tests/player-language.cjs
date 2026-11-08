@@ -47,12 +47,12 @@ test('player language survives navigation and simulation keeps each recorded rep
     await page.waitForURL(url => url.searchParams.get('lang') === 'en');
     assert.equal(new URL(page.url()).searchParams.get('ref'), 'language-check');
     assert.match(await frame.locator('[data-raven-language="en"]').getAttribute('href'), /lang=en/);
-    assert.equal(await frame.locator('.rvnHeroDialogue').innerText(), 'Dialogue simulation — The Deleted Name');
+    assert.equal(await frame.locator('.rvnHeroDialogue').innerText(), 'Discover The Deleted Name');
     await frame.locator('#ravenMenuToggle').click();
     const mobileLink = frame.locator('#ravenNavPanel a[href="#dialogue-preview"]');
     assert.equal(await mobileLink.isVisible(), true);
-    assert.equal(await mobileLink.innerText(), 'Dialogue simulation');
-    assert.deepEqual(await frame.locator('[data-dn-link="menu"]').allTextContents(), ['Dialogue simulation', 'Dialogue simulation']);
+    assert.equal(await mobileLink.innerText(), 'The Deleted Name');
+    assert.deepEqual(await frame.locator('[data-dn-link="menu"]').allTextContents(), ['The Deleted Name', 'The Deleted Name']);
     await frame.locator('#ravenMenuToggle').click();
     await page.reload();
     await frame.locator('html[lang="en"]').waitFor();
