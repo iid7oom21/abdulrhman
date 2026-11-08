@@ -14,6 +14,14 @@ python3 -m http.server 8786 --bind 127.0.0.1
 
 Open `http://127.0.0.1:8786/raven/`.
 
+## Written case continuation
+
+`raven/deleted-name/play/` is a generic bilingual case client, with the same persistent soundtrack shell. It receives only the current scene and earned materials from `/api/case/*`. The private story pack, unrevealed scenes and author solution are not included in this branch. GitHub Pages cannot run that API: without a configured server, the client shows an unavailable state and the static opening remains usable. The opening offers continuation only when the server reports a written case available.
+
+Local/private operation is documented on `main` in `docs/CASE-LOCAL.md`. A player may review a minimal opening-choice summary before starting a separate case session; it does not import private notebook entries or technical-dialogue state. There is no provider or payment dependency. New decorative case artwork is stored as preserved PNG originals and smaller WebP atlases; it is not forensic evidence or a reconstruction of the incident.
+
+This basic preview server is suitable for pages and assets. To verify seeking in the local studio videos, use a server that honors HTTP `Range` requests with `206 Partial Content`; the basic Python server used in this review returned `200` and could not complete those seek checks. `tests/visual-scenes.mjs` also expects the site to be served under `/abdulrhman/`, matching its published path.
+
 Public page identities and sharing:
 
 - Home: `https://iid7oom21.github.io/abdulrhman/raven/`
@@ -34,9 +42,9 @@ On 2026-11-05 the owner had a former 14th track and its files deleted from the s
 
 ## RAVEN 17
 
-RAVEN 17 shows two episodes: the original second film is episode 1 and the original third film is episode 2. Saved playback and personal notes keep original media IDs 2 and 3. Old `?episode=3` links open the current episode 2.
+RAVEN 17 shows all three original episodes. Display numbers and saved media IDs remain 1, 2 and 3; `?episode=1`, `?episode=2` and `?episode=3` open their corresponding films. Saved playback and personal notes remain isolated by the original media ID.
 
-`tests/legacy-episodes.mjs` checks the two-episode player in a real browser. Run it with `node tests/legacy-episodes.mjs` after serving this directory; set `PLAYWRIGHT_TEST_MODULE` to an available `@playwright/test` installation. It requires `ffmpeg` to generate a temporary playback fixture.
+`tests/restore-episode-one.mjs` checks the three-episode manifest and source IDs. `tests/legacy-episodes.mjs` checks navigation, playback progress, notes and language in Chromium. Run it with `node tests/legacy-episodes.mjs` after serving this directory on port 8786, or set `RAVEN_LEGACY_URL` to the served `/raven/` URL. It requires `ffmpeg` to generate a temporary playback fixture; this does not test streaming the original films in full.
 
 ## Metadata and recovery
 

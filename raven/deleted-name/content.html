@@ -114,6 +114,11 @@ h2{margin:0 0 16px;font-weight:600;font-size:clamp(20px,3.4vw,24px);color:var(--
 .hook-ending ul{padding-inline-start:22px;color:var(--soft)}
 .hook-ending nav{display:flex;flex-wrap:wrap;gap:12px;margin-top:16px}
 .hook-ending a{display:inline-flex;align-items:center;min-height:48px;overflow-wrap:anywhere}
+.case-studies summary{min-height:44px;padding-block:12px;cursor:pointer;color:var(--gold-hi)}
+.case-studies-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:20px}
+.case-studies-grid figure{margin:0;min-width:0}
+.case-studies-grid .raven-scene-art{max-width:none}
+.case-studies-grid figcaption{color:var(--soft)}
 .hook-secondary{min-height:48px;padding:10px 14px;border:1px solid var(--line);background:var(--panel);color:var(--text);font:inherit;text-align:start;cursor:pointer}
 .hook-sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
 @media(max-width:560px){.hook-comparison{grid-template-columns:1fr}}
@@ -215,6 +220,18 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     <a class="btn" href="../dialogue/" target="_blank" rel="noopener" data-k="nowBtn">معاينة الحوار التقنية — مستقلة عن هذا المشهد ↗</a>
     <p class="note" data-k="nowNote">الشخصيات ما ترد بعد بنص القصة. اختيارات الافتتاح لا تنتقل إلى هذه المعاينة.</p>
   </div></section>
+  <section class="block"><div class="wrap"><details class="case-studies" id="case-studies">
+    <summary data-k="studiesTitle">من أجواء القضية — ست لوحات جديدة</summary>
+    <p class="note" data-k="studiesNote">تصورات فنية للأماكن والأدوات، وليست أدلة أو إعادة بناء للواقعة. تفاصيل التحقيق تأتي من المواد المكتوبة.</p>
+    <div class="case-studies-grid">
+      <figure><div class="raven-scene-art" aria-hidden="true"><img src="./assets/scenes/case-investigation-v2.webp" width="1024" height="1536" alt="" loading="lazy" decoding="async"></div><figcaption data-k="studyLibrary">المكتبة</figcaption></figure>
+      <figure><div class="raven-scene-art" aria-hidden="true" style="--raven-scene-top:-100%"><img src="./assets/scenes/case-investigation-v2.webp" width="1024" height="1536" alt="" loading="lazy" decoding="async"></div><figcaption data-k="studyRoom">جلسة هادئة</figcaption></figure>
+      <figure><div class="raven-scene-art" aria-hidden="true" style="--raven-scene-top:-200%"><img src="./assets/scenes/case-investigation-v2.webp" width="1024" height="1536" alt="" loading="lazy" decoding="async"></div><figcaption data-k="studyTable">طاولة المقارنة</figcaption></figure>
+      <figure><div class="raven-scene-art" aria-hidden="true"><img src="./assets/scenes/case-tools-v1.webp" width="1024" height="1536" alt="" loading="lazy" decoding="async"></div><figcaption data-k="studyTools">أدوات المرمّم</figcaption></figure>
+      <figure><div class="raven-scene-art" aria-hidden="true" style="--raven-scene-top:-100%"><img src="./assets/scenes/case-tools-v1.webp" width="1024" height="1536" alt="" loading="lazy" decoding="async"></div><figcaption data-k="studyFolder">حافظة الأوراق</figcaption></figure>
+      <figure><div class="raven-scene-art" aria-hidden="true" style="--raven-scene-top:-200%"><img src="./assets/scenes/case-tools-v1.webp" width="1024" height="1536" alt="" loading="lazy" decoding="async"></div><figcaption data-k="studyNotebook">دفتر الملاحظات</figcaption></figure>
+    </div>
+  </details></div></section>
 </main>
 <footer class="wrap" data-k="footer">RAVEN · عبدالرحمن العتيبي</footer>
 <script>
@@ -240,6 +257,8 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       nowTitle: 'المتاح الآن', nowText: 'القضية قيد التطوير. تقدر تجرّب معاينة الحوار التقنية: تسجّل أقوالك وتصحيحاتك، وتجرّب مشاركة المواد.',
       nowBtn: 'معاينة الحوار التقنية — مستقلة عن هذا المشهد ↗', nowNote: 'الشخصيات ما ترد بعد بنص القصة. اختيارات الافتتاح لا تنتقل إلى هذه المعاينة.',
       footer: 'RAVEN · عبدالرحمن العتيبي', docTitle: 'RAVEN — الاسم المحذوف',
+      studiesTitle:'من أجواء القضية — ست لوحات جديدة', studiesNote:'تصورات فنية للأماكن والأدوات، وليست أدلة أو إعادة بناء للواقعة. تفاصيل التحقيق تأتي من المواد المكتوبة.',
+      studyLibrary:'المكتبة',studyRoom:'جلسة هادئة',studyTable:'طاولة المقارنة',studyTools:'أدوات المرمّم',studyFolder:'حافظة الأوراق',studyNotebook:'دفتر الملاحظات',
       description: 'خانة ممسوحة، ودعوة بعد العشاء، ومكتبة ما رجع منها صاحبها. قضية تفاعلية من RAVEN، قيد التطوير.'
     },
     en: {
@@ -261,6 +280,8 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       nowTitle: 'Available now', nowText: 'The case is in development. You can try the technical dialogue preview: record your statements and corrections, and try sharing materials.',
       nowBtn: 'Technical dialogue preview — separate from this scene ↗', nowNote: 'The characters do not answer from the story yet. Opening-scene choices do not carry into this preview.',
       footer: 'RAVEN · Abdulrahman Alotaibi', docTitle: 'RAVEN — The Deleted Name',
+      studiesTitle:'Case atmosphere — six new studies',studiesNote:'Artistic studies of rooms and tools, not evidence or a reconstruction of the incident. Written materials carry the investigation details.',
+      studyLibrary:'The library',studyRoom:'A quiet sitting room',studyTable:'The comparison table',studyTools:'Conservator’s tools',studyFolder:'The document folder',studyNotebook:'The private notebook',
       description: 'An erased field, an invitation after dinner, and a library its owner never came back from. An interactive RAVEN case, in development.'
     }
   };
@@ -662,5 +683,6 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
 
 </script>
 <script src="reading-tools.js?v=5"></script>
+<script src="case-entry.js?v=1"></script>
 </body>
 </html>

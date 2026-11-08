@@ -1,0 +1,7 @@
+# Public site only; written story content and player saves belong to the server.
+**/.env
+**/.env.*
+**/raven-case-content.json
+**/case-store.json
+**/case-store.json.lock
+**/PRIVATE-QA-*.json

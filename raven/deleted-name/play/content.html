@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b0a08">
+  <meta name="robots" content="noindex">
+  <title>RAVEN — القضية</title>
+  <link rel="stylesheet" href="./style.css?v=case-play-1">
+  <script src="../../../site-bridge.js?v=watching-1" defer></script>
+  <script src="./app.js?v=case-play-1" defer></script>
+</head>
+<body>
+  <a class="skip" href="#main" data-ui="skip">انتقل إلى القضية</a>
+  <header class="top wrap">
+    <a class="brand" href="../../" id="home-link">RAVEN</a>
+    <nav class="language" aria-label="لغة العرض" id="language-controls">
+      <button type="button" id="language-ar" lang="ar" aria-pressed="true">العربية</button>
+      <button type="button" id="language-en" lang="en" aria-pressed="false">English</button>
+    </nav>
+  </header>
+  <main class="wrap" id="main" tabindex="-1">
+    <div class="page-heading"><p class="eyebrow">RAVEN</p><h1 data-ui="title">القضية</h1><a href="../" id="case-link" data-ui="back">العودة إلى صفحة القضية</a></div>
+    <section id="connection" class="panel connection" aria-labelledby="connection-title">
+      <h2 id="connection-title" tabindex="-1">جارٍ التحقق من توفر القضية</h2>
+      <p id="connection-message">تحتاج هذه التجربة إلى خادم القضية.</p>
+      <div class="buttons" id="connection-actions"></div>
+    </section>
+    <div id="case-app" hidden>
+      <p id="save-status" class="muted"></p>
+      <section id="scene-panel" class="panel" aria-labelledby="scene-title">
+        <p class="eyebrow" id="scene-label"></p>
+        <h2 id="scene-title" tabindex="-1"></h2>
+        <div id="scene-art"></div><div id="scene-body" class="prose"></div>
+      </section>
+      <section id="action-panel" class="panel" aria-labelledby="action-title">
+        <h2 id="action-title" data-ui="actions">ماذا تريد أن تفعل؟</h2><div id="actions"></div>
+      </section>
+      <section id="review-panel" class="panel review" aria-labelledby="review-title" hidden>
+        <h2 id="review-title" tabindex="-1" data-ui="review">راجع اختيارك</h2><div id="review-body"></div><div id="review-actions" class="buttons"></div>
+      </section>
+      <section id="materials-panel" class="panel" aria-labelledby="materials-title">
+        <h2 id="materials-title" data-ui="materials">المواد التي وصلت إليك</h2>
+        <div id="materials-list" class="material-list"></div>
+        <details id="comparison"><summary data-ui="comparison">مقارنة المواد</summary>
+          <div class="comparison-controls"><div><label for="compare-a" data-ui="firstMaterial">المادة الأولى</label><select id="compare-a"></select></div><div><label for="compare-b" data-ui="secondMaterial">المادة الثانية</label><select id="compare-b"></select></div></div>
+          <div id="comparison-body" class="comparison-grid"></div>
+        </details>
+      </section>
+      <details id="notebook" class="panel"><summary data-ui="notebook">دفتر خاص</summary>
+        <p class="muted" data-ui="notebookScope">ملاحظات خاصة بجلسة القضية على الخادم. لا تصل إلى الشخصيات تلقائيًا. النص الذي لم تؤكده يبقى في هذه الصفحة فقط.</p>
+        <div id="notebook-actions"></div>
+        <div class="buttons"><button type="button" id="notes-download" data-ui="notesDownload">تنزيل ملاحظاتي</button></div>
+        <p data-ui="notesDownloadScope" class="muted">التنزيل يشمل الملاحظات المؤكدة فقط، ولا يشمل نصًا ما زلت تكتبه.</p>
+        <ol id="notes-list"></ol>
+      </details>
+      <section id="permissions-panel" class="panel" aria-labelledby="permissions-title" hidden><h2 id="permissions-title" data-ui="permissions">الأذونات ونطاق المشاركة</h2><div id="permissions-body"></div></section>
+      <section id="timeline-panel" class="panel" aria-labelledby="timeline-title" hidden><h2 id="timeline-title" data-ui="timeline">الخط الزمني</h2><div id="timeline-body"></div></section>
+      <section id="reports-panel" class="panel" aria-labelledby="reports-title" hidden><h2 id="reports-title" data-ui="reports">التقرير ومصادره</h2><div id="reports-body"></div></section>
+      <section id="receipts-panel" class="panel" aria-labelledby="receipts-title" hidden><h2 id="receipts-title" data-ui="receipts">إيصالات داخل القصة</h2><p data-ui="receiptScope" class="muted">الإيصال القصصي يصف الاستلام داخل القصة؛ لا يعني إرسالًا إلى جهة حقيقية أو اعتماد صحة التقرير.</p><div id="receipts-body"></div></section>
+      <div class="buttons page-tools"><button type="button" id="state-refresh" data-ui="refresh">تحديث حالة القضية</button><button type="button" id="case-export" data-ui="export">تنزيل سجل القضية</button></div>
+    </div>
+    <p id="announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+    <noscript><p>يلزم تشغيل JavaScript للاتصال بخادم القضية. الافتتاح المكتوب متاح في صفحة القضية.</p></noscript>
+  </main>
+</body>
+</html>
