@@ -58,7 +58,7 @@ test('mobile player leaves episode and case controls reachable in both orientati
       assert.ok(Math.max(...controls.map(c=>c.y))-Math.min(...controls.map(c=>c.y))<2,'the compact controls stay on one row');
       assert.ok((await page.locator('.site-player').boundingBox()).height<=46,'closed portrait dock stays compact');
     }
-    assert.equal(await page.locator('#music-track-picker option').count(),13);
+    assert.equal(await page.locator('#music-track-picker option').count(),17);
     assert.equal(await frame.locator('[data-rvn-episode]').count(),3);
     async function reachable(selector){
       const target=frame.locator(selector);await target.click({trial:true});
