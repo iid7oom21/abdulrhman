@@ -1,8 +1,9 @@
 // RAVEN soundtrack replacement QA. Run: node tests/music-replacement-manifest.mjs [--require-media]
 import { readFileSync, existsSync, statSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import assert from 'node:assert/strict';
-const root = resolve(import.meta.dirname, '..');
+const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const manifest = JSON.parse(readFileSync(join(root, 'raven/music-replacement/manifest.json'), 'utf8'));
 const player = readFileSync(join(root, 'site-audio.js'), 'utf8');
 const release = JSON.parse(readFileSync(join(root, 'raven/release.json'), 'utf8'));
