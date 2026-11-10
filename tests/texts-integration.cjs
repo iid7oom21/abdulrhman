@@ -40,7 +40,7 @@ test('approved labels through actual static dialogue and the single soundtrack U
     await page.locator('#status').filter({hasText:pack['dialogue_status_texts_bilingual_v1.0.1'].save_confirmed[lang]}).waitFor();
     assert.match(await page.locator('#mode-badge').innerText(),/محاكاة|simulation/);
     await page.goto(base+'/raven/?lang='+lang);
-    await page.waitForFunction(()=>document.querySelectorAll('#music-track-picker option').length===17);
+    await page.waitForFunction(()=>document.querySelectorAll('#music-track-picker option').length===13);
     assert.equal(await page.locator('audio').count(),1);
     assert.equal(await page.locator('#music-track-picker').getAttribute('aria-label'),pack['music_player_texts_bilingual_v1.0.0_8songs'].choose_song[lang]);
     assert.equal(await page.locator('#music-prev').innerText(),pack['music_player_texts_bilingual_v1.0.0_8songs'].previous[lang]);
