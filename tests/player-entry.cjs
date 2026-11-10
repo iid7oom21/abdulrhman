@@ -91,7 +91,7 @@ test('homepage offers the case directly without starting the dialogue preview', 
       const hero = frame.locator('.rvnHeroDialogue');
       assert.equal(await hero.innerText(), language === 'en' ? 'Discover The Deleted Name' : 'اكتشف قضية الاسم المحذوف');
       assert.equal(await hero.getAttribute('href'), caseHref);
-      assert.equal(await page.locator('#music-track-picker option').count(), 13);
+      assert.equal(await page.locator('#music-track-picker option').count(), 24);
       assert.equal(await frame.locator('[data-rvn-episode]').count(), 3);
       assert.equal(await frame.locator('#rvnDialogueFrame').count(), 0);
       assert.equal(await frame.locator('[data-dn-k="previewLabel"], [data-dn-k="openPreview"]').count(), 0);

@@ -1,24 +1,32 @@
-# RAVEN soundtrack — 26 M4A candidates (10 November 2026)
+# RAVEN soundtrack — 24 verified MP3 tracks (10 November 2026)
 
-## Current state — important
+## Safety status — DRAFT, NOT FOR MERGE
 
-- The **published GitHub Pages player references the existing 13 MP3 files**, which are still hosted under `assets/audio/raven/`. This was restored after PR #120 was merged prematurely, without the audio assets.
-- PR #120: https://github.com/iid7oom21/abdulrhman/pull/120 — **MERGED**, but its new 26-song player list was immediately disabled in a corrective commit because the 26 `.m4a` files were absent.
-- The 26 AAC-in-M4A soundtrack files were successfully extracted from the user's MP4 uploads, with no re-encoding, and are distributed **as a ZIP file in the ChatGPT conversation**. They have **NOT** been uploaded to GitHub yet.
-- 30 source MP4 uploads had 27 distinct file names. `35535.mp4` is byte-identical to `35542.mp4` and is excluded from the active candidate list; there are 26 remaining distinct binary source files. No independent musical-identity comparison is claimed.
+- The published **gh-pages** baseline currently uses the original **13 MP3 tracks** at `assets/audio/raven/`. Keep those files as the rollback fallback.
+- PR #118 was merged on 10 November 2026 despite its warning. Another merged staging change subsequently enabled missing M4A references; a corrective change restored the 13-track live player.
+- This is an isolated **new staging branch** based on the corrected gh-pages baseline, not a modification to the old merged PR branch.
+- The **24 converted MP3s are verified locally but have not been committed to this branch**. Until media is uploaded, the 24-track staged player would fail playback; DO NOT MERGE.
+- No case episodes or main site layout have been modified by this staging change.
 
-## Next deployment steps
+## Original source inspection
 
-1. Extract `RAVEN_Soundtrack_26_Ready_2026-11-10.zip` (prefer the updated v2 package) on your computer.
-2. Open the **published branch** `gh-pages` folder `assets/audio/raven-replacement/` at:
-   https://github.com/iid7oom21/abdulrhman/tree/gh-pages/assets/audio/raven-replacement
-3. Upload the 26 files named in `raven/music-replacement/manifest.json` from the ZIP's `assets/audio/raven-replacement/` folder. **Upload the individual M4A files, not the ZIP.**
-4. Confirm all GitHub asset URLs exist and return audio content. Run `node tests/music-replacement-manifest.mjs --require-media` (the media check will fail until the files are present).
-5. Once every M4A has been uploaded and checked, switch `site-audio.js` to the 26-track list in `raven/music-replacement/manifest.json`, change the download label/extension to M4A, and set `raven/release.json` `musicTracks` to 26. Mark `audio_file_upload_required: false` only after verification.
-6. Verify real playback on phone and desktop, AR/EN labels, previous/next/wrap, media focus and downloads. Keep `assets/audio/raven/*.mp3` untouched for rollback.
+- Recovered and inspected **30 MP4 upload copies**; **27 distinct source filenames**.
+- File SHA-256 confirmed exact duplicates: `35535.mp4` equals `35542.mp4`, plus repeat uploads `35529(1)`, `35530(1)`, and `35531(1)`.
+- Chromaprint **and aligned waveform correlation** confirmed two more duplicate musical recordings:
+  - `35528.mp4` matches `35529.mp4` (similarity ~0.982; waveform correlation ~0.95–0.96).
+  - `35487.mp4` matches `35486.mp4` (similarity ~0.972; waveform correlation ~0.998).
+- The retained **24 audio tracks** were converted with FFmpeg/LAME VBR `-q:a 2`. All 24 decoded in full without codec errors. They total approximately **142.35 MB**, about **104 minutes**.
+- Original source format: AAC 48 kHz stereo at around 192 kbps. Encoding to MP3 is lossy and does not improve source fidelity; this matches the MP3 delivery request.
+- Numeric song labels are placeholders; no musical titles were verified.
 
-**Release rule:** Never activate the 26-track list before the 26 M4A files are hosted. Any premature merge or direct write would break soundtrack playback again.
+## Upload and validation on staging only
 
-## Audio-quality note
+1. Extract `RAVEN-Music-Stage-24.zip` on your computer.
+2. Copy all **24 individual MP3 files**, preserving directory structure, to `assets/audio/raven-replacement/` on this **staging branch**, not `main` or `gh-pages`.
+3. Run `node tests/music-replacement-manifest.mjs --static-only` to check source references.
+4. Run `node tests/music-replacement-manifest.mjs --verify-local` after MP3 files are present. This validates the expected file size and SHA-256 from `manifest.json`.
+5. Test the actual RAVEN player with hosted media on desktop and mobile, including previous/next, wraparound, track changes, downloads, audio pause during video playback, persistence across navigation and Arabic/English labels. Run the existing player tests.
+6. Only after ALL media is committed and actual playback passes should `manifest.json` `audio_file_upload_required` become `false` and the strict gate `node tests/music-replacement-manifest.mjs --require-media` be run.
+7. **Ask the owner for explicit approval** before merging into `gh-pages` or publishing. Do not delete the original 13 MP3 files.
 
-All source audio is AAC at roughly 192 kbps. The M4A media were created using `ffmpeg -map 0:a:0 -vn -c:a copy`, without lossy re-encoding. Titles use the original numeric filenames because the MP4s have no verified song-name metadata.
+**The staging branch contains no new MP3 binaries yet. The strict release test must fail until upload and approval.**
