@@ -1,4 +1,4 @@
-// The staged RAVEN soundtrack is NOT live until all 26 AAC/M4A media files exist.
+// The staged RAVEN soundtrack is NOT live until all 32 AAC/M4A media files exist.
 // node tests/music-replacement-manifest.mjs --require-media
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
@@ -15,16 +15,16 @@ const checkMedia = process.argv.includes('--require-media') || !pending;
 const newFiles = liveFiles.filter(x => x.startsWith('assets/audio/raven-replacement/'));
 const originalFiles = liveFiles.filter(x => x.startsWith('assets/audio/raven/'));
 
-assert.equal(manifest.tracks.length, 26, '26 staged source files');
+assert.equal(manifest.tracks.length, 32, '32 staged source files');
 assert.equal(manifest.removed_exact_duplicates.length, 1, 'one exact byte-duplicate excluded');
 if (pending) {
   assert.equal(release.musicTracks, 13, 'keep the working original release live until new media is uploaded');
   assert.equal(originalFiles.length, 13, '13 original MP3 files should be referenced');
   assert.equal(newFiles.length, 0, 'incomplete soundtrack must never be published');
 } else {
-  assert.equal(release.musicTracks, 26, 'activated soundtrack must contain 26 tracks');
+  assert.equal(release.musicTracks, 32, 'activated soundtrack must contain 32 tracks');
   assert.equal(originalFiles.length, 0, 'replace old track references after successful upload');
-  assert.equal(newFiles.length, 26, '26 hosted audio files must be referenced');
+  assert.equal(newFiles.length, 32, '32 hosted audio files must be referenced');
 }
 
 const names = new Set();
@@ -43,5 +43,5 @@ for (const [index, track] of manifest.tracks.entries()) {
   }
 }
 console.log(pending
- ? 'RAVEN: 13 original tracks live; 26 replacement tracks staged (NOT PUBLISHED)'
- : 'RAVEN: 26 replacement tracks active and media checked');
+ ? 'RAVEN: 13 original tracks live; 32 replacement tracks staged (NOT PUBLISHED)'
+ : 'RAVEN: 32 replacement tracks active and media checked');
