@@ -20,7 +20,7 @@ test('mobile player leaves episode and case controls reachable in both orientati
     let pathname=new URL(req.url,'http://local').pathname;if(pathname.endsWith('/'))pathname+='index.html';
     const file=path.resolve(root,'.'+pathname);
     if(!file.startsWith(root+path.sep)){res.writeHead(403);return res.end();}
-    const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.png':'image/png','.webp':'image/webp','.jpg':'image/jpeg','.svg':'image/svg+xml','.woff2':'font/woff2','.mp3':'audio/mpeg'};
+    const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.png':'image/png','.webp':'image/webp','.jpg':'image/jpeg','.svg':'image/svg+xml','.woff2':'font/woff2','.mp3':'audio/mpeg','.m4a':'audio/mp4'};
     try{res.setHeader('Content-Type',mime[path.extname(file)]||'application/octet-stream');res.end(fs.readFileSync(file));}
     catch{res.writeHead(404);res.end();}
   });
@@ -58,7 +58,7 @@ test('mobile player leaves episode and case controls reachable in both orientati
       assert.ok(Math.max(...controls.map(c=>c.y))-Math.min(...controls.map(c=>c.y))<2,'the compact controls stay on one row');
       assert.ok((await page.locator('.site-player').boundingBox()).height<=46,'closed portrait dock stays compact');
     }
-    assert.equal(await page.locator('#music-track-picker option').count(),13);
+    assert.equal(await page.locator('#music-track-picker option').count(),26);
     assert.equal(await frame.locator('[data-rvn-episode]').count(),3);
     async function reachable(selector){
       const target=frame.locator(selector);await target.click({trial:true});
