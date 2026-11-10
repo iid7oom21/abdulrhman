@@ -1,24 +1,23 @@
-# RAVEN soundtrack — 26 M4A candidates (10 November 2026)
+# RAVEN soundtrack — 32 prepared AAC/M4A tracks (10 November 2026)
 
-## Current state — important
+## Verified status
 
-- The **published GitHub Pages player references the existing 13 MP3 files**, which are still hosted under `assets/audio/raven/`. This was restored after PR #120 was merged prematurely, without the audio assets.
-- PR #120: https://github.com/iid7oom21/abdulrhman/pull/120 — **MERGED**, but its new 26-song player list was immediately disabled in a corrective commit because the 26 `.m4a` files were absent.
-- The 26 AAC-in-M4A soundtrack files were successfully extracted from the user's MP4 uploads, with no re-encoding, and are distributed **as a ZIP file in the ChatGPT conversation**. They have **NOT** been uploaded to GitHub yet.
-- 30 source MP4 uploads had 27 distinct file names. `35535.mp4` is byte-identical to `35542.mp4` and is excluded from the active candidate list; there are 26 remaining distinct binary source files. No independent musical-identity comparison is claimed.
+The currently published player still uses **13 working MP3s** in `assets/audio/raven/`. Keep it that way until the replacement music is hosted and playback-tested.
 
-## Next deployment steps
+Four upload batches supplied 40 MP4 attachments. Repeated uploads across batches have been removed; 33 distinct filenames yielded **32 byte-distinct audio-source files** because `35535.mp4` and `35542.mp4` are identical. The newest 10 attachments included 4 exact reuploads (`35489`, `35490`, `35504`, `35519`) plus **6 new tracks** (`35512`, `35513`, `35514`, `35515`, `35517`, `35518`). The six new sources have valid AAC audio; chromaprint comparisons found no close musical duplicates among the 32 prepared candidates (not a formal proof of different songs).
 
-1. Extract `RAVEN_Soundtrack_26_Ready_2026-11-10.zip` (prefer the updated v2 package) on your computer.
-2. Open the **published branch** `gh-pages` folder `assets/audio/raven-replacement/` at:
-   https://github.com/iid7oom21/abdulrhman/tree/gh-pages/assets/audio/raven-replacement
-3. Upload the 26 files named in `raven/music-replacement/manifest.json` from the ZIP's `assets/audio/raven-replacement/` folder. **Upload the individual M4A files, not the ZIP.**
-4. Confirm all GitHub asset URLs exist and return audio content. Run `node tests/music-replacement-manifest.mjs --require-media` (the media check will fail until the files are present).
-5. Once every M4A has been uploaded and checked, switch `site-audio.js` to the 26-track list in `raven/music-replacement/manifest.json`, change the download label/extension to M4A, and set `raven/release.json` `musicTracks` to 26. Mark `audio_file_upload_required: false` only after verification.
-6. Verify real playback on phone and desktop, AR/EN labels, previous/next/wrap, media focus and downloads. Keep `assets/audio/raven/*.mp3` untouched for rollback.
+**Prepared delivery:** `RAVEN_Soundtrack_32_FINAL_2026-11-10.zip` in the ChatGPT conversation contains all 32 AAC/M4A media files, `raven/music-replacement/manifest.json`, a tracklist, and verification data. The 32 audio files **are not uploaded to GitHub yet**.
 
-**Release rule:** Never activate the 26-track list before the 26 M4A files are hosted. Any premature merge or direct write would break soundtrack playback again.
+## Deployment gate — do not skip
 
-## Audio-quality note
+1. Unzip the package locally.
+2. Upload all **32 individual .m4a files**, not the ZIP, to `assets/audio/raven-replacement/` in the GitHub repo `iid7oom21/abdulrhman`. Do not alter or delete `assets/audio/raven/`.
+3. Verify the exact 32 paths and file integrity (all >4 KB), then run `node tests/music-replacement-manifest.mjs --require-media` on the branch holding all 32 media files.
+4. In a **separate activation change**, update `site-audio.js` from the working 13 MP3s to the 32 M4As listed in the manifest, download labels from MP3 to M4A, and `raven/release.json` `musicTracks` from 13 to 32. Update tests accordingly. Do **not** flip `audio_file_upload_required` to false before the media is confirmed.
+5. Verify actual playback in a browser on phone and desktop, Arabic/English labels, next/previous/end-of-queue wrapping, focus changes during video playback, and download links. Merge/publish only after owner approval and testing.
 
-All source audio is AAC at roughly 192 kbps. The M4A media were created using `ffmpeg -map 0:a:0 -vn -c:a copy`, without lossy re-encoding. Titles use the original numeric filenames because the MP4s have no verified song-name metadata.
+Existing `gh-pages` playlist is safe to leave unchanged during these preparations. No claim of live publication is made.
+
+## Format
+
+All music is extracted as AAC in M4A containers via FFmpeg stream copy (`-map 0:a:0 -vn -c:a copy`), avoiding additional lossy re-encoding. Numeric labels are placeholders; the source videos have no verified song titles.
