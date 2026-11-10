@@ -57,7 +57,7 @@ test('production soundtrack module with production controls',async t=>{
   await t.test('queued pause/error/ended from previous source do not override new selection',()=>check(async p=>{
     await click(p,'music-toggle');await click(p,'music-next');
     await p.evaluate(()=>{const a=document.getElementById('site-soundtrack');for(const e of ['pause','error','ended'])a.dispatchEvent(new Event(e));});
-    assert.equal(await p.locator('#music-track-number').innerText(),'2 من 17');
+    assert.equal(await p.locator('#music-track-number').innerText(),'2 من 26');
     assert.equal(await p.evaluate(()=>manager.state().enabled),true);
     assert.equal(await phase(p),'starting');
   }));
@@ -75,10 +75,10 @@ test('production soundtrack module with production controls',async t=>{
     await p.evaluate(()=>plays[0].reject(new Error('old')));
     assert.equal(await phase(p),'starting');
     await p.evaluate(()=>{audioState.readyState=1;const a=document.getElementById('site-soundtrack');a.dispatchEvent(new Event('waiting'));a.dispatchEvent(new Event('stalled'));});
-    assert.equal(await phase(p),'waiting');assert.equal(await p.locator('#music-track-number').innerText(),'2 من 17');
-    await click(p,'music-settings-label');await p.locator('#music-track-picker').selectOption('16');
+    assert.equal(await phase(p),'waiting');assert.equal(await p.locator('#music-track-number').innerText(),'2 من 26');
+    await click(p,'music-settings-label');await p.locator('#music-track-picker').selectOption('25');
     await p.evaluate(()=>{audioState.ended=true;document.getElementById('site-soundtrack').dispatchEvent(new Event('ended'));audioState.ended=false;});
-    assert.equal(await p.locator('#music-track-number').innerText(),'1 من 17');
+    assert.equal(await p.locator('#music-track-number').innerText(),'1 من 26');
   }));
   await t.test('natural end while foreground media is active advances silently, then resumes next track',()=>check(async p=>{
     await click(p,'music-toggle');
@@ -89,7 +89,7 @@ test('production soundtrack module with production controls',async t=>{
       audioState.ended=false;
     });
     assert.equal(await phase(p),'suspended');
-    assert.equal(await p.locator('#music-track-number').innerText(),'2 من 17');
+    assert.equal(await p.locator('#music-track-number').innerText(),'2 من 26');
     assert.equal(await p.evaluate(()=>plays.length),1);
     assert.equal(await p.evaluate(()=>document.getElementById('site-soundtrack').paused),true);
     await p.evaluate(()=>manager.setMediaActive(false));
@@ -99,14 +99,14 @@ test('production soundtrack module with production controls',async t=>{
     assert.equal(await phase(p),'playing');
   }));
   await t.test('last track wraps silently during suspension; explicit stop prevents resume',()=>check(async p=>{
-    await click(p,'music-settings-label');await p.locator('#music-track-picker').selectOption('16');
+    await click(p,'music-settings-label');await p.locator('#music-track-picker').selectOption('25');
     await click(p,'music-toggle');
     await p.evaluate(()=>{
       audioState.ended=true;manager.setMediaActive(true);
       document.getElementById('site-soundtrack').dispatchEvent(new Event('ended'));
       audioState.ended=false;
     });
-    assert.equal(await p.locator('#music-track-number').innerText(),'1 من 17');
+    assert.equal(await p.locator('#music-track-number').innerText(),'1 من 26');
     assert.equal(await p.evaluate(()=>plays.length),1);
     await click(p,'music-toggle');
     await p.evaluate(()=>{manager.setMediaActive(false);plays[0].resolve();});
@@ -132,7 +132,7 @@ test('production soundtrack module with production controls',async t=>{
   }));
   await t.test('singleton, one background audio, repeat factory preserves preferences',()=>check(async p=>{
     assert.equal(await p.locator('audio').count(),1);
-    assert.equal(await p.locator('#music-track-picker option').count(),13);
+    assert.equal(await p.locator('#music-track-picker option').count(),26);
     assert.equal(await p.evaluate(()=>factory(new URL('/',location.href))===manager),true);
     assert.equal(await p.evaluate(()=>localStorage.getItem('raven_music_cinematic_v1')),'off');
     await click(p,'music-next');assert.equal(await p.evaluate(()=>document.getElementById('site-soundtrack').paused),true);

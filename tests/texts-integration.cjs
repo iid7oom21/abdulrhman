@@ -21,7 +21,7 @@ test('approved labels through actual static dialogue and the single soundtrack U
   const server=http.createServer((req,res)=>{
     let pathname=new URL(req.url,'http://local').pathname;if(pathname.endsWith('/'))pathname+='index.html';
     const file=path.resolve(root,'.'+pathname);if(!file.startsWith(root+path.sep)){res.writeHead(403);return res.end();}
-    try{const mime={'.js':'text/javascript','.html':'text/html; charset=utf-8','.css':'text/css','.json':'application/json','.mp3':'audio/mpeg','.jpg':'image/jpeg','.webp':'image/webp'};
+    try{const mime={'.js':'text/javascript','.html':'text/html; charset=utf-8','.css':'text/css','.json':'application/json','.mp3':'audio/mpeg','.m4a':'audio/mp4','.jpg':'image/jpeg','.webp':'image/webp'};
       res.setHeader('Content-Type',mime[path.extname(file)]||'application/octet-stream');res.end(fs.readFileSync(file));}
     catch{res.writeHead(404);res.end();}
   });
@@ -40,7 +40,7 @@ test('approved labels through actual static dialogue and the single soundtrack U
     await page.locator('#status').filter({hasText:pack['dialogue_status_texts_bilingual_v1.0.1'].save_confirmed[lang]}).waitFor();
     assert.match(await page.locator('#mode-badge').innerText(),/محاكاة|simulation/);
     await page.goto(base+'/raven/?lang='+lang);
-    await page.waitForFunction(()=>document.querySelectorAll('#music-track-picker option').length===13);
+    await page.waitForFunction(()=>document.querySelectorAll('#music-track-picker option').length===26);
     assert.equal(await page.locator('audio').count(),1);
     assert.equal(await page.locator('#music-track-picker').getAttribute('aria-label'),pack['music_player_texts_bilingual_v1.0.0_8songs'].choose_song[lang]);
     assert.equal(await page.locator('#music-prev').innerText(),pack['music_player_texts_bilingual_v1.0.0_8songs'].previous[lang]);

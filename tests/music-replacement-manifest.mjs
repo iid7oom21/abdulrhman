@@ -1,6 +1,5 @@
-// RAVEN staged soundtrack migration guard.
-// Until new media files are uploaded and verified, the live player must use the existing 13 songs.
-// Run: node tests/music-replacement-manifest.mjs [--require-media]
+// Soundtrack migration validation: staging branch may have no media; release requires --require-media.
+// node tests/music-replacement-manifest.mjs --require-media
 import { readFileSync, existsSync, statSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -10,36 +9,32 @@ const root = dirname(dirname(fileURLToPath(import.meta.url)));
 const manifest = JSON.parse(readFileSync(join(root, 'raven/music-replacement/manifest.json'), 'utf8'));
 const release = JSON.parse(readFileSync(join(root, 'raven/release.json'), 'utf8'));
 const player = readFileSync(join(root, 'site-audio.js'), 'utf8');
-const pending = manifest.status === 'pending-media-and-audio-deduplication';
-const liveFiles = [...player.matchAll(/file: '([^']+)'/g)].map(match => match[1]);
-const oldCount = liveFiles.filter(file => file.startsWith('assets/audio/raven/')).length;
-const proposedCount = liveFiles.filter(file => file.startsWith('assets/audio/raven-replacement/')).length;
+const requireMedia = process.argv.includes('--require-media');
+const sourceNames = new Set();
+const targetNames = new Set();
+const playlist = [...player.matchAll(/file: '([^']+)'/g)].map(match => match[1]);
 
-assert.equal(manifest.tracks.length, 17, 'original candidate count before audio-deduplication');
-if (pending) {
-  assert.equal(release.musicTracks, 13, 'keep 13 existing songs live while replacement is pending');
-  assert.equal(oldCount, 13, 'the live player must reference existing audio');
-  assert.equal(proposedCount, 0, 'the live player must not reference unpublished audio');
-} else {
-  assert.equal(release.musicTracks, manifest.tracks.length, 'the release count must match verified media');
-  assert.equal(proposedCount, manifest.tracks.length, 'the player must list verified files');
-}
-
-const requireMedia = process.argv.includes('--require-media') || !pending;
-const paths = new Set();
+assert.equal(manifest.tracks.length, 26, '26 audio-distinct candidates expected after exact byte deduplication');
+assert.equal(release.musicTracks, 26, 'staged release must describe 26 songs');
+assert.equal(playlist.length, 26, 'player must display 26 songs');
+assert.equal(playlist.filter(file => file.endsWith('.m4a')).length, 26, 'player must serve M4A / native AAC');
+assert.equal(manifest.audio_file_upload_required, true, 'uploads are required before release');
 for (const [index, track] of manifest.tracks.entries()) {
-  assert.equal(track.order, index + 1, 'track order must be contiguous');
-  assert.ok(track.source_mp4.endsWith('.mp4'), 'source must be MP4');
-  assert.ok(track.target_mp3.startsWith('assets/audio/raven-replacement/') && track.target_mp3.endsWith('.mp3'), 'target must be MP3 in replacement directory');
-  assert.ok(!paths.has(track.target_mp3), 'target paths must be unique');
-  paths.add(track.target_mp3);
-  if (!pending) assert.ok(liveFiles.includes(track.target_mp3), 'the player must reference ' + track.target_mp3);
+  assert.equal(track.order, index + 1, 'track order is contiguous');
+  assert.ok(track.source_mp4.endsWith('.mp4'), 'source file must be MP4');
+  assert.ok(track.target_m4a.startsWith('assets/audio/raven-replacement/'), 'target path is within replacement folder');
+  assert.ok(track.target_m4a.endsWith('.m4a'), 'target must be M4A');
+  assert.ok(!sourceNames.has(track.source_mp4), 'no repeated source name');
+  assert.ok(!targetNames.has(track.target_m4a), 'no repeated target name');
+  sourceNames.add(track.source_mp4);
+  targetNames.add(track.target_m4a);
+  assert.equal(playlist[index], track.target_m4a, 'playlist order must match manifest');
   if (requireMedia) {
-    const dest = join(root, track.target_mp3);
-    assert.ok(existsSync(dest), 'missing audio file: ' + track.target_mp3);
-    assert.ok(statSync(dest).size > 4096, 'audio file too small: ' + track.target_mp3);
+    const fullPath = join(root, track.target_m4a);
+    assert.ok(existsSync(fullPath), 'audio file not present: ' + track.target_m4a);
+    assert.ok(statSync(fullPath).size > 4096, 'invalid audio size: ' + track.target_m4a);
   }
 }
-console.log(pending
-  ? 'RAVEN replacement audio pending: 17 candidates staged; the original 13-song playlist remains active'
-  : 'RAVEN replacement playlist checked: ' + manifest.tracks.length + ' tracks');
+assert.equal(manifest.removed_exact_duplicates.length, 1);
+console.log('RAVEN music validated: 26 M4A song references' +
+  (requireMedia ? ' with media assets' : ' (staging references only; NOT safe to publish)'));

@@ -3,19 +3,32 @@ let soundtrack;
 
 // Play order. Each file sits under the site root; titles come from the files' own tags.
 export const TRACKS = [
-  { title: 'Raven: Return of the Shadows', file: 'assets/audio/raven/01.mp3' },
-  { title: 'Raven by Abdulrahman', file: 'assets/audio/raven/02.mp3' },
-  { title: 'RAVEN — A Beautiful Alibi', file: 'assets/audio/raven/03.mp3' },
-  { title: 'RAVEN — Keep Me Guessing', file: 'assets/audio/raven/04.mp3' },
-  { title: 'RAVEN — Keep Me Guessing', file: 'assets/audio/raven/05.mp3' },
-  { title: 'Raven', file: 'assets/audio/raven/06.mp3' },
-  { title: 'Raven: Return of the Shadows', file: 'assets/audio/raven/07.mp3' },
-  { title: 'RAVEN — A Beautiful Alibi', file: 'assets/audio/raven/08.mp3' },
-  { title: 'Raven by Abdulrahman', file: 'assets/audio/raven/09.mp3' },
-  { title: 'Raven, Keep Me Guessing', file: 'assets/audio/raven/10.mp3' },
-  { title: 'Raven', file: 'assets/audio/raven/11.mp3' },
-  { title: 'Raven, Keep Me Guessing', file: 'assets/audio/raven/12.mp3' },
-  { title: 'RAVEN — Keep Me Guessing', file: 'assets/audio/raven/13.mp3' }
+  { title: 'RAVEN · 35540', file: 'assets/audio/raven-replacement/35540.m4a' },
+  { title: 'RAVEN · 35539', file: 'assets/audio/raven-replacement/35539.m4a' },
+  { title: 'RAVEN · 35537', file: 'assets/audio/raven-replacement/35537.m4a' },
+  { title: 'RAVEN · 35542', file: 'assets/audio/raven-replacement/35542.m4a' },
+  { title: 'RAVEN · 35534', file: 'assets/audio/raven-replacement/35534.m4a' },
+  { title: 'RAVEN · 35532', file: 'assets/audio/raven-replacement/35532.m4a' },
+  { title: 'RAVEN · 35531', file: 'assets/audio/raven-replacement/35531.m4a' },
+  { title: 'RAVEN · 35530', file: 'assets/audio/raven-replacement/35530.m4a' },
+  { title: 'RAVEN · 35529', file: 'assets/audio/raven-replacement/35529.m4a' },
+  { title: 'RAVEN · 35528', file: 'assets/audio/raven-replacement/35528.m4a' },
+  { title: 'RAVEN · 35525', file: 'assets/audio/raven-replacement/35525.m4a' },
+  { title: 'RAVEN · 35524', file: 'assets/audio/raven-replacement/35524.m4a' },
+  { title: 'RAVEN · 35523', file: 'assets/audio/raven-replacement/35523.m4a' },
+  { title: 'RAVEN · 35521', file: 'assets/audio/raven-replacement/35521.m4a' },
+  { title: 'RAVEN · 35520', file: 'assets/audio/raven-replacement/35520.m4a' },
+  { title: 'RAVEN · 35519', file: 'assets/audio/raven-replacement/35519.m4a' },
+  { title: 'RAVEN · 35478', file: 'assets/audio/raven-replacement/35478.m4a' },
+  { title: 'RAVEN · 35480', file: 'assets/audio/raven-replacement/35480.m4a' },
+  { title: 'RAVEN · 35483', file: 'assets/audio/raven-replacement/35483.m4a' },
+  { title: 'RAVEN · 35484', file: 'assets/audio/raven-replacement/35484.m4a' },
+  { title: 'RAVEN · 35486', file: 'assets/audio/raven-replacement/35486.m4a' },
+  { title: 'RAVEN · 35487', file: 'assets/audio/raven-replacement/35487.m4a' },
+  { title: 'RAVEN · 35488', file: 'assets/audio/raven-replacement/35488.m4a' },
+  { title: 'RAVEN · 35489', file: 'assets/audio/raven-replacement/35489.m4a' },
+  { title: 'RAVEN · 35490', file: 'assets/audio/raven-replacement/35490.m4a' },
+  { title: 'RAVEN · 35504', file: 'assets/audio/raven-replacement/35504.m4a' },
 ];
 
 // The outer document owns this one player throughout navigation.
@@ -42,7 +55,7 @@ export function createSoundtrack(rootURL) {
   const download = document.querySelector('.music-download');
   const volumeKey = 'raven_music_volume_v1';
   const cinematicKey = 'raven_music_cinematic_v1';
-  const trackKey = 'raven_music_track_v1';
+  const trackKey = 'raven_music_track_v3';
   const muteKey = 'raven_music_muted_v1';
   const base = rootURL;
   // The visitor asked for playback. Pages always start paused.
@@ -83,7 +96,7 @@ export function createSoundtrack(rootURL) {
   function setDownload() {
     if (!download) return;
     download.href = trackURL(index);
-    download.setAttribute('download', `RAVEN-${String(index + 1).padStart(2, '0')}.mp3`);
+    download.setAttribute('download', `RAVEN-${String(index + 1).padStart(2, '0')}.m4a`);
   }
 
   function active() {
@@ -146,7 +159,7 @@ export function createSoundtrack(rootURL) {
     region?.setAttribute('aria-label', english ? 'RAVEN music' : 'أغنية رايفن');
     if (download) {
       download.setAttribute('aria-label', english ? 'Download the RAVEN song' : 'تنزيل أغنية رايفن');
-      download.textContent = english ? 'Download song · MP3' : 'تنزيل الأغنية · MP3';
+      download.textContent = english ? 'Download song · M4A' : 'تنزيل الأغنية · M4A';
     }
     volume.setAttribute('aria-label', english ? 'Music volume' : 'مستوى صوت الأغنية');
     if (volumeLabel) volumeLabel.textContent = english ? 'Volume' : 'الصوت';

@@ -40,9 +40,9 @@ $seen = @{}
 $report = @()
 foreach ($track in $manifest.tracks) {
   $mp4 = Join-Path $source $track.source_mp4
-  $output = Join-Path $root $track.target_mp3
-  Write-Host ('Converting ' + $track.source_mp4 + ' -> ' + $track.target_mp3)
-  & ffmpeg -nostdin -hide_banner -loglevel error -y -i $mp4 -map 0:a:0 -vn -c:a libmp3lame -q:a 2 -id3v2_version 3 -metadata ('title=' + $track.display_title) $output
+  $output = Join-Path $root $track.target_m4a
+  Write-Host ('Extracting without re-encoding ' + $track.source_mp4 + ' -> ' + $track.target_m4a)
+  & ffmpeg -nostdin -hide_banner -loglevel error -y -i $mp4 -map 0:a:0 -vn -c:a copy -movflags +faststart -metadata ('title=' + $track.display_title) $output
   if ($LASTEXITCODE -ne 0 -or -not (Test-Path -LiteralPath $output -PathType Leaf)) {
     throw ('Audio extraction failed: ' + $track.source_mp4)
   }
@@ -62,7 +62,7 @@ foreach ($track in $manifest.tracks) {
   }
   $report += [pscustomobject]@{
     source = $track.source_mp4
-    output = $track.target_mp3
+    output = $track.target_m4a
     duration_seconds = $duration
     sha256_pcm = $fingerprint.Replace('SHA256=', '')
     bytes = (Get-Item -LiteralPath $output).Length
@@ -70,5 +70,5 @@ foreach ($track in $manifest.tracks) {
 }
 $reportPath = Join-Path $root 'raven/music-replacement/conversion-report.json'
 $report | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $reportPath -Encoding UTF8
-Write-Host ('Converted ' + $report.Count + ' MP3 files. Report: ' + $reportPath)
+Write-Host ('Converted ' + $report.Count + ' M4A files. Report: ' + $reportPath)
 Write-Host 'The live site has NOT been changed. Review duplicates and upload audio to the draft branch before merging.'
