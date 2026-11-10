@@ -5,7 +5,10 @@
   "publicMode": "static-site-with-optional-written-case-server",
   "storyIncludedInPublicBundle": false,
   "providerCallsRequired": false,
-  "musicTracks": 13,
+  "musicTracks": 24,
   "raven17Episodes": 3,
-  "languages": ["ar", "en"]
+  "languages": [
+    "ar",
+    "en"
+  ]
 }
