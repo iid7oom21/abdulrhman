@@ -3,23 +3,19 @@ let soundtrack;
 
 // Play order. Each file sits under the site root; titles come from the files' own tags.
 export const TRACKS = [
-  { title: 'RAVEN · 35540', file: 'assets/audio/raven-replacement/35540.mp3' },
-  { title: 'RAVEN · 35539', file: 'assets/audio/raven-replacement/35539.mp3' },
-  { title: 'RAVEN · 35537', file: 'assets/audio/raven-replacement/35537.mp3' },
-  { title: 'RAVEN · 35542', file: 'assets/audio/raven-replacement/35542.mp3' },
-  { title: 'RAVEN · 35535', file: 'assets/audio/raven-replacement/35535.mp3' },
-  { title: 'RAVEN · 35534', file: 'assets/audio/raven-replacement/35534.mp3' },
-  { title: 'RAVEN · 35532', file: 'assets/audio/raven-replacement/35532.mp3' },
-  { title: 'RAVEN · 35531', file: 'assets/audio/raven-replacement/35531.mp3' },
-  { title: 'RAVEN · 35530', file: 'assets/audio/raven-replacement/35530.mp3' },
-  { title: 'RAVEN · 35529', file: 'assets/audio/raven-replacement/35529.mp3' },
-  { title: 'RAVEN · 35528', file: 'assets/audio/raven-replacement/35528.mp3' },
-  { title: 'RAVEN · 35525', file: 'assets/audio/raven-replacement/35525.mp3' },
-  { title: 'RAVEN · 35524', file: 'assets/audio/raven-replacement/35524.mp3' },
-  { title: 'RAVEN · 35523', file: 'assets/audio/raven-replacement/35523.mp3' },
-  { title: 'RAVEN · 35521', file: 'assets/audio/raven-replacement/35521.mp3' },
-  { title: 'RAVEN · 35520', file: 'assets/audio/raven-replacement/35520.mp3' },
-  { title: 'RAVEN · 35519', file: 'assets/audio/raven-replacement/35519.mp3' },
+  { title: 'Raven: Return of the Shadows', file: 'assets/audio/raven/01.mp3' },
+  { title: 'Raven by Abdulrahman', file: 'assets/audio/raven/02.mp3' },
+  { title: 'RAVEN — A Beautiful Alibi', file: 'assets/audio/raven/03.mp3' },
+  { title: 'RAVEN — Keep Me Guessing', file: 'assets/audio/raven/04.mp3' },
+  { title: 'RAVEN — Keep Me Guessing', file: 'assets/audio/raven/05.mp3' },
+  { title: 'Raven', file: 'assets/audio/raven/06.mp3' },
+  { title: 'Raven: Return of the Shadows', file: 'assets/audio/raven/07.mp3' },
+  { title: 'RAVEN — A Beautiful Alibi', file: 'assets/audio/raven/08.mp3' },
+  { title: 'Raven by Abdulrahman', file: 'assets/audio/raven/09.mp3' },
+  { title: 'Raven, Keep Me Guessing', file: 'assets/audio/raven/10.mp3' },
+  { title: 'Raven', file: 'assets/audio/raven/11.mp3' },
+  { title: 'Raven, Keep Me Guessing', file: 'assets/audio/raven/12.mp3' },
+  { title: 'RAVEN — Keep Me Guessing', file: 'assets/audio/raven/13.mp3' }
 ];
 
 // The outer document owns this one player throughout navigation.
@@ -46,7 +42,7 @@ export function createSoundtrack(rootURL) {
   const download = document.querySelector('.music-download');
   const volumeKey = 'raven_music_volume_v1';
   const cinematicKey = 'raven_music_cinematic_v1';
-  const trackKey = 'raven_music_track_v2';
+  const trackKey = 'raven_music_track_v1';
   const muteKey = 'raven_music_muted_v1';
   const base = rootURL;
   // The visitor asked for playback. Pages always start paused.
