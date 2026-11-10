@@ -94,7 +94,7 @@ test('production soundtrack module with production controls',async t=>{
     assert.equal(await p.evaluate(()=>document.getElementById('site-soundtrack').paused),true);
     await p.evaluate(()=>manager.setMediaActive(false));
     assert.equal(await p.evaluate(()=>plays.length),2);
-    assert.match(await p.locator('#site-soundtrack').getAttribute('src'),/35539\.mp3$/);
+    assert.match(await p.locator('#site-soundtrack').getAttribute('src'),/35539\.m4a$/);
     await p.evaluate(()=>plays[1].resolve());
     assert.equal(await phase(p),'playing');
   }));
