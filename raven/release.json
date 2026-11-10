@@ -1,15 +1,11 @@
 {
-  "release": "2026-11-10-soundtrack-26-staging",
+  "release": "2026-11-08-case-play-1",
   "interfaceVersion": "case-play-1",
   "caseApiVersion": 1,
   "publicMode": "static-site-with-optional-written-case-server",
   "storyIncludedInPublicBundle": false,
   "providerCallsRequired": false,
-  "musicTracks": 26,
+  "musicTracks": 13,
   "raven17Episodes": 3,
-  "languages": [
-    "ar",
-    "en"
-  ],
-  "mediaStatus": "pending-GitHub-audio-upload"
+  "languages": ["ar", "en"]
 }
