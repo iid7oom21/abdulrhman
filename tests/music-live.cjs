@@ -6,7 +6,7 @@ const assert=require('node:assert/strict');
   const page=await browser.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>{sessionStorage.setItem('raven_studio_ident_v1','1');localStorage.setItem('raven_music_cinematic_v1','off');});
   await page.goto(process.env.RAVEN_MUSIC_URL || 'http://127.0.0.1:10002/raven/',{waitUntil:'domcontentloaded'});
-  await page.waitForFunction(()=>document.querySelectorAll('#music-track-picker option').length===17);
+  await page.waitForFunction(()=>document.querySelectorAll('#music-track-picker option').length===13);
   await page.locator('#music-toggle').click();
   await page.waitForFunction(()=>{const a=document.getElementById('site-soundtrack');return !a.paused && a.currentTime>0.1 && a.readyState>=3;});
   console.log('Actual browser MP3 playback:',await page.locator('#site-soundtrack').evaluate(a=>({src:a.currentSrc,time:a.currentTime,ready:a.readyState,error:a.error,paused:a.paused})));
