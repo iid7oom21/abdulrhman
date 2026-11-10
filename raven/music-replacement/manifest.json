@@ -1,181 +1,240 @@
 {
-  "version": "2026-11-10-stage-26",
-  "status": "media-converted-locally-not-published",
+  "version": "2026-11-10-verified-mp3-24",
+  "status": "media-converted-locally-not-committed",
   "original_playlist_count": 13,
-  "candidate_uploads": 30,
-  "distinct_source_video_names": 27,
-  "byte_unique_audio_sources": 26,
-  "removed_exact_duplicates": [
+  "source_uploads_checked": 30,
+  "different_source_names": 27,
+  "distinct_audio_tracks": 24,
+  "source_audio_codec": "AAC (approx 192 kbps)",
+  "output_format": "MP3 (LAME VBR q=2)",
+  "audio_file_upload_required": true,
+  "old_audio_files_must_remain": true,
+  "requires_owner_approval_before_merge": true,
+  "excluded_audio_duplicates": [
     {
-      "source_mp4": "35535.mp4",
-      "same_as": "35542.mp4"
+      "removed": "35535.mp4",
+      "kept": "35542.mp4",
+      "method": "file SHA-256 identical"
+    },
+    {
+      "removed": "35528.mp4",
+      "kept": "35529.mp4",
+      "method": "Chromaprint .9822; wave correlation around .95-.96"
+    },
+    {
+      "removed": "35487.mp4",
+      "kept": "35486.mp4",
+      "method": "Chromaprint .9718; wave correlation around .998"
+    },
+    {
+      "removed": "35529(1).mp4",
+      "kept": "35529.mp4",
+      "method": "file SHA-256 identical"
+    },
+    {
+      "removed": "35530(1).mp4",
+      "kept": "35530.mp4",
+      "method": "file SHA-256 identical"
+    },
+    {
+      "removed": "35531(1).mp4",
+      "kept": "35531.mp4",
+      "method": "file SHA-256 identical"
     }
   ],
-  "repeat_filenames_across_batched_uploads": [
-    "35529.mp4",
-    "35530.mp4",
-    "35531.mp4"
-  ],
-  "source_audio_codec": "AAC",
-  "output_format": "M4A (AAC stream copied without re-encoding)",
-  "audio_file_upload_required": true,
-  "notes": "Draft branch only: no new media is hosted in GitHub; do not merge until media files are available. Original 13-song assets must remain for rollback. Titles are filename-based placeholders.",
+  "notes": "Validated original media bytes on 2026-11-10. The 24 MP3 binaries were converted and decoded locally, but MUST still be uploaded to the staging branch, checked in browser, and approved by owner BEFORE any merge. Original published 13 songs remain untouched. Song titles are unverified numeric placeholders.",
   "tracks": [
     {
       "order": 1,
       "source_mp4": "35540.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35540.m4a",
-      "display_title": "RAVEN · 35540"
+      "target_mp3": "assets/audio/raven-replacement/35540.mp3",
+      "display_title": "RAVEN · 35540",
+      "output_bytes": 7206709,
+      "sha256_mp3": "14737f0f4fadf2099aa795310cf8382248737273eda15cbd007d85e8d77a8499"
     },
     {
       "order": 2,
       "source_mp4": "35539.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35539.m4a",
-      "display_title": "RAVEN · 35539"
+      "target_mp3": "assets/audio/raven-replacement/35539.mp3",
+      "display_title": "RAVEN · 35539",
+      "output_bytes": 6302101,
+      "sha256_mp3": "b64efc1bfe861cc9ef6d4630888b8d3175dbf3593b02be51253bb4c481d2fe79"
     },
     {
       "order": 3,
       "source_mp4": "35537.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35537.m4a",
-      "display_title": "RAVEN · 35537"
+      "target_mp3": "assets/audio/raven-replacement/35537.mp3",
+      "display_title": "RAVEN · 35537",
+      "output_bytes": 6611797,
+      "sha256_mp3": "3391e200a7f4da5adc1c4b391f8e3c0864950d6ed44ac27f2ab7b43bc80914c5"
     },
     {
       "order": 4,
       "source_mp4": "35542.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35542.m4a",
-      "display_title": "RAVEN · 35542"
+      "target_mp3": "assets/audio/raven-replacement/35542.mp3",
+      "display_title": "RAVEN · 35542",
+      "output_bytes": 6994837,
+      "sha256_mp3": "cc2580d6466f3f15f9abdbd73c69d36a9ab92c44ed6ddd81d76ff785849dc987"
     },
     {
       "order": 5,
       "source_mp4": "35534.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35534.m4a",
-      "display_title": "RAVEN · 35534"
+      "target_mp3": "assets/audio/raven-replacement/35534.mp3",
+      "display_title": "RAVEN · 35534",
+      "output_bytes": 5792101,
+      "sha256_mp3": "9c238ea914915e901b643454278cca4018e397368bfd2d7bf794fed93e2603ee"
     },
     {
       "order": 6,
       "source_mp4": "35532.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35532.m4a",
-      "display_title": "RAVEN · 35532"
+      "target_mp3": "assets/audio/raven-replacement/35532.mp3",
+      "display_title": "RAVEN · 35532",
+      "output_bytes": 6630805,
+      "sha256_mp3": "2d66bff5bfd8664844c762ac2ec0814a2baae9fe9bd96317eaaa47ddd57a8e99"
     },
     {
       "order": 7,
       "source_mp4": "35531.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35531.m4a",
-      "display_title": "RAVEN · 35531"
+      "target_mp3": "assets/audio/raven-replacement/35531.mp3",
+      "display_title": "RAVEN · 35531",
+      "output_bytes": 6260629,
+      "sha256_mp3": "99dcaae98a2a17eb2d48ac9a7978e98fb475a74bd52d37383e32147dd1afd363"
     },
     {
       "order": 8,
       "source_mp4": "35530.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35530.m4a",
-      "display_title": "RAVEN · 35530"
+      "target_mp3": "assets/audio/raven-replacement/35530.mp3",
+      "display_title": "RAVEN · 35530",
+      "output_bytes": 6565285,
+      "sha256_mp3": "cfb78c539adc1f656a7ea9d2abf4a25bd7cea9d5dfd91547e1548d002502524c"
     },
     {
       "order": 9,
       "source_mp4": "35529.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35529.m4a",
-      "display_title": "RAVEN · 35529"
+      "target_mp3": "assets/audio/raven-replacement/35529.mp3",
+      "display_title": "RAVEN · 35529",
+      "output_bytes": 5083237,
+      "sha256_mp3": "f09a9a852c42c3db6c530f37691ce89c8b47d1a42d74e73fc03cfbd25e142c0d"
     },
     {
       "order": 10,
-      "source_mp4": "35528.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35528.m4a",
-      "display_title": "RAVEN · 35528"
+      "source_mp4": "35525.mp4",
+      "target_mp3": "assets/audio/raven-replacement/35525.mp3",
+      "display_title": "RAVEN · 35525",
+      "output_bytes": 6580501,
+      "sha256_mp3": "78f91f2c8e3baef61bdba64181fc8f8d3b527f382f82884d0c9958871ce198e2"
     },
     {
       "order": 11,
-      "source_mp4": "35525.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35525.m4a",
-      "display_title": "RAVEN · 35525"
+      "source_mp4": "35524.mp4",
+      "target_mp3": "assets/audio/raven-replacement/35524.mp3",
+      "display_title": "RAVEN · 35524",
+      "output_bytes": 6648133,
+      "sha256_mp3": "d8c00b7e5f229daec6cd304eca21c4a7e6b73b6a6ad80c098d91fd81b767c12e"
     },
     {
       "order": 12,
-      "source_mp4": "35524.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35524.m4a",
-      "display_title": "RAVEN · 35524"
+      "source_mp4": "35523.mp4",
+      "target_mp3": "assets/audio/raven-replacement/35523.mp3",
+      "display_title": "RAVEN · 35523",
+      "output_bytes": 6881893,
+      "sha256_mp3": "fffb7fa5d416f6de4dbc9f06c6346474f8bcb551cc96d520e4b0848fe91140fc"
     },
     {
       "order": 13,
-      "source_mp4": "35523.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35523.m4a",
-      "display_title": "RAVEN · 35523"
+      "source_mp4": "35521.mp4",
+      "target_mp3": "assets/audio/raven-replacement/35521.mp3",
+      "display_title": "RAVEN · 35521",
+      "output_bytes": 6705493,
+      "sha256_mp3": "497282c1b00e296d00c31c864a162daf2277012a8b590772d535a55cd1e82aef"
     },
     {
       "order": 14,
-      "source_mp4": "35521.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35521.m4a",
-      "display_title": "RAVEN · 35521"
+      "source_mp4": "35520.mp4",
+      "target_mp3": "assets/audio/raven-replacement/35520.mp3",
+      "display_title": "RAVEN · 35520",
+      "output_bytes": 6349165,
+      "sha256_mp3": "9560313b4fd72d65468a386f13413308f915c8fa7c1d1ed1d1271e2ed849870c"
     },
     {
       "order": 15,
-      "source_mp4": "35520.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35520.m4a",
-      "display_title": "RAVEN · 35520"
+      "source_mp4": "35519.mp4",
+      "target_mp3": "assets/audio/raven-replacement/35519.mp3",
+      "display_title": "RAVEN · 35519",
+      "output_bytes": 6883141,
+      "sha256_mp3": "2f26adbc6d64376bb6474e1b265e6e6a0109d868d570485647fac2cc3d5f84da"
     },
     {
       "order": 16,
-      "source_mp4": "35519.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35519.m4a",
-      "display_title": "RAVEN · 35519"
+      "source_mp4": "35478.mp4",
+      "target_mp3": "assets/audio/raven-replacement/35478.mp3",
+      "display_title": "RAVEN · 35478",
+      "output_bytes": 5159557,
+      "sha256_mp3": "f81cbc9b91c2729895c5721f7aa7e342e0cddc2f1cc90c4a12cf2435bb621637"
     },
     {
       "order": 17,
-      "source_mp4": "35478.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35478.m4a",
-      "display_title": "RAVEN · 35478"
+      "source_mp4": "35480.mp4",
+      "target_mp3": "assets/audio/raven-replacement/35480.mp3",
+      "display_title": "RAVEN · 35480",
+      "output_bytes": 4849957,
+      "sha256_mp3": "e820c6ff087f4b8a2f3831f5c4e36822b92720419bbc600a9e6207f3bb768587"
     },
     {
       "order": 18,
-      "source_mp4": "35480.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35480.m4a",
-      "display_title": "RAVEN · 35480"
+      "source_mp4": "35483.mp4",
+      "target_mp3": "assets/audio/raven-replacement/35483.mp3",
+      "display_title": "RAVEN · 35483",
+      "output_bytes": 5064253,
+      "sha256_mp3": "5cee7c737a90b7a76168786c83da42b4aeb8e6514b7666f776eebad57dbfdbc0"
     },
     {
       "order": 19,
-      "source_mp4": "35483.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35483.m4a",
-      "display_title": "RAVEN · 35483"
+      "source_mp4": "35484.mp4",
+      "target_mp3": "assets/audio/raven-replacement/35484.mp3",
+      "display_title": "RAVEN · 35484",
+      "output_bytes": 5126701,
+      "sha256_mp3": "4f64507ba139182024a62d9176d93454c48857f767cd4ca0da7058171a024344"
     },
     {
       "order": 20,
-      "source_mp4": "35484.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35484.m4a",
-      "display_title": "RAVEN · 35484"
+      "source_mp4": "35486.mp4",
+      "target_mp3": "assets/audio/raven-replacement/35486.mp3",
+      "display_title": "RAVEN · 35486",
+      "output_bytes": 5102149,
+      "sha256_mp3": "44b3b58fb92d60fe63008702885ea6f2be759bd1fc7f81742d64e954a93ce819"
     },
     {
       "order": 21,
-      "source_mp4": "35486.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35486.m4a",
-      "display_title": "RAVEN · 35486"
+      "source_mp4": "35488.mp4",
+      "target_mp3": "assets/audio/raven-replacement/35488.mp3",
+      "display_title": "RAVEN · 35488",
+      "output_bytes": 5183221,
+      "sha256_mp3": "9809081f6fcf96e657b2e829fd647a4ed5907b6a973b763321cdc0ee0b66debc"
     },
     {
       "order": 22,
-      "source_mp4": "35487.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35487.m4a",
-      "display_title": "RAVEN · 35487"
+      "source_mp4": "35489.mp4",
+      "target_mp3": "assets/audio/raven-replacement/35489.mp3",
+      "display_title": "RAVEN · 35489",
+      "output_bytes": 4837597,
+      "sha256_mp3": "bb3bc8e2b65552d46d231cc7b4ccac684c943fcf768fc9dbc3a0374062bd2854"
     },
     {
       "order": 23,
-      "source_mp4": "35488.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35488.m4a",
-      "display_title": "RAVEN · 35488"
+      "source_mp4": "35490.mp4",
+      "target_mp3": "assets/audio/raven-replacement/35490.mp3",
+      "display_title": "RAVEN · 35490",
+      "output_bytes": 4802725,
+      "sha256_mp3": "310bfe0089312e4bd761ade2f41f6291724f15fb442cd9fb466e1a8a137d794b"
     },
     {
       "order": 24,
-      "source_mp4": "35489.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35489.m4a",
-      "display_title": "RAVEN · 35489"
-    },
-    {
-      "order": 25,
-      "source_mp4": "35490.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35490.m4a",
-      "display_title": "RAVEN · 35490"
-    },
-    {
-      "order": 26,
       "source_mp4": "35504.mp4",
-      "target_m4a": "assets/audio/raven-replacement/35504.m4a",
-      "display_title": "RAVEN · 35504"
+      "target_mp3": "assets/audio/raven-replacement/35504.mp3",
+      "display_title": "RAVEN · 35504",
+      "output_bytes": 4725109,
+      "sha256_mp3": "4d87bac1e2f98824f0ea0232decdb46bba5130ce1fe932b125084b62999e268f"
     }
   ]
 }
