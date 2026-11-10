@@ -25,8 +25,8 @@ if(existsSync(oldDir)){
 }
 for(const [i,t] of m.tracks.entries()){
   assert.equal(t.order,i+1,'track order');
-  assert.ok(/^\\d+\\.mp4$/.test(t.source_mp4),'source filename');
-  assert.ok(/^assets\\/audio\\/raven-replacement\\/\\d+\\.mp3$/.test(t.target_mp3),'MP3 path');
+  assert.ok(/^\d+\.mp4$/.test(t.source_mp4),'source filename');
+  assert.ok(/^assets\/audio\/raven-replacement\/\d+\.mp3$/.test(t.target_mp3),'MP3 path');
   assert.equal(list[i],t.target_mp3,'player manifest ordering');
   assert.ok(Number.isSafeInteger(t.output_bytes)&&t.output_bytes>4096,'expected MP3 size');
   assert.match(t.sha256_mp3,/^[0-9a-f]{64}$/,'expected MP3 SHA-256');
