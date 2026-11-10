@@ -1,10 +1,10 @@
 {
-  "version": "2026-11-10-stage-26",
+  "version": "2026-11-10-32-staged",
   "status": "media-converted-locally-not-published",
   "original_playlist_count": 13,
-  "candidate_uploads": 30,
-  "distinct_source_video_names": 27,
-  "byte_unique_audio_sources": 26,
+  "candidate_uploads": 40,
+  "distinct_source_video_names": 33,
+  "byte_unique_audio_sources": 32,
   "removed_exact_duplicates": [
     {
       "source_mp4": "35535.mp4",
@@ -14,7 +14,11 @@
   "repeat_filenames_across_batched_uploads": [
     "35529.mp4",
     "35530.mp4",
-    "35531.mp4"
+    "35531.mp4",
+    "35489.mp4",
+    "35490.mp4",
+    "35504.mp4",
+    "35519.mp4"
   ],
   "source_audio_codec": "AAC",
   "output_format": "M4A (AAC stream copied without re-encoding)",
@@ -176,6 +180,58 @@
       "source_mp4": "35504.mp4",
       "target_m4a": "assets/audio/raven-replacement/35504.m4a",
       "display_title": "RAVEN · 35504"
+    },
+    {
+      "order": 27,
+      "source_mp4": "35512.mp4",
+      "target_m4a": "assets/audio/raven-replacement/35512.m4a",
+      "display_title": "RAVEN · 35512"
+    },
+    {
+      "order": 28,
+      "source_mp4": "35513.mp4",
+      "target_m4a": "assets/audio/raven-replacement/35513.m4a",
+      "display_title": "RAVEN · 35513"
+    },
+    {
+      "order": 29,
+      "source_mp4": "35514.mp4",
+      "target_m4a": "assets/audio/raven-replacement/35514.m4a",
+      "display_title": "RAVEN · 35514"
+    },
+    {
+      "order": 30,
+      "source_mp4": "35515.mp4",
+      "target_m4a": "assets/audio/raven-replacement/35515.m4a",
+      "display_title": "RAVEN · 35515"
+    },
+    {
+      "order": 31,
+      "source_mp4": "35517.mp4",
+      "target_m4a": "assets/audio/raven-replacement/35517.m4a",
+      "display_title": "RAVEN · 35517"
+    },
+    {
+      "order": 32,
+      "source_mp4": "35518.mp4",
+      "target_m4a": "assets/audio/raven-replacement/35518.m4a",
+      "display_title": "RAVEN · 35518"
     }
-  ]
+  ],
+  "newest_batch_uploaded": 10,
+  "newest_batch_repeats": [
+    "35489.mp4",
+    "35490.mp4",
+    "35504.mp4",
+    "35519.mp4"
+  ],
+  "newest_batch_new_sources": [
+    "35512.mp4",
+    "35513.mp4",
+    "35514.mp4",
+    "35515.mp4",
+    "35517.mp4",
+    "35518.mp4"
+  ],
+  "note": "32 prepared, byte-distinct AAC/M4A tracks across all four upload batches; 6 new sources from latest batch. AUDIO NOT UPLOADED TO GITHUB. Keep live 13-song player until all 32 new media files have been uploaded and tested; filenames are placeholders, not verified track titles."
 }
