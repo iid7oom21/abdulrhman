@@ -14,6 +14,7 @@
 
 ابدأ الحوار بـ `npm start` وافتح `http://127.0.0.1:10000`. لا حاجة إلى مفتاح أو رصيد في وضع المحاكاة الافتراضي.
 لربط OpenAI اقرأ [دليل الحوار](server/ai-dialogue/README.md). لا تضع مفتاحًا في HTML أو Git أو المحادثة.
+فحص مسارات حزمة قصة خاصة قبل تشغيلها: `node server/ai-dialogue/scripts/check-case.mjs` ([التفاصيل](docs/CASE-LOCAL.md)).
 اختبارات المنطق وHTTP: `npm test`. اختبارات المتصفح: `CHROMIUM_PATH=/usr/bin/chromium npm run test:browser` (تحتاج Playwright).
 بناء نموذج الاستوديو منفصل: `npm ci --ignore-scripts` ثم `npm run build`.
 
