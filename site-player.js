@@ -1,5 +1,5 @@
 // The host owns one soundtrack while the content document changes.
-import { createSoundtrack } from './site-audio.js?v=playlist-races-4';
+import { createSoundtrack } from './site-audio.js?v=mati-1.0.1';
 import { createEntryGate } from './site-entry.js?v=intro-2';
 
 const root = new URL('./', import.meta.url);
@@ -10,7 +10,7 @@ const loadMessage = document.querySelector('#site-load-message');
 const retry = document.querySelector('#site-retry');
 const direct = document.querySelector('#site-direct');
 const soundtrack = createSoundtrack(root);
-const routes = ['raven/', 'raven/deleted-name/'].map(path => new URL(path, root).pathname);
+const routes = ['raven/', 'raven/deleted-name/', 'raven/deleted-name/play/'].map(path => new URL(path, root).pathname);
 const pageMetadata = [
   'meta[name="description"]', 'meta[property^="og:"]', 'meta[name^="twitter:"]',
   'link[rel="canonical"]', 'link[rel="alternate"][hreflang]',
@@ -77,6 +77,7 @@ function restoreChild() {
 }
 
 function show(url, childState = null, view = null, force = false, focus = false) {
+  document.body.classList.remove('is-watching');
   destination = { url, childState, view, focus };
   const content = new URL(url);
   content.pathname += 'content.html';
@@ -128,6 +129,11 @@ window.RavenSite = {
   setMediaActive(child, source, active) {
     if (currentChild() && child === frame.contentWindow && source === loadedDocument) {
       soundtrack.setMediaActive(active);
+    }
+  },
+  setWatching(child, open) {
+    if (currentChild() && child === frame.contentWindow) {
+      document.body.classList.toggle('is-watching', Boolean(open));
     }
   },
   setDepth(child, value) {

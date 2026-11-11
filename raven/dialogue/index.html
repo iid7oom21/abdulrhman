@@ -1,9 +1,19 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+  <script src="../../assets/texts/raven-texts.js?v=mati-1.0.1"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>RAVEN — معاينة محادثة</title>
+  <meta name="description" content="معاينة محادثة تفاعلية من RAVEN «الاسم المحذوف»: اسأل الشخصية عمّا رأيته في المشهد، والردود محاكاة محلية لا تنشئ أدلة." />
+  <link rel="canonical" href="https://iid7oom21.github.io/abdulrhman/raven/dialogue/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="RAVEN — معاينة محادثة" />
+  <meta property="og:description" content="معاينة محادثة تفاعلية من RAVEN «الاسم المحذوف»: اسأل الشخصية عمّا رأيته في المشهد، والردود محاكاة محلية لا تنشئ أدلة." />
+  <meta property="og:url" content="https://iid7oom21.github.io/abdulrhman/raven/dialogue/" />
+  <meta property="og:image" content="https://iid7oom21.github.io/abdulrhman/assets/raven-home-share.jpg" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="stylesheet" href="../assets/raven-scene-art.css?v=scene-art-1">
   <style>
     @font-face {
       font-family: "Plex";
@@ -83,7 +93,7 @@
 <body>
   <header>
     <h1>RAVEN — الاسم المحذوف</h1>
-    <span class="badge">محاكاة</span>
+    <span class="badge" id="mode-badge">محاكاة محلية</span>
   </header>
   <main>
     <div class="row">
@@ -115,6 +125,7 @@
     <details id="materials-panel">
       <summary>الأقوال والتصحيحات ومواد المشاركة</summary>
       <p>تسجل هنا كلامك ومسوداتك. التصحيح يبقى إلى جانب القول الأصلي، ولا يجعل مضمونه حقيقة مثبتة. المواد في ذاكرة هذا المتصفح؛ نزّل نسخة للاحتفاظ بها.</p>
+      <figure class="raven-scene-art" data-scene-art="materials-before-sharing" aria-hidden="true" style="--raven-scene-top:-100%"><img src="../deleted-name/assets/scenes/investigation-scenes-v1.webp" width="1024" height="1536" alt="" loading="lazy" decoding="async"></figure>
       <div class="material-form">
         <label for="material-type">نوع المادة</label>
         <select id="material-type"><option value="statement">قول أصلي مني</option><option value="correction">تصحيح لقول مني</option><option value="motive">تفسير دافع</option><option value="private_note">ملاحظة خاصة</option><option value="report">مسودة تقرير</option></select>
@@ -135,9 +146,88 @@
       <p>التقرير هنا مسودة. الإيداع وإيصاله ينتظران المصدر المعتمد؛ لا يوجد زر يصنع إيصالًا أو دليلًا من نص الحوار.</p>
     </details>
   </main>
-  <footer>معاينة محاكاة — الردود ليست من نموذج ذكاء اصطناعي حقيقي. السجل في ذاكرة هذا المتصفح ويُفقد عند إعادة تشغيله. جلسة متصفح مجهولة وليست حسابًا موثقًا. نسخة محلية على هذا المتصفح إن سمح التخزين؛ لا يوجد حفظ دائم مضمون.</footer>
-  <script src="./local-api.js?v=dlg-1"></script>
+  <footer>معاينة محاكاة متصفح مستقلة — الردود ليست من نموذج ذكاء اصطناعي حقيقي. تُستعاد النسخة المحلية إذا نجح حفظها وبقيت بيانات هذا المتصفح؛ مسحها يفقدها. لا توجد مزامنة مع خادم أو حساب.</footer>
+  <script src="./local-api.js?v=bilingual-preview-4"></script>
   <script>
+  (() => {
+    const param = new URLSearchParams(location.search).get('lang');
+    let stored = null;
+    try { stored = localStorage.getItem('raven_language'); } catch (e) {}
+    const lang = param === 'en' || param === 'ar' ? param : stored === 'en' ? 'en' : 'ar';
+    const en = lang === 'en';
+    document.documentElement.lang = en ? 'en' : 'ar';
+    document.documentElement.dir = en ? 'ltr' : 'rtl';
+    window.ravenDialogueLang = en ? 'en' : 'ar';
+    window.ravenDialogueText = (ar, enText) => en ? enText : ar;
+    const badge = document.getElementById('mode-badge');
+    const server = window.RAVEN_DIALOGUE_MODE === 'server';
+    if (badge) badge.textContent = server
+      ? (en ? 'Server' : 'خادم')
+      : (en ? 'Local simulation' : 'محاكاة محلية');
+    if (!en) return;
+    const set = (sel, value, attr) => {
+      const el = document.querySelector(sel);
+      if (!el) return;
+      if (attr) el.setAttribute(attr, value); else el.textContent = value;
+    };
+    set('h1', 'RAVEN — The Deleted Name');
+    set('header + main > p', "Limited technical preview: the player is a record restorer who arrived after the library incident and the first response. The original statements are not available; simulated replies do not create evidence.");
+    set('#character', 'Character', 'aria-label');
+    set('#clear', 'Hide the view');
+    set('#player-help-title', 'How to ask in RAVEN');
+    const help = document.querySelectorAll('#player-help p, #player-help li');
+    const helpText = [
+      'Ask the character what they know, follow their answer calmly, and link your question to what appeared in the scene.',
+      'Ask about something specific you saw in the scene.',
+      "Follow the character's answer and ask for a simple clarification if needed.",
+      'Link your new question to what you learned from previous answers.',
+      'Instead of a general question, mention what you saw and ask: What do you know about this?'
+    ];
+    help.forEach((el, i) => { if (helpText[i]) el.textContent = helpText[i]; });
+    set('#input', 'Your question to the character', 'aria-label');
+    set('#input', 'Write your question...', 'placeholder');
+    set('#send', 'Send');
+    set('#check', 'Follow the original operation');
+    set('#stop', 'Stop waiting only');
+    set('#history', 'Load the record');
+    set('#log', 'Character record', 'aria-label');
+    set('#materials-panel summary', 'Statements, corrections, and shared materials');
+    set('#materials-panel > p', 'Record what you say and your drafts here. A correction stays beside the original statement and does not make it true. Materials are in this browser’s memory; download a copy to keep them.');
+    set('label[for="material-type"]', 'Material type');
+    const types = { statement: 'An original statement from me', correction: 'A correction of my statement', motive: 'A motive note', private_note: 'A private note', report: 'A report draft' };
+    document.querySelectorAll('#material-type option').forEach(opt => { if (types[opt.value]) opt.textContent = types[opt.value]; });
+    set('#original-label', 'The statement I am correcting');
+    set('label[for="material-text"]', 'Material text');
+    set('#report-fields p', 'Only the attachments explicitly chosen for this report draft:');
+    set('#material-save', 'Record the material');
+    set('#materials-list', 'My recorded materials', 'aria-label');
+    set('label[for="share-material"]', 'Material to share');
+    set('label[for="share-recipient"]', 'Recipient');
+    const names = { jonas: 'Jonas', claire: 'Claire', matteo: 'Matteo', elena: 'Elena' };
+    document.querySelectorAll('#character option, #share-recipient option').forEach(opt => { if (names[opt.value]) opt.textContent = names[opt.value]; });
+    set('#materials-panel .material-form + #materials-list + label + select + label + select + p', 'Sharing sends only the selected material. A report draft sends its chosen attachments; your motives and conversations are not attached automatically.');
+    set('#material-share', 'Share the selected material');
+    set('#material-check', 'Follow the original action');
+    set('#material-resend', 'Resend the pending action with the same id');
+    set('#material-refresh', 'Refresh materials');
+    set('#material-export', 'Download a copy');
+    set('#materials-panel h2', 'Materials that reached the selected recipient');
+    const notes = document.querySelectorAll('#materials-panel > p');
+    if (notes[1]) notes[1].textContent = 'Sharing sends only the selected material. A report draft sends its chosen attachments; your motives and conversations are not attached automatically.';
+    if (notes[2]) notes[2].textContent = 'The report here is a draft. Deposit and its receipt wait for the approved source; no button creates a receipt or evidence from dialogue.';
+    document.querySelector('footer').textContent = 'Independent browser simulation — replies are not from a real AI model. A successfully saved local copy is restored while this browser data remains; clearing it loses the copy. There is no server or account sync.';
+    document.title = 'RAVEN — Dialogue preview';
+  })();
+  </script>
+  <script>
+    const approvedTexts = window.RAVEN_ALL_TEXTS_BILINGUAL_MERGED;
+    const statusText = key => approvedTexts['dialogue_status_texts_bilingual_v1.0.1'][key][document.documentElement.lang === 'en' ? 'en' : 'ar'];
+    const helpTextPack = approvedTexts['player_help_texts_bilingual_v1.0.0'];
+    const displayLang = document.documentElement.lang === 'en' ? 'en' : 'ar';
+    document.getElementById('player-help-title').textContent = helpTextPack.help_title[displayLang];
+    const helpLines = [helpTextPack.help_intro,...helpTextPack.help_steps,helpTextPack.question_hint];
+    document.querySelectorAll('#player-help p, #player-help li').forEach((el,i) => { el.textContent = helpLines[i][displayLang]; });
+    document.getElementById('check').textContent = statusText('check_request');
     const log = document.getElementById('log');
     const input = document.getElementById('input');
     const sendBtn = document.getElementById('send');
@@ -149,7 +239,10 @@
     const states = Object.fromEntries(['jonas', 'claire'].map(id => [id, {
       draft: '', records: new Map(), active: null, notice: '', localSaved: true, hidden: false,
     }]));
-    const names = { jonas: 'يوناس', claire: 'كلير' };
+    const names = window.ravenDialogueLang === 'en'
+      ? { jonas: 'Jonas', claire: 'Claire' }
+      : { jonas: 'يوناس', claire: 'كلير' };
+    const t = window.ravenDialogueText;
     // Isolate Latin IDs inside Arabic text so a UUID renders as one left-to-right unit.
     const iso = value => '\u2068' + value + '\u2069';
     // 'unavailable': the server answered that this session has no such operation (restart or lost
@@ -229,28 +322,28 @@
       div.className = 'msg ' + (isMe ? 'me' : 'them');
       const name = document.createElement('div');
       name.className = 'name'; name.textContent = who;
-      const content = document.createElement('div'); content.textContent = text;
+      const content = document.createElement('div'); content.dir = 'auto'; content.textContent = text;
       div.append(name, content); log.appendChild(div);
     }
     function render() {
       const id = characterEl.value, s = states[id], op = unresolved(s);
       log.replaceChildren();
       if (!s.hidden) for (const r of s.records.values()) {
-        addMsg('أنت', r.message, true);
+        addMsg(t('أنت', 'You'), r.message, true);
         if (r.response?.text) addMsg(names[id], r.response.text, false);
         const label = r.status === 'completed'
-          ? (r.confirmed ? 'تأكد سابقًا تسجيل العملية في ذاكرة هذا المتصفح.' : 'الرد ظاهر هنا، وحفظه على الخادم غير مؤكد.')
-          : r.status === 'error' ? 'سُجّل خطأ للعملية، ولم يثبت نجاحها.'
-          : r.status === 'unavailable' ? (r.response?.text ? 'وصل هذا الرد، لكن ' : '') + 'العملية غير معروفة للخادم في جلستك الحالية. ربما أُعيد تشغيله أو انتهت جلسة المتصفح. '
-            + (r.response?.text ? 'حفظ الرد على الخادم غير مؤكد، ولم نُعد إرسال السؤال.' : 'لم يثبت نجاح العملية أو فشلها، ولم نُعد إرسالها.') + ' المعرف: ' + iso(r.id)
-          : (r.response?.text ? 'وصل الرد؛ حفظه غير مؤكد. ' : '') + 'حالة العملية غير محسومة. معرف المتابعة: ' + iso(r.id);
-        addMsg('حالة العملية', label, false);
+          ? (r.confirmed ? t('تأكد سابقًا تسجيل العملية في ذاكرة هذا المتصفح.', 'This operation was already recorded in this browser’s memory.') : t('الرد ظاهر هنا، وحفظ نسخته المحلية غير مؤكد.', 'The reply is shown here. Its local save is not confirmed.'))
+          : r.status === 'error' ? t('سُجّل خطأ للعملية، ولم يثبت نجاحها.', 'An error was recorded for the operation. Success was not established.')
+          : r.status === 'unavailable' ? (r.response?.text ? t('وصل هذا الرد، لكن ', 'This reply arrived, but ') : '') + t('العملية غير معروفة للخادم في جلستك الحالية. ربما أُعيد تشغيله أو انتهت جلسة المتصفح. ', 'the server does not know this operation in your current session. It may have restarted, or the browser session ended. ')
+            + (r.response?.text ? t('حفظ الرد على الخادم غير مؤكد، ولم نُعد إرسال السؤال.', 'Saving the reply on the server is not confirmed, and the question was not sent again.') : t('لم يثبت نجاح العملية أو فشلها، ولم نُعد إرسالها.', 'Neither success nor failure was established, and it was not sent again.')) + t(' المعرف: ', ' Id: ') + iso(r.id)
+          : (r.response?.text ? t('وصل الرد؛ حفظه غير مؤكد. ', 'The reply arrived; saving it is not confirmed. ') : '') + t('حالة العملية غير محسومة. معرف المتابعة: ', 'The operation is not settled. Follow-up id: ') + iso(r.id);
+        addMsg(t('حالة العملية', 'Operation status'), label, false);
       }
       input.value = s.draft;
       sendBtn.disabled = !!op || !!s.active;
       checkBtn.disabled = !!s.active || !s.records.size;
       stopBtn.disabled = !s.active;
-      statusEl.textContent = s.notice + (s.localSaved ? '' : ' الحفظ المحلي غير مؤكد، لكن الرد والمسودة ما زالا في الصفحة.') + (canPersist ? '' : ' تعذرت قراءة النسخة المخزنة، أو أنها غير متوافقة. احتفظنا بها كما هي.');
+      statusEl.textContent = s.notice + (s.localSaved ? '' : t(' الحفظ المحلي غير مؤكد، لكن الرد والمسودة ما زالا في الصفحة.', ' Local save is not confirmed, but the reply and the draft are still on the page.')) + (canPersist ? '' : t(' تعذرت قراءة النسخة المخزنة، أو أنها غير متوافقة. احتفظنا بها كما هي.', ' The stored copy could not be read, or it is incompatible. It was left unchanged.'));
       log.scrollTop = log.scrollHeight;
     }
     // Merge by operation ID, never by text. Stale reads cannot downgrade a known reply/error.
@@ -264,21 +357,21 @@
       if (old?.response?.text && (r.status !== 'completed' || r.response?.text !== old.response.text)) return false;
       if (old?.status === 'error' && r.status !== 'error') return false;
       s.records.set(r.id, { ...old, id:r.id, characterId:id, message:r.message,
-        status:r.status, response:typeof r.response?.text === 'string' ? { text:r.response.text } : old?.response, confirmed:r.storage === 'server-memory' });
+        status:r.status, response:typeof r.response?.text === 'string' ? { text:r.response.text } : old?.response, confirmed:r.storage === 'server-memory' && (!r.localPersist || r.localPersist === 'saved') });
       return true;
     }
-    const SESSION_LOST = 'انتهت جلسة المتصفح على الخادم، أو أُعيد تشغيل الخادم. أعد تحميل الصفحة، ثم اضغط «متابعة العملية الأصلية». العمليات والمسودة ما زالتا على هذا المتصفح.';
+    const SESSION_LOST = t('انتهت جلسة المتصفح على الخادم، أو أُعيد تشغيل الخادم. أعد تحميل الصفحة، ثم اضغط «متابعة العملية الأصلية». العمليات والمسودة ما زالتا على هذا المتصفح.', 'The browser session on the server ended, or the server restarted. Reload the page, then press “Follow the original operation”. The operations and the draft are still in this browser.');
     // Ending the browser wait (button or timeout) never proves the server cancelled or failed.
     function stoppedNotice(controller, id) {
       return controller.byUser
-        ? 'توقف انتظار المتصفح فقط. لم نتأكد من إلغاء العملية على الخادم، ومعرفها ' + iso(id) + ' محفوظ للمتابعة.'
-        : 'انتهت مهلة انتظار المتصفح. هذا لا يعني أن العملية فشلت أو أُلغيت على الخادم. المعرف ' + iso(id) + ' محفوظ للمتابعة دون توليد رد جديد.';
+        ? t('توقف انتظار المتصفح فقط. لم نتأكد من إلغاء العملية على الخادم، ومعرفها ', 'Only the browser wait stopped. Cancellation on the server was not confirmed. Id ') + iso(id) + t(' محفوظ للمتابعة.', ' is kept for follow-up.')
+        : t('انتهت مهلة انتظار المتصفح. هذا لا يعني أن العملية فشلت أو أُلغيت على الخادم. المعرف ', 'The browser wait timed out. That does not mean the operation failed or was cancelled on the server. Id ') + iso(id) + t(' محفوظ للمتابعة دون توليد رد جديد.', ' is kept for follow-up without generating a new reply.');
     }
     async function request(id, op, url, options = {}) {
       const s = states[id];
       if (s.active) return;
       const controller = new AbortController(); s.active = controller;
-      s.notice = 'جارٍ انتظار العملية ' + iso(op.id); render();
+      s.notice = (options.method === 'POST' ? statusText('request_sending') : statusText('request_unknown')) + ' ' + iso(op.id); render();
       const timer = setTimeout(() => controller.abort(), 8000);
       try {
         const res = await fetch(url, { ...options, signal:controller.signal, credentials:'same-origin' });
@@ -289,8 +382,8 @@
           // message, ID and any known reply; do not resend, and do not call it success or failure.
           const current = s.records.get(op.id);
           if (current && !['completed','error'].includes(current.status)) current.status = 'unavailable';
-          s.notice = 'الخادم لا يعرف العملية ' + iso(op.id) + ' في جلستك الحالية؛ ربما أُعيد تشغيله أو انتهت جلسة المتصفح. لم نغير نتيجتها المعروفة ولم نُعد إرسالها'
-            + (unresolved(s) ? '.' : '. يمكنك إرسال سؤال جديد.');
+          s.notice = t('الخادم لا يعرف العملية ', 'The server does not know operation ') + iso(op.id) + t(' في جلستك الحالية؛ ربما أُعيد تشغيله أو انتهت جلسة المتصفح. لم نغير نتيجتها المعروفة ولم نُعد إرسالها', ' in your current session; it may have restarted, or the browser session ended. Its known result was not changed and it was not sent again')
+            + (unresolved(s) ? '.' : t('. يمكنك إرسال سؤال جديد.', '. You can send a new question.'));
           return;
         }
         if (res.status === 401 && data?.error === 'session_unavailable') { s.notice = SESSION_LOST; return; }
@@ -301,16 +394,16 @@
             current.response = { text:data.response.text }; current.status = 'unknown';
           }
         }
-        if (!matches || !res.ok || res.status === 202 || !merge(id, data)) {
+        if (!matches || !res.ok || (res.status === 202 && data.status !== 'pending') || !merge(id, data)) {
           // Even an error/202/empty response is not proof of a committed operation.
-          s.notice = 'تعذر تأكيد الحالة (' + res.status + '). احتفظنا بالمعرف وبالرد إن وُجد. المتابعة لن تولد ردًا جديدًا.';
+          s.notice = statusText('status_read_failed') + ' — ' + t('تعذر تأكيد الحالة (', 'The status could not be confirmed (') + res.status + t('). احتفظنا بالمعرف وبالرد إن وُجد. المتابعة لن تولد ردًا جديدًا.', '). The id and any reply were kept. Follow-up will not generate a new reply.');
         } else {
-          s.notice = data.status === 'completed' ? 'وصل الرد، وتأكد تسجيل العملية في ذاكرة هذا المتصفح.'
-            : data.status === 'error' ? 'سُجّل خطأ، ولم يؤكد الاستعلام نجاح العملية.' : 'ما زالت العملية معلقة.';
+          s.notice = data.status === 'completed' ? statusText(data.localPersist && data.localPersist !== 'saved' ? 'save_unconfirmed' : 'save_confirmed') + ' — ' + t('وصل الرد، وتأكد تسجيل العملية في ذاكرة هذا المتصفح.', 'The reply arrived, and the operation is recorded in this browser’s memory.')
+            : data.status === 'error' ? t('سُجّل خطأ، ولم يؤكد الاستعلام نجاح العملية.', 'An error was recorded. The check did not confirm that the operation succeeded.') : statusText('request_pending');
         }
       } catch {
         s.notice = controller.signal.aborted ? stoppedNotice(controller, op.id)
-          : 'تعذرت قراءة الحالة. احتفظنا بالعملية، ويمكن متابعة معرفها الأصلي دون توليد رد جديد.';
+          : statusText('status_read_failed') + ' — ' + t('تعذرت قراءة الحالة. احتفظنا بالعملية، ويمكن متابعة معرفها الأصلي دون توليد رد جديد.', 'The status could not be read. The operation was kept, and its original id can be followed without generating a new reply.');
       } finally {
         clearTimeout(timer);
         if (s.active === controller) s.active = null;
@@ -324,25 +417,26 @@
       s.records.set(op.id, op); s.draft = ''; s.hidden = false;
       persist(); render();
       await request(id, op, '/api/dialogue', { method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({ requestId:op.id, characterId:id, message:text }) });
+        body:JSON.stringify({ requestId:op.id, characterId:id, message:text,
+          ...(window.RAVEN_DIALOGUE_MODE === 'local' ? { language:displayLang } : {}) }) });
     }
     async function loadHistory() {
       const id = characterEl.value, s = states[id];
-      s.notice = 'جارٍ تحميل سجل الشخصية؛ العمليات الحالية باقية.'; render();
+      s.notice = t('جارٍ تحميل سجل الشخصية؛ العمليات الحالية باقية.', 'Loading the character record; current operations remain.'); render();
       try {
         const res = await fetch('/api/history', { credentials:'same-origin' });
         if (res.status === 401) throw new Error('session');
         if (!res.ok) throw new Error('history');
         const data = await res.json();
         if (!Array.isArray(data.items)) throw new Error('history');
-        for (const r of data.items) merge(id, r);
-        s.hidden = false; s.notice = 'دُمج سجل الشخصية باستخدام معرفات العمليات. عدم ظهور عملية في السجل لا يحذف نسختها المحلية.';
+        for (const r of data.items) merge(id, { ...r, localPersist:data.localPersist });
+        s.hidden = false; s.notice = t('دُمج سجل الشخصية باستخدام معرفات العمليات. عدم ظهور عملية في السجل لا يحذف نسختها المحلية.', 'The character record was merged by operation id. An operation missing from that record is not deleted locally.');
         const open = unresolved(s);
         if (open && !data.items.some(r => r.id === open.id)) {
-          s.notice += ' العملية ' + iso(open.id) + ' ليست في سجل الخادم الحالي؛ اضغط «متابعة العملية الأصلية» لقراءة حالتها دون إرسال جديد.';
+          s.notice += t(' العملية ', ' Operation ') + iso(open.id) + t(' ليست في سجل الخادم الحالي؛ اضغط «متابعة العملية الأصلية» لقراءة حالتها دون إرسال جديد.', ' is not in the current server record. Press “Follow the original operation” to read its status without sending again.');
         }
         persist();
-      } catch (e) { s.notice = e?.message === 'session' ? SESSION_LOST : 'تعذر تحميل السجل. لم نحذف أي رسالة أو عملية.'; }
+      } catch (e) { s.notice = e?.message === 'session' ? SESSION_LOST : statusText('history_load_failed') + ' — ' + t('تعذر تحميل السجل. لم نحذف أي رسالة أو عملية.', 'The record could not be loaded. No message or operation was deleted.'); }
       render();
     }
     input.oninput = () => {
@@ -368,7 +462,7 @@
       const s = states[characterEl.value];
       if (!s.active) return;
       s.active.byUser = true;
-      s.notice = 'توقف انتظار المتصفح فقط. لم نتأكد من إلغاء العملية على الخادم، ومعرفها محفوظ للمتابعة.';
+      s.notice = t('توقف انتظار المتصفح فقط. لم نتأكد من إلغاء العملية على الخادم، ومعرفها محفوظ للمتابعة.', 'Only the browser wait stopped. Cancellation on the server was not confirmed, and its id is kept for follow-up.');
       s.active.abort(); render();
     };
     document.getElementById('history').onclick = loadHistory;
@@ -378,9 +472,12 @@
   <script>
   (() => {
     const $ = id => document.getElementById(id);
-    const labels = {statement:'قول أصلي', correction:'تصحيح', motive:'تفسير دافع', private_note:'ملاحظة خاصة', report:'مسودة تقرير', receipt:'إيصال', evidence:'مادة مصدر'};
+    const t = window.ravenDialogueText;
+    const labels = window.ravenDialogueLang === 'en'
+      ? {statement:'Original statement', correction:'Correction', motive:'Motive note', private_note:'Private note', report:'Report draft', receipt:'Receipt', evidence:'Source material'}
+      : {statement:'قول أصلي', correction:'تصحيح', motive:'تفسير دافع', private_note:'ملاحظة خاصة', report:'مسودة تقرير', receipt:'إيصال', evidence:'مادة مصدر'};
     const key = 'raven_deleted_name_material_actions_v1';
-    const SESSION_LOST_MATERIALS = 'انتهت جلسة هذا المتصفح على الخادم أو أُعيد تشغيله. أعد تحميل الصفحة؛ الإجراء المعلق ومسودتك باقيان، ويمكن إعادة إرساله بالمعرف نفسه.';
+    const SESSION_LOST_MATERIALS = t('انتهت جلسة هذا المتصفح على الخادم أو أُعيد تشغيله. أعد تحميل الصفحة؛ الإجراء المعلق ومسودتك باقيان، ويمكن إعادة إرساله بالمعرف نفسه.', 'This browser’s session on the server ended, or the server restarted. Reload the page; the pending action and your draft remain, and it can be sent again with the same id.');
     let items = [], pending = null, busy = false, writable = true, localOK = true, viewVersion = 0, listVersion = 0;
     let noteDraft = { type:'statement', text:'', originalId:'', attachments:[] };
     try {
@@ -411,7 +508,7 @@
       catch { localOK = false; }
     }
     function notice(text) {
-      $('material-status').textContent = text + (localOK ? '' : ' الحفظ المحلي غير مؤكد؛ نزّل نسخة قبل مغادرة الصفحة.') + (writable ? '' : ' النسخة المحلية غير متوافقة وباقية دون تغيير.');
+      $('material-status').textContent = text + (localOK ? '' : window.ravenDialogueText(' الحفظ المحلي غير مؤكد؛ نزّل نسخة قبل مغادرة الصفحة.', ' Local save is not confirmed; download a copy before leaving.')) + (writable ? '' : window.ravenDialogueText(' النسخة المحلية غير متوافقة وباقية دون تغيير.', ' The stored copy is incompatible and was left unchanged.'));
     }
     function controls() {
       $('material-save').disabled = busy || !!pending;
@@ -450,7 +547,7 @@
     function materialLine(item) {
       const line = document.createElement('div'); line.className = 'material';
       line.dataset.materialId = item.id;
-      line.textContent = (labels[item.type] || item.type) + (item.isLatestKnownCorrection === true ? ' — أحدث تصحيح معروف' : '') + ': ' + item.text;
+      line.textContent = (labels[item.type] || item.type) + (item.isLatestKnownCorrection === true ? t(' — أحدث تصحيح معروف', ' — latest known correction') : '') + ': ' + item.text;
       return line;
     }
     function renderItems() {
@@ -469,15 +566,15 @@
     }
     async function knowledge() {
       const version = ++viewVersion, id = $('share-recipient').value;
-      $('knowledge-list').textContent = 'جارٍ قراءة المواد التي وصلت إلى المستلم…';
+      $('knowledge-list').textContent = t('جارٍ قراءة المواد التي وصلت إلى المستلم…', 'Reading the materials that reached the recipient…');
       try {
         const res = await fetch('/api/knowledge?characterId=' + encodeURIComponent(id));
         const data = await res.json();
         if (!res.ok || data.actor !== id || !Array.isArray(data.materials)) throw new Error('knowledge');
         if (version !== viewVersion) return;
         $('knowledge-list').replaceChildren(...data.materials.map(materialLine));
-        if (!data.materials.length) $('knowledge-list').textContent = 'لم تصله مواد مسجلة في هذه الجلسة.';
-      } catch { if (version === viewVersion) $('knowledge-list').textContent = 'تعذرت قراءة معرفة المستلم؛ لم نعتبر ذلك حذفًا أو مشاركة.'; }
+        if (!data.materials.length) $('knowledge-list').textContent = window.ravenDialogueText('لم تصله مواد مسجلة في هذه الجلسة.', 'No recorded materials have reached them in this session.');
+      } catch { if (version === viewVersion) $('knowledge-list').textContent = t('تعذرت قراءة معرفة المستلم؛ لم نعتبر ذلك حذفًا أو مشاركة.', 'The recipient’s materials could not be read; that was not treated as deletion or sharing.'); }
     }
     function confirms(action, item, event) {
       const body = action.body;
@@ -490,6 +587,10 @@
     // done: the confirmed result of the action that triggered this refresh; it stays visible.
     async function refresh(done = '') {
       const version = ++listVersion;
+      if (!done) {
+        notice(t('جارٍ استعادة المواد…', 'Restoring materials…'));
+        if (!items.length) $('materials-list').textContent = t('جارٍ استعادة المواد…', 'Restoring materials…');
+      }
       try {
         const res = await fetch('/api/materials');
         if (res.status === 401) throw new Error('session');
@@ -498,13 +599,18 @@
         if (version !== listVersion) return;
         // Never claim local material copies still exist on a restarted server.
         items = data.items;
+        const persistNote = data.localPersist === 'failed' || data.localPersist === 'unavailable'
+          ? window.ravenDialogueText(' الحفظ المحلي فشل؛ المواد ظاهرة في الذاكرة فقط. نزّل نسخة.', ' Local save failed; materials are only in memory. Download a copy.')
+          : data.localPersist === 'incompatible'
+          ? window.ravenDialogueText(' النسخة المحلية غير متوافقة وبقيت دون تغيير.', ' The stored copy is incompatible and was left unchanged.')
+          : '';
         if (pending && (pending.path === '/api/materials' ? items.some(it => confirms(pending,it)) : data.events.some(it => confirms(pending,undefined,it)))) {
-          pending = null; saveLocal();notice('تأكد تسجيل الإجراء الأصلي في ذاكرة هذا المتصفح.');
-        } else notice(done || (pending ? 'حالة الإجراء غير مؤكدة. احتفظنا بمعرفه ومحتواه، ولم نُعد إرساله. إذا لم يظهر بعد إعادة تشغيل الخادم أو انتهاء الجلسة، يمكنك إرساله مجددًا بالمعرف نفسه. لن يكرر الخادم إجراءً سبق تسجيله بهذا المعرف.' : 'المواد المسجلة في ذاكرة هذا المتصفح؛ ليست حفظًا دائمًا.'));
+          pending = null; saveLocal();notice(window.ravenDialogueText('تأكد تسجيل الإجراء الأصلي في ذاكرة هذا المتصفح.', 'The original action is recorded in this browser’s memory.') + persistNote);
+        } else notice((done || (pending ? window.ravenDialogueText('حالة الإجراء غير مؤكدة. احتفظنا بمعرفه ومحتواه، ولم نُعد إرساله. إذا لم يظهر بعد إعادة تشغيل الخادم أو انتهاء الجلسة، يمكنك إرساله مجددًا بالمعرف نفسه. لن يكرر الخادم إجراءً سبق تسجيله بهذا المعرف.', 'The action is not confirmed. Its id and content were kept, and it was not sent again. If it is missing after a restart or a lost session, you can send it again with the same id. A previously recorded action is not repeated.') : window.ravenDialogueText('المواد المسجلة في ذاكرة هذا المتصفح؛ ليست حفظًا دائمًا.', 'Materials recorded in this browser’s memory; this is not permanent storage.'))) + persistNote);
         renderItems(); await knowledge();
       } catch (e) {
         notice(e?.message === 'session' ? (done ? done + ' ' : '') + SESSION_LOST_MATERIALS
-          : done ? done + ' تعذر تحديث القائمة بعده؛ بقيت النسخة المعروضة.' : 'تعذر تحديث المواد؛ بقيت النسخة المعروضة والإجراء المعلق.');
+          : done ? done + t(' تعذر تحديث القائمة بعده؛ بقيت النسخة المعروضة.', ' The list could not be refreshed after that; the shown copy remains.') : t('تعذر تحديث المواد؛ بقيت النسخة المعروضة والإجراء المعلق.', 'Materials could not be refreshed; the shown copy and the pending action remain.'));
       }
       controls();
     }
@@ -519,22 +625,26 @@
       if (busy || !pending) return;
       const {path, body, id} = pending;
       ++listVersion;
-      busy = true;controls();notice('جارٍ تسجيل الإجراء…');
+      busy = true;controls();notice(t('جارٍ تسجيل الإجراء…', 'Recording the action…'));
       const controller = new AbortController(), timer = setTimeout(() => controller.abort(),8000);
       try {
         const res = await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:controller.signal});
         const data = await res.json(), confirmedId = path === '/api/materials' ? data.item?.id : data.event?.eventId;
         if (res.ok && res.status !== 202 && confirmedId === id && data.storage === 'server-memory' && confirms(pending,data.item,data.event)) {
           if (data.item) { items = [...items.filter(it => it.id !== data.item.id), data.item];renderItems(); }
-          pending = null;saveLocal();notice('تأكد تسجيل الإجراء في ذاكرة هذا المتصفح.');await refresh('تأكد تسجيل الإجراء في ذاكرة هذا المتصفح.');
+          const failedSave = data.localPersist === 'failed' || data.localPersist === 'unavailable';
+          const savedMsg = failedSave
+            ? window.ravenDialogueText('الإجراء ظاهر في الذاكرة فقط. فشل الحفظ المحلي. نزّل نسخة قبل مغادرة الصفحة.', 'The action is only in memory. Local save failed. Download a copy before leaving.')
+            : window.ravenDialogueText('تأكد تسجيل الإجراء في ذاكرة هذا المتصفح.', 'The action is recorded in this browser’s memory.');
+          pending = null;saveLocal();notice(savedMsg);await refresh(savedMsg);
         } else if ([400,409,413,415].includes(res.status) && data.error) {
-          pending = null;saveLocal();notice('لم يُقبل الإجراء: ' + data.error + '. النص ما زال في المدخل.');
-        } else notice(res.status === 401 ? SESSION_LOST_MATERIALS : 'لم تتأكد حالة الإجراء. المعرف محفوظ للمتابعة دون إرسال جديد.');
-      } catch { notice('تعذر تأكيد الإجراء. احتفظنا بمعرفه ومحتواه للمتابعة.'); }
+          pending = null;saveLocal();notice(t('لم يُقبل الإجراء: ', 'The action was not accepted: ') + data.error + t('. النص ما زال في المدخل.', '. The text is still in the field.'));
+        } else notice(res.status === 401 ? SESSION_LOST_MATERIALS : t('لم تتأكد حالة الإجراء. المعرف محفوظ للمتابعة دون إرسال جديد.', 'The action status was not confirmed. The id is kept for follow-up without sending again.'));
+      } catch { notice(t('تعذر تأكيد الإجراء. احتفظنا بمعرفه ومحتواه للمتابعة.', 'The action could not be confirmed. Its id and content were kept for follow-up.')); }
       finally { clearTimeout(timer);busy = false;controls(); }
     }
     $('material-save').onclick = () => {
-      readDraft();if (!noteDraft.text.trim()) {notice('اكتب نص المادة أولًا.');return;}
+      readDraft();if (!noteDraft.text.trim()) {notice(t('اكتب نص المادة أولًا.', 'Write the material text first.'));return;}
       const id = crypto.randomUUID(), body = {id,type:noteDraft.type,text:noteDraft.text};
       if (body.type === 'correction') body.originalId = noteDraft.originalId;
       if (body.type === 'report') body.attachments = noteDraft.attachments;
@@ -553,7 +663,9 @@
     $('share-recipient').onchange = knowledge;
     $('material-refresh').onclick = () => refresh();$('material-check').onclick = () => refresh();$('material-resend').onclick = () => submit();
     $('material-export').onclick = () => {
-      const blob = new Blob([JSON.stringify({version:1,storage:'browser-copy',materials:items,pending,draft:noteDraft},null,2)],{type:'application/json'});
+      let storedRaw = null;
+      try { storedRaw = localStorage.getItem('raven_dialogue_static_backend_v2') || localStorage.getItem('raven_dialogue_static_backend_v1'); } catch (e) {}
+      const blob = new Blob([JSON.stringify({version:1,storage:'browser-copy',materials:items,pending,draft:noteDraft,storedRaw},null,2)],{type:'application/json'});
       const url = URL.createObjectURL(blob), link = document.createElement('a');link.href = url;link.download = 'raven-materials-backup.json';link.click();setTimeout(() => URL.revokeObjectURL(url),1000);
     };
     typeFields();controls();refresh();

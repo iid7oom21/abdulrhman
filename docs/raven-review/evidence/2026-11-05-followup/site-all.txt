@@ -1,0 +1,51 @@
+✔ corrupt and incompatible browser backups survive new actions unchanged and report unconfirmed storage (33.915582ms)
+✔ an invalid later saved event does not leave partial materials/knowledge in memory (2.752792ms)
+✔ valid legacy migration retains the original and a valid new backup restores materials (2.144814ms)
+▶ production soundtrack module with production controls
+  ✔ late error/ended/pause events after stop leave player paused (1387.652676ms)
+  ✔ queued pause/error/ended from previous source do not override new selection (1187.915809ms)
+  ✔ old play promise cannot override selection; pause and mute during pending play persist (1521.421084ms)
+  ✔ stale rejection ignored; waiting/stalled do not advance; actual ended wraps last to first (1285.250537ms)
+  ✔ natural end while foreground media is active advances silently, then resumes next track (1165.638245ms)
+  ✔ last track wraps silently during suspension; explicit stop prevents resume (1233.06339ms)
+  ✔ late pause with network error preserves explicit stop; active failure remains error (1304.006088ms)
+  ✔ singleton, one background audio, repeat factory preserves preferences (975.921593ms)
+✔ production soundtrack module with production controls (10940.411502ms)
+▶ written opening: choices, display boundaries, language and access
+  ✔ the document is visible before the explanatory dialogue, with exact source text (7383.287421ms)
+  ✔ branch matrix precise / jonas (3791.696964ms)
+  ✔ branch matrix precise / both (2649.740281ms)
+  ✔ branch matrix precise / draft (1800.600023ms)
+  ✔ branch matrix wait / jonas (3504.551386ms)
+  ✔ branch matrix wait / both (2380.795159ms)
+  ✔ branch matrix wait / draft (2667.539109ms)
+  ✔ branch matrix refuse / jonas (2690.375743ms)
+  ✔ branch matrix refuse / both (2187.243979ms)
+  ✔ branch matrix refuse / draft (1251.690977ms)
+  ✔ branch matrix lie / jonas (1484.613629ms)
+  ✔ branch matrix lie / both (1470.881571ms)
+  ✔ branch matrix lie / draft (1239.375364ms)
+  ✔ candidate recipients can be reviewed and changed without a second event (562.173415ms)
+  ✔ language changes at every phase preserve choices, candidate and confirmed recipient (2078.644025ms)
+  ✔ replay clears this isolated scene while reload returns to its disclosed start (669.088682ms)
+  ✔ keyboard steps keep focus and only a short status region announces changes (156.421536ms)
+  ✔ new dialogue stays at the reading start in portrait and landscape (1166.95691ms)
+  ✔ mobile widths, both languages, long text and 200% text enlargement remain usable (1178.170112ms)
+  ✔ comparison displays its source as text and makes no external write (276.69254ms)
+  ✔ private notebook anchors observations to visible text without sharing or creating evidence (569.897535ms)
+  ✔ notebook preserves a private draft and source IDs across language, exports a version and resets only on replay (653.283827ms)
+{"browser":"154.0.8037.57","node":"v24.19.0","scenarios":23,"passed":23,"failed":0}
+  ✔ notebook keyboard labels and long private text fit a 390px screen in both languages (903.577575ms)
+✔ written opening: choices, display boundaries, language and access (44011.068678ms)
+RAVEN episode 1 restore: PASS.
+✔ tests/restore-episode-one.mjs (47.640679ms)
+✔ approved merged JSON, each standalone section and the bracket-access browser bundle match (3.34176ms)
+✔ approved labels through actual static dialogue and the single soundtrack UI in AR and EN (3688.485092ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 39
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 60616.302875

@@ -1,3 +1,4 @@
+import './assets/texts/raven-texts.js?v=mati-1.0.1';
 let soundtrack;
 
 // Play order. Each file sits under the site root; titles come from the files' own tags.
@@ -108,6 +109,8 @@ export function createSoundtrack(rootURL) {
 
   function sync() {
     const english = document.documentElement.lang === 'en';
+    const musicTexts = window.RAVEN_ALL_TEXTS_BILINGUAL_MERGED['music_player_texts_bilingual_v1.0.0_8songs'];
+    const mt = key => musicTexts[key][english ? 'en' : 'ar'];
     toggle.textContent = active() ? (english ? 'Pause music' : 'إيقاف الأغنية') :
       (english ? 'Play music' : 'تشغيل الأغنية');
     toggle.setAttribute('aria-pressed', String(active()));
@@ -116,25 +119,24 @@ export function createSoundtrack(rootURL) {
       playing: english ? 'RAVEN · Now playing' : 'RAVEN · الأغنية شغّالة',
       suspended: english ? 'Music paused while media plays' : 'الأغنية متوقفة أثناء تشغيل المقطع',
       waiting: english ? 'Buffering the music…' : 'جارٍ تحميل الأغنية…',
-      blocked: english ? 'Tap to start the music' : 'اضغط لتبدأ الأغنية',
-      error: english ? 'This track could not play. Pick another, or press Play to retry.' :
-        'تعذّر تشغيل هذه الأغنية. اختر أغنية أخرى، أو اضغط تشغيل للمحاولة.',
+      blocked: mt('press_play_to_listen'),
+      error: mt('load_failed'),
       paused: english ? 'RAVEN · Music paused' : 'RAVEN · الأغنية متوقفة'
     };
     status.textContent = messages[phase];
     if (trackNumber) trackNumber.textContent = english ? `Track ${index + 1} of ${TRACKS.length}` : `${index + 1} من ${TRACKS.length}`;
-    if (trackTitle) trackTitle.textContent = TRACKS[index].title;
-    if (trackPickerLabel) trackPickerLabel.textContent = english ? 'Track' : 'اختر الأغنية';
+    if (trackTitle) { trackTitle.textContent = TRACKS[index].title; trackTitle.setAttribute('aria-label',mt('current_song') + ': ' + TRACKS[index].title); }
+    if (trackPickerLabel) trackPickerLabel.textContent = mt('choose_song');
     if (trackPicker) {
       trackPicker.value = String(index);
-      trackPicker.setAttribute('aria-label', english ? 'Choose a track' : 'اختر الأغنية');
+      trackPicker.setAttribute('aria-label', mt('choose_song'));
     }
     if (previous) {
-      previous.textContent = english ? 'Previous' : 'السابقة';
+      previous.textContent = mt('previous');
       previous.setAttribute('aria-label', english ? 'Previous track' : 'الأغنية السابقة');
     }
     if (next) {
-      next.textContent = english ? 'Next' : 'التالية';
+      next.textContent = mt('next');
       next.setAttribute('aria-label', english ? 'Next track' : 'الأغنية التالية');
     }
     if (mute) {

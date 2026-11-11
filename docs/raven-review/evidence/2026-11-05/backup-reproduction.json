@@ -1,0 +1,5 @@
+{
+  "scope": "Exact local-api source in Node VM; synthetic storage only",
+  "beforeCorruptBackupPreserved": false,
+  "afterCorruptBackupPreserved": true
+}

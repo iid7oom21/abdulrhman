@@ -1,5 +1,6 @@
 // RAVEN «الاسم المحذوف» player page: checks against a served repository root.
 // Run: RAVEN_REDESIGN_URL=http://127.0.0.1:8080/ node tests/deleted-name.mjs
+// Optional: CHROMIUM_PATH selects an installed Chromium executable.
 // The page lives inside the persistent shell (one soundtrack), keeps the author's
 // solution off the public page, reads in Arabic and English, and fits phone widths.
 import assert from 'node:assert/strict';
@@ -12,7 +13,7 @@ const base = (process.env.RAVEN_REDESIGN_URL || 'http://127.0.0.1:8080/').replac
 const SPOILERS = ['الفاعل', 'فاعلة', 'اسمي', 'الشال', 'شال', 'تسبق', 'يسبق', 'دقايق', 'دقائق', 'سجل الباب',
   'اعتداء', 'اعتدى', 'همزة', 'culprit', 'shawl', 'minutes', 'door log', 'attack', 'clock'];
 
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH || undefined });
 const newContext = async (width = 390, height = 844) => {
   const context = await browser.newContext({ viewport: { width, height }, reducedMotion: 'reduce', locale: 'ar-SA' });
   await context.addInitScript(() => { try { sessionStorage.setItem('raven_studio_ident_v1', '1'); } catch (_) {} });
