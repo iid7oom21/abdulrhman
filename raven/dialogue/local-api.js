@@ -338,8 +338,9 @@
           const r = submitRequest(data.requestId, data.characterId, data.message, data.sharedFacts, data.contentVersion, owner, materials.contextFor(data.characterId), data.language);
           out = [r.error ? r.status === "conflict" ? 409 : r.error === "forbidden" ? 403 : 400 : 200, r];
         }
-        if (out[0] === 200 && !replaying) {
-          log.push({ path, data });
+        if (out[0] === 200 && !replaying && !(out[1] && out[1].replayed === true)) {
+          // A dialogue entry keeps the time it was first answered, so a reload restores it.
+          log.push(path === "/api/dialogue" && out[1] && typeof out[1].createdAt === "string" ? { path, data, at: out[1].createdAt } : { path, data });
           log = compact(log);
           persist();
         }
@@ -356,9 +357,11 @@
     materials = createMaterialStore();
     try {
     for (const e of entries) {
-      if (!e || Object.keys(e).some(k => !['path','data'].includes(k)) || !['/api/dialogue','/api/materials','/api/shares'].includes(e.path)) throw new Error('schema');
+      if (!e || Object.keys(e).some(k => !['path','data','at'].includes(k)) || !['/api/dialogue','/api/materials','/api/shares'].includes(e.path)) throw new Error('schema');
+      if (e.at !== undefined && (e.path !== '/api/dialogue' || typeof e.at !== 'string')) throw new Error('schema');
       const result = handle("POST", e.path, null, e.data, true);
       if (result[0] !== 200) throw new Error('schema');
+      if (e.at !== undefined && result[1] && requests.has(result[1].id)) requests.get(result[1].id).createdAt = e.at;
     }
     } catch (error) {
       materials = beforeMaterials;
