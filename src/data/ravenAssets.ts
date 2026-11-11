@@ -2,10 +2,10 @@ import type { VideoProject } from "../types";
 
 const ROOT = `${import.meta.env.BASE_URL}visual-lab`;
 
-export const RAVEN_HOME_URL = new URL(
-  '../raven/index.html',
-  new URL(import.meta.env.BASE_URL, window.location.origin),
-).pathname;
+// The published RAVEN site is its own deployment (the gh-pages branch). The studio
+// links to it rather than bundling a copy, so readers always get the current site
+// and no stale snapshot of it ships inside this app.
+export const RAVEN_HOME_URL = 'https://iid7oom21.github.io/abdulrhman/raven/';
 
 export interface RavenScene {
   id: string;

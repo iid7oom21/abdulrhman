@@ -201,6 +201,8 @@ console.log(result);`;
             </button>
             <a
               href={`${RAVEN_HOME_URL}${isAr ? '' : '?lang=en'}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/15 hover:bg-amber-500/25 text-amber-300 border border-amber-500/30 font-medium transition-colors"
             >
               <Eye className="w-3.5 h-3.5" />
