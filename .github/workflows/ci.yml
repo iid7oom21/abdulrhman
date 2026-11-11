@@ -1,0 +1,44 @@
+# Builds the studio and runs both test suites on every pull request and on main.
+# A red check here is what catches a broken build before a deploy does.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+concurrency:
+  # A newer push to the same branch cancels this run; main's runs are never cancelled.
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Render builds on Node 24; match it so a failure here means a failure there.
+          node-version: '24'
+          cache: npm
+
+      # npm ci installs exactly what package-lock.json records, which is also what
+      # the Render build command uses. The repo's postinstall covers the server.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build the studio
+        run: npm run build
+
+      - name: Studio component tests
+        run: npm run test:app
+
+      - name: Dialogue server tests
+        run: npm test
