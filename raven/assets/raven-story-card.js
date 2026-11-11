@@ -2,7 +2,7 @@
 const WIDTH = 1080;
 const HEIGHT = 1920;
 const FILE_NAME = 'raven-on-the-other-side.png';
-const FONT_URL = new URL('../../fourth-signature/assets/fonts/NotoSansArabic.ttf', import.meta.url);
+const FONT_URL = new URL('fonts/NotoSansArabic.ttf', import.meta.url);
 const DISCOVERY_URL = new URL('../#raven-archive', import.meta.url).href;
 const GOLD = '#d3b27c';
 const PAPER = '#f2e9d7';
