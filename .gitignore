@@ -19,3 +19,6 @@ server/config.json
 .render-site/
 .render-build-*/
 .render-site.build-lock/
+
+# npm regenerates this for the dependency-free dialogue server on every install.
+server/ai-dialogue/package-lock.json
