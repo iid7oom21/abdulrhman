@@ -5,3 +5,9 @@
 **/case-store.json
 **/case-store.json.lock
 **/PRIVATE-QA-*.json
+
+# Build artifacts from the app branch. They are not part of the published
+# site, and a stray `git add -A` here would commit ~258 MB of them.
+node_modules
+dist
+*.tsbuildinfo
