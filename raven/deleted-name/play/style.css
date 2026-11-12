@@ -36,6 +36,8 @@ h3{font-size:19px;color:var(--gold);margin-bottom:10px}
 .speech p{margin-bottom:0}
 .scene-image{display:block;width:100%;max-height:360px;object-fit:cover;margin-bottom:20px;aspect-ratio:2/1}
 .case-art{margin:0 0 18px;max-width:640px;overflow:hidden}
+.case-art-image{overflow:hidden}
+.case-art figcaption{font-size:.85rem;line-height:1.6;margin-top:8px}
 .case-art img{display:block;width:100%;height:auto}
 .case-art-atlas{position:relative;aspect-ratio:2/1}
 .case-art-atlas img{position:absolute;width:100%;height:300%;max-width:none;left:0;top:var(--image-top,0%)}

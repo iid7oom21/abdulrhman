@@ -23,7 +23,7 @@ test('character portraits stay paired with approved names across language and sc
     if (pathname.endsWith('/')) pathname += 'index.html';
     const file = path.resolve(root, '.' + pathname);
     if (!file.startsWith(root + path.sep)) { response.writeHead(403); return response.end(); }
-    const mime = {'.html':'text/html; charset=utf-8', '.js':'text/javascript', '.css':'text/css', '.json':'application/json', '.png':'image/png', '.webp':'image/webp'};
+    const mime = {'.html':'text/html; charset=utf-8', '.js':'text/javascript', '.css':'text/css', '.json':'application/json', '.png':'image/png', '.webp':'image/webp', '.jpg':'image/jpeg'};
     try { response.setHeader('Content-Type', mime[path.extname(file)] || 'application/octet-stream'); response.end(fs.readFileSync(file)); }
     catch { response.writeHead(404); response.end(); }
   });
@@ -53,6 +53,7 @@ test('character portraits stay paired with approved names across language and sc
             const crop = portrait.getBoundingClientRect(), full = image.getBoundingClientRect();
             return {id:card.dataset.character, name:card.querySelector('dt').innerText, description:card.querySelector('dd').innerText,
               source:image.currentSrc, loaded:image.complete && image.naturalWidth > 0, square:image.naturalWidth === image.naturalHeight,
+              fit:getComputedStyle(image).objectFit, position:getComputedStyle(image).objectPosition,
               alt:image.getAttribute('alt'), hidden:portrait.getAttribute('aria-hidden'), lazy:image.loading, async:image.decoding,
               ratio:crop.width / crop.height, column:(crop.x - full.x) / crop.width, row:(crop.y - full.y) / crop.height,
               fullWidth:full.width / crop.width, fullHeight:full.height / crop.height};
@@ -64,18 +65,26 @@ test('character portraits stay paired with approved names across language and sc
         assert.deepEqual(state.cards.map(card => card.name), names[language]);
         assert.deepEqual(state.cards.map(card => card.description), descriptions[language]);
         state.cards.forEach((card, index) => {
-          assert.equal(card.loaded, true); assert.equal(card.square, true);
+          assert.equal(card.loaded, true);
           assert.equal(card.alt, ''); assert.equal(card.hidden, 'true');
           assert.equal(card.lazy, 'lazy'); assert.equal(card.async, 'async');
           assert.ok(Math.abs(card.ratio - 2 / 3) < 0.001, 'each face keeps the portrait crop');
-          assert.ok(Math.abs(card.column - index % 3) < 0.001, 'RTL must not reverse atlas columns');
-          assert.ok(Math.abs(card.row - Math.floor(index / 3)) < 0.001, 'each face uses the intended atlas row');
-          assert.ok(Math.abs(card.fullWidth - 3) < 0.001 && Math.abs(card.fullHeight - 2) < 0.001, 'the crop must exclude neighboring faces');
+          if (card.id === 'victor') {
+            assert.equal(card.square, true);
+            assert.ok(Math.abs(card.column) < 0.001 && Math.abs(card.row) < 0.001, 'Victor keeps the original first atlas tile in RTL and LTR');
+            assert.ok(Math.abs(card.fullWidth - 3) < 0.001 && Math.abs(card.fullHeight - 2) < 0.001, 'Victor’s crop must exclude neighboring faces');
+          } else {
+            assert.equal(card.square, false, 'individual portraits retain their portrait source');
+            assert.equal(card.fit, 'cover'); assert.equal(card.position, '50% 50%');
+            assert.ok(Math.abs(card.column) < 0.001 && Math.abs(card.row) < 0.001, 'individual portraits must not inherit an atlas offset');
+            assert.ok(Math.abs(card.fullWidth - 1) < 0.001 && Math.abs(card.fullHeight - 1) < 0.001, 'the individual portrait fills its own card');
+            assert.ok(card.source.endsWith('/raven/assets/images/deleted-name/' + card.id + '.jpg'), 'each name keeps its existing individual portrait');
+          }
         });
         const sources = state.cards.map(card => card.source);
         if (initialSources) assert.deepEqual(sources, initialSources, 'changing language must retain the same portraits');
         else initialSources = sources;
-        assert.equal(new Set(sources).size, 1, 'all faces share the single local atlas');
+        assert.equal(new Set(sources).size, 6, 'Victor uses the atlas and the other five retain their individual portraits');
         assert.match(sources[0], /\/raven\/deleted-name\/assets\/characters\/cast-portraits-v1\.webp$/);
         assert.equal(await page.locator('audio').count(), 1);
         assert.equal(await frame.locator('audio').count(), 0);

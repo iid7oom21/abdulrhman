@@ -1,6 +1,6 @@
 {
-  "release": "2026-11-08-case-play-1",
-  "interfaceVersion": "case-play-1",
+  "release": "2026-11-12-case-play-2",
+  "interfaceVersion": "case-play-2",
   "caseApiVersion": 1,
   "publicMode": "static-site-with-optional-written-case-server",
   "storyIncludedInPublicBundle": false,

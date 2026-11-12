@@ -146,6 +146,7 @@ test('written opening: choices, display boundaries, language and access',async t
       if(written&&recipient==='draft')assert.equal(status,lang==='ar'?'احتفظت بمسودة.':'You kept a draft.');
       await click('record','done');
       assert.match(await page.locator('#hook-register').innerText(),/سجل استقبال بلاغات المراجعة|Review Reports Intake Log/);
+      assert.equal(await page.locator('#hook-log [data-line-id="L17"] > p').innerText(),lang==='ar'?'هذا عنوان السجل. نحتاج نشوف القيد نفسه.':'This is the register title. We need to examine the entry itself.');
       assert.equal(await page.locator('#hook-log [data-line-id="L20"] > p').innerText(),lang==='ar'?'طيب ليش المسودة تقول إن اختلاف النسخ ما يغير نتيجة الملف؟':'Then why does the draft say that differences between copies do not change the file’s result?');
       assert.equal(await page.locator('#hook-log > li:last-child > p').innerText(),lang==='ar'?'إيلينا ما تجاوب.':'Elena does not answer.');
       assert.equal(await page.locator('#hook-ending').isVisible(),true);assert.equal(await action('replay').isVisible(),true);

@@ -48,9 +48,9 @@ try {
     const context = await newContext();
     const page = await context.newPage();
     await page.goto(base + 'raven/', { waitUntil: 'domcontentloaded' });
-    await frameOf(page).locator('#dialogue-preview a[href="./deleted-name/"]').waitFor();
+    await frameOf(page).locator('#rvnEnterDeletedName').waitFor();
     await page.evaluate(() => { document.querySelector('audio').dataset.marker = 'kept'; });
-    await frameOf(page).locator('#dialogue-preview a[href="./deleted-name/"]').click();
+    await frameOf(page).locator('#rvnEnterDeletedName').click();
     await page.waitForURL(/\/raven\/deleted-name\/$/);
     await frameOf(page).locator('h1').waitFor();
     assert.equal(await page.evaluate(() => document.querySelector('audio').dataset.marker), 'kept');
