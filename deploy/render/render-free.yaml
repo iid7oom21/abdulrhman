@@ -1,0 +1,29 @@
+# Review template for the written case on a free single-instance service.
+# Progress recovery lives in the player's browser; this does not add a disk.
+# Private story input is required on every boot. Keep the checkpoint key stable
+# across restarts/redeploys: exactly 64 hexadecimal characters from 32 random bytes.
+services:
+  - type: web
+    name: raven-case
+    runtime: node
+    repo: https://github.com/iid7oom21/abdulrhman
+    branch: main
+    plan: free
+    numInstances: 1
+    autoDeploy: false
+    buildCommand: node deploy/render/build.mjs
+    startCommand: node deploy/render/start.mjs
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_VERSION
+        value: "24"
+      - key: NODE_ENV
+        value: production
+      - key: RAVEN_RENDER_STORAGE_MODE
+        value: browser-checkpoint
+      - key: RAVEN_CASE_CONTENT_GZIP_BASE64
+        sync: false
+      - key: RAVEN_CASE_CONTENT_SHA256
+        sync: false
+      - key: RAVEN_CASE_CHECKPOINT_KEY
+        sync: false

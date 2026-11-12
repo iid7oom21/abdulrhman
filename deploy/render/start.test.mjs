@@ -5,7 +5,8 @@ import os from 'node:os';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {gzipSync} from 'node:zlib';
-import {execFileSync} from 'node:child_process';
+import {execFileSync,spawn} from 'node:child_process';
+import {once} from 'node:events';
 import {fileURLToPath} from 'node:url';
 import {prepareRenderRuntime,createRenderServer,MAX_CONTENT_BYTES,RenderStartupError} from './start.mjs';
 import {CORE_FILES,SITE_COMMIT,PUBLIC_RELEASE,EXPORT_MARKER} from './build.mjs';
@@ -23,7 +24,7 @@ function fixture(t) {
   put('site-audio.js',Array.from({length:13},(_,i)=>`{file:'assets/audio/raven/${String(i+1).padStart(2,'0')}.mp3'}`).join(','));
   for(let n=1;n<=13;n++)put(`assets/audio/raven/${String(n).padStart(2,'0')}.mp3`);
   for(let n=1;n<=3;n++)put(`raven/terminal-preview/raven-17/part-${n}/index.html`);
-  put('raven/release.json',JSON.stringify({release:PUBLIC_RELEASE,interfaceVersion:'case-play-1',caseApiVersion:1,
+  put('raven/release.json',JSON.stringify({release:PUBLIC_RELEASE,interfaceVersion:'case-play-2',caseApiVersion:1,
     publicMode:'static-site-with-optional-written-case-server',storyIncludedInPublicBundle:false,
     providerCallsRequired:false,musicTracks:13,raven17Episodes:3,languages:['ar','en']}));
   put(EXPORT_MARKER,JSON.stringify({format:'raven-render-site-v1',commit:SITE_COMMIT,release:PUBLIC_RELEASE}));
@@ -32,6 +33,44 @@ function fixture(t) {
   return {root,siteRoot,mount,secrets,secret,bytes,env,put,options:{siteRoot,env,defaultSecretFile:path.join(secrets,'missing-default.json')}};
 }
 function rejected(callback,code) { assert.throws(callback,error=>error instanceof RenderStartupError && (!code || error.code===code)); }
+function browserFixture(t) {
+  const f=fixture(t);
+  Object.assign(f.env,{
+    RAVEN_RENDER_STORAGE_MODE:'browser-checkpoint',RAVEN_CASE_CHECKPOINT_KEY:'a1'.repeat(32),
+    RAVEN_RENDER_EPHEMERAL_DIR:path.join(f.root,'temporary-private'),
+    // Explicitly unusable disk settings demonstrate that this mode needs no disk.
+    RAVEN_RENDER_DATA_MOUNT:path.join(f.root,'absent-disk'),
+    RAVEN_RENDER_DATA_DIR:path.join(f.root,'absent-disk','raven'),
+  });
+  return f;
+}
+
+async function launchProcess(t,options) {
+  const code=`import {createRenderServer} from ${JSON.stringify(new URL('./start.mjs',import.meta.url).href)};
+    const {server}=createRenderServer(JSON.parse(process.argv[1]));
+    server.listen(0,'127.0.0.1',()=>process.send({port:server.address().port}));
+    process.once('SIGTERM',()=>{server.closeAllConnections();server.close(()=>process.exit(0));});`;
+  const child=spawn(process.execPath,['--input-type=module','-e',code,JSON.stringify(options)],{stdio:['ignore','ignore','ignore','ipc']});
+  const close=async()=>{
+    if(child.exitCode!==null || child.signalCode!==null)return;
+    const exited=once(child,'exit');child.kill('SIGTERM');await exited;
+  };
+  t.after(close);
+  const message=await new Promise((resolve,reject)=>{
+    const timer=setTimeout(()=>{child.kill('SIGKILL');reject(new Error('fixture server startup timed out'));},5000);
+    child.once('message',value=>{clearTimeout(timer);resolve(value);});
+    child.once('error',error=>{clearTimeout(timer);reject(error);});
+    child.once('exit',code=>{clearTimeout(timer);reject(new Error('fixture server exited: '+code));});
+  });
+  const origin='http://127.0.0.1:'+message.port;
+  const request=async(target,{body,cookie}={})=>{
+    const response=await fetch(origin+target,{method:body===undefined?'GET':'POST',headers:{
+      ...(cookie?{cookie}:{}),...(body===undefined?{}:{'Content-Type':'application/json',Origin:origin.replace('http:','https:')}),
+    },...(body===undefined?{}:{body:JSON.stringify(body)})});
+    return {status:response.status,headers:response.headers,body:await response.json()};
+  };
+  return {origin,request,close};
+}
 
 test('module import performs no listen/build and does not require private configuration',()=>{
   const script=`await import(${JSON.stringify(new URL('./start.mjs',import.meta.url).href)});console.log('import-only');`;
@@ -41,6 +80,7 @@ test('module import performs no listen/build and does not require private config
 test('validated private JSON is staged atomically with pinned public export, restrictive modes and disk paths',t=>{
   const f=fixture(t);f.env.RAVEN_CASE_CONTENT_SHA256=digest(f.bytes).toUpperCase();f.env.PORT='19001';
   const runtime=prepareRenderRuntime(f.options);
+  assert.equal(runtime.storageMode,'disk');
   assert.equal(runtime.host,'0.0.0.0');assert.equal(runtime.port,19001);assert.equal(runtime.source,'secret-file');
   assert.equal(runtime.caseContentSHA256,digest(f.bytes));assert.deepEqual(fs.readFileSync(runtime.caseContentPath),f.bytes);
   for(const directory of [runtime.dataDir,path.dirname(runtime.caseContentPath),path.dirname(runtime.caseStoragePath)])assert.equal(mode(directory),0o700);
@@ -150,6 +190,7 @@ for (const target of ['caseStoragePath','storeFile']) test(`corrupt ${target} pr
 
 test('hosted server loads the written case, forces simulation off-provider, and uses Secure durable sessions',async t=>{
   const f=fixture(t);f.env.RAVEN_AI_PROVIDER='openai';f.env.RAVEN_MODEL_CALLS_ENABLED='1';f.env.OPENAI_API_KEY='FICTIONAL_NEVER_USED';
+  f.env.RAVEN_CASE_CHECKPOINT_KEY='IGNORED_UNLESS_BROWSER_MODE_IS_EXPLICIT';
   const {server,runtime}=createRenderServer(f.options);
   assert.equal(server.listening,false);
   await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
@@ -164,4 +205,91 @@ test('hosted server loads the written case, forces simulation off-provider, and 
   const health=await fetch(origin+'/healthz');assert.equal(health.status,200);
   const noSource={...f.env};delete noSource.RAVEN_CASE_CONTENT_FILE;
   fs.unlinkSync(runtime.caseContentPath);rejected(()=>createRenderServer({...f.options,env:noSource}));
+});
+
+test('browser mode stages only private content without requiring or creating a persistent mount or save files',t=>{
+  const f=browserFixture(t),runtime=prepareRenderRuntime(f.options);
+  assert.equal(runtime.storageMode,'browser-checkpoint');
+  assert.equal(runtime.caseStoragePath,null);assert.equal(runtime.storeFile,null);
+  assert.equal(runtime.dataDir,f.env.RAVEN_RENDER_EPHEMERAL_DIR);
+  assert.equal(mode(runtime.dataDir),0o700);assert.equal(mode(runtime.caseContentPath),0o600);
+  assert.deepEqual(fs.readFileSync(runtime.caseContentPath),f.bytes);
+  assert.equal(fs.existsSync(f.env.RAVEN_RENDER_DATA_MOUNT),false);
+  assert.equal(fs.existsSync(path.join(runtime.dataDir,'stores')),false);
+  assert.doesNotMatch(JSON.stringify(runtime),new RegExp(f.env.RAVEN_CASE_CHECKPOINT_KEY));
+});
+
+test('free template gzip input is validated and staged privately with its decoded hash',t=>{
+  const f=browserFixture(t);delete f.env.RAVEN_CASE_CONTENT_FILE;
+  f.env.RAVEN_CASE_CONTENT_GZIP_BASE64=gzipSync(f.bytes).toString('base64');
+  f.env.RAVEN_CASE_CONTENT_SHA256=digest(f.bytes);
+  f.env.RAVEN_CASE_CHECKPOINT_KEY=f.env.RAVEN_CASE_CHECKPOINT_KEY.toUpperCase();
+  const runtime=prepareRenderRuntime(f.options);
+  assert.equal(runtime.source,'secret-env');assert.equal(runtime.storageMode,'browser-checkpoint');
+  assert.equal(runtime.caseContentSHA256,digest(f.bytes));assert.deepEqual(fs.readFileSync(runtime.caseContentPath),f.bytes);
+  assert.equal(mode(runtime.caseContentPath),0o600);assert.equal(runtime.caseStoragePath,null);assert.equal(runtime.storeFile,null);
+  for(const secret of [f.env.RAVEN_CASE_CHECKPOINT_KEY,f.env.RAVEN_CASE_CONTENT_GZIP_BASE64])assert.equal(JSON.stringify(runtime).includes(secret),false);
+});
+
+test('browser mode refuses missing or malformed stable keys and unknown modes before creating private content',t=>{
+  const f=browserFixture(t);
+  for(const value of [undefined,'','short','g'.repeat(64),'ab'.repeat(31)]){
+    const env={...f.env};if(value===undefined)delete env.RAVEN_CASE_CHECKPOINT_KEY;else env.RAVEN_CASE_CHECKPOINT_KEY=value;
+    rejected(()=>createRenderServer({...f.options,env}));
+    assert.equal(fs.existsSync(f.env.RAVEN_RENDER_EPHEMERAL_DIR),false);
+  }
+  rejected(()=>prepareRenderRuntime({...f.options,env:{...f.env,RAVEN_RENDER_STORAGE_MODE:'memory'}}),'invalid_storage_mode');
+  assert.equal(fs.existsSync(f.env.RAVEN_RENDER_EPHEMERAL_DIR),false);
+});
+
+test('browser content remains outside Git and public roots and cannot follow directory links',t=>{
+  const f=browserFixture(t),outside=path.join(f.root,'unmodified');fs.mkdirSync(outside);fs.chmodSync(outside,0o755);
+  const link=path.join(f.root,'linked-private');fs.symlinkSync(outside,link);
+  const repo=path.join(f.root,'checkout');fs.mkdirSync(repo);fs.mkdirSync(path.join(repo,'.git'));
+  for(const directory of [f.siteRoot,path.join(repo,'private'),path.join(link,'content'),'/']){
+    rejected(()=>prepareRenderRuntime({...f.options,env:{...f.env,RAVEN_RENDER_EPHEMERAL_DIR:directory}}));
+  }
+  assert.equal(mode(outside),0o755);assert.deepEqual(fs.readdirSync(outside),[]);
+});
+
+test('browser mode never uses an ephemeral content cache when the deployment secret is missing',t=>{
+  const f=browserFixture(t),runtime=prepareRenderRuntime(f.options),old=fs.readFileSync(runtime.caseContentPath);
+  const missing={...f.env};delete missing.RAVEN_CASE_CONTENT_FILE;
+  rejected(()=>prepareRenderRuntime({...f.options,env:missing}),'private_content_required');
+  assert.deepEqual(fs.readFileSync(runtime.caseContentPath),old);
+  const broken=path.join(f.secrets,'broken.json');fs.writeFileSync(broken,'{"SECRET_SENTINEL":');
+  rejected(()=>prepareRenderRuntime({...f.options,env:{...f.env,RAVEN_CASE_CONTENT_FILE:broken}}));
+  assert.deepEqual(fs.readFileSync(runtime.caseContentPath),old);
+});
+
+test('browser checkpoint survives a real process restart and loss of all ephemeral files without claiming server persistence',async t=>{
+  const f=browserFixture(t);f.env.RAVEN_AI_PROVIDER='openai';f.env.RAVEN_MODEL_CALLS_ENABLED='1';f.env.OPENAI_API_KEY='FICTIONAL_UNUSED_KEY';
+  const first=await launchProcess(t,f.options);
+  const config=await first.request('/api/case/config');assert.equal(config.body.persistence,'browser-checkpoint');assert.equal(config.body.enabled,true);
+  const provider=await first.request('/api/config');assert.equal(provider.body.provider,'simulation');assert.equal(provider.body.controls.providerCallsEnabled,false);assert.equal(provider.body.persistence,'process-memory');
+  assert.doesNotMatch(JSON.stringify([config.body,provider.body]),new RegExp(f.env.RAVEN_CASE_CHECKPOINT_KEY+'|FICTIONAL_UNUSED_KEY'));
+  const began=await first.request('/api/case/start',{body:{contentVersion:'fixture-v1'}});
+  assert.equal(began.status,200);assert.equal(began.body.saveStatus,'browser-required');assert.equal(typeof began.body.checkpoint,'string');
+  assert.match(began.headers.get('set-cookie'),/HttpOnly; SameSite=Strict;.*; Secure/);
+  const cookie=began.headers.get('set-cookie').split(';')[0];
+  const action={id:'render-free-read',revision:0,contentVersion:'fixture-v1',actionId:'read',values:{}};
+  const changed=await first.request('/api/case/actions',{body:action,cookie});assert.equal(changed.status,200);assert.equal(changed.body.revision,1);
+  assert.equal(changed.body.persistence,'browser-checkpoint');assert.equal(changed.body.saveStatus,'browser-required');
+  const checkpoint=changed.body.checkpoint;assert.equal(typeof checkpoint,'string');assert.ok(checkpoint.length>0);
+  assert.doesNotMatch(checkpoint,/PUBLIC_CARD_BODY|UNSEEN_MATERIAL_SENTINEL|FUTURE_SCENE_SENTINEL/);
+  await first.close();fs.rmSync(f.env.RAVEN_RENDER_EPHEMERAL_DIR,{recursive:true,force:true});
+  const second=await launchProcess(t,f.options);
+  assert.equal((await second.request('/api/case/state',{cookie})).status,401);
+  const restored=await second.request('/api/case/restore',{body:{checkpoint},cookie});assert.equal(restored.status,200);assert.equal(restored.body.revision,1);
+  assert.equal(restored.body.saveStatus,'browser-required');assert.deepEqual(restored.body.materials,changed.body.materials);
+  const resumedCookie=restored.headers.get('set-cookie')?.split(';')[0] || cookie;
+  const replay=await second.request('/api/case/actions',{body:action,cookie:resumedCookie});assert.equal(replay.status,200);assert.equal(replay.body.replayed,true);assert.equal(replay.body.revision,1);
+  const reading=await second.request('/api/case/export',{cookie:resumedCookie});assert.equal(reading.status,200);
+  assert.equal(Object.hasOwn(reading.body,'checkpoint'),false);assert.equal(Object.hasOwn(reading.body,'checkpointInfo'),false);
+  assert.doesNotMatch(JSON.stringify(reading.body),/UNSEEN_MATERIAL_SENTINEL|FUTURE_SCENE_SENTINEL/);
+  assert.equal(fs.existsSync(path.join(f.env.RAVEN_RENDER_EPHEMERAL_DIR,'stores')),false);
+  await second.close();
+  const wrong=await launchProcess(t,{...f.options,env:{...f.env,RAVEN_CASE_CHECKPOINT_KEY:'b2'.repeat(32)}});
+  const rejectedRestore=await wrong.request('/api/case/restore',{body:{checkpoint},cookie:resumedCookie});assert.equal(rejectedRestore.status,400);assert.equal(rejectedRestore.body.error,'checkpoint_invalid');
+  assert.equal(rejectedRestore.headers.get('set-cookie'),null);
 });

@@ -6,7 +6,7 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {buildSite,validatePublicExport,CORE_FILES,PUBLIC_RELEASE,EXPORT_MARKER} from './build.mjs';
 
-const metadata={release:PUBLIC_RELEASE,interfaceVersion:'case-play-1',caseApiVersion:1,
+const metadata={release:PUBLIC_RELEASE,interfaceVersion:'case-play-2',caseApiVersion:1,
   publicMode:'static-site-with-optional-written-case-server',storyIncludedInPublicBundle:false,
   providerCallsRequired:false,musicTracks:13,raven17Episodes:3,languages:['ar','en']};
 const run=(program,args,options)=>execFileSync(program,args,{...options,shell:false,stdio:['ignore','pipe','pipe']});

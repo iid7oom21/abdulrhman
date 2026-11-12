@@ -3,6 +3,7 @@ import path from 'node:path';
 import {randomBytes} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import {openCaseStore} from './case-store.js';
+import {createCaseCheckpoint, checkpointSessionTag, MAX_CHECKPOINT_BODY_BYTES} from './case-checkpoint.js';
 import {CaseError, canonical, caseFingerprint, validateCasePack, validateOpening, createCaseState,
   applyCaseAction, projectCaseState, validateCaseRequest, validateStoredCaseState} from './case-engine.js';
 
@@ -34,7 +35,7 @@ function validateProjection(view, state) {
   const localized = value => plain(value) && Object.keys(value).length > 0 && Object.entries(value).every(([locale, item]) => /^[a-z]{2}(?:-[A-Z]{2})?$/.test(locale) && typeof item === 'string' && item.length <= 40000);
   const art = item => (item.image === undefined || /^\/raven\/deleted-name\/assets\/(?:[A-Za-z0-9_-]+\/)*[A-Za-z0-9_-]+\.(?:webp|png|jpg)$/.test(item.image)) && (item.imageRow === undefined || [0,1,2].includes(item.imageRow));
   fail(only(view, ['caseId','contentVersion','revision','saveStatus','persistence','scene','materials','actions','notes','captures','shares','receipts','opening']));
-  fail(view.caseId === state.caseId && view.contentVersion === state.contentVersion && view.revision === state.revision && ['confirmed','memory'].includes(view.saveStatus) && ['disk-file','process-memory'].includes(view.persistence));
+  fail(view.caseId === state.caseId && view.contentVersion === state.contentVersion && view.revision === state.revision && ['confirmed','memory','browser-required'].includes(view.saveStatus) && ['disk-file','process-memory','browser-checkpoint'].includes(view.persistence));
   fail(only(view.scene,['id','title','body','image','imageRow','lines']) && view.scene.id === state.sceneId && localized(view.scene.title) && localized(view.scene.body) && art(view.scene));
   fail(Array.isArray(view.scene.lines) && view.scene.lines.every(line => only(line,['speaker','text']) && localized(line.speaker) && localized(line.text)));
   fail(Array.isArray(view.materials) && canonical(view.materials.map(item => item.id)) === canonical(state.materialIds));
@@ -51,9 +52,16 @@ function validateProjection(view, state) {
 }
 
 export function createCaseService({contentPath = null, storagePath = null, pack:injectedPack = null,
-  siteRoot = null, secureCookie = false, openStore = openCaseStore, maxSessions = 10000, maxOperations = 4096} = {}) {
+  siteRoot = null, secureCookie = false, openStore = openCaseStore, maxSessions = 10000, maxOperations = 4096, checkpointKey = null} = {}) {
+  const checkpoints = checkpointKey === null || checkpointKey === undefined ? null : createCaseCheckpoint(checkpointKey);
+  if (checkpoints && storagePath) throw new CaseError('case_checkpoint_configuration_invalid');
+  if (checkpoints) {
+    fail(Number.isSafeInteger(maxSessions) && maxSessions > 0 && Number.isSafeInteger(maxOperations) && maxOperations > 0, 'case_checkpoint_configuration_invalid');
+    maxSessions = Math.min(maxSessions,128); maxOperations = Math.min(maxOperations,4096);
+  }
   const pack = injectedPack ? validateCasePack(injectedPack) : contentPath ? loadCaseContent(contentPath, {siteRoot}) : null;
-  const persistence = storagePath ? 'disk-file' : 'process-memory';
+  const packFingerprint = pack ? caseFingerprint(pack) : null;
+  const persistence = checkpoints ? 'browser-checkpoint' : storagePath ? 'disk-file' : 'process-memory';
   let sessions = new Map(), writeBlocked = false;
   const validateSnapshot = snapshot => {
     fail(only(snapshot,['schemaVersion','sessions']) && snapshot.schemaVersion === 1 && Array.isArray(snapshot.sessions) && snapshot.sessions.length <= maxSessions);
@@ -96,8 +104,55 @@ export function createCaseService({contentPath = null, storagePath = null, pack:
     // reading view, but do not claim it matches disk or accept further writes.
     return writeBlocked ? {...view,saveStatus:'unconfirmed',actions:[],readOnly:true,storageUnavailable:true} : view;
   };
+  const responseOf = session => {
+    const view = viewOf(session);
+    if (!checkpoints) return view;
+    // Select the session fields explicitly: no pack, future scenes, or arbitrary
+    // service metadata can be included in a browser's encrypted recovery copy.
+    const checkpoint = checkpoints.seal({schemaVersion:1,packFingerprint:session.packFingerprint,
+      session:{id:session.id,state:session.state,operations:session.operations,view:session.view}});
+    return {...view,checkpoint,checkpointInfo:{sessionTag:checkpointSessionTag(session.id),
+      historyTag:caseFingerprint({state:session.state,operations:session.operations}),
+      caseId:session.state.caseId,contentVersion:session.state.contentVersion,revision:session.state.revision}};
+  };
+  const candidateWith = entry => {
+    const candidate = new Map(sessions);
+    candidate.delete(entry.id); candidate.set(entry.id,entry);
+    if (checkpoints) while (candidate.size > maxSessions) candidate.delete(candidate.keys().next().value);
+    return candidate;
+  };
+  const cookieFor = (req,res,id) => res.setHeader('Set-Cookie', `${COOKIE}=${id}; HttpOnly; SameSite=Strict; Path=/; Max-Age=31536000${req.socket.encrypted || secureCookie ? '; Secure' : ''}`);
+  const restoredSession = token => {
+    const payload = checkpoints.open(token);
+    try {
+      fail(only(payload,['schemaVersion','packFingerprint','session']) && payload.schemaVersion === 1 && typeof payload.packFingerprint === 'string' && /^[a-f0-9]{64}$/.test(payload.packFingerprint));
+      const session = payload.session;
+      fail(only(session,['id','state','operations','view']) && typeof session.id === 'string' && /^[a-f0-9]{64}$/.test(session.id));
+      validateStoredCaseState(session.state); validateProjection(session.view,session.state);
+      fail(session.view.persistence === 'browser-checkpoint' && session.view.saveStatus === 'browser-required');
+      fail(Array.isArray(session.operations) && session.operations.length <= maxOperations && session.operations.length === session.state.revision);
+      const ids = new Set();
+      for (const [index,operation] of session.operations.entries()) {
+        fail(only(operation,['request','fingerprint']));
+        const request = validateCaseRequest(operation.request);
+        fail(!ids.has(request.id) && request.revision === index && request.contentVersion === session.state.contentVersion && operation.fingerprint === caseFingerprint(request));
+        ids.add(request.id);
+      }
+      if (pack && (session.state.caseId !== pack.caseId || (session.state.contentVersion === pack.contentVersion && payload.packFingerprint !== packFingerprint))) throw new CaseError('content_version_mismatch',409);
+      if (compatible(session)) {
+        let replay = createCaseState(pack,session.state.opening);
+        for (const operation of session.operations) replay = applyCaseAction(pack,replay,operation.request);
+        fail(canonical(replay) === canonical(session.state));
+        fail(canonical(projectCaseState(pack,replay,persistence)) === canonical(session.view));
+      }
+      return {...session,packFingerprint:payload.packFingerprint};
+    } catch (error) {
+      if (error instanceof CaseError && error.code === 'content_version_mismatch') throw error;
+      throw new CaseError('checkpoint_invalid');
+    }
+  };
   const config = () => ({enabled:!!pack, ...(pack ? {caseId:pack.caseId,contentVersion:pack.contentVersion,locales:[...pack.locales],defaultLocale:pack.defaultLocale} : {}),scope:'written-story',persistence});
-  const readBody = async req => {
+  const readBody = async (req, limit = 65536) => {
     fail(req.headers['content-type']?.split(';')[0].trim().toLowerCase() === 'application/json', 'json_required', 415);
     if (req.headers['sec-fetch-site'] === 'cross-site') throw new CaseError('cross_site',403);
     if (req.headers.origin) {
@@ -110,7 +165,7 @@ export function createCaseService({contentPath = null, storagePath = null, pack:
     const chunks = []; let length = 0;
     for await (const chunk of req) {
       length += chunk.length;
-      if (length > 65536) throw new CaseError('body_too_large',413);
+      if (length > limit) throw new CaseError('body_too_large',413);
       chunks.push(chunk);
     }
     let body;
@@ -124,6 +179,23 @@ export function createCaseService({contentPath = null, storagePath = null, pack:
         if (req.method === 'GET' && url.pathname === '/api/case/config') { json(200, config()); return true; }
         const id = /(?:^|;\s*)raven_case_session=([a-f0-9]{64})(?:;|$)/.exec(req.headers.cookie || '')?.[1];
         let session = id ? sessions.get(id) : null;
+        if (req.method === 'POST' && url.pathname === '/api/case/restore') {
+          if (!checkpoints) throw new CaseError('checkpoint_unavailable',404);
+          const body = await readBody(req,MAX_CHECKPOINT_BODY_BYTES);
+          fail(only(body,['checkpoint']) && typeof body.checkpoint === 'string','invalid_request');
+          const entry = restoredSession(body.checkpoint);
+          const cookies = (req.headers.cookie || '').split(';').map(value => value.trim()).filter(value => value.startsWith(COOKIE + '='));
+          if (cookies.some(value => value !== COOKIE + '=' + entry.id)) throw new CaseError('checkpoint_session_conflict',409);
+          const existing = sessions.get(entry.id);
+          if (existing) {
+            if (entry.state.revision < existing.state.revision) throw new CaseError('checkpoint_stale',409);
+            fail(entry.packFingerprint === existing.packFingerprint && entry.state.caseId === existing.state.caseId && entry.state.contentVersion === existing.state.contentVersion && canonical(entry.state.opening) === canonical(existing.state.opening) && canonical(entry.operations.slice(0,existing.operations.length)) === canonical(existing.operations), 'checkpoint_session_conflict',409);
+            if (entry.state.revision === existing.state.revision) fail(canonical(entry) === canonical(existing),'checkpoint_session_conflict',409);
+          }
+          const response = responseOf(entry); // Seal successfully before accepting any progress.
+          commit(candidateWith(entry));
+          cookieFor(req,res,entry.id); json(200,response); return true;
+        }
         if (req.method === 'POST' && url.pathname === '/api/case/start') {
           const body = await readBody(req);
           session = id ? sessions.get(id) : null;
@@ -131,17 +203,17 @@ export function createCaseService({contentPath = null, storagePath = null, pack:
           const opening = validateOpening(body.opening);
           if (!pack) throw new CaseError('case_unavailable',503);
           if (body.contentVersion !== pack.contentVersion || (session && !compatible(session))) throw new CaseError('content_version_mismatch',409);
-          if (session) { json(200,viewOf(session)); return true; }
+          if (session) { json(200,responseOf(session)); return true; }
           if (id) throw new CaseError('session_unavailable',401);
-          if (sessions.size >= maxSessions) throw new CaseError('sessions_limit',503);
+          if (!checkpoints && sessions.size >= maxSessions) throw new CaseError('sessions_limit',503);
           const newId = randomBytes(32).toString('hex'), state = createCaseState(pack,opening);
-          const entry = {id:newId,state,operations:[],view:projectCaseState(pack,state,persistence)};
-          const candidate = new Map(sessions); candidate.set(newId,entry); commit(candidate);
-          res.setHeader('Set-Cookie', `${COOKIE}=${newId}; HttpOnly; SameSite=Strict; Path=/; Max-Age=31536000${req.socket.encrypted || secureCookie ? '; Secure' : ''}`);
-          json(200, viewOf(entry)); return true;
+          const entry = {id:newId,state,operations:[],view:projectCaseState(pack,state,persistence),...(checkpoints ? {packFingerprint} : {})};
+          const response = responseOf(entry); commit(candidateWith(entry));
+          cookieFor(req,res,newId);
+          json(200, response); return true;
         }
         if (!session) throw new CaseError('session_unavailable',401);
-        if (req.method === 'GET' && url.pathname === '/api/case/state') { json(200,viewOf(session)); return true; }
+        if (req.method === 'GET' && url.pathname === '/api/case/state') { json(200,responseOf(session)); return true; }
         if (req.method === 'GET' && url.pathname === '/api/case/export') {
           const view = viewOf(session); delete view.actions;
           json(200,{format:'raven-case-reading-export-v1',scope:'reading-copy-not-an-import',...view}); return true;
@@ -156,15 +228,15 @@ export function createCaseService({contentPath = null, storagePath = null, pack:
           const previous = session.operations.find(operation => operation.request.id === request.id);
           if (previous) {
             if (previous.fingerprint !== fingerprint) throw new CaseError('request_id_conflict',409);
-            json(200,{...viewOf(session),replayed:true}); return true;
+            json(200,{...responseOf(session),replayed:true}); return true;
           }
           if (!pack) throw new CaseError('case_unavailable',503);
           if (!compatible(session) || request.contentVersion !== pack.contentVersion) throw new CaseError('content_version_mismatch',409);
           if (session.operations.length >= maxOperations) throw new CaseError('operations_limit',409);
           const state = applyCaseAction(pack, session.state, request);
-          const entry = {id,state,operations:[...session.operations,{request,fingerprint}],view:projectCaseState(pack,state,persistence)};
-          const candidate = new Map(sessions); candidate.set(id,entry); commit(candidate);
-          json(200,{...viewOf(entry),replayed:false}); return true;
+          const entry = {id,state,operations:[...session.operations,{request,fingerprint}],view:projectCaseState(pack,state,persistence),...(checkpoints ? {packFingerprint} : {})};
+          const response = responseOf(entry); commit(candidateWith(entry));
+          json(200,{...response,replayed:false}); return true;
         }
         json(404,{error:'not_found'}); return true;
       } catch (error) {

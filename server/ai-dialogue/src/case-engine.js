@@ -184,7 +184,7 @@ export function projectCaseState(pack, state, persistence = 'process-memory') {
   if (state.materialIds.length) {
     const note = noteAction(state); note.fields[1].options = state.materialIds.map(id => ({value:id,label:clone(pack.materials[id].title)})); actions.push(note);
   }
-  return {caseId:state.caseId, contentVersion:state.contentVersion,revision:state.revision,saveStatus:persistence === 'disk-file' ? 'confirmed' : 'memory',persistence,
+  return {caseId:state.caseId, contentVersion:state.contentVersion,revision:state.revision,saveStatus:persistence === 'disk-file' ? 'confirmed' : persistence === 'browser-checkpoint' ? 'browser-required' : 'memory',persistence,
     scene:{id:state.sceneId,title:clone(scene.title),body:clone(scene.body),...optionalArt(scene),lines:(scene.lines || []).filter(line => gateAllows(line.requires,state)).map(line => ({speaker:clone(line.speaker),text:clone(line.text)}))},
     materials:state.materialIds.map(id => ({id,title:clone(pack.materials[id].title),body:clone(pack.materials[id].body),type:pack.materials[id].type,source:clone(pack.materials[id].source),...optionalArt(pack.materials[id])})),
     actions,notes:clone(state.notes),captures:clone(state.captures),shares:clone(state.shares),receipts:clone(state.receipts),opening:clone(state.opening)};

@@ -245,6 +245,67 @@ test('visual scenes and linked studio serve reviewed assets across root and lega
   }
 });
 
+test('the six reviewed homepage JPGs and favicon serve exact bytes while adjacent files and symlinks stay private', async t => {
+  const f = fixture(t), names = ['jonas','claire','elena','mateo','noah','evidence_table'];
+  const assets = names.map((name,index) => ({name:`raven/assets/images/deleted-name/${name}.jpg`,
+    type:'image/jpeg',bytes:Buffer.from([0xff,0xd8,0xff,0xe0,index,0xff,0xd9])}));
+  assets.push({name:'raven/assets/favicon.svg',type:'image/svg+xml',bytes:Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><title>Fixture favicon</title></svg>')});
+  for (const asset of assets) f.write(asset.name,asset.bytes);
+  const privateNames = ['raven/assets/images/deleted-name/private.jpg','raven/assets/images/deleted-name/jonas-copy.jpg',
+    'raven/assets/images/deleted-name/claire.webp','raven/assets/images/private.jpg','raven/assets/favicon-private.svg'];
+  for (const name of privateNames) f.write(name,'PRIVATE_HOMEPAGE_SENTINEL');
+  const s = await start(t,{siteRoot:f.root});
+  for (const asset of assets) for (const method of ['GET','HEAD']) {
+    const response = await fetch(s.root + '/' + asset.name + '?v=reviewed',{method});
+    assert.equal(response.status,200); assert.equal(response.headers.get('content-type'),asset.type);
+    assert.equal(response.headers.get('content-length'),String(asset.bytes.length));
+    assert.equal(response.headers.get('set-cookie'),null);
+    assert.deepEqual(Buffer.from(await response.arrayBuffer()),method === 'HEAD' ? Buffer.alloc(0) : asset.bytes);
+  }
+  for (const name of [...privateNames,'raven/assets/images/deleted-name/','raven/assets/images/',
+    'deleted-name/assets/images/jonas.jpg','raven/title-sequence.html']) {
+    const response = await fetch(s.root + '/' + name);
+    assert.equal(response.status,404); assert.doesNotMatch(await response.text(),/PRIVATE_HOMEPAGE_SENTINEL/);
+  }
+  const outside = path.join(f.dir,'outside.jpg');fs.writeFileSync(outside,'PRIVATE_HOMEPAGE_SENTINEL');
+  for (const [index,asset] of assets.entries()) {
+    const file = path.join(f.root,asset.name);fs.unlinkSync(file);
+    fs.symlinkSync(index % 2 ? outside : path.join(f.root,privateNames[0]),file);
+    const response = await fetch(s.root + '/' + asset.name);
+    assert.equal(response.status,404);assert.doesNotMatch(await response.text(),/PRIVATE_HOMEPAGE_SENTINEL/);
+  }
+  const images = path.join(f.root,'raven/assets/images/deleted-name'),moved = path.join(f.dir,'moved-images');
+  fs.renameSync(images,moved);fs.symlinkSync(moved,images);
+  for (const name of names) assert.equal((await fetch(s.root + `/raven/assets/images/deleted-name/${name}.jpg`)).status,404);
+});
+
+test('only the exact legacy case entry URLs redirect to canonical pages with query strings intact', async t => {
+  const f = fixture(t);f.write('raven/deleted-name/content.html','<!doctype html><p>Canonical case reading</p>');
+  const aliases = [
+    ['/deleted-name','/raven/deleted-name/'],['/deleted-name/','/raven/deleted-name/'],
+    ['/deleted-name/index.html','/raven/deleted-name/'],['/deleted-name/content.html','/raven/deleted-name/content.html'],
+    ['/raven/deleted-name.html','/raven/deleted-name/'],
+  ];
+  const s = await start(t,{siteRoot:f.root});
+  const query = '?lang=en&source=legacy%20link';
+  for (const [from,to] of aliases) for (const method of ['GET','HEAD']) {
+    const response = await fetch(s.root + from + query + '#opening',{method,redirect:'manual'});
+    assert.equal(response.status,308);assert.equal(response.headers.get('location'),to + query);
+    // Fragments never reach HTTP. A Location without a fragment lets browsers
+    // inherit the original #opening instead of replacing or stripping it.
+    assert.equal(response.headers.get('location').includes('#'),false);
+    assert.equal(response.headers.get('set-cookie'),null);assert.equal(await response.text(),'');
+    const destination = await fetch(s.root + response.headers.get('location'),{method});
+    assert.equal(destination.status,200);assert.equal(destination.headers.get('set-cookie'),null);
+  }
+  for (const name of ['deleted-name/private.html','deleted-name/content-backup.html','raven/deleted-name-private.html']) {
+    f.write(name,'PRIVATE_ALIAS_SENTINEL');
+    const response = await fetch(s.root + '/' + name,{redirect:'manual'});
+    assert.equal(response.status,404);assert.equal(response.headers.get('location'),null);
+    assert.doesNotMatch(await response.text(),/PRIVATE_ALIAS_SENTINEL/);
+  }
+});
+
 test('private files and raw traversal never reach the public mount, with or without a session', async t => {
   const f = fixture(t), s = await start(t, {siteRoot:f.root});
   for (const file of ['.env', '.git/config', 'PRIVATE-content-review-not-published.md', 'docs/review.html',

@@ -4,8 +4,8 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 
-export const SITE_COMMIT = 'bfabbe4f6d59781aff17e9e84ccd72580c137106';
-export const PUBLIC_RELEASE = '2026-11-08-case-play-1';
+export const SITE_COMMIT = 'e149136d9272f611f869c8c4f11aa6274ea75bd4';
+export const PUBLIC_RELEASE = '2026-11-12-case-play-2';
 export const EXPORT_MARKER = '.raven-render-export.json';
 const FORMAT = 'raven-render-site-v1';
 const MODULE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
@@ -24,6 +24,13 @@ export const CORE_FILES = [
   'raven/deleted-name/play/index.html','raven/deleted-name/play/content.html',
   'raven/deleted-name/play/app.js','raven/deleted-name/play/style.css',
   'raven/assets/raven-homepage-v6.css','raven/terminal-preview/raven-17/index.html',
+  'raven/assets/images/deleted-name/claire.jpg',
+  'raven/assets/images/deleted-name/jonas.jpg',
+  'raven/assets/images/deleted-name/mateo.jpg',
+  'raven/assets/images/deleted-name/noah.jpg',
+  'raven/assets/images/deleted-name/elena.jpg',
+  'raven/assets/images/deleted-name/evidence_table.jpg',
+  'raven/assets/favicon.svg',
   'raven/deleted-name/assets/characters/cast-portraits-v1.webp',
   'raven/deleted-name/assets/scenes/case-investigation-v2.webp',
   'raven/deleted-name/assets/scenes/case-tools-v1.webp',
@@ -58,7 +65,7 @@ export function validatePublicExport(root, {files=fs, release=PUBLIC_RELEASE} = 
     check(plain(metadata) && sameList(Object.keys(metadata),[
       'release','interfaceVersion','caseApiVersion','publicMode','storyIncludedInPublicBundle',
       'providerCallsRequired','musicTracks','raven17Episodes','languages',
-    ]) && metadata.release===release && metadata.interfaceVersion==='case-play-1' &&
+    ]) && metadata.release===release && metadata.interfaceVersion==='case-play-2' &&
       metadata.caseApiVersion===1 && metadata.publicMode==='static-site-with-optional-written-case-server' &&
       metadata.storyIncludedInPublicBundle===false && metadata.providerCallsRequired===false &&
       metadata.musicTracks===13 && metadata.raven17Episodes===3 &&

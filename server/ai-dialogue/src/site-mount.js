@@ -27,6 +27,9 @@ const files = [
   'raven/assets/raven-archive.js', 'raven/assets/raven-home-focus.css',
   'raven/assets/raven-enhancements-v1.js', 'raven/assets/raven-archive.css',
   'raven/assets/raven-deleted-name-home.js', 'raven/assets/raven-refinement-v2.js',
+  'raven/assets/favicon.svg',
+  ...['jonas', 'claire', 'elena', 'mateo', 'noah', 'evidence_table'].map(name =>
+    `raven/assets/images/deleted-name/${name}.jpg`),
   'raven/assets/raven-homepage-v6.css', 'raven/assets/raven-redesign-v1.css', 'raven/assets/raven-i18n.js',
   'raven/assets/raven-visual-scenes.js', 'raven/assets/raven-visual-scenes.css',
   // Runtime files used by the pinned homepage and its linked studio, not the source/download bundle.
@@ -52,6 +55,13 @@ const files = [
   ...Array.from({length:13}, (_, n) => `assets/audio/raven/${String(n + 1).padStart(2, '0')}.mp3`),
 ];
 const routes = new Map(files.map(file => ['/' + file, file]));
+const legacyCaseRoutes = new Map([
+  ['/deleted-name', '/raven/deleted-name/'],
+  ['/deleted-name/', '/raven/deleted-name/'],
+  ['/deleted-name/index.html', '/raven/deleted-name/'],
+  ['/deleted-name/content.html', '/raven/deleted-name/content.html'],
+  ['/raven/deleted-name.html', '/raven/deleted-name/'],
+]);
 for (const file of files) if (file.endsWith('/index.html')) routes.set('/' + file.slice(0, -10), file);
 // The pinned studio build retains its GitHub Pages base. Alias only reviewed studio routes.
 for (const [route, file] of [...routes]) if (route.startsWith('/studio/')) routes.set('/abdulrhman' + route, file);
@@ -88,6 +98,7 @@ export function createSiteMount(directory) {
   return {
     redirect(pathname) {
       if (pathname === '/abdulrhman/raven/index.html') return '/raven/';
+      if (legacyCaseRoutes.has(pathname)) return legacyCaseRoutes.get(pathname);
       return !pathname.endsWith('/') && (routes.has(pathname + '/') || pathname === '/raven/dialogue')
         ? pathname + '/' : null;
     },

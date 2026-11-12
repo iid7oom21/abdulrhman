@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import {createHash, randomUUID} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
 import {fileURLToPath} from 'node:url';
@@ -124,13 +125,21 @@ export function prepareRenderRuntime({env = process.env, siteRoot = DEFAULT_SITE
     validatePublicExport(siteRoot);
     const portText = envValue(env,'PORT','10000');
     check(/^\d+$/.test(portText) && Number(portText) >= 1 && Number(portText) <= 65535,'invalid_port');
-    const mount = absolute(envValue(env,'RAVEN_RENDER_DATA_MOUNT','/var/data'));
+    const storageMode = envValue(env,'RAVEN_RENDER_STORAGE_MODE','disk');
+    check(['disk','browser-checkpoint'].includes(storageMode),'invalid_storage_mode');
+    const browserCheckpoint = storageMode === 'browser-checkpoint';
+    // A restart must use the same operator-supplied key. Never create a key at
+    // boot: that would make the browser's only recovery copy unreadable.
+    if (browserCheckpoint) check(/^[a-fA-F0-9]{64}$/.test(envValue(env,'RAVEN_CASE_CHECKPOINT_KEY','')),'invalid_checkpoint_key');
+    const mount = browserCheckpoint ? fs.realpathSync(os.tmpdir()) : absolute(envValue(env,'RAVEN_RENDER_DATA_MOUNT','/var/data'));
     pathWithoutLinks(mount); check(fs.lstatSync(mount).isDirectory(),'persistent_mount_missing');
-    const dataDir = absolute(envValue(env,'RAVEN_RENDER_DATA_DIR',path.join(mount,'raven')));
-    check(dataDir !== mount && inside(dataDir,mount),'data_outside_mount');
+    const dataDir = absolute(browserCheckpoint
+      ? envValue(env,'RAVEN_RENDER_EPHEMERAL_DIR',path.join(mount,'raven-private-render'))
+      : envValue(env,'RAVEN_RENDER_DATA_DIR',path.join(mount,'raven')));
+    check(dataDir !== mount && inside(dataDir,mount),browserCheckpoint ? 'content_outside_temporary_directory' : 'data_outside_mount');
     privatePath(dataDir,siteRoot);
-    const contentDir = path.join(dataDir,'content'), storageDir = path.join(dataDir,'stores');
-    privatePath(contentDir,siteRoot); privatePath(storageDir,siteRoot);
+    const contentDir = path.join(dataDir,'content'), storageDir = browserCheckpoint ? null : path.join(dataDir,'stores');
+    privatePath(contentDir,siteRoot); if (storageDir) privatePath(storageDir,siteRoot);
     const caseContentPath = path.join(contentDir,'raven-case-content.json');
     const fileExplicit = Object.hasOwn(env,'RAVEN_CASE_CONTENT_FILE'), gzipExplicit = Object.hasOwn(env,'RAVEN_CASE_CONTENT_GZIP_BASE64');
     check(!(fileExplicit && gzipExplicit),'conflicting_content_sources');
@@ -142,17 +151,23 @@ export function prepareRenderRuntime({env = process.env, siteRoot = DEFAULT_SITE
       const secretFile = absolute(envValue(env,'RAVEN_CASE_CONTENT_FILE',defaultSecretFile));
       privatePath(secretFile,siteRoot);
       if (fileExplicit || exists(secretFile)) { bytes = boundedRead(secretFile); loadCaseContent(secretFile,{siteRoot}); source = 'secret-file'; }
-      else { privatePath(caseContentPath,siteRoot); bytes = boundedRead(caseContentPath); loadCaseContent(caseContentPath,{siteRoot}); source = 'validated-cache'; }
+      else {
+        // An ephemeral cache is not a recoverable deployment input. The free
+        // mode needs its private content supplied through Render on every boot.
+        check(!browserCheckpoint,'private_content_required');
+        privatePath(caseContentPath,siteRoot); bytes = boundedRead(caseContentPath); loadCaseContent(caseContentPath,{siteRoot}); source = 'validated-cache';
+      }
     }
     validateBytes(bytes,expectedHash);
-    privateDirectory(contentDir,mount); privateDirectory(storageDir,mount);
+    privateDirectory(contentDir,mount); if (storageDir) privateDirectory(storageDir,mount);
     privatePath(caseContentPath,siteRoot);
     if (source !== 'validated-cache') replaceContent(caseContentPath,bytes,siteRoot);
     secureExistingFile(caseContentPath);
-    const caseStoragePath = path.join(storageDir,'case-store.json'), storeFile = path.join(storageDir,'dialogue-preview.json');
-    for (const file of [caseStoragePath,storeFile]) { privatePath(file,siteRoot); secureExistingFile(file); }
+    const caseStoragePath = storageDir ? path.join(storageDir,'case-store.json') : null;
+    const storeFile = storageDir ? path.join(storageDir,'dialogue-preview.json') : null;
+    for (const file of [caseStoragePath,storeFile].filter(Boolean)) { privatePath(file,siteRoot); secureExistingFile(file); }
     loadCaseContent(caseContentPath,{siteRoot});
-    return {siteRoot,dataDir,caseContentPath,caseContentSHA256:sha256(bytes),caseStoragePath,storeFile,source,host:'0.0.0.0',port:Number(portText)};
+    return {siteRoot,dataDir,storageMode,caseContentPath,caseContentSHA256:sha256(bytes),caseStoragePath,storeFile,source,host:'0.0.0.0',port:Number(portText)};
   } catch (error) {
     if (error instanceof RenderStartupError) throw error;
     throw new RenderStartupError('render_startup_failed'); // No content, path, secret or parser excerpt in logs.
@@ -164,6 +179,7 @@ export function createRenderServer(options = {}) {
   try {
     const server = createPreviewServer({siteRoot:runtime.siteRoot,caseContentPath:runtime.caseContentPath,
       caseStoragePath:runtime.caseStoragePath,storeFile:runtime.storeFile,hostedRootRedirect:'/raven/',
+      caseCheckpointKey:runtime.storageMode === 'browser-checkpoint' ? (options.env || process.env).RAVEN_CASE_CHECKPOINT_KEY : null,
       secureCookie:true,generate:simulateReply,providerInfo:{provider:'simulation',model:null},
       readControls:() => ({providerCallsEnabled:false,controlAvailable:true,purchasesEnabled:false,
         entitlementUseEnabled:false,writtenDialogueAvailable:true})});
@@ -183,7 +199,8 @@ export async function startRenderServer(options = {}) {
 if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   try {
     const {server,runtime} = await startRenderServer();
-    console.log(`RAVEN written case listening on port ${runtime.port}; private disk storage; model calls disabled.`);
+    const storageLabel = runtime.storageMode === 'browser-checkpoint' ? 'browser recovery checkpoints; server memory is temporary' : 'private disk storage';
+    console.log(`RAVEN written case listening on port ${runtime.port}; ${storageLabel}; model calls disabled.`);
     const close = () => server.close(() => process.exit(0));
     process.once('SIGINT',close); process.once('SIGTERM',close);
   } catch (error) {
