@@ -35,7 +35,7 @@ const ready = async page => {await idle(page);await textIncludes(page, '#save-st
 async function harness(createPreviewServer, fixturePack) {
   const api = {requests:[],dropAction:false,holdState:false,heldState:null,invalidCheckpoint:false,invalidActionCheckpoint:false,server:null,port:0};
   api.start = async (key = SECRET) => {
-    api.server = createPreviewServer({siteRoot:ROOT,casePack:fixturePack(),caseCheckpointKey:key,generate:() => {throw new Error('Written case cannot call a provider');}});
+    api.server = createPreviewServer({siteRoot:ROOT,casePack:fixturePack(api.version),caseCheckpointKey:key,generate:() => {throw new Error('Written case cannot call a provider');}});
     const original = api.server.listeners('request')[0];
     api.server.removeListener('request', original);
     api.server.on('request', (req,res) => {
@@ -112,6 +112,20 @@ test('browser-held progress with the real case HTTP service', {timeout:120000,sk
     const downloadPromise = page.waitForEvent('download');await page.locator('#case-export').click();
     const record = JSON.parse(fs.readFileSync(await (await downloadPromise).path(),'utf8'));
     assert.equal(record.revision,1);assert.doesNotMatch(JSON.stringify(record),/raven1\.|checkpoint|sessionTag/);
+  }));
+
+  await t.test('a restored older content version stays saved in this browser and clearly read-only', () => check(async (page,api) => {
+    await read(page);await ready(page);const previous = await saved(page);
+    api.version = 'fixture-v2';await api.restart();await page.reload();await ready(page);
+    await textIncludes(page,'#connection-title','read-only');await textIncludes(page,'#connection-message','different content version');
+    assert.doesNotMatch(await page.locator('#connection').innerText(),/not confirmed|storage.*restored/);
+    assert.equal(await page.locator('#actions form,#notebook-actions form,#operation-retry,#case-start').count(),0);
+    assert.deepEqual((await saved(page)).checkpointInfo,previous.checkpointInfo);
+    await textIncludes(page,'#materials-list','Card A');
+    const downloadPromise = page.waitForEvent('download');await page.locator('#case-export').click();
+    const record = JSON.parse(fs.readFileSync(await (await downloadPromise).path(),'utf8'));
+    assert.equal(record.contentVersion,'fixture-v1');assert.equal(record.revision,1);assert.equal(record.materials[0].id,'card');
+    assert.equal(api.actions().length,1);assert.equal(api.starts().length,1);
   }));
 
   await t.test('quota failure preserves the last token and pending operation until retry-save succeeds', () => check(async (page,api) => {

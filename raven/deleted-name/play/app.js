@@ -32,7 +32,7 @@
       pendingTitle:'نتيجة الإجراء لم تُحسم بعد',pendingBody:'قد يكون الخادم نفّذ اختيارك. إعادة المحاولة التالية تستخدم العملية نفسها ولا تنشئ اختيارًا جديدًا.',retryOperation:'تابع العملية نفسها',pendingBusy:'جارٍ تنفيذ اختيارك…',
       pendingCorruptTitle:'تعذّرت قراءة سجل عملية سابقة',pendingCorruptBody:'أُبقي السجل المحلي الأصلي دون تغيير. يمكنك تنزيله للاحتفاظ به؛ لا يمكن إرسال إجراء جديد من هذه الصفحة قبل مراجعة هذه الحالة.',pendingDownload:'تنزيل سجل العملية المحلي',
       pendingNoStorage:'تعذّر حفظ مرجع العملية في هذا المتصفح. أبقِ الصفحة مفتوحة حتى تتضح النتيجة.',
-      conflict:'تغيّرت حالة القضية. حدّثها ثم راجع اختيارك من جديد.',version:'إصدار جلسة القضية يختلف عن الإصدار المطلوب. نزّل سجلك المتاح قبل استئناف العمل على إصدار آخر.',
+      conflict:'تغيّرت حالة القضية. حدّثها ثم راجع اختيارك من جديد.',versionPaused:'هذه القضية متاحة للقراءة فقط بسبب اختلاف إصدار المحتوى',version:'إصدار جلسة القضية يختلف عن الإصدار المطلوب. نزّل سجلك المتاح قبل استئناف العمل على إصدار آخر.',
       rejected:'لم يقبل الخادم هذا الإجراء. راجع الحقول والاختيارات المتاحة.',session:'تعذّر الوصول إلى الجلسة. تحقّق من الاتصال قبل إعادة المحاولة.',blocked:'تعذّر التحقق من مصدر الطلب؛ لم يُؤكَّد تنفيذ الإجراء.',
       error:'تعذّر إكمال الطلب الآن.',emptyMaterials:'لم تصل إليك مواد بعد.',chooseMaterial:'اختر مادة',source:'المصدر',noSource:'لا يوجد مصدر معروض.',
       preview:'راجع قبل التأكيد',confirm:'تأكيد الاختيار',edit:'العودة للتعديل',choice:'الاختيار',fieldsScope:'هذه القيم ستُرسل إلى خادم القضية. راجع الجهة ونطاق المشاركة في المشهد؛ لا تُرفق ملاحظاتك الخاصة تلقائيًا.',
@@ -68,7 +68,7 @@
       pendingTitle:'The action’s outcome is not confirmed',pendingBody:'The server may have carried out your choice. The next retry uses the same operation rather than creating a new choice.',retryOperation:'Check the same operation',pendingBusy:'Carrying out your choice…',
       pendingCorruptTitle:'A previous operation record could not be read',pendingCorruptBody:'The original local record was left unchanged. Download it to keep a copy; this page cannot submit a new action until this situation is reviewed.',pendingDownload:'Download local operation record',
       pendingNoStorage:'This browser could not retain the operation reference. Keep the page open until its outcome is known.',
-      conflict:'The case state changed. Refresh it, then review your choice again.',version:'The case session uses a different content version. Download any available record before continuing with another version.',
+      conflict:'The case state changed. Refresh it, then review your choice again.',versionPaused:'This case is read-only because its content version differs',version:'The case session uses a different content version. Download any available record before continuing with another version.',
       rejected:'The server did not accept this action. Review the fields and available choices.',session:'The session could not be reached. Check the connection before retrying.',blocked:'The request origin could not be verified; the action was not confirmed.',
       error:'The request could not finish right now.',emptyMaterials:'You have not received materials yet.',chooseMaterial:'Choose a material',source:'Source',noSource:'No source is shown.',
       preview:'Review before confirming',confirm:'Confirm choice',edit:'Back to editing',choice:'Choice',fieldsScope:'These values will be sent to the case server. Review the recipient and sharing scope in the scene; private notes are not attached automatically.',
@@ -299,7 +299,9 @@
   function pendingBanner() {
     if (corruptPending !== null) return {title:'pendingCorruptTitle',message:'pendingCorruptBody',kind:'corrupt'};
     if (browserMode() && checkpointIssue) return {title:({save:'browserSaveTitle',newer:'browserNewerTitle',conflict:'browserConflictTitle',corrupt:'browserCorruptTitle',restore:'browserRestoreTitle'})[checkpointIssue],message:({save:'browserSaveBody',newer:'browserNewerBody',conflict:'browserConflictBody',corrupt:'browserCorruptBody',restore:'browserRestoreBody'})[checkpointIssue],kind:'checkpoint'};
-    if (state?.readOnly || state?.storageUnavailable || state?.saveStatus === 'unconfirmed') return {title:'storagePaused',message:'storageUnconfirmed',kind:'storage'};
+    if (state?.storageUnavailable || state?.saveStatus === 'unconfirmed') return {title:'storagePaused',message:'storageUnconfirmed',kind:'storage'};
+    if (state?.contentVersionMismatch) return {title:'versionPaused',message:'version',kind:'version'};
+    if (state?.readOnly) return {title:'storagePaused',message:'storageUnconfirmed',kind:'storage'};
     if (pending) return {title:busy ? 'pendingBusy' : 'pendingTitle',message:pendingIssue || 'pendingBody',kind:'pending'};
     return banner;
   }
@@ -316,8 +318,8 @@
       if (pending) actions.append(button('pending-download',tr('pendingDownload'),() => download(pending,'raven-pending-operation.json')));
     }
     if (display.kind === 'corrupt') actions.append(button('pending-download',tr('pendingDownload'),() => download(corruptPending,'raven-pending-operation.json')));
-    if (display.kind === 'storage') {
-      actions.append(button('storage-refresh',tr('refresh'),refresh));
+    if (['storage','version'].includes(display.kind)) {
+      actions.append(button(display.kind + '-refresh',tr('refresh'),refresh));
       if (pending) actions.append(button('pending-download',tr('pendingDownload'),() => download(pending,'raven-pending-operation.json')));
     }
     if (display.kind === 'start') {
@@ -646,7 +648,7 @@
     for (const language of ['ar','en']) $('language-' + language).setAttribute('aria-pressed',String(lang === language));
     $('home-link').href = '../../' + (lang === 'en' ? '?lang=en' : '');$('case-link').href = '../' + (lang === 'en' ? '?lang=en' : '');
     $('case-app').hidden = !state;renderBanner();if (!state) return;
-    $('save-status').textContent = browserMode() ? tr(checkpointSaved && !checkpointIssue ? 'browserSaved' : 'browserUnsaved') : state.readOnly || state.storageUnavailable || state.saveStatus === 'unconfirmed' ? tr('saveUnconfirmed') : state.persistence === 'disk-file' && state.saveStatus === 'confirmed' ? tr('confirmed') : state.persistence === 'process-memory' && state.saveStatus === 'memory' ? tr('memory') : tr('saveUnconfirmed');
+    $('save-status').textContent = browserMode() ? tr(checkpointSaved && !checkpointIssue ? 'browserSaved' : 'browserUnsaved') : (state.readOnly && !state.contentVersionMismatch) || state.storageUnavailable || state.saveStatus === 'unconfirmed' ? tr('saveUnconfirmed') : state.persistence === 'disk-file' && state.saveStatus === 'confirmed' ? tr('confirmed') : state.persistence === 'process-memory' && state.saveStatus === 'memory' ? tr('memory') : tr('saveUnconfirmed');
     displayText($('scene-title'),localized(state.scene.title));$('scene-label').textContent = '';
     const prose = $('scene-body');prose.replaceChildren();if (localized(state.scene.body)) prose.append(element('p',localized(state.scene.body)));
     for (const line of state.scene.lines || []) {const speech = element('div',undefined,'speech');if (localized(line.speaker)) speech.append(element('span',localized(line.speaker),'speaker'));speech.append(element('p',localized(line.text)));prose.append(speech);}

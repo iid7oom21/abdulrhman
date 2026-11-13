@@ -513,6 +513,50 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     assert.equal(api.mutations, 1);
   }));
 
+  await t.test('an older confirmed disk session remains readable and exportable with a version notice', () => check({}, async (page, api) => {
+    await ready(page);
+    Object.assign(api.state, { contentVersion: VERSION + '-earlier', readOnly: true, contentVersionMismatch: true, actions: [] });
+    const previous = clone(api.state);
+    const operation = JSON.stringify({ id: 'fixture-old-version-operation', revision: previous.revision, contentVersion: previous.contentVersion, actionId: 'fixture-advance', values: {} });
+    await page.evaluate(({key,operation}) => sessionStorage.setItem(key,operation), {key:PENDING_KEY,operation});
+    await page.reload();await ready(page);
+    await textIncludes(page, '#connection-title', 'اختلاف إصدار المحتوى');
+    await textIncludes(page, '#save-status', 'حُفظت هذه الخطوة');
+    await english(page);
+    await textIncludes(page, '#connection-title', 'read-only');
+    await textIncludes(page, '#connection-message', 'different content version');
+    await textIncludes(page, '#save-status', 'This step was saved');
+    assert.doesNotMatch(await page.locator('#connection').innerText(), /not confirmed|storage.*restored/);
+    assert.equal(await page.locator('#actions form,#notebook-actions form,#operation-retry,#case-start').count(), 0);
+    assert.equal(await page.locator('#pending-download').count(), 1);
+    assert.equal(await page.evaluate(key => sessionStorage.getItem(key), PENDING_KEY), operation);
+    await textIncludes(page, '#materials-list', 'Fixture letter');
+    const downloadPromise = page.waitForEvent('download');await page.locator('#case-export').click();
+    const exported = JSON.parse(fs.readFileSync(await (await downloadPromise).path(), 'utf8'));
+    assert.equal(exported.contentVersion, previous.contentVersion);assert.equal(exported.revision, previous.revision);
+    assert.equal(exported.readOnly, true);assert.deepEqual(exported.materials, previous.materials);
+    Object.assign(api.state, { storageUnavailable: true, saveStatus: 'unconfirmed' });
+    await page.locator('#state-refresh').click();
+    await textIncludes(page, '#connection-title', 'saving could not be confirmed');
+    await textIncludes(page, '#save-status', 'Saving is unconfirmed');
+    assert.doesNotMatch(await page.locator('#save-status').innerText(), /was saved/);
+    Object.assign(api.state, { storageUnavailable: false, saveStatus: 'confirmed' });
+    await page.locator('#storage-refresh').click();
+    await textIncludes(page, '#connection-title', 'read-only');await textIncludes(page, '#save-status', 'This step was saved');
+    assert.equal(await page.evaluate(key => sessionStorage.getItem(key), PENDING_KEY), operation);
+    assert.equal(actionRequests(api).length, 0);assert.equal(startRequests(api).length, 0);
+  }));
+
+  await t.test('an unexplained read-only state remains paused without claiming confirmed saving', () => check({}, async (page, api) => {
+    await ready(page);await english(page);
+    Object.assign(api.state, { readOnly: true, actions: [] });
+    await page.locator('#state-refresh').click();
+    await textIncludes(page, '#save-status', 'Saving is unconfirmed');
+    assert.equal(await page.locator('#actions form,#notebook-actions form,#operation-retry').count(), 0);
+    assert.doesNotMatch(await page.locator('#save-status').innerText(), /was saved/);
+    assert.equal(actionRequests(api).length, 0);
+  }));
+
   await t.test('recording range review uses earned materials and keeps its selection across language changes', () => check({}, async (page, api) => {
     await ready(page);
     api.state.materials.push(
