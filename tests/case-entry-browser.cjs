@@ -175,14 +175,28 @@ test('opening continuation: explicit import, persistent shell and unavailable-se
     }));
   }
 
-  for (const mode of ['disabled', 'missing', 'html']) {
-    await t.test(mode + ' availability leaves the opening complete without a continue button or writes', async () => check({ mode }, async ({ api, page, frame }) => {
+  // An unavailable case used to leave a blank ending. A static host with no case
+  // server (missing/html) now points to the case server; a server that answers
+  // but has the case off says it is unavailable. Neither imports or writes.
+  const CASE_SERVER = 'https://raven-ai-dialogue-preview.onrender.com';
+  for (const [mode, language] of [['disabled', 'ar'], ['missing', 'ar'], ['html', 'ar'], ['missing', 'en']]) {
+    const noServer = mode !== 'disabled';
+    await t.test(language + ': ' + mode + ' availability ' + (noServer ? 'points to the case server' : 'says the case is unavailable') + ' without a continue button or writes', async () => check({ mode, language }, async ({ api, page, frame }) => {
       const response = page.waitForResponse(response => new URL(response.url()).pathname === '/api/case/config');
       await finish({ api, frame }, 'wait', null);
       await (await response).finished();
       await frame.locator('#hook').evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
-      assert.equal(await frame.locator('#case-continuation').count(), 0);
+      assert.equal(await frame.locator('#case-continuation').count(), 1, 'the ending explains the state instead of going blank');
       assert.equal(await frame.locator('#case-continue-link').count(), 0);
+      if (noServer) {
+        const link = frame.locator('#case-server-link');
+        assert.equal(await link.getAttribute('href'), CASE_SERVER + OPENING_PATH + (language === 'en' ? '?lang=en' : ''));
+        assert.equal(await link.getAttribute('target'), '_top', 'the link leaves the site shell frame');
+        assert.equal(await link.innerText(), language === 'en' ? 'Open the case on its server' : 'افتح القضية على خادمها');
+      } else {
+        assert.equal(await frame.locator('#case-server-link').count(), 0, 'a server that answers is not sent elsewhere');
+        assert.equal(await frame.locator('#case-continuation h3').innerText(), 'القضية المكتوبة غير متاحة الآن');
+      }
       assert.equal(await frame.locator('#hook-ending').isVisible(), true);
       assert.equal(await frame.locator('[data-hook-action="replay"]').isVisible(), true);
       assert.equal(await page.evaluate(key => sessionStorage.getItem(key), KEY), null);
