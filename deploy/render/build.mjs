@@ -4,7 +4,7 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 
-export const SITE_COMMIT = 'e149136d9272f611f869c8c4f11aa6274ea75bd4';
+export const SITE_COMMIT = 'f5b8ea3a9d7f962d390d55d40cd6704e02394b3f';
 export const PUBLIC_RELEASE = '2026-11-12-case-play-2';
 export const EXPORT_MARKER = '.raven-render-export.json';
 // Render builds from a shallow, single-branch checkout and removes its Git
@@ -27,6 +27,8 @@ export const CORE_FILES = [
   'raven/deleted-name/play/index.html','raven/deleted-name/play/content.html',
   'raven/deleted-name/play/app.js','raven/deleted-name/play/style.css',
   'raven/assets/raven-homepage-v6.css','raven/terminal-preview/raven-17/index.html',
+  'raven/terminal-preview/assets/hero-poster.jpg',
+  'raven/terminal-preview/assets/hero-loop.mp4',
   'raven/assets/images/deleted-name/claire.jpg',
   'raven/assets/images/deleted-name/jonas.jpg',
   'raven/assets/images/deleted-name/mateo.jpg',

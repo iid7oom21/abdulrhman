@@ -106,6 +106,8 @@ test('wrong release, missing files, fourteen tracks, mismatched playlist and mis
   const mutations=[
     root=>write(root,'raven/release.json',JSON.stringify({...metadata,release:'unreviewed'})),
     root=>fs.rmSync(path.join(root,'raven/deleted-name/play/app.js')),
+    root=>fs.rmSync(path.join(root,'raven/terminal-preview/assets/hero-poster.jpg')),
+    root=>fs.rmSync(path.join(root,'raven/terminal-preview/assets/hero-loop.mp4')),
     root=>write(root,'assets/audio/raven/14.mp3','FOURTEENTH'),
     root=>write(root,'site-audio.js','export const TRACKS=[];'),
     root=>fs.rmSync(path.join(root,'raven/terminal-preview/raven-17/part-3'),{recursive:true}),
