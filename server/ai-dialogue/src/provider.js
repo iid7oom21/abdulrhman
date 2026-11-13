@@ -16,6 +16,13 @@ const labels = {
   private_note: 'ملاحظة شاركها اللاعب',
   report: 'مسودة تقرير للاعب'
 };
+// Reject invalid operator limits before issuing a request. These bounds also
+// protect embedded callers from disabled concurrency or overflowing Node timers.
+function checkLimit(value, maximum, code) {
+  if (!Number.isInteger(value) || value < 1 || value > maximum) throw new Error(code);
+}
+const envNumber = (value, fallback) => value === undefined || (typeof value === 'string' && !value.trim())
+  ? fallback : Number(value);
 
 export function createOpenAIReply(options = {}) {
   return createReceivedMaterialReply({ ...options, protocol: 'responses', endpoint: 'https://api.openai.com/v1/responses' });
@@ -29,8 +36,10 @@ export function createCompatibleReply({ baseUrl = 'https://api.x.ai/v1', ...opti
   return createReceivedMaterialReply({ ...options, protocol: 'chat', endpoint });
 }
 
-function createReceivedMaterialReply({ apiKey, model, protocol, endpoint, fetchImpl = fetch, timeoutMs = 30000, maxConcurrent = 4, maxInputChars = 32000, maxMaterials = 40 } = {}) {
+function createReceivedMaterialReply({ apiKey, model, protocol, endpoint, fetchImpl = fetch, timeoutMs = 30000, maxConcurrent = 4 } = {}) {
   if (!apiKey || typeof model !== 'string' || !model.trim()) throw new Error('model_configuration_required');
+  checkLimit(timeoutMs, 120000, 'invalid_model_timeout');
+  checkLimit(maxConcurrent, 16, 'invalid_model_concurrency');
   let active = 0;
   return async function generate(characterId, message, received) {
     const context = buildContext(characterId, received);
@@ -38,7 +47,7 @@ function createReceivedMaterialReply({ apiKey, model, protocol, endpoint, fetchI
     const materials = (context.received?.materials || []).filter(m => m.author === 'player' && Object.hasOwn(labels, m.type))
       .map(m => Object.fromEntries(fields.filter(k => Object.hasOwn(m, k)).map(k => [k, m[k]])));
     // No source, no paid request. A too-large context is refused rather than silently dropping corrections.
-    if (!materials.length || materials.length > maxMaterials || JSON.stringify(materials).length > maxInputChars) return refuse();
+    if (!materials.length || materials.length > 40 || JSON.stringify(materials).length > 32000) return refuse();
     if (active >= maxConcurrent) throw new ProviderError('provider_busy');
     active++;
     const controller = new AbortController();
@@ -130,7 +139,12 @@ You cannot share, create, correct, deposit, or change game state. Return JSON on
           throw new ProviderError('provider_invalid_output');
         }
         // Server-side verification and composition. Model cannot create facts or change state.
-        if (selection.action === 'unavailable' || !selection.materialIds.length) return refuse();
+        if (selection.action === 'unavailable') return refuse();
+        if (!selection.materialIds.length) {
+          return selection.action === 'clarify'
+            ? { text: 'أي قول أو تصحيح تقصد من المواد التي وصلتني؟', refused: false, source: 'grounded-model' }
+            : refuse();
+        }
         const selected = new Set(selection.materialIds);
         // An older selected statement never conceals a newer correction known to this recipient.
         for (const m of materials) {
@@ -158,6 +172,10 @@ You cannot share, create, correct, deposit, or change game state. Return JSON on
 export function providerFromEnv(env = process.env) {
   const provider = env.RAVEN_AI_PROVIDER || (env.RAVEN_MODEL_KEY ? 'compatible' : 'simulation');
   if (provider === 'simulation') return { info: { provider: 'simulation', model: null } };
+  const limits = {
+    timeoutMs: envNumber(env.RAVEN_MODEL_TIMEOUT_MS, 30000),
+    maxConcurrent: envNumber(env.RAVEN_MODEL_MAX_CONCURRENT, 4)
+  };
   if (provider === 'compatible') {
     const model = env.RAVEN_MODEL_NAME || 'grok-3';
     return {
@@ -165,8 +183,7 @@ export function providerFromEnv(env = process.env) {
         apiKey: env.RAVEN_MODEL_KEY,
         model,
         baseUrl: env.RAVEN_MODEL_BASE || 'https://api.x.ai/v1',
-        timeoutMs: Number(env.RAVEN_MODEL_TIMEOUT_MS) || 30000,
-        maxConcurrent: Number(env.RAVEN_MODEL_MAX_CONCURRENT) || 4
+        ...limits
       }),
       info: { provider, model }
     };
@@ -177,8 +194,7 @@ export function providerFromEnv(env = process.env) {
     generate: createOpenAIReply({
       apiKey: env.OPENAI_API_KEY,
       model,
-      timeoutMs: Number(env.RAVEN_MODEL_TIMEOUT_MS) || 30000,
-      maxConcurrent: Number(env.RAVEN_MODEL_MAX_CONCURRENT) || 4
+      ...limits
     }),
     info: { provider: 'openai', model }
   };
