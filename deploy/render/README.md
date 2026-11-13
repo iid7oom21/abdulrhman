@@ -29,7 +29,7 @@ node deploy/render/build.mjs
 node deploy/render/start.mjs
 ```
 
-The build pins the reviewed public commit and verifies the release, 13 music tracks and three episodes before replacing `.render-site`. A failed build preserves the previous export or its recoverable backup. Build output is ignored by Git.
+The build pins the reviewed public commit and verifies the release, 13 music tracks and three episodes before replacing `.render-site`. Render builds from a shallow checkout of one branch and removes its Git remote; when the pinned commit is not present and there is no `origin`, the build fetches that exact SHA from the public repository instead, and still refuses any object that is not that commit. A failed build preserves the previous export or its recoverable backup. Build output is ignored by Git.
 
 Startup validates the public export and private story before listening on `0.0.0.0:$PORT` (default `10000`). Disk mode stages content and opens existing saves on the mounted disk. Browser mode stages only the private story in a restricted temporary directory and keeps live sessions in process memory; it creates no save files. Missing/invalid content or unsafe storage locations stop startup. `/` and `/index.html` redirect to `/raven/`, preserving the language query. Secure cookies are enabled for Render's HTTPS proxy.
 

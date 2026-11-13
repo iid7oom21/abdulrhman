@@ -7,6 +7,9 @@ import {fileURLToPath} from 'node:url';
 export const SITE_COMMIT = 'e149136d9272f611f869c8c4f11aa6274ea75bd4';
 export const PUBLIC_RELEASE = '2026-11-12-case-play-2';
 export const EXPORT_MARKER = '.raven-render-export.json';
+// Render builds from a shallow, single-branch checkout and removes its Git
+// remote, so a missing pinned commit is fetched from here by its SHA.
+export const PUBLIC_REPOSITORY = 'https://github.com/iid7oom21/abdulrhman.git';
 const FORMAT = 'raven-render-site-v1';
 const MODULE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const TRACKS = Array.from({length:13}, (_, index) => `${String(index + 1).padStart(2,'0')}.mp3`);
@@ -118,7 +121,7 @@ function ownedExport(files, directory) {
 
 // Injection is for local tests. CLI always uses the pinned public commit above;
 // no environment override can silently select a floating branch or source tree.
-export function buildSite({repo=MODULE_ROOT,files=fs,run=command,commit=SITE_COMMIT,release=PUBLIC_RELEASE} = {}) {
+export function buildSite({repo=MODULE_ROOT,files=fs,run=command,commit=SITE_COMMIT,release=PUBLIC_RELEASE,source=PUBLIC_REPOSITORY} = {}) {
   check(/^[a-f0-9]{40}$/.test(commit),'invalid_public_commit');
   repo=path.resolve(repo);
   check(files.realpathSync(repo)===repo && files.lstatSync(repo).isDirectory(),'unsafe_repository');
@@ -137,7 +140,14 @@ export function buildSite({repo=MODULE_ROOT,files=fs,run=command,commit=SITE_COM
     const git=args=>run('git',['--no-replace-objects',...args],{cwd:repo});
     let present=true;
     try { git(['cat-file','-e',`${commit}^{commit}`]); } catch { present=false; }
-    if(!present) git(['fetch','--no-tags','--depth=1','origin',commit]);
+    if(!present) {
+      // Prefer the checkout's own remote. Without one (as on Render), fetch the
+      // pinned SHA from the public repository; rev-parse below still requires the
+      // fetched object to be exactly that commit, so no other tree can enter.
+      let remote='origin';
+      try { git(['remote','get-url','origin']); } catch { remote=source; }
+      git(['fetch','--no-tags','--depth=1',remote,commit]);
+    }
     check(git(['rev-parse','--verify',`${commit}^{commit}`]).toString().trim()===commit,'public_commit_mismatch');
     const roots=validateTree(git(['ls-tree','-r','-z','--full-tree',commit,'--',...PUBLIC_ROOTS]));
     staging=files.mkdtempSync(path.join(repo,'.render-build-'));
