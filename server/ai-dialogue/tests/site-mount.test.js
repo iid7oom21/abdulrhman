@@ -114,7 +114,7 @@ test('hosted dialogue uses real HTTP recipient context, mocked provider, and dur
   const generate = createOpenAIReply({apiKey:'TEST_ONLY',model:'mock',fetchImpl:async (_url, options) => {
     calls++; assert.doesNotMatch(options.body, /PRIVATE_NOTE/);
     assert.deepEqual(JSON.parse(JSON.parse(options.body).input).receivedPlayerMaterials.map(m => m.id), ['shared']);
-    return new Response(JSON.stringify({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify({action:'received_materials',materialIds:['shared']})}]}]}));
+    return new Response(JSON.stringify({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify({action:'quote_materials',materialIds:['shared']})}]}]}));
   }});
   const a = await start(t, {siteRoot:f.root, storeFile, generate, providerInfo:{provider:'openai',model:'mock'}});
   assert.equal((await fetch(a.root + '/raven/deleted-name/')).headers.get('set-cookie'), null);

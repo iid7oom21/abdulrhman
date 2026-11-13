@@ -17,7 +17,7 @@ test('compatible API retains /v1 and receives only attributed recipient material
   let payload, url, headers;
   const generate = createGroundedReply({apiKey:'TEST_ONLY',fetchImpl:async(endpoint,options)=>{
     url=endpoint;payload=JSON.parse(options.body);headers=options.headers;
-    return reply({action:'received_materials',materialIds:['m1']});
+    return reply({action:'quote_materials',materialIds:['m1']});
   }});
   const result = await generate('jonas','وش وصلك؟',received);
   assert.equal(url,'https://api.x.ai/v1/chat/completions');
@@ -41,7 +41,7 @@ test('network failure remains unknown and is not relabeled as a successful refus
 test('compatible model cannot inject free text, unknown IDs, tool calls or a truncated result', async () => {
   for (const body of [
     {choices:[{finish_reason:'stop',message:{content:'{"text":"invented testimony","refused":false}'}}]},
-    {choices:[{finish_reason:'stop',message:{content:'{"action":"received_materials","materialIds":["private"]}'}}]},
+    {choices:[{finish_reason:'stop',message:{content:'{"action":"quote_materials","materialIds":["private"]}'}}]},
     {choices:[{finish_reason:'tool_calls',message:{tool_calls:[{id:'fake'}]}}]},
     {choices:[{finish_reason:'length',message:{content:'{}'}}]},
   ]) {
