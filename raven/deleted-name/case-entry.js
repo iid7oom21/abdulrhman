@@ -21,10 +21,10 @@
     return {version:'paper-opening-2026-11-05-r2',choice,recipient};
   }
   function render() {
-    const restoreFocus = document.activeElement?.id === 'case-continue-link';
+    const focusedId = document.activeElement?.id;
     document.getElementById('case-continuation')?.remove();
     if (hook.dataset.phase !== 'done' || !availability) return;
-    if (!availability.enabled) { renderUnavailable(); return; }
+    if (!availability.enabled) { renderUnavailable(focusedId); return; }
     const box = document.createElement('section');
     box.id = 'case-continuation';
     box.className = 'hook-review';
@@ -61,9 +61,9 @@
     });
     box.append(title, note, link);
     ending.append(box);
-    if (restoreFocus) link.focus({preventScroll:true});
+    if (focusedId === 'case-continue-link') link.focus({preventScroll:true});
   }
-  function renderUnavailable() {
+  function renderUnavailable(focusedId) {
     const box = document.createElement('section');
     box.id = 'case-continuation';
     box.className = 'hook-review';
@@ -93,6 +93,7 @@
       box.append(title, note);
     }
     ending.append(box);
+    if (focusedId === 'case-server-link') box.querySelector('#case-server-link')?.focus({preventScroll:true});
   }
   function inspect() {
     if (hook.dataset.phase !== 'done') return;
@@ -103,8 +104,15 @@
       const timer = setTimeout(() => controller.abort(), 5000);
       try {
         const response = await fetch('/api/case/config', {credentials:'same-origin',cache:'no-store',signal:controller.signal});
-        availability = response.ok && response.headers.get('content-type')?.includes('application/json')
-          ? await response.json() : {enabled:false, noServer:true};
+        if (response.ok && response.headers.get('content-type')?.includes('application/json')) {
+          let config;
+          try { config = await response.json(); } catch { config = null; }
+          // A JSON response alone is not proof that this host offers the case.
+          // Keep an invalid response visible as unavailable, without trusting
+          // truthy strings or treating a responding server as a static host.
+          availability = config && typeof config === 'object' && !Array.isArray(config) && typeof config.enabled === 'boolean'
+            ? {enabled:config.enabled} : {enabled:false};
+        } else availability = {enabled:false, noServer:true};
       } catch { availability = {enabled:false, noServer:true}; }
       finally { clearTimeout(timer); pending = null; render(); }
     })();

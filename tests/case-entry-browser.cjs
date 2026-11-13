@@ -13,6 +13,7 @@ const PLAY_PATH = '/raven/deleted-name/play/';
 const KEY = 'raven.case.opening.v1';
 const VERSION = 'paper-opening-2026-11-05-r2';
 const PRIVATE_SENTINEL = 'PRIVATE-NOTE-DO-NOT-IMPORT';
+const malformedConfigs = {null:null, 'string-disabled':{enabled:'false'}, primitive:true, array:[]};
 const audioSnapshot = page => page.evaluate(() => ({
   sameDocument: window.__entryDocument === document,
   sameAudio: window.__entryAudio === document.querySelector('#site-soundtrack'),
@@ -34,6 +35,8 @@ function fixture(mode = 'enabled') {
           return res.end('<!doctype html><title>Static site fixture</title>');
         }
         res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+        if (mode === 'broken-json') return res.end('{broken');
+        if (Object.hasOwn(malformedConfigs, mode)) return res.end(JSON.stringify(malformedConfigs[mode]));
         return res.end(JSON.stringify({ enabled: mode === 'enabled', contentVersion: 'entry-browser-fixture-v1', locales: ['ar', 'en'], scope: 'written-story' }));
       }
       // Reaching play must present a user-controlled start/import decision.
@@ -204,6 +207,42 @@ test('opening continuation: explicit import, persistent shell and unavailable-se
       assert.equal(new URL(page.url()).pathname, OPENING_PATH);
     }));
   }
+
+  for (const mode of [...Object.keys(malformedConfigs), 'broken-json']) {
+    await t.test(mode + ' config stays visibly unavailable without offering or importing a case', async () => check({ mode }, async ({ api, page, frame }) => {
+      const response = page.waitForResponse(response => new URL(response.url()).pathname === '/api/case/config');
+      await finish({ api, frame }, 'wait', null);
+      await (await response).finished();
+      await frame.locator('#case-continuation h3').waitFor();
+      assert.equal(await frame.locator('#case-continuation h3').innerText(), 'القضية المكتوبة غير متاحة الآن');
+      assert.equal(await frame.locator('#case-continue-link').count(), 0, 'malformed data cannot enable local play');
+      assert.equal(await frame.locator('#case-server-link').count(), 0, 'a malformed JSON reply does not prove this is a static host');
+      assert.equal(await frame.locator('#hook-ending').isVisible(), true);
+      assert.equal(await frame.locator('[data-hook-action="replay"]').isVisible(), true);
+      assert.equal(await page.evaluate(key => sessionStorage.getItem(key), KEY), null);
+      assert.deepEqual(api.requests, [{ method: 'GET', pathname: '/api/case/config' }]);
+    }));
+  }
+
+  await t.test('the external gateway keeps keyboard focus and language without transferring the opening', async () => check({ mode:'missing' }, async ({ api, page, frame }) => {
+    await finish({ api, frame }, 'wait', null);
+    await frame.locator('#case-server-link').waitFor();
+    const choice = await frame.locator('#hook').evaluate(el => el.dataset.layers);
+    for (const language of ['ar', 'en']) {
+      if (language === 'en') {
+        await frame.locator('#lang-switch').click();
+        assert.equal(await frame.locator('#lang-switch').evaluate(el => document.activeElement === el), true, 'rendering must not steal focus from the language switch');
+      }
+      const link = frame.locator('#case-server-link');
+      assert.equal(await link.getAttribute('href'), CASE_SERVER + OPENING_PATH + (language === 'en' ? '?lang=en' : ''));
+      await link.focus();
+      await link.evaluate(() => document.dispatchEvent(new CustomEvent('raven:language', {detail:{language:document.documentElement.lang}})));
+      assert.equal(await frame.locator('#case-server-link').evaluate(el => document.activeElement === el), true, 'rebuilding the focused gateway must restore keyboard focus');
+      assert.equal(await frame.locator('#hook').evaluate(el => el.dataset.layers), choice);
+      assert.equal(await page.evaluate(key => sessionStorage.getItem(key), KEY), null);
+    }
+    assert.deepEqual(api.requests, [{ method: 'GET', pathname: '/api/case/config' }]);
+  }));
 
   for (const language of ['ar', 'en']) {
     await t.test(language + ': blocked session storage offers a direct link without claiming choice transfer', async () => check({ language, blockSession: true }, async ({ api, page, frame }) => {
