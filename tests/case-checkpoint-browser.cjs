@@ -33,7 +33,7 @@ const idle = page => page.waitForFunction(() => document.body.getAttribute('aria
 const ready = async page => {await idle(page);await textIncludes(page, '#save-status', 'Progress is saved in this browser.');};
 
 async function harness(createPreviewServer, fixturePack) {
-  const api = {requests:[],dropAction:false,holdState:false,heldState:null,invalidCheckpoint:false,server:null,port:0};
+  const api = {requests:[],dropAction:false,holdState:false,heldState:null,invalidCheckpoint:false,invalidActionCheckpoint:false,server:null,port:0};
   api.start = async (key = SECRET) => {
     api.server = createPreviewServer({siteRoot:ROOT,casePack:fixturePack(),caseCheckpointKey:key,generate:() => {throw new Error('Written case cannot call a provider');}});
     const original = api.server.listeners('request')[0];
@@ -55,7 +55,7 @@ async function harness(createPreviewServer, fixturePack) {
         };
       } else if (route === '/api/case/state' && api.holdState) {
         api.holdState = false;res.end = body => {api.heldState = {body:JSON.parse(body),release:() => end(body)};return res;};
-      } else if (route === '/api/case/state' && api.invalidCheckpoint) {
+      } else if ((route === '/api/case/state' && api.invalidCheckpoint) || (route === '/api/case/actions' && api.invalidActionCheckpoint)) {
         res.end = body => {const value = JSON.parse(body);value.checkpoint = 'invalid-server-value';return end(JSON.stringify(value));};
       }
       original(req,res);
@@ -155,6 +155,31 @@ test('browser-held progress with the real case HTTP service', {timeout:120000,sk
     await second.locator('#state-refresh').click();await ready(second);assert.equal((await saved(second)).checkpointInfo.revision,1);
   }));
 
+  await t.test('language changes preserve an acknowledged action and its case lock through server restart', () => check(async (page,api,context) => {
+    await read(page);await ready(page);
+    const second = await context.newPage();await second.goto(api.origin + PAGE);await ready(second);
+    let release,received = false;const gate = new Promise(resolve => release = resolve);
+    await page.route('**/api/case/actions',async route => {const response = await route.fetch();received = true;await gate;await route.fulfill({response});});
+    await page.locator('form[data-action-id="share"] button').click();await eventually(() => received,'share response was not held');
+    const operation = await pending(page);
+    try {
+      await page.locator('#language-ar').click();
+      assert.equal(await page.locator('body').getAttribute('aria-busy'),'true','changing language must not abandon the saving action');
+      assert.deepEqual(await pending(page),operation);assert.equal(await page.locator('#operation-retry').isDisabled(),true);
+      await page.locator('#language-en').click();
+      await api.restart();await second.locator('form[data-action-id="finish"] button').click();
+      const locks = await second.evaluate(() => navigator.locks.query());assert.equal(locks.pending.length,1);
+    } finally {release();}
+    await ready(page);await eventually(async () => await pending(page) === null,'acknowledged operation was not saved');
+    await textIncludes(second,'#connection-title','newer progress');
+    assert.equal((await saved(page)).checkpointInfo.revision,2);assert.equal(api.actions().length,2,'the other tab cannot create a divergent revision');
+    await second.locator('#state-refresh').click();await ready(second);
+    const downloadPromise = second.waitForEvent('download');await second.locator('#case-export').click();
+    const record = JSON.parse(fs.readFileSync(await (await downloadPromise).path(),'utf8'));
+    assert.equal(record.revision,2);assert.equal(record.shares.length,1,'the acknowledged share survives restart and locale changes');
+    assert.equal(api.starts().length,1);
+  }));
+
   await t.test('quota-failed acknowledged progress survives restart and refresh even when the old smaller save would fit', () => check(async (page,api) => {
     const previous = await rawSave(page);await page.evaluate(limit => window.fixtureQuotaLimit = limit,previous.length);
     await read(page);await textIncludes(page,'#connection-title','could not be saved');const operation = await pending(page);
@@ -244,6 +269,35 @@ test('browser-held progress with the real case HTTP service', {timeout:120000,sk
     await page.locator('#state-refresh').click();await idle(page);await textIncludes(page,'#connection-title','could not be saved');
     assert.equal(await rawSave(page),previous);assert.equal(await page.locator('form[data-action-id="read"] button').isDisabled(),true);
     api.invalidCheckpoint = false;await page.locator('#state-refresh').click();await ready(page);
+  }));
+
+  await t.test('retry after a malformed action checkpoint saves the displayed step instead of an older candidate', () => check(async (page,api) => {
+    const previous = await rawSave(page);api.invalidActionCheckpoint = true;
+    await read(page);await textIncludes(page,'#connection-title','could not be saved');
+    const operation = await pending(page);
+    assert.equal(await rawSave(page),previous);assert.equal(operation.revision,0);
+    api.invalidActionCheckpoint = false;
+    await page.locator('#checkpoint-retry').click();await ready(page);
+    assert.equal((await saved(page)).checkpointInfo.revision,1,'the save notice must refer to the displayed reading');
+    assert.equal(api.actions().length,1,'recovering the checkpoint does not resend a choice');
+    assert.deepEqual(await pending(page),operation,'checkpoint recovery alone does not confirm the operation');
+    await page.locator('#operation-retry').click();await eventually(async () => await pending(page) === null,'the original operation was not confirmed');
+    assert.equal(api.actions()[1].body.id,operation.id);assert.equal((await saved(page)).checkpointInfo.revision,1);
+    await api.restart();await page.reload();await ready(page);await textIncludes(page,'#materials-list','Card A');
+    assert.equal(api.starts().length,1);
+  }));
+
+  await t.test('clearing browser storage in another tab pauses changes until the displayed step is saved again', () => check(async (page,api,context) => {
+    await read(page);await ready(page);const previous = await saved(page);
+    const other = await context.newPage();await other.goto(api.origin + '/404.html');
+    await other.evaluate(() => {localStorage.clear();localStorage.setItem('fixture-unrelated','keep');});
+    await textIncludes(page,'#connection-title','could not be saved');
+    assert.equal(await rawSave(page),null);assert.match(await page.locator('#save-status').innerText(),/not saved/);
+    assert.equal(await page.locator('form[data-action-id="share"] button').isDisabled(),true);
+    await page.locator('#checkpoint-retry').click();await ready(page);
+    assert.deepEqual((await saved(page)).checkpointInfo,previous.checkpointInfo);
+    assert.equal(api.actions().length,1);assert.equal(api.starts().length,1);
+    await other.close();
   }));
 
   await t.test('corrupt local data is preserved and cannot cause a new session', () => check(async (page,api) => {

@@ -270,9 +270,14 @@
     if (pendingAcknowledgement?.revision === value.revision && pendingAcknowledgement.historyTag === value.checkpointInfo?.historyTag) pendingAcknowledgement.persisted = true;
     if (pending && pendingAcknowledgement?.id === pending.id && pendingAcknowledgement.checkpoint === value.checkpoint && pendingAcknowledgement.revision === value.revision) clearPending();
   }
+  function canRetryCheckpoint() {
+    return checkpointCandidate && state && checkpointCandidate.caseId === state.caseId && checkpointCandidate.contentVersion === state.contentVersion && checkpointCandidate.revision === state.revision && checkpointCandidate.checkpointInfo?.sessionTag === state.checkpointInfo?.sessionTag && checkpointCandidate.checkpointInfo?.historyTag === state.checkpointInfo?.historyTag;
+  }
   async function retryCheckpoint() {
     if (busy) return;
-    if (!checkpointCandidate || checkpointIssue !== 'save') return refresh();
+    // A malformed newer response may leave an older valid candidate in memory.
+    // Saving that record cannot confirm that the displayed reading is saved.
+    if (!canRetryCheckpoint() || checkpointIssue !== 'save') return refresh();
     const token = ++epoch;setBusy(true);
     try {
       await storeCheckpoint(checkpointCandidate);
@@ -306,7 +311,7 @@
     if (display.kind === 'pending' && (!browserMode() || pendingMatches())) actions.append(button('operation-retry',tr('retryOperation'),retryPending));
     if (display.kind === 'pending' && browserMode() && !pendingMatches()) {$('connection-message').textContent = tr('browserPendingOther');actions.append(button('pending-download',tr('pendingDownload'),() => download(pending,'raven-pending-operation.json')));}
     if (display.kind === 'checkpoint') {
-      actions.append(button('checkpoint-retry',tr(checkpointIssue === 'save' && checkpointCandidate ? 'browserSaveRetry' : 'retryConnection'),retryCheckpoint));
+      actions.append(button('checkpoint-retry',tr(checkpointIssue === 'save' && canRetryCheckpoint() ? 'browserSaveRetry' : 'retryConnection'),retryCheckpoint));
       if (state) actions.append(button('checkpoint-export',tr('export'),() => download(readingCopy(state),'raven-case-record.json')));
       if (pending) actions.append(button('pending-download',tr('pendingDownload'),() => download(pending,'raven-pending-operation.json')));
     }
@@ -655,10 +660,13 @@
   function changeLanguage(language) {
     if (!['ar','en'].includes(language) || language === lang) return;
     const previous = document.activeElement?.id,selection = document.activeElement instanceof HTMLTextAreaElement ? [document.activeElement.selectionStart,document.activeElement.selectionEnd] : null;
-    lang = language;++epoch;busy = false;
+    lang = language;
+    // Browser progress must finish saving under its lock even if its response
+    // arrives after a language change. Rendering already uses the current lang.
+    if (!browserMode()) {++epoch;busy = false;}
     const url = new URL(location.href);if (lang === 'en') url.searchParams.set('lang','en');else url.searchParams.delete('lang');history.replaceState(history.state,'',url);
     render();if (previous && $(previous)) {$(previous).focus({preventScroll:true});if (selection && $(previous) instanceof HTMLTextAreaElement) $(previous).setSelectionRange(...selection);}
-    announce(tr('languageChanged'));if (!state) void connect();
+    announce(tr('languageChanged'));if (!state && !busy) void connect();
   }
   async function refresh() {
     if (busy) return;const token = ++epoch;setBusy(true);
@@ -679,8 +687,9 @@
   $('state-refresh').addEventListener('click',refresh);$('case-export').addEventListener('click',exportCase);
   $('notes-download').addEventListener('click',() => {if (state) download({caseId:state.caseId,contentVersion:state.contentVersion,scope:'private-case-notes',notes:state.notes},'raven-private-case-notes.json');});
   window.addEventListener('storage',event => {
-    if (!browserMode() || event.key !== checkpointKey() || !state) return;
+    if (!browserMode() || (event.key !== null && event.key !== checkpointKey()) || !state) return;
     try {
+      if (event.storageArea !== localStorage) return;
       const saved = savedCheckpoint();
       if (!saved) throw new CheckpointError('save');
       compareCheckpoint(saved,envelope({format:CHECKPOINT_FORMAT,...state}));
