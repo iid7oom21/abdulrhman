@@ -42,6 +42,7 @@
       recipient:'المستلم',shared:'مادة تمت مشاركتها داخل القصة',recorded:'ما سجلته',revision:'نسخة الجلسة',reportScope:'هذه صياغة اللاعب واختياراته المسجلة، وليست حقائق يثبتها النظام تلقائيًا.',
       receipt:'إيصال قصصي',relates:'مرتبط بإيصال سابق',reportLink:'مراجعة النسخة المرتبطة',exportFailed:'تعذّر تنزيل السجل. لم تتغير حالة القضية.',
       receiptPreview:'ما سيُسجَّل في الإيصال',capturedReport:'النسخة المسجلة لهذا الإيصال',attachments:'المواد المرفقة',materialRecipients:'مستلمو المواد',noAttachments:'لا توجد مواد مرفقة.',noMaterialRecipients:'لا يتضمن هذا الاختيار مشاركة مواد.',cancel:'إلغاء المراجعة',
+      attachmentBundle:'اختر حزمة المرفقات',bundleHelp:'اختر إحدى الحزم المتاحة، ثم راجع النص والمرفقات والمستلمين قبل التأكيد.',requiredAttachments:'مرفقات مطلوبة في كل الحزم المتاحة',additionalAttachments:'مرفقات إضافية في اختيارك',noAdditionalAttachments:'لا توجد مرفقات إضافية في هذه الحزمة.',bundleChanged:'تغيّر اختيار المرفقات. راجع اختيارك من جديد قبل التأكيد.',
       exportScope:'الملف سجل للقراءة والاحتفاظ بنسخة، ولا يتيح استيراد الجلسة هنا.',
       noInput:'لا توجد قيم إضافية لهذا الاختيار.',yes:'نعم',no:'لا',
       sharedEntries:'مشاركات مسجلة',sceneIllustration:'تصوّر بصري للمشهد؛ المرجع في النص والمواد المعروضة.',materialIllustration:'تصوّر بصري؛ المرجع في النص والمواد المعروضة.',
@@ -79,6 +80,7 @@
       recipient:'Recipient',shared:'Material shared within the story',recorded:'What you recorded',revision:'Session revision',reportScope:'These are the player’s recorded words and choices, not facts automatically established by the system.',
       receipt:'Fictional receipt',relates:'Related to an earlier receipt',reportLink:'Review the related version',exportFailed:'The record could not be downloaded. The case state did not change.',
       receiptPreview:'What this receipt will record',capturedReport:'Recorded version for this receipt',attachments:'Attached materials',materialRecipients:'Material recipients',noAttachments:'No materials are attached.',noMaterialRecipients:'This choice includes no material sharing.',cancel:'Cancel review',
+      attachmentBundle:'Choose an attachment bundle',bundleHelp:'Choose an available bundle, then review the text, attachments and recipients before confirming.',requiredAttachments:'Required in every available bundle',additionalAttachments:'Additional attachments in your selection',noAdditionalAttachments:'This bundle has no additional attachments.',bundleChanged:'The attachment selection changed. Review your choice again before confirming.',
       exportScope:'This file is a reading and backup copy. Importing a session is not supported here.',
       noInput:'This choice has no additional fields.',yes:'Yes',no:'No',
       sharedEntries:'recorded shares',sceneIllustration:'Scene illustration; refer to the text and available materials.',materialIllustration:'Illustration; refer to the text and available materials.',
@@ -93,6 +95,7 @@
   const checkpointKey = () => CHECKPOINT_PREFIX + encodeURIComponent(config.caseId);
   const checkpointLock = () => 'raven-case-save:' + config.caseId;
   const drafts = new Map();
+  const bundleSelections = new Map();
   const openMaterials = new Set();
   const openShares = new Set(),captureAnchors = new Map();
   let newlyEarned = new Set();
@@ -379,7 +382,7 @@
     }
     newlyEarned = new Set(state ? value.materials.filter(material => !state.materials.some(previous => previous.id === material.id)).map(material => material.id) : []);
     state = {...value,notes:Array.isArray(value.notes) ? value.notes : [],shares:Array.isArray(value.shares) ? value.shares : [],receipts:Array.isArray(value.receipts) ? value.receipts : [],captures:value.captures && typeof value.captures === 'object' ? value.captures : {}};
-    review = null;banner = null;render();
+    review = null;bundleSelections.clear();banner = null;render();
     if (moveFocus) focus('scene-title');announce(tr('updated'));return true;
   }
   async function connect() {
@@ -496,6 +499,90 @@
     return element('span',typeof value === 'boolean' ? tr(value ? 'yes' : 'no') : value == null ? tr('noSelection') : String(value));
   }
   const hasReceiptPreview = action => action.receiptPreview?.scope === 'story-only';
+  function canonical(value) {
+    const sorted = item => Array.isArray(item) ? item.map(sorted) : item && typeof item === 'object' ? Object.fromEntries(Object.keys(item).sort().map(key => [key,sorted(item[key])])) : item;
+    return JSON.stringify(sorted(value));
+  }
+  function receiptBundleKey(action) {
+    const preview = action.receiptPreview;
+    // Group only complete, current, no-input receipt choices. Legacy or
+    // incomplete projections keep their ordinary action controls.
+    if (!hasReceiptPreview(action) || typeof action.id !== 'string' || !action.id || (action.fields !== undefined && (!Array.isArray(action.fields) || action.fields.length))) return null;
+    if (typeof preview.kind !== 'string' || !localized(preview.title) || typeof preview.fromCapture !== 'string' || !Array.isArray(preview.materials) || !Array.isArray(preview.shares)) return null;
+    const capture = preview.capture;
+    if (!capture || typeof capture.actionId !== 'string' || !Number.isInteger(capture.revision) || !capture.values || typeof capture.values !== 'object' || Array.isArray(capture.values) || !Array.isArray(capture.fields)) return null;
+    if (preview.relatesTo !== undefined && !state.receipts.some(receipt => receipt.id === preview.relatesTo && receipt.scope === 'story-only')) return null;
+    const ids = new Set();
+    for (const material of preview.materials) {
+      if (!material || typeof material.id !== 'string' || ids.has(material.id) || !materialById(material.id)) return null;
+      ids.add(material.id);
+    }
+    if (preview.shares.some(share => !share || !ids.has(share.materialId) || typeof share.recipient !== 'string')) return null;
+    if ([...ids].some(id => !preview.shares.some(share => share.materialId === id))) return null;
+    return canonical({kind:preview.kind,title:preview.title,fromCapture:preview.fromCapture,capture:preview.capture,relatesTo:preview.relatesTo || null,recipients:[...new Set(preview.shares.map(share => share.recipient))].sort()});
+  }
+  function receiptBundleGroups() {
+    const candidates = new Map(),groups = new Map();
+    for (const action of state.actions) {
+      if (action.id === 'case.note') continue;
+      const key = receiptBundleKey(action);if (key === null) continue;
+      if (!candidates.has(key)) candidates.set(key,[]);candidates.get(key).push(action);
+    }
+    for (const actions of candidates.values()) {
+      if (actions.length < 2) continue;
+      // A material must retain the same recipient scope across alternatives.
+      // The UI selects an existing action; it never synthesizes share sets.
+      const scopes = new Map();let compatible = true;
+      for (const action of actions) for (const material of action.receiptPreview.materials) {
+        const scope = canonical({title:material.title,recipients:action.receiptPreview.shares.filter(share => share.materialId === material.id).map(share => share.recipient).sort()});
+        if (scopes.has(material.id) && scopes.get(material.id) !== scope) compatible = false;
+        scopes.set(material.id,scope);
+      }
+      if (!compatible) continue;
+      const common = actions[0].receiptPreview.materials.filter(material => actions.every(action => action.receiptPreview.materials.some(item => item.id === material.id)));
+      const group = {id:actions[0].id,actions,common};for (const action of actions) groups.set(action,group);
+    }
+    return groups;
+  }
+  function attachmentList(materials, className) {
+    const list = element('ul',undefined,'source-list ' + className);
+    for (const material of materials) {const row = element('li');row.append(sourceLink(material.id,material.title));list.append(row);}
+    return list;
+  }
+  function renderReceiptBundle(group, parent) {
+    const form = element('form',undefined,'choice receipt-bundle');form.id = domId('bundle',group.id);form.dataset.receiptBundles = '';form.tabIndex = -1;
+    form.append(element('h3',localized(group.actions[0].receiptPreview.title)));
+    const help = element('p',tr('bundleHelp'),'muted');help.id = domId('bundle-help',group.id);form.append(help);
+    if (group.common.length) form.append(element('h3',tr('requiredAttachments')),attachmentList(group.common,'bundle-required'));
+    const select = element('select');select.id = domId('bundle-select',group.id);select.required = true;select.setAttribute('aria-describedby',help.id);
+    const label = element('label',tr('attachmentBundle'));label.htmlFor = select.id;
+    select.append(new Option(tr('attachmentBundle'),''));
+    for (const action of group.actions) select.append(new Option(optionLabel(localized(action.label)),action.id));
+    select.value = bundleSelections.get(group.id) || '';
+    const summary = element('div',undefined,'bundle-summary');summary.setAttribute('aria-live','polite');
+    const selectedAction = () => group.actions.find(action => action.id === select.value && state.actions.includes(action));
+    const update = () => {
+      const action = selectedAction();summary.replaceChildren();form.dataset.actionId = action?.id || '';
+      if (!action) return;
+      const extra = action.receiptPreview.materials.filter(material => !group.common.some(item => item.id === material.id));
+      summary.append(element('p',localized(action.label),'bundle-selection'),element('h3',tr('additionalAttachments')));
+      summary.append(extra.length ? attachmentList(extra,'bundle-additional') : element('p',tr('noAdditionalAttachments'),'muted'));
+      const recipients = [...new Set(action.receiptPreview.shares.map(share => share.recipient))];
+      const details = element('dl');pair(details,tr('materialRecipients'),recipients.map(recipient => TEXT[lang].names[recipient] || String(recipient)).join(lang === 'ar' ? '، ' : ', '));summary.append(details);
+    };
+    select.addEventListener('change',() => {
+      const action = selectedAction();if (action) bundleSelections.set(group.id,action.id);else bundleSelections.delete(group.id);
+      review = null;renderReview();update();announce(tr('bundleChanged'));
+    });
+    const submit = element('button',tr('preview'),'primary');submit.type = 'submit';
+    form.append(label,select,summary,submit);update();
+    form.addEventListener('submit',event => {
+      event.preventDefault();if (busy || pending || corruptPending !== null || browserLocked() || !form.reportValidity()) return;
+      const action = selectedAction();if (!action) return;
+      review = {action,values:{},revision:state.revision,contentVersion:state.contentVersion,returnFocus:select.id};renderReview();focus('review-title');
+    });
+    parent.append(form);
+  }
   function captureValues(capture) {
     const list = element('dl');
     for (const [fieldId,value] of Object.entries(capture.values || {})) {
@@ -552,7 +639,7 @@
     $('review-actions').replaceChildren(button('review-confirm',tr('confirm'),() => {
       if (!review || review.revision !== state.revision || review.contentVersion !== state.contentVersion || !state.actions.includes(review.action)) {review = null;renderReview();announce(tr('conflict'));return;}
       submitAction(review.action,review.values);
-    },true),button('review-edit',tr(review.action.fields?.length ? 'edit' : 'cancel'),() => {const id = domId('action',review.action.id);review = null;renderReview();focus(id);}));
+    },true),button('review-edit',tr(review.action.fields?.length ? 'edit' : 'cancel'),() => {const id = review.returnFocus || domId('action',review.action.id);review = null;renderReview();focus(id);}));
   }
   function renderAction(action, parent) {
     if (typeof action.id !== 'string') return;
@@ -703,7 +790,12 @@
     for (const line of state.scene.lines || []) {const speech = element('div',undefined,'speech');if (localized(line.speaker)) speech.append(element('span',localized(line.speaker),'speaker'));speech.append(element('p',localized(line.text)));prose.append(speech);}
     const art = $('scene-art');art.replaceChildren();const picture = artwork(state.scene,true);if (picture) art.append(picture);
     $('actions').replaceChildren();$('notebook-actions').replaceChildren();
-    for (const action of state.actions) renderAction(action,$(action.id === 'case.note' ? 'notebook-actions' : 'actions'));
+    const bundles = receiptBundleGroups(),renderedBundles = new Set();
+    for (const action of state.actions) {
+      const bundle = bundles.get(action);
+      if (!bundle) renderAction(action,$(action.id === 'case.note' ? 'notebook-actions' : 'actions'));
+      else if (!renderedBundles.has(bundle)) {renderReceiptBundle(bundle,$('actions'));renderedBundles.add(bundle);}
+    }
     if (!state.actions.some(action => action.id !== 'case.note')) $('actions').append(element('p',tr('noActions'),'muted'));
     if (!state.actions.some(action => action.id === 'case.note')) $('notebook-actions').append(element('p',tr('noteUnavailable'),'muted'));
     renderMaterials();renderNotes();renderShares();renderTimeline();renderCaptures();renderReceipts();renderReview();setBusy(busy);

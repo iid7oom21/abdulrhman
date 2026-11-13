@@ -77,6 +77,11 @@ dt{color:var(--muted);font-size:14px}
 dd{margin:3px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
 .review{border-color:var(--gold)}
 .review .buttons{margin-top:18px}
+.receipt-bundle>h3{margin-top:14px}
+.receipt-bundle>h3:first-child{margin-top:0}
+.bundle-summary{margin-block:16px}
+.bundle-selection{border-inline-start:2px solid var(--gold);padding-inline-start:12px}
+.receipt-bundle select{width:100%;text-overflow:ellipsis}
 #notes-list{padding-inline-start:24px}
 #notes-list li{margin-top:16px}
 #notes-list p{white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0}

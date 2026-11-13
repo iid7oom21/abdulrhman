@@ -41,7 +41,7 @@ test('homepage offers the case directly without starting the dialogue preview', 
   t.after(() => browser.close());
 
   for (const [language, width] of [['ar',390], ['en',1366]]) {
-    await t.test(language + ': hero and legacy card enter the case, preserving the player and saved preview', async t => {
+    await t.test(language + ': hero and case card enter the case, preserving the player and saved preview', async t => {
       const context = await browser.newContext({viewport:{width,height:844}, reducedMotion:'reduce'});
       t.after(() => context.close());
       const requests = [], writes = [], errors = [];
@@ -88,16 +88,17 @@ test('homepage offers the case directly without starting the dialogue preview', 
       await page.goto(base + '/raven/?lang=' + language);
       await page.locator('#archive-skip').click();
       await frame.locator('html[lang="' + language + '"]').waitFor();
-      const hero = frame.locator('.rvnHeroDialogue');
+      const hero = frame.locator('[data-dn-link="hero"]');
+      assert.equal(await hero.count(), 1);
       assert.equal(await hero.innerText(), language === 'en' ? 'Discover The Deleted Name' : 'اكتشف قضية الاسم المحذوف');
       assert.equal(await hero.getAttribute('href'), caseHref);
       assert.equal(await page.locator('#music-track-picker option').count(), 13);
       assert.equal(await frame.locator('[data-rvn-episode]').count(), 3);
       assert.equal(await frame.locator('#rvnDialogueFrame').count(), 0);
       assert.equal(await frame.locator('[data-dn-k="previewLabel"], [data-dn-k="openPreview"]').count(), 0);
-      assert.deepEqual(await frame.locator('[data-dn-link="menu"]').allTextContents(),
+      assert.deepEqual(await frame.locator('[data-rvn-v2="deletedName"]').allTextContents(),
         Array(2).fill(language === 'en' ? 'The Deleted Name' : 'الاسم المحذوف'));
-      for (const link of await frame.locator('[data-dn-link="menu"]').all()) assert.equal(await link.getAttribute('href'), '#dialogue-preview');
+      for (const link of await frame.locator('[data-rvn-v2="deletedName"]').all()) assert.equal(await link.getAttribute('href'), '#deleted-name-experience');
       const contact = frame.locator('[data-rvn-i18n="contactOriginal"]');
       assert.equal(await contact.getAttribute('href'), 'https://wa.me/966565365000');
       assert.equal(await contact.getAttribute('target'), '_blank');
@@ -112,30 +113,48 @@ test('homepage offers the case directly without starting the dialogue preview', 
       await assertCase();
 
       await frame.locator('a.brand').click();
-      await frame.locator('.rvnHeroDialogue').waitFor();
+      await frame.locator('[data-dn-link="hero"]').waitFor();
       await page.waitForURL(url => url.pathname === '/raven/' && (url.searchParams.get('lang') === 'en') === (language === 'en'));
       assert.equal(await frame.locator('html').getAttribute('lang'), language);
       if (width < 800) await frame.locator('#ravenMenuToggle').click();
-      const menu = frame.locator('[data-dn-link="menu"]:visible');
+      const menu = frame.locator('[data-rvn-v2="deletedName"]:visible');
       await menu.click();
-      await page.waitForURL(url => url.hash === '#dialogue-preview');
+      await page.waitForURL(url => url.hash === '#deleted-name-experience');
       const card = frame.locator('#dialogue-preview');
       assert.equal(await card.isVisible(), true);
       assert.match(await card.locator('[data-dn-k="eyebrow"]').innerText(), language === 'en' ? /In development/i : /قيد التطوير/);
-      const image = card.locator('img');
-      await image.scrollIntoViewIfNeeded();
-      await image.evaluate(img => img.complete && img.naturalWidth > 0 ? undefined : new Promise((resolve,reject) => {
-        img.addEventListener('load',resolve,{once:true}); img.addEventListener('error',() => reject(new Error('case image failed to load')),{once:true});
-      }));
-      assert.ok(await image.evaluate(img => img.naturalWidth > 0), 'the case card retains its image');
+      const portraits = card.locator('[data-dn-entry]');
+      assert.equal(await portraits.count(), 6);
+      for (const link of await portraits.all()) assert.equal(await link.getAttribute('href'), caseHref);
+      assert.deepEqual(await portraits.locator('strong').allTextContents(), language === 'en'
+        ? ['Jonas', 'Claire', 'Elena', 'Mateo', 'Noah', 'Lounge table']
+        : ['يوناس', 'كلير', 'إيلينا', 'ماتيو', 'نوح', 'طاولة الصالة']);
+      if (language === 'en') assert.doesNotMatch(await card.innerText(), /[\u0600-\u06ff]/, 'the English card has no untranslated Arabic roles or disclaimer');
+      assert.match(await card.locator('[data-dn-k="illustrationNote"]').innerText(), language === 'en' ? /written materials/ : /المواد المكتوبة/);
+      const images = card.locator('img');
+      assert.equal(await images.count(), 6, 'the case card retains all five portraits and the evidence-table illustration');
+      assert.deepEqual(await images.evaluateAll(nodes => nodes.map(img => img.alt)), language === 'en'
+        ? ['Jonas', 'Claire', 'Elena', 'Mateo', 'Noah', 'Artist’s impression of the table of papers']
+        : ['يوناس', 'كلير', 'إيلينا', 'ماتيو', 'نوح', 'تصور فني لطاولة الأوراق']);
+      for (const image of await images.all()) {
+        await image.scrollIntoViewIfNeeded();
+        await image.evaluate(img => img.complete && img.naturalWidth > 0 ? undefined : new Promise((resolve,reject) => {
+          img.addEventListener('load',resolve,{once:true}); img.addEventListener('error',() => reject(new Error('case image failed to load')),{once:true});
+        }));
+        assert.ok(await image.evaluate(img => img.naturalWidth > 0), 'every case card image loads');
+      }
       assert.equal(await card.locator('[data-dn-k="enter"]').getAttribute('href'), caseHref);
       assert.equal(await card.locator('iframe').count(), 0);
       await assertStored();
       assertNoPreview();
 
+      await portraits.first().click();
+      await assertCase();
+      await frame.locator('a.brand').click();
+      await frame.locator('[data-dn-link="hero"]').waitFor();
       await page.reload();
       await frame.locator('html[lang="' + language + '"]').waitFor();
-      assert.equal(await frame.locator('.rvnHeroDialogue').getAttribute('href'), caseHref);
+      assert.equal(await frame.locator('[data-dn-link="hero"]').getAttribute('href'), caseHref);
       await assertStored();
       assertNoPreview();
       await page.locator('#site-soundtrack').evaluate(audio => { audio.dataset.entryMarker = 'retained'; });
@@ -158,4 +177,51 @@ test('homepage offers the case directly without starting the dialogue preview', 
       assert.deepEqual(errors, []);
     });
   }
+
+  await t.test('English portrait and illustration entries retain language when browser storage is unavailable', async t => {
+    const context = await browser.newContext({viewport:{width:390,height:844}, reducedMotion:'reduce'});
+    t.after(() => context.close());
+    const errors = [], writes = [], api = [];
+    context.on('page', page => page.on('pageerror', error => errors.push(error.message)));
+    await context.route('**/*', route => {
+      const request = route.request();
+      if (!['GET','HEAD'].includes(request.method())) writes.push(request.method() + ' ' + request.url());
+      if (/\/api(?:\/|$)|\/raven\/dialogue(?:\/|$)/.test(new URL(request.url()).pathname)) api.push(request.url());
+      return request.url().startsWith(base + '/') ? route.continue() : route.abort();
+    });
+    await context.addInitScript(() => {
+      Object.defineProperty(window, 'localStorage', {
+        get() { throw new DOMException('Browser storage unavailable in this fixture', 'SecurityError'); }
+      });
+    });
+    const page = await context.newPage();
+    page.setDefaultTimeout(12000);
+    const frame = page.frameLocator('#site-content');
+    for (const index of [0, 5]) {
+      await page.goto(base + '/raven/?lang=en');
+      if (await page.locator('#archive-skip').isVisible()) await page.locator('#archive-skip').click();
+      await frame.locator('html[lang="en"]').waitFor();
+      if (index === 0) {
+        for (const language of ['ar', 'en']) {
+          await frame.locator('[data-raven-language="' + language + '"]').click();
+          await frame.locator('html[lang="' + language + '"]').waitFor();
+          const expected = './deleted-name/' + (language === 'en' ? '?lang=en' : '');
+          for (const link of await frame.locator('[data-dn-entry]').all()) assert.equal(await link.getAttribute('href'), expected);
+          assert.equal(await frame.locator('[data-dn-entry] img').first().getAttribute('alt'), language === 'en' ? 'Jonas' : 'يوناس');
+        }
+      }
+      await page.evaluate(() => { window.__entryAudio = document.querySelector('#site-soundtrack'); });
+      await frame.locator('#dialogue-preview [data-dn-entry]').nth(index).click();
+      await page.waitForURL(url => url.pathname === '/raven/deleted-name/' && url.searchParams.get('lang') === 'en');
+      await frame.locator('#hook').waitFor();
+      assert.equal(await frame.locator('html').getAttribute('lang'), 'en', 'entry must not depend on a saved language preference');
+      assert.equal(await page.evaluate(() => window.__entryAudio === document.querySelector('#site-soundtrack')), true);
+      assert.equal(await page.locator('audio').count(), 1);
+      assert.equal(await frame.locator('audio').count(), 0);
+      assert.equal(await page.locator('#music-track-picker option').count(), 13);
+    }
+    assert.deepEqual(writes, [], 'entering a case never submits an action');
+    assert.deepEqual(api, [], 'entry does not open the technical preview or read availability before the opening ends');
+    assert.deepEqual(errors, []);
+  });
 });
