@@ -465,7 +465,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     state.choice = id;
     state.draftWritten = writesDraft() ? {id:'opening-draft',textKey:id === 'precise' ? 'correction' : 'denial'} : null;
     if (!writesDraft()) state.spokenAloud.push({lineId:id === 'wait' ? 'C02' : 'C03',textKey:id === 'wait' ? 'waitSpoken' : 'refuseSpoken',listeners:['jonas','claire','elena']});
-    transition({phase:writesDraft() ? 'share' : 'review'});
+    transition({phase:writesDraft() ? 'share' : 'after'});
   }
   function confirmChoice() {
     if (state.phase !== 'review') return;

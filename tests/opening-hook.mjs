@@ -110,32 +110,53 @@ test('written opening: choices, display boundaries, language and access',async t
     assert.equal(await action('recipient-draft').innerText(),lockedCopy[lang].draft);
     assert.equal((await page.locator('#hook-log > li[data-kind="spoken"] > p').allTextContents()).at(-1),lockedCopy[lang].who);
     for(const choice of ['wait','refuse']){
-      await reachRespond(lang);await click(choice,'review');await click('confirm','after');
+      await reachRespond(lang);await click(choice,'after');
       assert.equal(await page.locator('#hook-choice-start > p').innerText(),lockedCopy[lang][choice]);
       assert.equal(await page.locator('#hook-choice-start').getAttribute('data-kind'),'spoken');
     }
     }
   });
 
-  for(const choice of ['precise','wait','refuse','lie']) for(const recipient of ['jonas','both','draft'])
-  await run('branch matrix '+choice+' / '+recipient,async()=>{
+  for(const choice of ['precise','wait','refuse','lie']) for(const recipient of (['precise','lie'].includes(choice)?['jonas','both','draft']:[null]))
+  await run('branch matrix '+choice+' / '+(recipient||'spoken only'),async()=>{
     const written=['precise','lie'].includes(choice);
     for(const lang of ['ar','en']) {
-      await reachRespond(lang);await click(choice,written?'share':'review');
+      await reachRespond(lang);await click(choice,written?'share':'after');
       if(written){
         assert.equal(await page.locator('#hook-draft').isVisible(),true);
         assert.equal(await page.locator('#hook-draft').evaluate(el=>Boolean(el.closest('.you'))),false);
         await click('recipient-'+recipient,'review');
       } else {
-        assert.equal(await action('recipient-'+recipient).count(),0,'defer/refuse must not invent a written material or a recipient');
+        assert.equal(await page.locator('[data-hook-action^="recipient-"]').count(),0,'defer/refuse must not invent a written material or a recipient');
         assert.equal(await page.locator('#hook-draft').count(),0);
       }
       const layers=()=>page.locator('#hook').evaluate(el=>JSON.parse(el.dataset.layers));
       const before=await layers();assert.equal(before.sceneShared,null);
       assert.deepEqual(before.recipientKnowledge,{jonas:[],claire:[],elena:[]});
-      assert.equal(await page.locator('#hook-share-review').isVisible(),true);
-      assert.ok((await page.locator('#hook-share-review [data-part="private"]').innerText()).length>10);
-      await click('confirm','after');
+      if(written){
+        assert.equal(await page.locator('#hook-share-review').isVisible(),true);
+        assert.ok((await page.locator('#hook-share-review [data-part="private"]').innerText()).length>10);
+        await click('confirm','after');
+      } else {
+        assert.deepEqual(await state(),{phase:'after',choice,recipient:'',share:''});
+        assert.equal(before.draftWritten,null);
+        assert.deepEqual(before.spokenAloud.map(line=>line.lineId),['L10','L14',choice==='wait'?'C02':'C03']);
+        assert.deepEqual(before.spokenAloud[2].listeners,['jonas','claire','elena']);
+        assert.equal(await page.locator('#hook-step-heading').evaluate(el=>el.parentElement.id),'hook-choice-start','focus must introduce the actual spoken response');
+        const noWrittenReview=async()=>{
+          assert.equal(await page.locator('#hook-share-review').count(),0,'a spoken response must not display a written preview or recipient');
+          assert.equal(await page.locator('#hook-review-panel').innerText(),'');
+          assert.equal(await page.locator('#hook-draft').count(),0);
+          assert.deepEqual(await page.locator('#hook-actions [data-hook-action]').evaluateAll(nodes=>nodes.map(node=>node.dataset.hookAction)),['record'],'there is no written confirmation step');
+        };
+        await noWrittenReview();
+        for(let toggle=0;toggle<2;toggle++){
+          await page.click('#lang-switch');
+          assert.deepEqual(await layers(),before,'translation must not create a written material or share');
+          assert.deepEqual(await state(),{phase:'after',choice,recipient:'',share:''});
+          await noWrittenReview();
+        }
+      }
       const after=await layers();const expected=written?({jonas:['jonas'],both:['jonas','claire'],draft:[]})[recipient]:[];
       assert.deepEqual(after.sceneShared?.recipients||[],expected);
       for(const id of ['jonas','claire','elena']) assert.deepEqual(after.recipientKnowledge[id],expected.includes(id)?['opening-draft']:[]);
@@ -292,7 +313,7 @@ test('written opening: choices, display boundaries, language and access',async t
     assert.equal(await page.inputValue('#reading-note'),'سؤالي الخاص');assert.equal(await page.inputValue('#reading-source'),'document-original');assert.equal(await page.evaluate(()=>document.activeElement.id),'reading-note');
     await page.click('#reading-add');const promise=page.waitForEvent('download');await page.click('#reading-download');const download=await promise;
     const exported=JSON.parse(fs.readFileSync(await download.path(),'utf8'));assert.equal(exported.contentVersion,'paper-opening-2026-11-05-r2');assert.equal(exported.scope,'private-scene-notes');assert.equal(exported.entries[0].sourceId,'document-original');assert.equal(exported.entries[0].text,'سؤالي الخاص');
-    await click('continue','respond');await click('refuse','review');await click('confirm','after');await click('record','done');
+    await click('continue','respond');await click('refuse','after');await click('record','done');
     await click('replay','start');assert.deepEqual(await page.locator('#reading-tools').evaluate(el=>JSON.parse(el.dataset.notes).entries),[]);await preservedStorage();
   });
 
@@ -332,7 +353,7 @@ test('written opening: choices, display boundaries, language and access',async t
       await page.selectOption('#reading-source','document-conclusion');await page.fill('#reading-note','FIXTURE سؤال عن الاستنتاج');await page.click('#reading-add');
       assert.equal(await page.locator('#reading-quotes').evaluate(el=>el.open),true,'adding a note must not close the statements being reviewed');
       await page.click('#remove-note-1');assert.equal(await page.locator('#reading-quotes').evaluate(el=>el.open),true);
-      await click('refuse','review');await click('confirm','after');await click('record','done');
+      await click('refuse','after');await click('record','done');
       assert.equal(await page.locator('#reading-quotes').evaluate(el=>el.open),true);
       await click('replay','start');await click('open','invite');await click('enter','compare');
       assert.equal(await page.locator('#reading-details').evaluate(el=>el.open),false);

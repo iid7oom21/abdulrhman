@@ -101,7 +101,8 @@ test('mobile player leaves episode and case controls reachable in both orientati
     await (await reachable('[data-hook-action="enter"]')).click();
     await (await reachable('[data-hook-action="continue"]')).click();
     await (await reachable('[data-hook-action="wait"]')).click();
-    await (await reachable('[data-hook-action="confirm"]')).click();
+    assert.equal(await frame.locator('#hook-share-review').count(), 0, 'waiting skips the written preview');
+    assert.equal(await frame.locator('[data-hook-action="confirm"]').count(), 0);
     await (await reachable('[data-hook-action="record"]')).click();
     await (await reachable('[data-hook-action="replay"]')).click();
     assert.equal(await frame.locator('#hook').getAttribute('data-phase'),'start');

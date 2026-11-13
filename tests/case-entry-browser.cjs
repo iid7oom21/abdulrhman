@@ -120,9 +120,18 @@ test('opening continuation: explicit import, persistent shell and unavailable-se
     const action = id => frame.locator('[data-hook-action="' + id + '"]');
     for (const id of ['open', 'enter', 'continue']) await action(id).click();
     await action(choice).click();
-    if (['precise', 'lie'].includes(choice)) await action('recipient-' + recipient).click();
-    else assert.equal(await frame.locator('[data-hook-action^="recipient-"]').count(), 0, 'wait/refuse creates no written recipient choice');
-    await action('confirm').click();
+    if (['precise', 'lie'].includes(choice)) {
+      await action('recipient-' + recipient).click();
+      await action('confirm').click();
+    } else {
+      assert.equal(await frame.locator('[data-hook-action^="recipient-"]').count(), 0, 'wait/refuse creates no written recipient choice');
+      assert.equal(await frame.locator('#hook-share-review').count(), 0, 'a spoken-only response skips the written preview');
+      assert.equal(await action('confirm').count(), 0, 'a spoken-only response needs no written confirmation');
+      const layers = await frame.locator('#hook').evaluate(el => JSON.parse(el.dataset.layers));
+      assert.equal(layers.draftWritten, null);
+      assert.equal(layers.sceneShared, null);
+      assert.deepEqual(layers.recipientKnowledge, { jonas: [], claire: [], elena: [] });
+    }
     assert.equal(await frame.locator('#hook').getAttribute('data-phase'), 'after');
     assert.equal(await frame.locator('#case-continue-link').count(), 0, 'continuation is not offered before the ending');
     assert.equal(api.requests.length, 0, 'availability is not checked before the player finishes the opening');
