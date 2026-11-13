@@ -99,9 +99,9 @@ test('homepage offers the case directly without starting the dialogue preview', 
         Array(2).fill(language === 'en' ? 'The Deleted Name' : 'الاسم المحذوف'));
       for (const link of await frame.locator('[data-dn-link="menu"]').all()) assert.equal(await link.getAttribute('href'), '#dialogue-preview');
       const contact = frame.locator('[data-rvn-i18n="contactOriginal"]');
-      assert.equal(await contact.getAttribute('href'), 'https://project25762.websitepublisher.ai/#raven-collaborate');
+      assert.equal(await contact.getAttribute('href'), 'https://wa.me/966565365000');
       assert.equal(await contact.getAttribute('target'), '_blank');
-      assert.match(await contact.innerText(), language === 'en' ? /external/i : /خارجي/);
+      assert.match(await contact.innerText(), language === 'en' ? /WhatsApp/ : /واتساب/);
       await assertStored();
       assertNoPreview();
 
