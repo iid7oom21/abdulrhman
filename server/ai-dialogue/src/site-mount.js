@@ -27,6 +27,7 @@ const files = [
   'raven/assets/raven-archive.js', 'raven/assets/raven-home-focus.css',
   'raven/assets/raven-enhancements-v1.js', 'raven/assets/raven-archive.css',
   'raven/assets/raven-deleted-name-home.js', 'raven/assets/raven-refinement-v2.js',
+  'raven/assets/raven-media-fallback.js', 'raven/assets/raven-media-fallback.css',
   'raven/assets/favicon.svg',
   ...['jonas', 'claire', 'elena', 'mateo', 'noah', 'evidence_table'].map(name =>
     `raven/assets/images/deleted-name/${name}.jpg`),

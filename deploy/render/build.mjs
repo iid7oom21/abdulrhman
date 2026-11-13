@@ -4,7 +4,7 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 
-export const SITE_COMMIT = 'a132e30d6a7d8af196ffd0af1df16c0a7269d2a9';
+export const SITE_COMMIT = '5ef92a46dcece0a4985f34bba5ab6e239dd0812b';
 export const PUBLIC_RELEASE = '2026-11-12-case-play-2';
 export const EXPORT_MARKER = '.raven-render-export.json';
 // Render builds from a shallow, single-branch checkout and removes its Git
@@ -36,6 +36,7 @@ export const CORE_FILES = [
   'raven/assets/images/deleted-name/elena.jpg',
   'raven/assets/images/deleted-name/evidence_table.jpg',
   'raven/assets/favicon.svg',
+  'raven/assets/raven-media-fallback.js','raven/assets/raven-media-fallback.css',
   'raven/deleted-name/assets/characters/cast-portraits-v1.webp',
   'raven/deleted-name/assets/scenes/case-investigation-v2.webp',
   'raven/deleted-name/assets/scenes/case-tools-v1.webp',

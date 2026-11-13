@@ -245,14 +245,17 @@ test('visual scenes and linked studio serve reviewed assets across root and lega
   }
 });
 
-test('the six reviewed homepage JPGs and favicon serve exact bytes while adjacent files and symlinks stay private', async t => {
+test('reviewed homepage images, favicon and media fallback serve exact bytes while adjacent files and symlinks stay private', async t => {
   const f = fixture(t), names = ['jonas','claire','elena','mateo','noah','evidence_table'];
   const assets = names.map((name,index) => ({name:`raven/assets/images/deleted-name/${name}.jpg`,
     type:'image/jpeg',bytes:Buffer.from([0xff,0xd8,0xff,0xe0,index,0xff,0xd9])}));
   assets.push({name:'raven/assets/favicon.svg',type:'image/svg+xml',bytes:Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"><title>Fixture favicon</title></svg>')});
+  assets.push({name:'raven/assets/raven-media-fallback.js',type:'text/javascript; charset=utf-8',bytes:Buffer.from('/* reviewed media fallback */')});
+  assets.push({name:'raven/assets/raven-media-fallback.css',type:'text/css; charset=utf-8',bytes:Buffer.from('.media-fallback { display: block; }')});
   for (const asset of assets) f.write(asset.name,asset.bytes);
   const privateNames = ['raven/assets/images/deleted-name/private.jpg','raven/assets/images/deleted-name/jonas-copy.jpg',
-    'raven/assets/images/deleted-name/claire.webp','raven/assets/images/private.jpg','raven/assets/favicon-private.svg'];
+    'raven/assets/images/deleted-name/claire.webp','raven/assets/images/private.jpg','raven/assets/favicon-private.svg',
+    'raven/assets/raven-media-fallback-private.js','raven/assets/raven-media-fallback-private.css'];
   for (const name of privateNames) f.write(name,'PRIVATE_HOMEPAGE_SENTINEL');
   const s = await start(t,{siteRoot:f.root});
   for (const asset of assets) for (const method of ['GET','HEAD']) {
