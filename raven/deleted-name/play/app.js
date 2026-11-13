@@ -41,6 +41,7 @@
       noActions:'لا توجد اختيارات إضافية في هذا المشهد.',updated:'حُدّثت حالة القضية.',languageChanged:'تغيّرت لغة العرض دون إرسال اختيار جديد.',
       recipient:'المستلم',shared:'مادة تمت مشاركتها داخل القصة',recorded:'ما سجلته',revision:'نسخة الجلسة',reportScope:'هذه صياغة اللاعب واختياراته المسجلة، وليست حقائق يثبتها النظام تلقائيًا.',
       receipt:'إيصال قصصي',relates:'مرتبط بإيصال سابق',reportLink:'مراجعة النسخة المرتبطة',exportFailed:'تعذّر تنزيل السجل. لم تتغير حالة القضية.',
+      receiptPreview:'ما سيُسجَّل في الإيصال',capturedReport:'النسخة المسجلة لهذا الإيصال',attachments:'المواد المرفقة',materialRecipients:'مستلمو المواد',noAttachments:'لا توجد مواد مرفقة.',noMaterialRecipients:'لا يتضمن هذا الاختيار مشاركة مواد.',cancel:'إلغاء المراجعة',
       exportScope:'الملف سجل للقراءة والاحتفاظ بنسخة، ولا يتيح استيراد الجلسة هنا.',
       noInput:'لا توجد قيم إضافية لهذا الاختيار.',yes:'نعم',no:'لا',
       sharedEntries:'مشاركات مسجلة',sceneIllustration:'تصوّر بصري للمشهد؛ المرجع في النص والمواد المعروضة.',materialIllustration:'تصوّر بصري؛ المرجع في النص والمواد المعروضة.',
@@ -77,6 +78,7 @@
       noActions:'There are no further choices in this scene.',updated:'The case state was updated.',languageChanged:'The display language changed without submitting a new choice.',
       recipient:'Recipient',shared:'Material shared within the story',recorded:'What you recorded',revision:'Session revision',reportScope:'These are the player’s recorded words and choices, not facts automatically established by the system.',
       receipt:'Fictional receipt',relates:'Related to an earlier receipt',reportLink:'Review the related version',exportFailed:'The record could not be downloaded. The case state did not change.',
+      receiptPreview:'What this receipt will record',capturedReport:'Recorded version for this receipt',attachments:'Attached materials',materialRecipients:'Material recipients',noAttachments:'No materials are attached.',noMaterialRecipients:'This choice includes no material sharing.',cancel:'Cancel review',
       exportScope:'This file is a reading and backup copy. Importing a session is not supported here.',
       noInput:'This choice has no additional fields.',yes:'Yes',no:'No',
       sharedEntries:'recorded shares',sceneIllustration:'Scene illustration; refer to the text and available materials.',materialIllustration:'Illustration; refer to the text and available materials.',
@@ -145,9 +147,9 @@
     const description = element('dd');if (value instanceof Node) description.append(value);else description.textContent = value;
     group.append(description);list.append(group);
   }
-  function sourceLink(id) {
+  function sourceLink(id, title) {
     const material = materialById(id);if (!material) return element('span',String(id));
-    const link = element('a',localized(material.title));link.href = '#' + domId('material',id);
+    const link = element('a',localized(title || material.title));link.href = '#' + domId('material',id);
     link.addEventListener('click',event => {event.preventDefault();focus(domId('material',id));});return link;
   }
   function download(value, name) {
@@ -493,15 +495,64 @@
     if (typeof value === 'string' && materialById(value)) return sourceLink(value);
     return element('span',typeof value === 'boolean' ? tr(value ? 'yes' : 'no') : value == null ? tr('noSelection') : String(value));
   }
+  const hasReceiptPreview = action => action.receiptPreview?.scope === 'story-only';
+  function captureValues(capture) {
+    const list = element('dl');
+    for (const [fieldId,value] of Object.entries(capture.values || {})) {
+      const field = Array.isArray(capture.fields) ? capture.fields.find(item => item.id === fieldId) : null;
+      pair(list,localized(field?.label) || (Array.isArray(value) ? tr('sourceRefs') : tr('recorded')),valueView(value,field));
+    }
+    return list;
+  }
+  function receiptLink(id) {
+    const receipt = state.receipts.find(item => item.id === id && item.scope === 'story-only');
+    if (!receipt) return null;
+    const link = element('a',String(receipt.id));link.dir = 'auto';link.href = '#' + domId('receipt',receipt.id);
+    link.addEventListener('click',event => {event.preventDefault();focus(domId('receipt',receipt.id));});return link;
+  }
+  function renderReceiptPreview(preview) {
+    const section = element('section',undefined,'receipt-preview');section.setAttribute('aria-labelledby','receipt-preview-title');
+    const title = element('h3',tr('receiptPreview'));title.id = 'receipt-preview-title';
+    section.append(title,element('p',localized(preview.title)),element('p',tr('receiptScope'),'muted'));
+    if (preview.capture) {
+      // This inline snapshot is the server's authorized receipt input. The
+      // current capture alias may contain a different, newer version.
+      const capture = element('section',undefined,'material receipt-capture');
+      capture.append(element('h3',localized(preview.capture.label || preview.capture.title) || tr('capturedReport')),element('p',tr('revision') + ': ' + String(preview.capture.revision),'muted'),captureValues(preview.capture));
+      section.append(capture);
+    }
+    const shares = Array.isArray(preview.shares) ? preview.shares : [];
+    const recipients = [...new Set(shares.map(share => share.recipient))];
+    const details = element('dl');
+    pair(details,tr('materialRecipients'),recipients.length ? recipients.map(recipient => TEXT[lang].names[recipient] || String(recipient)).join(lang === 'ar' ? '، ' : ', ') : tr('noMaterialRecipients'));
+    const related = receiptLink(preview.relatesTo);if (related) pair(details,tr('relates'),related);
+    section.append(details,element('h3',tr('attachments')));
+    const materials = Array.isArray(preview.materials) ? preview.materials.filter(material => materialById(material.id)) : [];
+    if (!materials.length) section.append(element('p',tr('noAttachments'),'muted'));
+    else {
+      const list = element('ul',undefined,'shared-materials receipt-attachments');
+      for (const material of materials) {
+        const earned = materialById(material.id),row = element('li');row.append(sourceLink(material.id,material.title));
+        const source = localized(earned.source);row.append(element('p',source ? tr('source') + ': ' + source : tr('noSource'),'muted'));
+        const receiving = [...new Set(shares.filter(share => share.materialId === material.id).map(share => share.recipient))];
+        if (receiving.length) row.append(element('p',tr('materialRecipients') + ': ' + receiving.map(recipient => TEXT[lang].names[recipient] || String(recipient)).join(lang === 'ar' ? '، ' : ', '),'muted'));
+        list.append(row);
+      }
+      section.append(list);
+    }
+    return section;
+  }
   function renderReview() {
     $('review-panel').hidden = !review;if (!review) return;
-    const body = $('review-body');body.replaceChildren(element('p',localized(review.action.label)),element('p',tr('fieldsScope'),'muted'));
+    const body = $('review-body');body.replaceChildren(element('p',localized(review.action.label)));
+    if (hasReceiptPreview(review.action)) body.append(renderReceiptPreview(review.action.receiptPreview));
+    if (review.action.fields?.length) body.append(element('p',tr('fieldsScope'),'muted'));
     const list = element('dl');for (const field of review.action.fields || []) pair(list,localized(field.label),valueView(review.values[field.id],field));
     body.append(list);
     $('review-actions').replaceChildren(button('review-confirm',tr('confirm'),() => {
-      if (!review || review.revision !== state.revision || review.contentVersion !== state.contentVersion) {review = null;renderReview();announce(tr('conflict'));return;}
+      if (!review || review.revision !== state.revision || review.contentVersion !== state.contentVersion || !state.actions.includes(review.action)) {review = null;renderReview();announce(tr('conflict'));return;}
       submitAction(review.action,review.values);
-    },true),button('review-edit',tr('edit'),() => {const id = domId('action',review.action.id);review = null;renderReview();focus(id);}));
+    },true),button('review-edit',tr(review.action.fields?.length ? 'edit' : 'cancel'),() => {const id = domId('action',review.action.id);review = null;renderReview();focus(id);}));
   }
   function renderAction(action, parent) {
     if (typeof action.id !== 'string') return;
@@ -533,12 +584,15 @@
     });
     if (!supported) {form.append(element('p',tr('unsupported')));parent.append(form);return;}
     const submit = element('button',fields.length ? tr('preview') : localized(action.label),'primary');submit.type = 'submit';submit.dataset.actionId = action.id;form.append(submit);
-    const remember = () => drafts.set(action.id,valuesFrom(form,fields));form.addEventListener('input',remember);form.addEventListener('change',remember);
+    const remember = () => {
+      drafts.set(action.id,valuesFrom(form,fields));
+      if (review?.action.id === action.id) {review = null;renderReview();announce(tr('conflict'));}
+    };form.addEventListener('input',remember);form.addEventListener('change',remember);
     form.addEventListener('submit',event => {
       event.preventDefault();if (busy || pending || corruptPending !== null || browserLocked() || !form.reportValidity()) return;
       const values = valuesFrom(form,fields);drafts.set(action.id,values);
       if (fields.some(field => field.required && field.type === 'materialRefs' && !values[field.id]?.length)) {announce(tr('rejected'));form.querySelector('input[type="checkbox"]')?.focus();return;}
-      if (!fields.length) {submitAction(action,values);return;}
+      if (!fields.length && !hasReceiptPreview(action)) {submitAction(action,values);return;}
       review = {action,values:JSON.parse(JSON.stringify(values)),revision:state.revision,contentVersion:state.contentVersion};renderReview();focus('review-title');
     });
     parent.append(form);
@@ -621,12 +675,7 @@
       const article = element('article',undefined,'material');article.id = domId('capture',key);article.tabIndex = -1;
       versions.set(signature,article.id);captureAnchors.set(key,article.id);
       article.append(element('h3',localized(capture.label || capture.title) || tr('recorded')),element('p',tr('revision') + ': ' + String(capture.revision),'muted'));
-      const list = element('dl');
-      for (const [fieldId,value] of Object.entries(capture.values || {})) {
-        const field = Array.isArray(capture.fields) ? capture.fields.find(item => item.id === fieldId) : null;
-        pair(list,localized(field?.label) || (Array.isArray(value) ? tr('sourceRefs') : tr('recorded')),valueView(value,field));
-      }
-      article.append(list);body.append(article);
+      article.append(captureValues(capture));body.append(article);
     }
   }
   function renderReceipts() {

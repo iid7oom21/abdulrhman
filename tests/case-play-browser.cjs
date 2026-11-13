@@ -20,8 +20,8 @@ const materialOptions = [
   { value: 'fixture-map', label: localized('Fixture map', 'خريطة الاختبار') },
 ];
 
-function projection({ notes = true, revision = 4 } = {}) {
-  return {
+function projection({ notes = true, revision = 4, receiptPreview = false } = {}) {
+  const state = {
     caseId: 'fictional-browser-fixture', contentVersion: VERSION, revision,
     saveStatus: 'confirmed', persistence: 'disk-file',
     scene: {
@@ -54,6 +54,41 @@ function projection({ notes = true, revision = 4 } = {}) {
     notes: [], captures: {}, shares: [], receipts: [], opening: null,
     forbiddenSentinel: FORBIDDEN,
   };
+  if (receiptPreview) {
+    const capture = {
+      actionId: 'fixture-earlier-capture', revision: 2,
+      label: localized('Captured fixture correction', 'تصحيح الاختبار المسجل'),
+      fields: [
+        { id: 'text', type: 'textarea', label: localized('Recorded correction', 'التصحيح المسجل') },
+        { id: 'sources', type: 'materialRefs', label: localized('Recorded sources', 'المصادر المسجلة') },
+      ],
+      values: { text: 'The exact earlier captured text.\nIt remains a player statement.', sources: ['fixture-letter'] },
+    };
+    state.materials.push({ id: 'fixture-unattached', title: localized('Unattached earned sheet', 'ورقة مكتسبة غير مرفقة'), body: localized('An earned sheet that is not part of this filing.', 'ورقة مكتسبة ليست ضمن هذا الإيداع.'), type: 'document', source: localized('Other fixture desk', 'مكتب اختبار آخر') });
+    state.captures = {
+      fixture_delivery_report: { ...clone(capture), revision: 4, values: { text: 'LATEST_ALIAS_MUST_NOT_REPLACE_REVIEW', sources: ['fixture-unattached'] } },
+      'fixture_delivery_report.revision.2': clone(capture),
+    };
+    state.receipts = [{ id: 'fixture-receipt-original', title: localized('Earlier fixture receipt', 'إيصال اختبار سابق'), kind: 'fixture', scope: 'story-only', revision: 1 }];
+    state.shares = [{ materialId: 'fixture-unattached', recipient: 'fixture-unrelated-recipient', revision: 3 }];
+    state.actions.unshift({
+      id: 'fixture-file-correction', label: localized('File fixture correction', 'إيداع تصحيح الاختبار'),
+      receiptPreview: {
+        kind: 'fixture-correction', title: localized('Fixture correction receipt', 'إيصال تصحيح الاختبار'), scope: 'story-only',
+        fromCapture: 'fixture_delivery_report.revision.2', capture,
+        materials: materialOptions.map(option => ({ id: option.value, title: option.label })),
+        shares: [
+          { materialId: 'fixture-letter', recipient: 'assessment_review' },
+          { materialId: 'fixture-map', recipient: 'assessment_review' },
+          { materialId: 'fixture-map', recipient: 'incident_followup' },
+        ],
+        relatesTo: 'fixture-receipt-original',
+        target: FORBIDDEN, hiddenFutureReceipt: FORBIDDEN,
+      },
+      target: FORBIDDEN,
+    });
+  }
+  return state;
 }
 
 function fixture(options = {}) {
@@ -70,7 +105,12 @@ function fixture(options = {}) {
     if (api.seen.has(body.id)) return clone(api.seen.get(body.id));
     api.mutations += 1;
     api.state.revision += 1;
-    if (body.actionId === 'case.note') {
+    const preview = api.state.actions.find(action => action.id === body.actionId)?.receiptPreview;
+    if (preview) {
+      api.state.captures[preview.fromCapture] = clone(preview.capture);
+      api.state.shares.push(...preview.shares.map(share => ({ ...share, revision: api.state.revision })));
+      api.state.receipts.push({ id: 'fixture-receipt-' + api.state.revision, kind: preview.kind, title: preview.title, scope: 'story-only', fromCapture: preview.fromCapture, relatesTo: preview.relatesTo, revision: api.state.revision });
+    } else if (body.actionId === 'case.note') {
       api.state.notes.push({ id: 'fixture-note-' + api.state.revision, text: body.values.text, sourceId: body.values.sourceId });
     } else {
       api.state.scene.title = localized('Fixture report recorded', 'تم تسجيل تقرير الاختبار');
@@ -111,6 +151,7 @@ function fixture(options = {}) {
         const failure = api.failures.shift();
         if (failure === '503') return json(res, 503, { error: 'storage_unavailable' });
         if (failure === '409') return json(res, 409, { error: 'stale_revision' });
+        if (!api.seen.has(body.id) && body.revision !== api.state.revision) return json(res, 409, { error: 'revision_conflict' });
         const result = apply(body);
         if (api.holdAction) {
           api.holdAction = false;
@@ -160,10 +201,10 @@ async function textIncludes(page, selector, text) {
   await page.waitForFunction(({ selector, text }) => document.querySelector(selector)?.textContent.includes(text), { selector, text });
 }
 
-async function noOverflow(page) {
+async function noOverflow(page, width = 320) {
   const result = await page.evaluate(() => ({ width: innerWidth, document: document.documentElement.scrollWidth, body: document.body.scrollWidth }));
-  assert.equal(result.width, 320, 'the actual browser viewport is 320 CSS pixels');
-  assert.ok(result.document <= 321 && result.body <= 321, 'no horizontal overflow: ' + JSON.stringify(result));
+  assert.equal(result.width, width, `the actual browser viewport is ${width} CSS pixels`);
+  assert.ok(result.document <= width + 1 && result.body <= width + 1, 'no horizontal overflow: ' + JSON.stringify(result));
 }
 
 async function english(page) {
@@ -356,6 +397,130 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     await english(page);
     assert.equal(actionRequests(api).length, 1);
     await noOverflow(page);
+  }));
+
+  await t.test('receipt review shows the exact captured correction, recipients and earned attachments before confirmation in both languages', () => check({ receiptPreview: true }, async (page, api) => {
+    await ready(page);
+    const before = clone(api.state), preview = clone(api.state.actions[0].receiptPreview);
+    const action = page.locator('form[data-action-id="fixture-file-correction"] button');
+    await action.focus();await page.keyboard.press('Enter');
+    await page.locator('#review-panel').waitFor({ state: 'visible' });
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'review-title');
+    assert.equal(actionRequests(api).length, 0);
+    await textIncludes(page, '.receipt-preview', 'التصحيح المسجل');
+    await textIncludes(page, '.receipt-preview', 'نسخة الجلسة: 2');
+    await textIncludes(page, '.receipt-preview', 'الجهة التي أصدرت التقييم');
+    await textIncludes(page, '.receipt-preview', 'الجهة المتابعة لواقعة المكتبة');
+    await noOverflow(page);
+    await english(page);
+    await textIncludes(page, '.receipt-capture', preview.capture.values.text);
+    await textIncludes(page, '.receipt-capture', 'Session revision: 2');
+    await textIncludes(page, '.receipt-preview', 'The organization that issued the assessment');
+    await textIncludes(page, '.receipt-preview', 'The organization following up the library incident');
+    assert.doesNotMatch(await page.locator('.receipt-preview').innerText(), /LATEST_ALIAS_MUST_NOT_REPLACE_REVIEW|Unattached earned sheet|fixture-unrelated-recipient|fixture-receipt-5/);
+    assert.deepEqual(await page.locator('.receipt-attachments>li>a').evaluateAll(links => links.map(link => [link.textContent, link.getAttribute('href')])), [['Fixture letter', '#material-fixture-letter'], ['Fixture map', '#material-fixture-map']]);
+    await textIncludes(page, '.receipt-attachments', 'Source: Fictional desk');
+    await textIncludes(page, '.receipt-attachments', 'Source: Fictional folder');
+    assert.equal(await page.locator('.receipt-attachments>li').nth(0).innerText().then(text => text.includes('The organization following up the library incident')), false, 'each attachment shows only its actual recipients');
+    await page.locator('.receipt-attachments a[href="#material-fixture-map"]').focus();await page.keyboard.press('Enter');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'material-fixture-map');
+    assert.equal(await page.locator('#material-fixture-map').evaluate(node => node.open), true);
+    await page.locator('.receipt-preview a[href="#receipt-fixture-receipt-original"]').focus();await page.keyboard.press('Enter');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'receipt-fixture-receipt-original');
+    assert.deepEqual(api.state, before, 'reading the capture and source or related receipt links cannot mutate the case');
+    await page.setViewportSize({ width: 390, height: 844 });await noOverflow(page, 390);
+    await page.locator('#language-ar').click();await noOverflow(page, 390);
+    await english(page);
+    await page.locator('#review-confirm').focus();await page.keyboard.press('Enter');
+    await page.locator('#review-panel').waitFor({ state: 'hidden' });
+    await eventually(() => api.mutations === 1, 'confirmation did not file the reviewed receipt');
+    assert.equal(actionRequests(api).length, 1);
+    assertActionRequest(actionRequests(api)[0], 'fixture-file-correction', before.revision);
+    assert.deepEqual(actionRequests(api)[0].body.values, {}, 'preview metadata and captured text are never sent back as action authority');
+    const receipt = api.state.receipts.at(-1);
+    assert.equal(receipt.fromCapture, preview.fromCapture);
+    assert.equal(receipt.relatesTo, preview.relatesTo);
+    assert.deepEqual(api.state.captures[receipt.fromCapture], preview.capture, 'the confirmed receipt uses exactly the reviewed capture');
+    assert.deepEqual(api.state.shares.slice(before.shares.length).map(({ revision, ...share }) => share), preview.shares, 'the receipt shares exactly the reviewed materials with the reviewed recipients');
+    await page.locator('#receipt-' + receipt.id + ' a').click();
+    const focused = await page.evaluate(() => document.activeElement.textContent);
+    assert.match(focused, /The exact earlier captured text/);
+    assert.doesNotMatch(focused, /LATEST_ALIAS_MUST_NOT_REPLACE_REVIEW/);
+  }));
+
+  await t.test('cancelling receipt review preserves local drafts and does not create a pending operation or receipt', () => check({ receiptPreview: true }, async (page, api) => {
+    await ready(page);await english(page);
+    const draft = page.locator('form[data-action-id="fixture-report"]').getByLabel('Report summary', { exact: true });
+    await draft.fill('Unsubmitted local draft survives receipt review.');
+    const before = clone(api.state);
+    await page.locator('form[data-action-id="fixture-file-correction"] button').click();
+    await page.locator('#language-ar').click();
+    await page.locator('#review-edit').focus();await page.keyboard.press('Enter');
+    assert.equal(await page.locator('#review-panel').isVisible(), false);
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'action-fixture-file-correction');
+    await english(page);
+    assert.equal(await draft.inputValue(), 'Unsubmitted local draft survives receipt review.');
+    assert.equal(await page.evaluate(key => sessionStorage.getItem(key), PENDING_KEY), null);
+    assert.equal(actionRequests(api).length, 0);
+    assert.deepEqual(api.state, before);
+    await page.locator('form[data-action-id="fixture-advance"] button').click();
+    await eventually(() => actionRequests(api).length === 1, 'ordinary no-field actions should still submit directly');
+    assert.equal(await page.locator('#review-panel').isVisible(), false);
+    assertActionRequest(actionRequests(api)[0], 'fixture-advance', before.revision);
+  }));
+
+  await t.test('changed case state rejects an old receipt review and refresh requires reviewing the new snapshot', () => check({ receiptPreview: true }, async (page, api) => {
+    await ready(page);await english(page);
+    await page.locator('form[data-action-id="fixture-file-correction"] button').click();
+    api.state.revision += 1;
+    const next = api.state.actions[0].receiptPreview;
+    next.capture.revision = api.state.revision;
+    next.capture.values.text = 'Changed correction that needs a fresh review.';
+    next.fromCapture = 'fixture_delivery_report.revision.' + api.state.revision;
+    await page.locator('#review-confirm').click();
+    await textIncludes(page, '#connection-message', 'case state changed');
+    assert.equal(api.mutations, 0);
+    assert.equal(api.state.receipts.length, 1);
+    assert.equal(await page.evaluate(key => sessionStorage.getItem(key), PENDING_KEY), null, 'a rejected stale review is not retried as an uncertain operation');
+    assert.equal(actionRequests(api)[0].body.revision, 4);
+    await page.locator('#state-refresh').click();
+    await page.waitForFunction(() => document.body.getAttribute('aria-busy') === 'false');
+    assert.equal(await page.locator('#review-panel').isVisible(), false);
+    await page.locator('form[data-action-id="fixture-file-correction"] button').click();
+    await textIncludes(page, '.receipt-capture', next.capture.values.text);
+    assert.doesNotMatch(await page.locator('.receipt-capture').innerText(), /exact earlier captured text/);
+    await page.locator('#state-refresh').click();
+    await page.locator('#review-panel').waitFor({ state: 'hidden' });
+    assert.equal(actionRequests(api).length, 1, 'refresh invalidates the displayed review without submitting another action');
+  }));
+
+  await t.test('editing reviewed inputs requires a fresh review and preserves the new draft', () => check({}, async (page, api) => {
+    await ready(page);await reportReview(page);
+    const form = page.locator('form[data-action-id="fixture-report"]');
+    await form.getByLabel('Report summary', { exact: true }).fill('A revised statement that has not been confirmed.');
+    assert.equal(await page.locator('#review-panel').isVisible(), false);
+    assert.equal(actionRequests(api).length, 0);
+    await page.locator('#language-ar').click();await english(page);
+    await form.locator('button[type="submit"]').click();
+    await textIncludes(page, '#review-panel', 'A revised statement that has not been confirmed.');
+    await page.locator('#review-edit').click();
+    assert.equal(await form.getByLabel('Report summary', { exact: true }).inputValue(), 'A revised statement that has not been confirmed.');
+    assert.equal(actionRequests(api).length, 0);
+  }));
+
+  await t.test('a receipt confirmed before a lost response retries the same operation without a second receipt', () => check({ receiptPreview: true, failures: ['network'] }, async (page, api) => {
+    await ready(page);await english(page);
+    await page.locator('form[data-action-id="fixture-file-correction"] button').click();
+    await page.locator('#review-confirm').click();
+    await page.locator('#operation-retry').waitFor({ state: 'visible' });
+    const original = clone(actionRequests(api)[0].body);
+    await page.locator('#language-ar').click();
+    assert.equal(actionRequests(api).length, 1);
+    await page.locator('#operation-retry').click();
+    await eventually(async () => await page.evaluate(key => sessionStorage.getItem(key), PENDING_KEY) === null, 'receipt retry did not clear its pending operation');
+    assert.deepEqual(actionRequests(api)[1].body, original);
+    assert.equal(api.mutations, 1);
+    assert.equal(api.state.receipts.length, 2, 'the earlier receipt and one new correction receipt remain');
   }));
 
   await t.test('case.note is offered only when projected and sends only the selected earned source', () => check({}, async (page, api) => {
