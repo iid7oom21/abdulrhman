@@ -251,8 +251,12 @@ export function createPreviewServer({
 }
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const {generate,info} = providerFromEnv();
-  createPreviewServer({storeFile:storagePathFromEnv(),generate,providerInfo:info,siteRoot:process.env.RAVEN_SITE_ROOT || null,
+  const host = process.env.HOST || (process.env.RENDER === 'true' ? '0.0.0.0' : '127.0.0.1');
+  const server = createPreviewServer({storeFile:storagePathFromEnv(),generate,providerInfo:info,siteRoot:process.env.RAVEN_SITE_ROOT || null,
     caseContentPath:process.env.RAVEN_CASE_CONTENT_PATH || null,
-    caseStoragePath:process.env.RAVEN_CASE_STORAGE_PATH || (process.env.RAVEN_CASE_CONTENT_PATH ? DEFAULT_CASE_STORAGE_PATH : null)})
-    .listen(process.env.PORT || 10000, process.env.HOST || '127.0.0.1', () => console.log(`RAVEN preview: ${info.provider}, local disk file`));
+    caseStoragePath:process.env.RAVEN_CASE_STORAGE_PATH || (process.env.RAVEN_CASE_CONTENT_PATH ? DEFAULT_CASE_STORAGE_PATH : null)});
+  server.listen(process.env.PORT || 10000, host, () => {
+    const address = server.address();
+    console.log(`RAVEN preview: ${info.provider}, local disk file; listening on ${address.address}:${address.port}`);
+  });
 }
