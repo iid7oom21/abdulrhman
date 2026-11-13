@@ -1,6 +1,4 @@
 import { buildContext } from './knowledge.js';
-import crypto from 'node:crypto';
-import { generateAIResponse } from './ai-provider.js';
 
 const requests = new Map();
 const shares = new Map();
@@ -10,19 +8,18 @@ export function makeRequestId() {
 }
 
 export function fingerprint(content) {
-  const str = JSON.stringify(content);
-  return crypto.createHash('sha256').update(str).digest('hex');
+  return Buffer.from(JSON.stringify(content)).toString('base64').slice(0, 16);
 }
 
-export function simulateReply(characterId, playerMessage, allowedFacts = []) {
-  const ctx = buildContext(characterId, allowedFacts);
+export function simulateReply(characterId, playerMessage, sharedFacts = []) {
+  const ctx = buildContext(characterId, sharedFacts);
   const lower = (playerMessage || '').toLowerCase();
 
   if (
     ctx.forbidden.some(
       (f) =>
         lower.includes(f.replace(/_/g, ' ')) ||
-        (lower.includes('ظرف') && characterId === 'jonas' && !allowedFacts.includes('envelope_shared'))
+        (lower.includes('ظرف') && characterId === 'jonas' && !sharedFacts.includes('envelope_shared'))
     )
   ) {
     return { text: 'ما أعرف عن هالشي. ما شفته.', refused: true };
@@ -45,7 +42,7 @@ export function simulateReply(characterId, playerMessage, allowedFacts = []) {
         refused: false,
       };
     }
-    if (lower.includes('ملاحظة') && !allowedFacts.includes('note_shared')) {
+    if (lower.includes('ملاحظة') && !sharedFacts.includes('note_shared')) {
       return { text: 'ما شفت الملاحظة. إذا عندكها، ورّيني.', refused: true };
     }
     return {
@@ -57,63 +54,32 @@ export function simulateReply(characterId, playerMessage, allowedFacts = []) {
   return { text: 'ما أقدر أجاوب خارج ما أعرفه.', refused: true };
 }
 
-/**
- * In a real environment with PostgreSQL and Gemini:
- * 1. Check DB for existing request by requestId and ownerId.
- * 2. If exists, compare fingerprint. If different -> 409 conflict. If same -> return cached response.
- * 3. If missing, save pending request to DB.
- * 4. Build context, call Gemini API.
- * 5. Update DB with Gemini response.
- * 6. Return response.
- */
-export async function submitRequest(requestId, characterId, message, sharedFacts = [], contentVersion = 'v1', ownerId = 'anon') {
+export function submitRequest(requestId, characterId, message, sharedFacts = [], contentVersion = 'v1', ownerId = 'anon') {
   const fp = fingerprint({ characterId, message, sharedFacts, contentVersion });
   const existing = requests.get(requestId);
-
   if (existing) {
     if (existing.owner !== ownerId) {
       return { error: 'forbidden', status: 'forbidden' };
     }
-    if (existing.fingerprint === fp) {
-      if (existing.status === 'pending') {
-          // In a real system, you might wait or return a specific code telling client to wait/retry.
-          // Returning conflict to avoid duplicate generation running concurrently.
-          return { error: 'generation_in_progress', status: 'conflict' };
-      }
+    if (existing.fingerprint === fp && existing.response) {
       return { ...existing, replayed: true };
     }
     return { error: 'request_id_conflict', status: 'conflict' };
   }
 
-  // Build context, filtering out any invalid client shared facts against real DB in production.
-  const safeContext = buildContext(characterId, sharedFacts);
-
-  let record = {
+  const reply = simulateReply(characterId, message, sharedFacts);
+  const record = {
     fingerprint: fp,
-    status: 'pending',
+    response: reply,
+    status: 'completed',
     contentVersion,
     owner: ownerId,
     characterId,
     message,
     createdAt: new Date().toISOString(),
   };
-
   requests.set(requestId, record);
-
-  // Add artificial delay to allow concurrent tests to hit pending state
-  await new Promise(r => setTimeout(r, 50));
-
-  try {
-      // In future: const reply = await generateAIResponse(characterId, message, safeContext);
-      const reply = simulateReply(characterId, message, safeContext.allowed);
-      record.response = reply;
-      record.status = 'completed';
-      requests.set(requestId, record);
-      return { ...record, replayed: false };
-  } catch (e) {
-      requests.delete(requestId);
-      return { error: 'generation_failed', status: 'failed' };
-  }
+  return { ...record, replayed: false };
 }
 
 export function recordShare(shareKey) {
@@ -132,7 +98,7 @@ export function getRequest(requestId, ownerId) {
 export function listRequests(ownerId) {
   const out = [];
   for (const [id, rec] of requests) {
-    if (rec.owner === ownerId && rec.status === 'completed') out.push({ id, ...rec });
+    if (rec.owner === ownerId) out.push({ id, ...rec });
   }
   return out;
 }

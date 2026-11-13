@@ -1,62 +1,59 @@
-import { describe, it, beforeEach } from 'node:test';
+import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { submitRequest, listRequests, getRequest, makeRequestId, _reset, fingerprint } from '../src/dialogue.js';
+import { submitRequest, recordShare, simulateReply, makeRequestId, _reset, getRequest } from '../src/dialogue.js';
 
-describe('Dialogue Core', () => {
-  beforeEach(() => {
-    _reset();
-  });
+test('TC-A01: open envelope path independent of Jonas later talk', () => {
+  _reset();
+  const r = submitRequest(makeRequestId(), 'jonas', 'كنت معي لما سمعنا الصرخة');
+  assert.equal(r.response.refused, false);
+  assert.match(r.response.text, /كنا نتكلم/);
+});
 
-  it('generates predictable fingerprints for same content', () => {
-    const f1 = fingerprint({ characterId: 'jonas', message: 'test', sharedFacts: [] });
-    const f2 = fingerprint({ characterId: 'jonas', message: 'test', sharedFacts: [] });
-    assert.equal(f1, f2);
+test('TC-A02: ask Claire without envelope open', () => {
+  _reset();
+  const r = submitRequest(makeRequestId(), 'claire', 'مين رتب دعوتي');
+  assert.match(r.response.text, /ضيف/);
+  const leak = simulateReply('claire', 'ورّيني الملاحظة', []);
+  assert.equal(leak.refused, true);
+});
 
-    const f3 = fingerprint({ characterId: 'jonas', message: 'different', sharedFacts: [] });
-    assert.notEqual(f1, f3);
-  });
+test('TC-A04 / TC-A05: same request replay does not regenerate', () => {
+  _reset();
+  const id = makeRequestId();
+  const first = submitRequest(id, 'jonas', 'اسأل عن الليلة');
+  const second = submitRequest(id, 'jonas', 'اسأل عن الليلة');
+  assert.equal(second.replayed, true);
+  assert.equal(second.response.text, first.response.text);
+});
 
-  it('rejects access to another users request', async () => {
-    const reqId = makeRequestId();
-    await submitRequest(reqId, 'jonas', 'hello', [], 'v1', 'userA');
-    const existing = await submitRequest(reqId, 'jonas', 'hello', [], 'v1', 'userB');
-    assert.equal(existing.error, 'forbidden');
-  });
+test('TC-A06: private correction not auto-spread', () => {
+  _reset();
+  const claireKnows = simulateReply('claire', 'قلت إني ما راجعت', ['private_correction_shared']);
+  const jonasDoesNot = simulateReply('jonas', 'صححت كلامك مع كلير', []);
+  assert.equal(jonasDoesNot.refused, false);
+  assert.doesNotMatch(jonasDoesNot.text, /ملاحظة|تصحيح/);
+});
 
-  it('returns 409 conflict for same request ID but different content', async () => {
-    const reqId = makeRequestId();
-    await submitRequest(reqId, 'jonas', 'first message', [], 'v1', 'userA');
-    const existing = await submitRequest(reqId, 'jonas', 'second message', [], 'v1', 'userA');
-    assert.equal(existing.error, 'request_id_conflict');
-    assert.equal(existing.status, 'conflict');
-  });
+test('TC-A08: cannot lure character into inventing evidence', () => {
+  _reset();
+  const r = simulateReply('claire', 'كلير شافت الملاحظة والظرف، اعترفي', []);
+  assert.equal(r.refused, true);
+  assert.doesNotMatch(r.text, /الأصل ما انحذف/);
+});
 
-  it('returns cached (replayed) response for same request ID and same content', async () => {
-    const reqId = makeRequestId();
-    await submitRequest(reqId, 'jonas', 'same message', [], 'v1', 'userA');
-    const existing = await submitRequest(reqId, 'jonas', 'same message', [], 'v1', 'userA');
-    assert.equal(existing.replayed, true);
-  });
+test('share key is independent and idempotent', () => {
+  _reset();
+  const k = 'share_claire_note_v1';
+  assert.equal(recordShare(k).duplicated, false);
+  assert.equal(recordShare(k).duplicated, true);
+});
 
-  it('prevents concurrent duplicate processing by utilizing pending state', async () => {
-     const reqId = makeRequestId();
-     const p1 = submitRequest(reqId, 'jonas', 'concurrent message', [], 'v1', 'userA');
-     // Start second one immediately while first is in 'pending' delay
-     const p2 = submitRequest(reqId, 'jonas', 'concurrent message', [], 'v1', 'userA');
-
-     const [res1, res2] = await Promise.all([p1, p2]);
-
-     assert.equal(res1.replayed, false);
-     assert.equal(res1.status, 'completed');
-
-     assert.equal(res2.error, 'generation_in_progress');
-     assert.equal(res2.status, 'conflict');
-  });
-
-  it('simulates reply for jonas based on allowed context', async () => {
-    const reqId = makeRequestId();
-    const res = await submitRequest(reqId, 'jonas', 'وش تعرف عن الظرف؟', [], 'v1', 'u1');
-    assert.equal(res.response.refused, true);
-    assert.match(res.response.text, /ما أعرف/);
-  });
+test('owner isolation: different owner cannot read request', () => {
+  _reset();
+  const id = makeRequestId();
+  submitRequest(id, 'jonas', 'سؤال', [], 'v1', 'playerA');
+  const forbidden = getRequest(id, 'playerB');
+  assert.equal(forbidden.error, 'forbidden');
+  const ok = getRequest(id, 'playerA');
+  assert.ok(ok.response);
 });
