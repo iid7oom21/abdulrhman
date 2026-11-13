@@ -4,7 +4,7 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 
-export const SITE_COMMIT = 'f5b8ea3a9d7f962d390d55d40cd6704e02394b3f';
+export const SITE_COMMIT = '8fb45b01bc8a5feb0d6d33f9636dfe84020f8895';
 export const PUBLIC_RELEASE = '2026-11-12-case-play-2';
 export const EXPORT_MARKER = '.raven-render-export.json';
 // Render builds from a shallow, single-branch checkout and removes its Git

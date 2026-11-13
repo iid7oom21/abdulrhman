@@ -64,7 +64,7 @@ node --test server/ai-dialogue/tests/*.test.js
 node server/ai-dialogue/scripts/check-case.mjs --content /absolute/private/raven-case-content.json
 ```
 
-The last command plays the private story through the engine from every opening and must exit 0: every scene and choice reachable, no dead end, and an ending reachable from every state. Run it on the exact file whose SHA-256 is configured. Give changed content a new `contentVersion`; saves made on other content under the same version are refused at startup.
+The last command plays the private story through the engine from every opening and must exit 0: every scene and choice reachable, no dead end, and an ending reachable from every state. Run it on the exact file whose SHA-256 is configured. Give changed content a new `contentVersion`. Browser checkpoints verify the whole pack's fingerprint and refuse different content under the same version. Disk saves replay the reached history and validate its saved projection, so changes confined to unseen content may not be detected at startup; this check does not replace versioning.
 
 After deployment, verify the actual Render URL, not GitHub Pages:
 
