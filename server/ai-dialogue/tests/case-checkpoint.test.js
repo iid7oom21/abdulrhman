@@ -129,6 +129,26 @@ test('a real restart restores earned receipts and exactly-once operation identit
   assert.equal(noCookie.status,200); assert.equal(noCookie.headers.get('set-cookie').split(';')[0],p.cookie);
 });
 
+test('older checkpoints without receipt previews restore while forged present previews fail closed', async t => {
+  const a = await start(t), p = await begin(a);
+  await act(a,p.cookie,action(0,'read'));
+  const drafted = await act(a,p.cookie,action(1,'draft',{text:'Checkpoint review',position:'unknown',sources:['card']}));
+  const preview = drafted.data.actions.find(item => item.id === 'deposit').receiptPreview;
+  const codec = createCaseCheckpoint(KEY), payload = codec.open(drafted.data.checkpoint);
+  await a.close();
+  const forged = structuredClone(payload);
+  forged.session.view.actions.find(item => item.id === 'deposit').receiptPreview.capture.values.text = 'Forged preview';
+  const b = await start(t);
+  assert.deepEqual((await restore(b,codec.seal(forged),p.cookie)).data,{error:'checkpoint_invalid'});
+  for (const projected of payload.session.view.actions) delete projected.receiptPreview;
+  const restored = await restore(b,codec.seal(payload),p.cookie);
+  assert.equal(restored.status,200);
+  assert.deepEqual(restored.data.actions.find(item => item.id === 'deposit').receiptPreview,preview);
+  const deposited = await act(b,p.cookie,action(2,'deposit'));
+  assert.equal(deposited.status,200);
+  assert.deepEqual(deposited.data.captures[deposited.data.receipts[0].fromCapture],preview.capture);
+});
+
 test('same-revision authenticated forks have distinct history tags even when their resulting state is identical', async t => {
   const first = await start(t), p = await begin(first);
   const acceptedA = await act(first,p.cookie,action(0,'read',{},'branch-a'));

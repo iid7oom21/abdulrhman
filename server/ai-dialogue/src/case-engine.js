@@ -133,6 +133,10 @@ export function validateCaseRequest(request) {
   reject(keys(request, ['id','revision','contentVersion','actionId','values']) && identifier(request.id) && identifier(request.actionId) && identifier(request.contentVersion) && Number.isSafeInteger(request.revision) && request.revision >= 0 && (request.values === undefined || plain(request.values)));
   return {id:request.id,revision:request.revision,contentVersion:request.contentVersion,actionId:request.actionId,values:clone(request.values || {})};
 }
+const receiptCapture = (state, fromCapture) => {
+  const capture = state.captures[fromCapture];
+  return capture ? {key:fromCapture + '.revision.' + capture.revision,capture} : null;
+};
 export function applyCaseAction(pack, state, request) {
   reject(request.contentVersion === pack.contentVersion && state.contentVersion === pack.contentVersion, 'content_version_mismatch', 409);
   reject(request.revision === state.revision, 'revision_conflict', 409);
@@ -160,8 +164,8 @@ export function applyCaseAction(pack, state, request) {
     const receipt = effects.receipt;
     const entry = {id:'receipt.' + request.id,kind:receipt.kind,title:clone(receipt.title),scope:'story-only',revision:next.revision};
     if (receipt.fromCapture) {
-      const capture = next.captures[receipt.fromCapture]; reject(capture, 'capture_unavailable', 409);
-      const snapshotKey = receipt.fromCapture + '.revision.' + capture.revision;
+      const snapshot = receiptCapture(next,receipt.fromCapture); reject(snapshot, 'capture_unavailable', 409);
+      const {key:snapshotKey,capture} = snapshot;
       reject(!own(next.captures, snapshotKey) || canonical(next.captures[snapshotKey]) === canonical(capture), 'capture_conflict', 409);
       next.captures[snapshotKey] = clone(capture); entry.fromCapture = snapshotKey;
     }
@@ -175,11 +179,31 @@ export function applyCaseAction(pack, state, request) {
   return next;
 }
 const optionalArt = value => ({...(value.image === undefined ? {} : {image:value.image}),...(value.imageRow === undefined ? {} : {imageRow:value.imageRow})});
+function receiptPreview(action, state, pack) {
+  const effects = action.effects || {}, receipt = effects.receipt;
+  // A review can describe only an already captured draft and earned attachments.
+  // In particular, do not preview a grant or guess values submitted by this action.
+  if (!receipt || effects.capture || (effects.share || []).some(share => !state.materialIds.includes(share.materialId))) return null;
+  const preview = {kind:receipt.kind,title:clone(receipt.title),scope:'story-only'};
+  if (receipt.fromCapture) {
+    const snapshot = receiptCapture(state,receipt.fromCapture);
+    if (!snapshot || (own(state.captures,snapshot.key) && canonical(state.captures[snapshot.key]) !== canonical(snapshot.capture))) return null;
+    preview.fromCapture = snapshot.key; preview.capture = clone(snapshot.capture);
+  }
+  if (receipt.relatesTo) {
+    const previous = state.receipts.findLast(item => item.kind === receipt.relatesTo);
+    if (!previous) return null;
+    preview.relatesTo = previous.id;
+  }
+  preview.shares = clone(effects.share || []);
+  preview.materials = [...new Set(preview.shares.map(share => share.materialId))].map(id => ({id,title:clone(pack.materials[id].title)}));
+  return preview;
+}
 export function projectCaseState(pack, state, persistence = 'process-memory') {
   const scene = pack.scenes[state.sceneId];
   const actions = scene.actions.filter(action => gateAllows(action.requires, state)).map(action => {
-    const fields = displayFields(action,state,pack);
-    return {id:action.id,label:clone(action.label),...(fields.length ? {fields} : {})};
+    const fields = displayFields(action,state,pack), preview = receiptPreview(action,state,pack);
+    return {id:action.id,label:clone(action.label),...(fields.length ? {fields} : {}),...(preview ? {receiptPreview:preview} : {})};
   });
   if (state.materialIds.length) {
     const note = noteAction(state); note.fields[1].options = state.materialIds.map(id => ({value:id,label:clone(pack.materials[id].title)})); actions.push(note);

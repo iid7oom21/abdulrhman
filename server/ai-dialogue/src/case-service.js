@@ -42,13 +42,34 @@ function validateProjection(view, state) {
   for (const material of view.materials) fail(only(material,['id','title','body','type','source','image','imageRow']) && localized(material.title) && localized(material.body) && localized(material.source) && ['document','testimony','recording','map','note'].includes(material.type) && art(material));
   fail(Array.isArray(view.actions));
   for (const action of view.actions) {
-    fail(only(action,['id','label','fields']) && typeof action.id === 'string' && localized(action.label) && (action.fields === undefined || Array.isArray(action.fields)));
+    fail(only(action,['id','label','fields','receiptPreview']) && typeof action.id === 'string' && localized(action.label) && (action.fields === undefined || Array.isArray(action.fields)));
     for (const field of action.fields || []) {
       fail(only(field,['id','type','label','required','maxLength','options']) && typeof field.id === 'string' && localized(field.label) && ['text','textarea','select','materialRefs'].includes(field.type));
       if (field.options !== undefined) fail(Array.isArray(field.options) && field.options.every(option => only(option,['value','label']) && typeof option.value === 'string' && localized(option.label)));
     }
+    if (action.receiptPreview !== undefined) {
+      const preview = action.receiptPreview;
+      const identifier = value => typeof value === 'string' && /^[A-Za-z0-9][A-Za-z0-9_.-]{0,119}$/.test(value) && !['constructor','prototype','__proto__'].includes(value);
+      fail(only(preview,['kind','title','scope','fromCapture','capture','materials','shares','relatesTo']) && identifier(preview.kind) && localized(preview.title) && preview.scope === 'story-only');
+      fail((preview.fromCapture === undefined) === (preview.capture === undefined));
+      if (preview.capture !== undefined) fail(Object.entries(state.captures).some(([key,capture]) => preview.fromCapture === key + '.revision.' + capture.revision && canonical(preview.capture) === canonical(capture)));
+      fail(preview.relatesTo === undefined || state.receipts.some(receipt => receipt.id === preview.relatesTo));
+      fail(Array.isArray(preview.shares) && preview.shares.length <= 200 && preview.shares.every(share => only(share,['materialId','recipient']) && state.materialIds.includes(share.materialId) && identifier(share.recipient)));
+      fail(Array.isArray(preview.materials) && canonical(preview.materials.map(material => material.id)) === canonical([...new Set(preview.shares.map(share => share.materialId))]));
+      for (const material of preview.materials) fail(only(material,['id','title']) && view.materials.some(earned => earned.id === material.id && canonical(earned.title) === canonical(material.title)));
+    }
   }
   for (const key of ['notes','captures','shares','receipts','opening']) fail(canonical(view[key]) === canonical(state[key]));
+}
+
+function projectionMatches(stored, current) {
+  // Older saves predate receipt reviews. Missing optional previews may be
+  // regenerated, while any stored preview must still match canonical replay.
+  const expected = clone(current);
+  expected.actions.forEach((action,index) => {
+    if (stored.actions[index]?.receiptPreview === undefined) delete action.receiptPreview;
+  });
+  return canonical(stored) === canonical(expected);
 }
 
 export function createCaseService({contentPath = null, storagePath = null, pack:injectedPack = null,
@@ -80,7 +101,7 @@ export function createCaseService({contentPath = null, storagePath = null, pack:
       }
       if (replay) {
         fail(canonical(replay) === canonical(session.state));
-        fail(canonical(projectCaseState(pack,replay,session.view.persistence)) === canonical(session.view));
+        fail(projectionMatches(session.view,projectCaseState(pack,replay,session.view.persistence)));
       }
     }
     return true;
@@ -143,7 +164,7 @@ export function createCaseService({contentPath = null, storagePath = null, pack:
         let replay = createCaseState(pack,session.state.opening);
         for (const operation of session.operations) replay = applyCaseAction(pack,replay,operation.request);
         fail(canonical(replay) === canonical(session.state));
-        fail(canonical(projectCaseState(pack,replay,persistence)) === canonical(session.view));
+        fail(projectionMatches(session.view,projectCaseState(pack,replay,persistence)));
       }
       return {...session,packFingerprint:payload.packFingerprint};
     } catch (error) {

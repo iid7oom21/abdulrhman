@@ -130,6 +130,58 @@ test('file-backed session and receipt replay survive restart; wrong-version stat
   assert.equal((await request(disabled,'/api/case/export',{cookie:p.cookie})).data.receipts.length,1);
 });
 
+test('receipt review reads preserve state and old disk projections gain optional previews on restart', async t => {
+  const dir = directory(t), store = path.join(dir,'case-store.json'), pack = fixturePack();
+  pack.scenes.desk.actions.find(item => item.id === 'deposit').effects.share = [{materialId:'card',recipient:'guide'}];
+  const a = await start(t,{casePack:pack,caseStoragePath:store}), p = await begin(a);
+  await act(a,p.cookie,action(0,'read'));
+  const drafted = await act(a,p.cookie,action(1,'draft',{text:'Ready to review',position:'unknown',sources:['card']}));
+  const preview = drafted.data.actions.find(item => item.id === 'deposit').receiptPreview;
+  assert.equal(preview.capture.values.text,'Ready to review');
+  const saved = fs.readFileSync(store);
+  const reviewed = await request(a,'/api/case/state',{cookie:p.cookie});
+  const {replayed,...draftView} = drafted.data;
+  assert.deepEqual(reviewed.data,draftView);
+  assert.deepEqual(reviewed.data.receipts,[]); assert.deepEqual(reviewed.data.shares,[]);
+  assert.deepEqual(fs.readFileSync(store),saved);
+  const forged = await act(a,p.cookie,{...action(2,'deposit'),receiptPreview:{...preview,shares:[]}});
+  assert.equal(forged.status,400); assert.deepEqual(fs.readFileSync(store),saved);
+  await a.close();
+  const envelope = JSON.parse(saved);
+  for (const projected of envelope.payload.sessions[0].view.actions) delete projected.receiptPreview;
+  fs.writeFileSync(store,JSON.stringify(envelope));
+  const b = await start(t,{casePack:pack,caseStoragePath:store});
+  const resumed = await request(b,'/api/case/state',{cookie:p.cookie});
+  assert.deepEqual(resumed.data.actions.find(item => item.id === 'deposit').receiptPreview,preview);
+  const deposited = await act(b,p.cookie,action(2,'deposit'));
+  assert.equal(deposited.status,200);
+  assert.deepEqual(deposited.data.captures[deposited.data.receipts[0].fromCapture],preview.capture);
+  assert.deepEqual(deposited.data.shares.map(({revision,...share}) => share),preview.shares);
+});
+
+test('stored receipt reviews reject forged captures, recipients, materials and authority extensions', async t => {
+  const dir = directory(t), store = path.join(dir,'case-store.json'), pack = fixturePack();
+  pack.scenes.desk.actions.find(item => item.id === 'deposit').effects.share = [{materialId:'card',recipient:'guide'}];
+  const a = await start(t,{casePack:pack,caseStoragePath:store}), p = await begin(a);
+  await act(a,p.cookie,action(0,'read'));
+  await act(a,p.cookie,action(1,'draft',{text:'Review draft',position:'unknown',sources:['card']}));
+  await a.close();
+  const original = JSON.parse(fs.readFileSync(store));
+  for (const mutate of [
+    preview => { preview.effects = {grant:['sealed']}; },
+    preview => { preview.capture.values.text = 'Forged'; },
+    preview => { preview.shares[0].recipient = 'forged-recipient'; },
+    preview => { preview.materials[0].title.en = 'Forged title'; },
+    preview => { preview.relatesTo = 'receipt.not-issued'; },
+  ]) {
+    const envelope = structuredClone(original);
+    mutate(envelope.payload.sessions[0].view.actions.find(item => item.id === 'deposit').receiptPreview);
+    const bytes = JSON.stringify(envelope); fs.writeFileSync(store,bytes);
+    assert.throws(() => createPreviewServer({casePack:pack,caseStoragePath:store}),error => error.code === 'case_store_invalid');
+    assert.equal(fs.readFileSync(store,'utf8'),bytes);
+  }
+});
+
 test('storage failure never acknowledges an action; ambiguous post-rename failure freezes writes until restart and replays once', async t => {
   const dir = directory(t), store = path.join(dir,'case-store.json'); let failAfterCommit = false;
   const hook = (file,options) => {

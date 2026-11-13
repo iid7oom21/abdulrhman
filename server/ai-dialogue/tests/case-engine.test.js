@@ -57,6 +57,55 @@ test('capture validation and immutable receipt copies preserve the original when
   assert.equal(state.receipts[1].scope,'story-only');
 });
 
+test('receipt review projects the exact earned capture, shares and prior receipt without executing effects', () => {
+  const pack = fixturePack(), deposit = pack.scenes.desk.actions.find(item => item.id === 'deposit');
+  deposit.effects.share = [{materialId:'card',recipient:'guide'},{materialId:'card',recipient:'clerk'}];
+  deposit.effects.set = {private_author_flag:'UNPROJECTED_EFFECT_SENTINEL'};
+  deposit.effects.grant = ['sealed'];
+  let state = applyCaseAction(pack,createCaseState(pack),action(0,'read'));
+  assert.equal(projectCaseState(pack,state).actions.find(item => item.id === 'deposit').receiptPreview,undefined);
+  state = applyCaseAction(pack,state,action(1,'draft',{text:'First draft',position:'unknown',sources:['card']}));
+  const before = structuredClone(state), shown = projectCaseState(pack,state);
+  const preview = shown.actions.find(item => item.id === 'deposit').receiptPreview;
+  assert.deepEqual(state,before);
+  assert.deepEqual(preview,{kind:'submission',title:L('Fictional acknowledgement'),scope:'story-only',
+    fromCapture:'summary.revision.2',capture:state.captures.summary,shares:deposit.effects.share,materials:[{id:'card',title:L('Card A')}]});
+  assert.equal(shown.actions.find(item => item.id === 'correct').receiptPreview,undefined);
+  assert.doesNotMatch(JSON.stringify(preview),/UNPROJECTED_EFFECT_SENTINEL|sealed|"effects"|"target"|"flags"|"requires"|receipt\.operation/);
+  assert.throws(() => validateCaseRequest({...action(2,'deposit'),receiptPreview:preview}),error('invalid_request'));
+  const deposited = applyCaseAction(pack,state,action(2,'deposit'));
+  assert.equal(deposited.receipts[0].fromCapture,preview.fromCapture);
+  assert.deepEqual(deposited.captures[preview.fromCapture],preview.capture);
+  assert.deepEqual(deposited.shares.map(({revision,...share}) => share),preview.shares);
+  preview.capture.values.text = 'Client-only change'; preview.materials[0].title.en = 'Client-only title';
+  assert.deepEqual(state,before);
+  state = applyCaseAction(pack,deposited,action(3,'draft',{text:'Correction',position:'partial',sources:['card']}));
+  const correction = projectCaseState(pack,state).actions.find(item => item.id === 'correct').receiptPreview;
+  assert.equal(correction.relatesTo,deposited.receipts[0].id);
+  assert.equal(correction.capture.values.text,'Correction');
+  assert.equal(correction.fromCapture,'summary.revision.4');
+  assert.throws(() => applyCaseAction(pack,state,action(3,'correct',{},'stale-review')),error('revision_conflict'));
+  const corrected = applyCaseAction(pack,state,action(4,'correct'));
+  assert.equal(corrected.receipts[1].relatesTo,correction.relatesTo);
+  assert.deepEqual(corrected.captures[corrected.receipts[1].fromCapture],correction.capture);
+  assert.equal(corrected.captures[deposited.receipts[0].fromCapture].values.text,'First draft');
+});
+
+test('receipt reviews omit unavailable or new data and never reveal a gated receipt action', () => {
+  const pack = fixturePack();
+  pack.scenes.desk.actions.push(
+    {id:'receipt-only',label:L('Receipt only'),effects:{receipt:{kind:'notice',title:L('Notice')}}},
+    {id:'grant-and-receipt',label:L('Receive a card'),effects:{grant:['sealed'],share:[{materialId:'sealed',recipient:'unknown-recipient'}],receipt:{kind:'notice',title:L('Notice')}}},
+    {id:'new-capture-receipt',label:L('New capture'),effects:{capture:'new',receipt:{kind:'notice',title:L('Notice'),fromCapture:'new'}}},
+    {id:'gated-receipt',label:L('HIDDEN_RECEIPT_LABEL'),requires:{flag:'not_initialized',equals:true},effects:{receipt:{kind:'hidden',title:L('HIDDEN_RECEIPT_TITLE')}}},
+  );
+  const state = createCaseState(validateCasePack(pack)), view = projectCaseState(pack,state);
+  assert.deepEqual(view.actions.find(item => item.id === 'receipt-only').receiptPreview,{kind:'notice',title:L('Notice'),scope:'story-only',shares:[],materials:[]});
+  for (const id of ['grant-and-receipt','new-capture-receipt','deposit','correct']) assert.equal(view.actions.find(item => item.id === id).receiptPreview,undefined);
+  assert.doesNotMatch(JSON.stringify(view),/unknown-recipient|HIDDEN_RECEIPT|UNSEEN_MATERIAL_SENTINEL/);
+  assert.equal(state.revision,0); assert.deepEqual(state.captures,{}); assert.deepEqual(state.receipts,[]); assert.deepEqual(state.shares,[]);
+});
+
 test('strict pack validation refuses active URLs, malformed options, authority extensions and reserved capture keys', () => {
   const mutations = [
     pack => { pack.scenes.desk.image = 'https://external.invalid/private.png'; },
