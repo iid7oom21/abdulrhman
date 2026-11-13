@@ -76,7 +76,6 @@ window.ravenIntro={complete:true,finish:function(){}};
 <a class="active" data-rvn-i18n="home" href="#top">الرئيسية</a>
 <a data-rvn-i18n="films" href="#films">الأفلام</a>
 <a data-rvn-v2="deletedName" href="#deleted-name-experience">الاسم المحذوف</a>
-<a data-rvn-v2="archive" href="#archive-experience">اللغز التفاعلي</a>
 <a data-rvn-v2="studio" href="#studio">خلف الكادر</a>
 <a data-rvn-i18n="teaserNav" href="#next-premiere">الفيلم القادم</a>
 <a data-rvn-v2="creatorNav" href="#about">صانع RAVEN</a>
@@ -95,7 +94,6 @@ window.ravenIntro={complete:true,finish:function(){}};
 <a data-rvn-i18n="home" href="#top">الرئيسية</a>
 <a data-rvn-i18n="films" href="#films">الأفلام</a>
 <a data-rvn-v2="deletedName" href="#deleted-name-experience">الاسم المحذوف</a>
-<a data-rvn-v2="archive" href="#archive-experience">اللغز التفاعلي</a>
 <a data-rvn-v2="studio" href="#studio">خلف الكادر</a>
 <a data-rvn-i18n="teaserNav" href="#next-premiere">الفيلم القادم</a>
 <a data-rvn-v2="creatorNav" href="#about">صانع RAVEN</a>
@@ -122,7 +120,7 @@ window.ravenIntro={complete:true,finish:function(){}};
 <button class="rvnHeroWatch" data-rvn-episodes="true" data-rvn-v2="watch" type="button">شاهد RAVEN 17</button>
 <a class="rvnEnterCase" id="rvnHeroEnterDeletedName" data-dn-link="hero" href="./deleted-name/" style="min-height:44px;display:inline-flex;align-items:center;padding:10px 18px;">اكتشف قضية «الاسم المحذوف» ←</a>
 </div>
-<p style="font-size:0.9rem;color:#dec9a9;margin-top:10px;max-width:58ch;">دخلت البيت لتعيد اسمًا إلى سجل. فوجدت ملاحظتك تُستخدم لإغلاق ملف لم تفحصه.</p>
+<p data-dn-hero-copy style="font-size:0.9rem;color:#dec9a9;margin-top:10px;max-width:58ch;">دعوة بعد العشاء، وسجل ناقص، ومسودة تنتظر مراجعتك. افحص الأوراق واختر ردك.</p>
 </div>
 </header>
 <section id="films">
@@ -206,16 +204,10 @@ window.ravenIntro={complete:true,finish:function(){}};
 </div>
 </div>
 </section>
-<section aria-labelledby="rvnArchiveTitle" class="rvnArchiveExperience rvnCaseSpotlight" id="archive-experience">
+<section aria-labelledby="rvnFileToolsTitle" class="rvnArchiveExperience" id="archive-experience">
 <span id="raven-archive" class="rvnLegacyAnchor" aria-hidden="true"></span>
 <div class="wrap">
-<div class="rvnCaseHeading"><span class="eyebrow" data-rvn-i18n="interactiveLabel">لغز تفاعلي / 017</span><h2 data-rvn-v2="caseName" id="rvnArchiveTitle">التوقيع الرابع</h2></div>
-<div class="rvnCaseScene">
-<video id="rvnCasePreview" aria-label="مشهد من التوقيع الرابع" muted playsinline loop preload="none" poster="../fourth-signature/assets/hero.webp" data-src="../fourth-signature/assets/video/hero.mp4"></video>
-<button id="rvnCaseMotion" class="rvnCaseMotion" type="button" aria-controls="rvnCasePreview" hidden>تشغيل المشهد</button>
-</div>
-<div class="rvnCaseEntry"><div><p data-rvn-v2="caseDescription">صورة أدانت حارسًا. أربعة توقيعات ثبّتت الرواية. افحص ما تخفيه الأوراق.</p><a class="rvnEnterCase" data-raven-route="../fourth-signature/" data-rvn-v2="enter" href="../fourth-signature/">افتح ملف التحقيق</a><p class="rvnCaseDuration" data-rvn-v2="caseLanguage">القضية متاحة بالعربية · ٨–١٢ دقيقة</p></div></div>
-<details class="rvnFileTools"><summary data-rvn-v2="searchLabel">ابحث في ملفات RAVEN</summary>
+<details class="rvnFileTools"><summary data-rvn-v2="searchLabel" id="rvnFileToolsTitle">ابحث في ملفات RAVEN</summary>
 <div class="rvnCaseSearch"><label data-rvn-v2="searchLabel" for="rvnArchiveSearch">ابحث في ملفات RAVEN</label><input aria-describedby="rvnSearchStatus" autocomplete="off" dir="auto" id="rvnArchiveSearch" placeholder="ابحث عن فيلم، القضية، الكواليس أو المواد…" type="search"/><p aria-live="polite" class="rvnSearchStatus" data-rvn-v2="searchStart" id="rvnSearchStatus" role="status">ابحث في المحتوى المتاح فقط.</p><ul class="rvnSearchResults" id="rvnSearchResults"></ul></div>
 <div class="rvnArchiveActions"><button data-rvn-v2="terminal" id="rvnOpenTerminal" type="button">فتح محطة الأوامر</button><span data-rvn-v2="terminalHelp">اكتب HELP للمساعدة. استخدم Enter للتنفيذ وEsc للإغلاق.</span></div>
 </details>
@@ -376,7 +368,7 @@ window.ravenIntro={complete:true,finish:function(){}};
 <video controls="" id="ravenEpisodePlayer" playsinline="" poster="https://cdn.websitepublisher.ai/custom/wid25762/images/raven-film-card.jpg" preload="none" src="https://res.cloudinary.com/du88n6b83/video/upload/v1789985735/raven17/episode-2.mp4"></video>
 </div>
 <div class="rvnVideoMessage" hidden="" id="rvnVideoError" role="status"><span data-rvn-v2="videoError">تعذر تحميل الفيديو. جرّب مرة أخرى؛ ملاحظاتك وتقدمك لن يتغيرا.</span><button data-rvn-v2="retry" id="rvnRetryVideo" type="button">إعادة المحاولة</button></div>
-<div class="rvnAfterCredits" hidden="" id="rvnAfterCredits"><h3 data-rvn-v2="partComplete" id="rvnAfterTitle">اكتمل الجزء.</h3><div class="rvnAfterActions"><button data-rvn-v2="nextEpisode" id="rvnAfterNext" type="button">شاهد الجزء التالي</button><button data-rvn-v2="again" id="rvnAfterReplay" type="button">إعادة المشاهدة</button><a data-raven-route="../fourth-signature/" data-rvn-v2="afterCase" href="../fourth-signature/">افتح ملف التوقيع الرابع</a></div><details><summary data-rvn-v2="endQuestion">ما التفصيل الذي غيّر تفسيرك؟</summary><textarea aria-label="ملاحظتك بعد المشاهدة" dir="auto" id="rvnEndNote" maxlength="1500"></textarea><p data-rvn-v2="endPrivacy">ملاحظتك تُحفظ على جهازك فقط، ولا تُرسل تلقائيًا.</p><p id="rvnEndNoteStatus" role="status"></p></details></div>
+<div class="rvnAfterCredits" hidden="" id="rvnAfterCredits"><h3 data-rvn-v2="partComplete" id="rvnAfterTitle">اكتمل الجزء.</h3><div class="rvnAfterActions"><button data-rvn-v2="nextEpisode" id="rvnAfterNext" type="button">شاهد الجزء التالي</button><button data-rvn-v2="again" id="rvnAfterReplay" type="button">إعادة المشاهدة</button><a data-raven-route="./deleted-name/" data-dn-link="afterEpisode" data-dn-entry href="./deleted-name/">افتح قضية الاسم المحذوف</a></div><details><summary data-rvn-v2="endQuestion">ما التفصيل الذي غيّر تفسيرك؟</summary><textarea aria-label="ملاحظتك بعد المشاهدة" dir="auto" id="rvnEndNote" maxlength="1500"></textarea><p data-rvn-v2="endPrivacy">ملاحظتك تُحفظ على جهازك فقط، ولا تُرسل تلقائيًا.</p><p id="rvnEndNoteStatus" role="status"></p></details></div>
 <div class="rvnTheaterBar">
 <button aria-label="الحلقة السابقة" id="rvnPrevEpisode" type="button">← <span data-rvn-v2="previous">السابق</span></button>
 <div class="rvnNowPlaying"><small data-rvn-i18n="nowPlaying" dir="auto">يُعرض الآن</small><strong id="rvnNowEpisode">FILE 01</strong><span id="rvnResumeNote"></span></div>
@@ -396,7 +388,7 @@ window.ravenIntro={complete:true,finish:function(){}};
 <script defer="" src="./assets/raven-enhancements-v1.js?v=direct-contact-1"></script>
 <script defer="" src="./assets/raven-refinement-v2.js?v=episodes-two-1"></script>
 <script defer src="./assets/raven-media-fallback.js?v=1"></script>
-<script defer src="./assets/raven-deleted-name-home.js?v=player-entry-3"></script>
+<script defer src="./assets/raven-deleted-name-home.js?v=player-entry-4"></script>
 <script>
     (()=>{
       const video=document.getElementById('ravenHeroMotion');

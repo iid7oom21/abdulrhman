@@ -8,6 +8,8 @@
     ar: {
       menu: 'الاسم المحذوف',
       hero: 'اكتشف قضية الاسم المحذوف',
+      afterEpisode: 'افتح قضية الاسم المحذوف',
+      heroCopy: 'دعوة بعد العشاء، وسجل ناقص، ومسودة تنتظر مراجعتك. افحص الأوراق واختر ردك.',
       label: 'قضية RAVEN — الاسم المحذوف',
       eyebrow: 'قضية تفاعلية · قيد التطوير',
       title: 'RAVEN — الاسم المحذوف',
@@ -31,6 +33,8 @@
     en: {
       menu: 'The Deleted Name',
       hero: 'Discover The Deleted Name',
+      afterEpisode: 'Open The Deleted Name',
+      heroCopy: 'An invitation after dinner, an incomplete record, and a draft awaiting your review. Examine the papers and choose your reply.',
       label: 'RAVEN — The Deleted Name, interactive case',
       eyebrow: 'Interactive case · In development',
       title: 'RAVEN — The Deleted Name',
@@ -59,6 +63,7 @@
     document.querySelectorAll('[data-dn-link]').forEach(el => {
       if (t[el.dataset.dnLink] !== undefined) el.textContent = t[el.dataset.dnLink];
     });
+    document.querySelectorAll('[data-dn-hero-copy]').forEach(el => { el.textContent = t.heroCopy; });
     section.setAttribute('aria-label', t.label);
     section.querySelectorAll('[data-dn-k]').forEach(el => {
       if (t[el.dataset.dnK] !== undefined) el.textContent = t[el.dataset.dnK];
