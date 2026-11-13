@@ -43,6 +43,7 @@
       receipt:'إيصال قصصي',relates:'مرتبط بإيصال سابق',reportLink:'مراجعة النسخة المرتبطة',exportFailed:'تعذّر تنزيل السجل. لم تتغير حالة القضية.',
       receiptPreview:'ما سيُسجَّل في الإيصال',capturedReport:'النسخة المسجلة لهذا الإيصال',attachments:'المواد المرفقة',materialRecipients:'مستلمو المواد',noAttachments:'لا توجد مواد مرفقة.',noMaterialRecipients:'لا يتضمن هذا الاختيار مشاركة مواد.',cancel:'إلغاء المراجعة',
       attachmentBundle:'اختر حزمة المرفقات',bundleHelp:'اختر إحدى الحزم المتاحة، ثم راجع النص والمرفقات والمستلمين قبل التأكيد.',requiredAttachments:'مرفقات مطلوبة في كل الحزم المتاحة',additionalAttachments:'مرفقات إضافية في اختيارك',noAdditionalAttachments:'لا توجد مرفقات إضافية في هذه الحزمة.',bundleChanged:'تغيّر اختيار المرفقات. راجع اختيارك من جديد قبل التأكيد.',
+      attachmentChoices:'اختر المرفقات الإضافية',attachmentChoicesHelp:'المرفقات المطلوبة محددة أدناه. اختر الإضافات التي تريدها، ثم راجع النص والمستلمين قبل التأكيد.',fixedAttachments:'مرفقات ثابتة لهذا الاختيار',fixedAttachmentsHelp:'هذه المرفقات جزء من الاختيار المتاح. راجع النص والمستلمين قبل التأكيد.',requiredBadge:'مطلوب',optionalBadge:'اختياري',selectedBadge:'محدد',unselectedBadge:'غير محدد',togetherAttachments:'مواد تُرفق معًا',togetherHelp:'هذا اختيار واحد يشمل جميع المواد التالية.',attachmentCount:'المرفقات المحددة',requiredCount:'المطلوبة',optionalCount:'الإضافية',optionalAttachments:'المرفقات الإضافية المتاحة',
       exportScope:'الملف سجل للقراءة والاحتفاظ بنسخة، ولا يتيح استيراد الجلسة هنا.',
       noInput:'لا توجد قيم إضافية لهذا الاختيار.',yes:'نعم',no:'لا',
       sharedEntries:'مشاركات مسجلة',sceneIllustration:'تصوّر بصري للمشهد؛ المرجع في النص والمواد المعروضة.',materialIllustration:'تصوّر بصري؛ المرجع في النص والمواد المعروضة.',
@@ -81,6 +82,7 @@
       receipt:'Fictional receipt',relates:'Related to an earlier receipt',reportLink:'Review the related version',exportFailed:'The record could not be downloaded. The case state did not change.',
       receiptPreview:'What this receipt will record',capturedReport:'Recorded version for this receipt',attachments:'Attached materials',materialRecipients:'Material recipients',noAttachments:'No materials are attached.',noMaterialRecipients:'This choice includes no material sharing.',cancel:'Cancel review',
       attachmentBundle:'Choose an attachment bundle',bundleHelp:'Choose an available bundle, then review the text, attachments and recipients before confirming.',requiredAttachments:'Required in every available bundle',additionalAttachments:'Additional attachments in your selection',noAdditionalAttachments:'This bundle has no additional attachments.',bundleChanged:'The attachment selection changed. Review your choice again before confirming.',
+      attachmentChoices:'Choose additional attachments',attachmentChoicesHelp:'Required attachments are marked below. Choose any additions, then review the text and recipients before confirming.',fixedAttachments:'Fixed attachments for this choice',fixedAttachmentsHelp:'These attachments belong to the available choice. Review the text and recipients before confirming.',requiredBadge:'Required',optionalBadge:'Optional',selectedBadge:'Selected',unselectedBadge:'Not selected',togetherAttachments:'Materials attached together',togetherHelp:'This single choice includes all the materials below.',attachmentCount:'Selected attachments',requiredCount:'Required',optionalCount:'Additional',optionalAttachments:'Available additional attachments',
       exportScope:'This file is a reading and backup copy. Importing a session is not supported here.',
       noInput:'This choice has no additional fields.',yes:'Yes',no:'No',
       sharedEntries:'recorded shares',sceneIllustration:'Scene illustration; refer to the text and available materials.',materialIllustration:'Illustration; refer to the text and available materials.',
@@ -345,7 +347,7 @@
     busy = value;document.body.setAttribute('aria-busy',String(value));
     if (state && browserMode()) $('save-status').textContent = tr(checkpointSaved && !checkpointIssue ? 'browserSaved' : 'browserUnsaved');
     const locked = busy || browserLocked() || Boolean(pending) || corruptPending !== null || Boolean(state?.readOnly || state?.storageUnavailable || state?.saveStatus === 'unconfirmed');
-    for (const control of document.querySelectorAll('#actions input,#actions textarea,#actions select,#actions button,#notebook-actions input,#notebook-actions textarea,#notebook-actions select,#notebook-actions button,#review-actions button')) control.disabled = locked;
+    for (const control of document.querySelectorAll('#actions input,#actions textarea,#actions select,#actions button,#notebook-actions input,#notebook-actions textarea,#notebook-actions select,#notebook-actions button,#review-actions button')) control.disabled = locked || control.hasAttribute('data-attachment-required');
     $('state-refresh').disabled = busy;$('case-export').disabled = busy;renderBanner();
   }
   class ApiError extends Error {
@@ -529,7 +531,6 @@
       if (!candidates.has(key)) candidates.set(key,[]);candidates.get(key).push(action);
     }
     for (const actions of candidates.values()) {
-      if (actions.length < 2) continue;
       // A material must retain the same recipient scope across alternatives.
       // The UI selects an existing action; it never synthesizes share sets.
       const scopes = new Map();let compatible = true;
@@ -540,9 +541,41 @@
       }
       if (!compatible) continue;
       const common = actions[0].receiptPreview.materials.filter(material => actions.every(action => action.receiptPreview.materials.some(item => item.id === material.id)));
-      const group = {id:actions[0].id,actions,common};for (const action of actions) groups.set(action,group);
+      const group = {id:actions[0].id,actions,common,choices:attachmentChoices(actions,common)};for (const action of actions) groups.set(action,group);
     }
     return groups;
+  }
+  function attachmentChoices(actions, common) {
+    // Checkboxes describe only a complete family of existing choices. A
+    // partial family, or two actions with the same materials, keeps the select.
+    const signature = materials => canonical(materials.map(material => material.id).sort());
+    const byMaterials = new Map();
+    for (const action of actions) {
+      const key = signature(action.receiptPreview.materials);
+      if (byMaterials.has(key)) return null;
+      byMaterials.set(key,action);
+    }
+    const base = byMaterials.get(signature(common));if (!base) return null;
+    const required = new Set(common.map(material => material.id)),optional = new Map();
+    for (const action of actions) for (const material of action.receiptPreview.materials) if (!required.has(material.id)) optional.set(material.id,material);
+    const occurrences = new Map();
+    for (const material of optional.values()) {
+      const key = canonical(actions.map(action => action.receiptPreview.materials.some(item => item.id === material.id)));
+      if (!occurrences.has(key)) occurrences.set(key,[]);occurrences.get(key).push(material);
+    }
+    const groups = [...occurrences.values()];
+    // Avoid bit masks (which truncate beyond 31 bits), and never enumerate
+    // an exponential family. Unique valid subsets plus this count prove
+    // that every combination has an exact, authorized action.
+    if (groups.length > Math.log2(actions.length) || 2 ** groups.length !== actions.length) return null;
+    const bySelection = new Map();
+    for (const action of actions) {
+      const ids = new Set(action.receiptPreview.materials.map(material => material.id));
+      const key = canonical(groups.map(materials => materials.every(material => ids.has(material.id))));
+      if (bySelection.has(key)) return null;
+      bySelection.set(key,action);
+    }
+    return {base,groups,bySelection};
   }
   function attachmentList(materials, className) {
     const list = element('ul',undefined,'source-list ' + className);
@@ -550,11 +583,13 @@
     return list;
   }
   function renderReceiptBundle(group, parent) {
+    if (group.choices) {renderAttachmentChoices(group,parent);return;}
     const form = element('form',undefined,'choice receipt-bundle');form.id = domId('bundle',group.id);form.dataset.receiptBundles = '';form.tabIndex = -1;
+    form.dataset.attachmentSelector = 'select';
     form.append(element('h3',localized(group.actions[0].receiptPreview.title)));
-    const help = element('p',tr('bundleHelp'),'muted');help.id = domId('bundle-help',group.id);form.append(help);
+    const help = element('p',tr('bundleHelp'),'muted');help.id = form.id + ':help';form.append(help);
     if (group.common.length) form.append(element('h3',tr('requiredAttachments')),attachmentList(group.common,'bundle-required'));
-    const select = element('select');select.id = domId('bundle-select',group.id);select.required = true;select.setAttribute('aria-describedby',help.id);
+    const select = element('select');select.id = form.id + ':select';select.required = true;select.setAttribute('aria-describedby',help.id);
     const label = element('label',tr('attachmentBundle'));label.htmlFor = select.id;
     select.append(new Option(tr('attachmentBundle'),''));
     for (const action of group.actions) select.append(new Option(optionLabel(localized(action.label)),action.id));
@@ -580,6 +615,70 @@
       event.preventDefault();if (busy || pending || corruptPending !== null || browserLocked() || !form.reportValidity()) return;
       const action = selectedAction();if (!action) return;
       review = {action,values:{},revision:state.revision,contentVersion:state.contentVersion,returnFocus:select.id};renderReview();focus('review-title');
+    });
+    parent.append(form);
+  }
+  function renderAttachmentChoices(group, parent) {
+    const choices = group.choices,fixed = choices.groups.length === 0;
+    const form = element('form',undefined,'choice receipt-bundle');form.id = domId('bundle',group.id);form.dataset.receiptBundles = '';form.dataset.attachmentSelector = fixed ? 'fixed' : 'checkbox';form.tabIndex = -1;
+    form.append(element('h3',localized(group.actions[0].receiptPreview.title)));
+    const help = element('p',tr(fixed ? 'fixedAttachmentsHelp' : 'attachmentChoicesHelp'),'muted');help.id = form.id + ':help';form.append(help);
+    const summary = element('p',undefined,'bundle-counts');summary.setAttribute('aria-live','polite');form.append(summary);
+    const materialList = materials => {
+      const list = element('ul',undefined,'attachment-members');
+      for (const material of materials) {
+        const row = element('li');row.append(sourceLink(material.id,material.title));
+        const source = localized(materialById(material.id).source);row.append(element('p',source ? tr('source') + ': ' + source : tr('noSource'),'muted'));list.append(row);
+      }
+      return list;
+    };
+    const card = (materials,required,index) => {
+      const row = element('div',undefined,'attachment-card');row.dataset.attachmentCard = required ? 'required' : 'optional';
+      const input = element('input');input.type = 'checkbox';input.id = form.id + (required ? ':required:' : ':optional:') + index;
+      if (required) {input.dataset.attachmentRequired = '';input.checked = true;input.disabled = true;}
+      else {input.dataset.attachmentGroup = '';input.value = String(index);}
+      const label = element('label',undefined,'check-label');label.htmlFor = input.id;
+      label.append(input,element('span',materials.length === 1 ? localized(materials[0].title) : tr('togetherAttachments')));
+      const status = element('span',required ? tr('requiredBadge') + ' · ' + tr('selectedBadge') : tr('optionalBadge'),'attachment-badge');row.append(label,status);
+      if (materials.length > 1) row.append(element('p',tr('togetherHelp'),'muted'));
+      row.append(materialList(materials));return {row,input,status};
+    };
+    if (group.common.length) {
+      const required = element('fieldset',undefined,'bundle-required');required.append(element('legend',tr(fixed ? 'fixedAttachments' : 'requiredAttachments')));
+      group.common.forEach((material,index) => required.append(card([material],true,index).row));form.append(required);
+    } else if (fixed) form.append(element('p',tr('noAttachments'),'muted'));
+    const controls = [];
+    if (!fixed) {
+      const optional = element('fieldset',undefined,'bundle-optional');optional.append(element('legend',tr('optionalAttachments')));
+      choices.groups.forEach((materials,index) => {const control = card(materials,false,index);controls.push(control);optional.append(control.row);});form.append(optional);
+    }
+    const pendingChoice = pending?.revision === state.revision && pending?.contentVersion === state.contentVersion ? group.actions.find(action => action.id === pending.actionId) : null;
+    const cached = group.actions.find(action => action.id === bundleSelections.get(group.id)),initial = pendingChoice || cached || choices.base;
+    for (let index = 0;index < controls.length;index++) controls[index].input.checked = choices.groups[index].every(material => initial.receiptPreview.materials.some(item => item.id === material.id));
+    const selectedAction = () => {
+      const action = choices.bySelection.get(canonical(controls.map(control => control.input.checked)));
+      return state.actions.includes(action) ? action : null;
+    };
+    const selection = element('p',undefined,'bundle-selection');
+    const update = () => {
+      const action = selectedAction();form.dataset.actionId = action?.id || '';
+      const count = action?.receiptPreview.materials.length || 0;
+      summary.textContent = tr('attachmentCount') + ': ' + count + ' · ' + tr('requiredCount') + ': ' + group.common.length + ' · ' + tr('optionalCount') + ': ' + (count - group.common.length);
+      displayText(selection,action ? localized(action.label) : tr('noSelection'));
+      for (const control of controls) control.status.textContent = tr('optionalBadge') + ' · ' + tr(control.input.checked ? 'selectedBadge' : 'unselectedBadge');
+    };
+    const submit = element('button',tr('preview'),'primary');submit.type = 'submit';submit.id = form.id + ':review';
+    let returnFocus = controls[0]?.input.id || submit.id;
+    for (const control of controls) control.input.addEventListener('change',() => {
+      if (busy || pending || corruptPending !== null || browserLocked()) return;
+      const action = selectedAction();if (action) bundleSelections.set(group.id,action.id);else bundleSelections.delete(group.id);
+      returnFocus = control.input.id;review = null;renderReview();update();announce(tr('bundleChanged'));
+    });
+    form.append(selection,submit);update();
+    form.addEventListener('submit',event => {
+      event.preventDefault();if (busy || pending || corruptPending !== null || browserLocked() || !form.reportValidity()) return;
+      const action = selectedAction();if (!action) return;
+      review = {action,values:{},revision:state.revision,contentVersion:state.contentVersion,returnFocus};renderReview();focus('review-title');
     });
     parent.append(form);
   }

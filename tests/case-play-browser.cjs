@@ -247,6 +247,17 @@ async function reportReview(page) {
   await page.locator('#review-panel').waitFor({ state: 'visible' });
 }
 
+async function chooseBundle(form, action) {
+  const select = form.locator('select');
+  if (await select.count()) {await select.selectOption(action.id);return;}
+  const ids = new Set(action.receiptPreview.materials.map(material => material.id));
+  for (const card of await form.locator('[data-attachment-card="optional"]').all()) {
+    const members = await card.locator('.attachment-members a').evaluateAll(links => links.map(link => decodeURIComponent(link.hash.slice('#material-'.length))));
+    await card.locator('input[data-attachment-group]').setChecked(members.every(id => ids.has(id)));
+  }
+  assert.equal(await form.getAttribute('data-action-id'),action.id,'attachment selection resolves to the original projected action');
+}
+
 function assertActionRequest(request, actionId, revision) {
   assert.deepEqual(Object.keys(request.body).sort(), ['actionId', 'contentVersion', 'id', 'revision', 'values']);
   assert.equal(request.method, 'POST');
@@ -474,7 +485,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     await page.locator('#language-ar').click();
     await page.locator('#review-edit').focus();await page.keyboard.press('Enter');
     assert.equal(await page.locator('#review-panel').isVisible(), false);
-    assert.equal(await page.evaluate(() => document.activeElement.id), 'action-fixture-file-correction');
+    assert.equal(await page.evaluate(() => document.activeElement.id), 'bundle-fixture-file-correction:review');
     await english(page);
     assert.equal(await draft.inputValue(), 'Unsubmitted local draft survives receipt review.');
     assert.equal(await page.evaluate(key => sessionStorage.getItem(key), PENDING_KEY), null);
@@ -543,27 +554,47 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
   await t.test('eight authorized attachment bundles share one review control and each files its exact projected materials', () => check({ receiptBundles: true }, async (page, api) => {
     await ready(page);
     const actions = clone(api.state.actions.filter(action => action.receiptPreview));
-    const form = page.locator('.receipt-bundle'), select = form.locator('select');
+    const form = page.locator('.receipt-bundle'), optional = form.locator('input[data-attachment-group]');
     assert.equal(await form.count(), 1);
+    assert.equal(await form.getAttribute('data-attachment-selector'),'checkbox');
     assert.equal(await form.locator('button[type="submit"]').count(), 1);
-    assert.equal(await select.inputValue(), '', 'a filing bundle is never chosen automatically');
-    assert.deepEqual(await select.locator('option').evaluateAll(options => options.map(option => option.value)), ['',...actions.map(action => action.id)]);
+    assert.equal(await form.locator('select').count(),0);
+    assert.equal(await optional.count(),3,'five co-required ranges have one logical control');
+    assert.deepEqual(await optional.evaluateAll(inputs=>inputs.map(input=>input.checked)),[false,false,false]);
+    assert.equal(await form.getAttribute('data-action-id'),actions[0].id,'only the required-only baseline is initially selected');
+    assert.equal(await form.locator('[data-attachment-card="optional"]').nth(1).locator('.attachment-members a').count(),5);
+    assert.deepEqual(await form.locator('input[data-attachment-required]').evaluateAll(inputs=>inputs.map(input=>[input.checked,input.disabled])),[[true,true],[true,true]]);
     assert.deepEqual(await form.locator('.bundle-required a').evaluateAll(links => links.map(link => link.getAttribute('href'))), ['#material-fixture-letter','#material-fixture-map']);
     assert.equal(await page.locator('form[data-action-id="fixture-advance"]').count(), 1, 'navigation remains independent');
     assert.equal(await page.locator('#notebook-actions form[data-action-id="case.note"]').count(), 1);
     await form.locator('button').click();
-    assert.equal(await page.locator('#review-panel').isVisible(), false, 'the placeholder cannot be reviewed');
+    assert.equal(await page.locator('#review-panel').isVisible(), true, 'the baseline still requires explicit review and confirmation');
+    assert.equal(await page.locator('.receipt-attachments>li').count(),2);
     assert.equal(actionRequests(api).length, 0);
-    await select.focus();await page.keyboard.press('ArrowDown');await page.keyboard.press('Enter');
-    assert.equal(await select.inputValue(), actions[0].id, 'native keyboard selection reaches an allowed bundle');
+    await page.locator('#review-edit').click();
+    await optional.first().focus();await page.keyboard.press('Space');
+    assert.equal(await form.getAttribute('data-action-id'),actions[1].id,'native keyboard selection reaches an allowed bundle');
+    await page.keyboard.press('Space');
+    assert.equal(await form.getAttribute('data-action-id'),actions[0].id);
     await noOverflow(page);
     await english(page);await noOverflow(page);
     await page.setViewportSize({ width:390,height:844 });await noOverflow(page,390);
     await page.locator('#language-ar').click();await noOverflow(page,390);await english(page);
+    if (process.env.RAVEN_UI_SCREENSHOT_DIR) {
+      fs.mkdirSync(process.env.RAVEN_UI_SCREENSHOT_DIR,{recursive:true});
+      await chooseBundle(form,actions[7]);
+      for (const [locale,width,height] of [['ar',320,720],['en',390,844]]) {
+        await page.setViewportSize({width,height});await page.locator('#language-'+locale).click();await noOverflow(page,width);
+        await form.screenshot({path:path.join(process.env.RAVEN_UI_SCREENSHOT_DIR,`fixture-attachments-${locale}-${width}.png`)});
+        await form.locator('button[type="submit"]').click();
+        await page.locator('#review-panel').screenshot({path:path.join(process.env.RAVEN_UI_SCREENSHOT_DIR,`fixture-review-${locale}-${width}.png`)});
+        await page.locator('#review-edit').click();
+      }
+    }
     for (const action of actions) {
       const before = clone(api.state), preview = action.receiptPreview;
-      await select.selectOption(action.id);
-      assert.equal(await form.locator('.bundle-additional a').count(), preview.materials.length - 2);
+      await chooseBundle(form,action);
+      await textIncludes(page,'.bundle-counts','Selected attachments: ' + preview.materials.length);
       await form.locator('button[type="submit"]').focus();await page.keyboard.press('Enter');
       await page.locator('#review-panel').waitFor({ state:'visible' });
       assert.equal(await page.evaluate(() => document.activeElement.id), 'review-title');
@@ -578,7 +609,9 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
       assert.deepEqual(api.state.shares.slice(before.shares.length).map(({ revision,...share }) => share),preview.shares);
       assert.deepEqual(api.state.captures[api.state.receipts.at(-1).fromCapture],preview.capture);
       assert.equal(api.state.receipts.at(-1).relatesTo,preview.relatesTo);
-      assert.equal(await select.inputValue(), '', 'a new projection requires a new bundle selection and review');
+      assert.deepEqual(await optional.evaluateAll(inputs=>inputs.map(input=>input.checked)),[false,false,false],'a fresh projection clears optional selection');
+      assert.equal(await page.locator('#review-panel').isVisible(),false,'a new projection never retains confirmation');
+      assert.equal(await form.locator('input[data-attachment-required]:enabled').count(),0,'busy reset cannot enable required materials');
     }
     assert.equal(api.mutations,8);
     assert.equal(api.state.receipts.length,9);
@@ -586,21 +619,21 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
 
   await t.test('bundle selection and unrelated drafts survive locale changes; changing or cancelling selection has no delivery effects', () => check({ receiptBundles:true }, async (page,api) => {
     await ready(page);await english(page);
-    const form=page.locator('.receipt-bundle'),select=form.locator('select');
+    const form=page.locator('.receipt-bundle'),actions=api.state.actions.filter(action=>action.receiptPreview);
     const draft=page.locator('form[data-action-id="fixture-report"]').getByLabel('Report summary',{exact:true});
     await draft.fill('Keep this unsubmitted draft while choosing attachments.');
     const before=clone(api.state);
-    await select.selectOption('fixture-package-h');await form.locator('button').click();
+    await chooseBundle(form,actions[7]);await form.locator('button').click();
     await page.locator('#language-ar').click();
-    assert.equal(await select.inputValue(),'fixture-package-h');
+    assert.equal(await form.getAttribute('data-action-id'),'fixture-package-h');
     assert.equal(await page.locator('#review-panel').isVisible(),true);
     await page.locator('#review-edit').focus();await page.keyboard.press('Enter');
-    assert.equal(await page.evaluate(() => document.activeElement.id),'bundle-select-fixture-package-a');
-    assert.equal(await select.inputValue(),'fixture-package-h');
+    assert.equal(await page.evaluate(() => document.activeElement.id),'bundle-fixture-package-a:optional:2');
+    assert.equal(await form.getAttribute('data-action-id'),'fixture-package-h');
     await english(page);
     assert.equal(await draft.inputValue(),'Keep this unsubmitted draft while choosing attachments.');
     await form.locator('button').click();
-    await select.selectOption('fixture-package-b');
+    await chooseBundle(form,actions[1]);
     assert.equal(await page.locator('#review-panel').isVisible(),false,'a changed bundle invalidates its review');
     await form.locator('button').click();
     assert.equal(await page.locator('.receipt-attachments>li').count(),3,'new review reflects the changed bundle');
@@ -624,6 +657,39 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     assert.equal(actionRequests(api)[0].body.actionId,'fixture-package-h');
   }));
 
+  await t.test('disconnected combinations and duplicate material sets keep every original action reachable through the select',()=>check({receiptBundles:[1,2]},async(page,api)=>{
+    await ready(page);await english(page);
+    const form=page.locator('.receipt-bundle'),select=form.locator('select');
+    assert.equal(await form.getAttribute('data-attachment-selector'),'select','without a required-only choice, checkbox toggles could trap the player');
+    assert.deepEqual(await select.locator('option').evaluateAll(options=>options.map(option=>option.value)),['','fixture-package-b','fixture-package-c']);
+    for(const action of api.state.actions.filter(action=>action.receiptPreview)) {
+      await chooseBundle(form,action);await form.locator('button').click();
+      assert.equal(await page.locator('.receipt-attachments>li').count(),action.receiptPreview.materials.length);
+      await page.locator('#review-edit').click();
+    }
+    const baseline=projection({receiptBundles:[0,1]}).actions;
+    const duplicate={...clone(baseline[0]),id:'fixture-same-materials-other-choice',label:localized('Keep a distinct original choice','اختيار أصلي مختلف')};
+    api.state.actions=[...baseline,duplicate];
+    await page.locator('#state-refresh').click();await page.waitForFunction(()=>document.body.getAttribute('aria-busy')==='false');
+    assert.equal(await form.getAttribute('data-attachment-selector'),'select','identical materials cannot choose between distinct actions');
+    assert.deepEqual(await select.locator('option').evaluateAll(options=>options.map(option=>option.value)),['','fixture-package-a','fixture-package-b',duplicate.id]);
+    await chooseBundle(form,duplicate);await form.locator('button').click();await page.locator('#review-confirm').click();
+    await eventually(()=>api.mutations===1,'the duplicate-set action disappeared');
+    assert.equal(actionRequests(api)[0].body.actionId,duplicate.id);
+  }));
+
+  await t.test('material recipient scope differences retain separate actions instead of checkbox authority',()=>check({receiptBundles:[0,1]},async(page,api)=>{
+    await ready(page);
+    const changed=api.state.actions.find(action=>action.id==='fixture-package-b');
+    changed.receiptPreview.shares.find(share=>share.materialId==='fixture-letter').recipient='incident_followup';
+    await page.locator('#state-refresh').click();await page.waitForFunction(()=>document.body.getAttribute('aria-busy')==='false');
+    assert.equal(await page.locator('.receipt-bundle').count(),0,'same global recipients do not erase a changed per-material scope');
+    for(const id of ['fixture-package-a','fixture-package-b']) assert.equal(await page.locator(`form[data-action-id="${id}"]`).count(),1);
+    await page.locator('form[data-action-id="fixture-package-b"] button').click();
+    await textIncludes(page,'.receipt-attachments>li:first-child','الجهة المتابعة');
+    assert.equal(actionRequests(api).length,0);
+  }));
+
   await t.test('different receipt meanings keep independent attachment selectors',()=>check({receiptBundles:[0,1]},async(page,api)=>{
     await ready(page);
     const original=api.state.actions.filter(action=>action.receiptPreview);
@@ -632,23 +698,50 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     await page.locator('#state-refresh').click();
     await eventually(async()=>await page.locator('.receipt-bundle').count()===2,'independent report selectors were combined');
     const forms=page.locator('.receipt-bundle');
-    assert.deepEqual(await forms.nth(0).locator('option').evaluateAll(options=>options.map(option=>option.value)),['',...original.map(action=>action.id)]);
-    assert.deepEqual(await forms.nth(1).locator('option').evaluateAll(options=>options.map(option=>option.value)),['',...second.map(action=>action.id)]);
-    await forms.nth(1).locator('select').selectOption(second[1].id);await forms.nth(1).locator('button').click();
+    assert.equal(await forms.nth(0).locator('input[data-attachment-group]').count(),1);
+    assert.equal(await forms.nth(1).locator('input[data-attachment-group]').count(),1);
+    const ids=await page.locator('[id]').evaluateAll(nodes=>nodes.map(node=>node.id));
+    assert.equal(ids.length,new Set(ids).size,'independent groups never duplicate DOM ids');
+    await chooseBundle(forms.nth(1),second[1]);await forms.nth(1).locator('button').click();
     await textIncludes(page,'.receipt-capture','A separately captured report.');assert.equal(actionRequests(api).length,0);
+    assert.equal(await forms.nth(0).getAttribute('data-action-id'),original[0].id);
+  }));
+
+  await t.test('action ids resembling control suffixes cannot collide across fixed, checkbox, and fallback groups',()=>check({receiptBundles:[0,1]},async(page,api)=>{
+    await ready(page);await english(page);
+    const group=(ids,masks)=>projection({receiptBundles:masks}).actions.filter(action=>action.receiptPreview).map((action,index)=>({
+      ...action,id:ids[index],receiptPreview:{...action.receiptPreview,capture:{...action.receiptPreview.capture,values:{text:'Distinct group '+ids[0]}}}
+    }));
+    api.state.actions=[
+      ...group(['a','a-with-extra'],[0,1]),...group(['s','s-with-some','s-with-all'],[0,3,7]),
+      ...['a-optional-0','a-required-0','a-help','a-review','select-s','help-s'].flatMap(id=>group([id],[0])),
+    ];
+    await page.locator('#state-refresh').click();await page.waitForFunction(()=>document.body.getAttribute('aria-busy')==='false');
+    const ids=await page.locator('[id]').evaluateAll(nodes=>nodes.map(node=>node.id));
+    assert.equal(ids.length,new Set(ids).size,'encoded action ids and control suffixes have separate namespaces');
+    const check=page.locator('#bundle-a'),select=page.locator('#bundle-s');
+    await check.locator('input[data-attachment-group]').check();await check.locator('button').click();await page.locator('#review-edit').click();
+    assert.equal(await page.evaluate(()=>document.activeElement.id),'bundle-a:optional:0');
+    assert.equal(await check.getAttribute('data-action-id'),'a-with-extra');
+    await select.locator('select').selectOption('s-with-all');await select.locator('button').click();await page.locator('#review-edit').click();
+    assert.equal(await page.evaluate(()=>document.activeElement.id),'bundle-s:select');
+    assert.equal(actionRequests(api).length,0);
   }));
 
   await t.test('single bundles stay fixed and legacy or incomplete previews retain separate actions',()=>check({receiptBundles:[7]},async(page,api)=>{
     await ready(page);await english(page);
-    assert.equal(await page.locator('.receipt-bundle').count(),0);
+    assert.equal(await page.locator('.receipt-bundle[data-attachment-selector="fixed"]').count(),1);
     const single=page.locator('form[data-action-id="fixture-package-h"]');
-    assert.equal(await single.locator('select,input[type="checkbox"]').count(),0);
+    assert.equal(await single.locator('select,input[data-attachment-group]').count(),0);
+    assert.equal(await single.locator('input[data-attachment-required]:disabled:checked').count(),9);
+    assert.equal(await single.locator('.bundle-required a').count(),9);
     await single.locator('button').click();assert.equal(await page.locator('.receipt-attachments>li').count(),9);
     await page.locator('#review-edit').click();
     const actions=projection({receiptBundles:[0,1]}).actions;
     delete actions[1].receiptPreview.capture;
     api.state.actions=actions;await page.locator('#state-refresh').click();await page.waitForFunction(()=>document.body.getAttribute('aria-busy')==='false');
-    assert.equal(await page.locator('.receipt-bundle').count(),0,'partial preview metadata cannot be grouped');
+    assert.equal(await page.locator('.receipt-bundle[data-attachment-selector="fixed"]').count(),1,'the complete choice remains fixed');
+    assert.equal(await page.locator('form[data-action-id="fixture-package-b"].receipt-bundle').count(),0,'partial preview metadata keeps its ordinary action');
     assert.equal(await page.locator('#actions form').count(),4);
     for(const action of api.state.actions)delete action.receiptPreview;
     await page.locator('#state-refresh').click();await page.waitForFunction(()=>document.body.getAttribute('aria-busy')==='false');
@@ -657,31 +750,62 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     await eventually(()=>api.mutations===1,'legacy no-input action no longer works');assert.equal(actionRequests(api)[0].body.actionId,'fixture-package-b');
   }));
 
+  await t.test('a complete fixed receipt without attachments states that scope and still requires review',()=>check({receiptPreview:true},async(page,api)=>{
+    await ready(page);await english(page);
+    const action=api.state.actions.find(action=>action.receiptPreview);action.receiptPreview.materials=[];action.receiptPreview.shares=[];
+    await page.locator('#state-refresh').click();await page.waitForFunction(()=>document.body.getAttribute('aria-busy')==='false');
+    const form=page.locator('.receipt-bundle[data-attachment-selector="fixed"]');
+    await textIncludes(page,'.receipt-bundle','No materials are attached.');assert.equal(await form.locator('input,select').count(),0);
+    await form.locator('button').click();await textIncludes(page,'.receipt-preview','This choice includes no material sharing.');
+    await page.locator('#review-edit').click();assert.equal(await page.evaluate(()=>document.activeElement.id),'bundle-fixture-file-correction:review');
+    assert.equal(actionRequests(api).length,0);
+  }));
+
   await t.test('stale bundle reviews are rejected and refreshed attachment data requires a fresh choice',()=>check({receiptBundles:true},async(page,api)=>{
     await ready(page);await english(page);
-    const form=page.locator('.receipt-bundle'),select=form.locator('select');
-    await select.selectOption('fixture-package-h');await form.locator('button').click();
+    const form=page.locator('.receipt-bundle');
+    await chooseBundle(form,api.state.actions.find(action=>action.id==='fixture-package-h'));await form.locator('button').click();
     api.state.revision++;
     api.state.actions=api.state.actions.filter(action=>!action.receiptPreview || action.id==='fixture-package-a' || action.id==='fixture-package-b');
     await page.locator('#review-confirm').click();await textIncludes(page,'#connection-message','case state changed');
     assert.equal(api.mutations,0);assert.equal(api.state.receipts.length,1);
     await page.locator('#state-refresh').click();await page.waitForFunction(()=>document.body.getAttribute('aria-busy')==='false');
-    assert.equal(await page.locator('#review-panel').isVisible(),false);assert.equal(await select.inputValue(),'');
-    assert.deepEqual(await select.locator('option').evaluateAll(options=>options.map(option=>option.value)),['','fixture-package-a','fixture-package-b']);
-    await select.selectOption('fixture-package-b');await form.locator('button').click();await page.locator('#review-confirm').click();
+    assert.equal(await page.locator('#review-panel').isVisible(),false);assert.equal(await form.getAttribute('data-action-id'),'fixture-package-a');
+    assert.deepEqual(await form.locator('input[data-attachment-group]').evaluateAll(inputs=>inputs.map(input=>input.checked)),[false]);
+    await chooseBundle(form,api.state.actions.find(action=>action.id==='fixture-package-b'));await form.locator('button').click();await page.locator('#review-confirm').click();
     await eventually(()=>api.mutations===1,'newly reviewed bundle was not filed');assert.equal(actionRequests(api).at(-1).body.revision,5);
   }));
 
   await t.test('repeated bundle confirmation and lost response keep one operation and one receipt',()=>check({receiptBundles:true,failures:['network']},async(page,api)=>{
     await ready(page);await english(page);
-    const select=page.locator('.receipt-bundle select');await select.selectOption('fixture-package-d');await page.locator('.receipt-bundle button').click();
+    const form=page.locator('.receipt-bundle');await chooseBundle(form,api.state.actions.find(action=>action.id==='fixture-package-d'));await form.locator('button').click();
     await page.locator('#review-confirm').evaluate(node=>{node.click();node.click();});
     await page.locator('#operation-retry').waitFor({state:'visible'});
-    assert.equal(actionRequests(api).length,1);assert.equal(await select.isDisabled(),true);
+    assert.equal(actionRequests(api).length,1);assert.equal(await form.locator('input:enabled,button:enabled').count(),0);
     const original=clone(actionRequests(api)[0].body);await page.locator('#language-ar').click();
-    assert.equal(await select.inputValue(),'fixture-package-d');assert.equal(await select.isDisabled(),true);
+    assert.equal(await form.getAttribute('data-action-id'),'fixture-package-d');assert.equal(await form.locator('input:enabled,button:enabled').count(),0);
     await page.locator('#operation-retry').click();await eventually(async()=>await page.evaluate(key=>sessionStorage.getItem(key),PENDING_KEY)===null,'bundle retry remained pending');
     assert.deepEqual(actionRequests(api)[1].body,original);assert.equal(api.mutations,1);assert.equal(api.state.receipts.length,2);
+  }));
+
+  await t.test('an unresolved filing reload shows its exact locked attachments without choosing or resending a different bundle',()=>check({receiptBundles:true,failures:['503']},async(page,api)=>{
+    await ready(page);await english(page);
+    const form=page.locator('.receipt-bundle');
+    await chooseBundle(form,api.state.actions.find(action=>action.id==='fixture-package-h'));await form.locator('button').click();await page.locator('#review-confirm').click();
+    await page.locator('#operation-retry').waitFor({state:'visible'});
+    const original=clone(actionRequests(api)[0].body);
+    assert.equal(api.state.revision,4);assert.equal(api.mutations,0);
+    await page.reload();await page.locator('#case-app').waitFor({state:'visible'});await textIncludes(page,'#scene-title','Fixture reading desk');
+    assert.equal(await form.getAttribute('data-action-id'),'fixture-package-h');
+    assert.deepEqual(await form.locator('input[data-attachment-group]').evaluateAll(inputs=>inputs.map(input=>[input.checked,input.disabled])),[[true,true],[true,true],[true,true]]);
+    assert.equal(await form.locator('input[data-attachment-required]:enabled').count(),0);
+    assert.equal(await page.locator('#review-panel').isVisible(),false);
+    assert.equal(actionRequests(api).length,1,'reload does not confirm or retry');
+    await english(page);assert.equal(await form.getAttribute('data-action-id'),'fixture-package-h');
+    await page.locator('#operation-retry').click();
+    await eventually(async()=>await page.evaluate(key=>sessionStorage.getItem(key),PENDING_KEY)===null,'exact pending bundle retry did not finish');
+    assert.deepEqual(actionRequests(api)[1].body,original);assert.equal(api.mutations,1);
+    assert.deepEqual(await form.locator('input[data-attachment-group]').evaluateAll(inputs=>inputs.map(input=>input.checked)),[false,false,false]);
   }));
 
   await t.test('case.note is offered only when projected and sends only the selected earned source', () => check({}, async (page, api) => {

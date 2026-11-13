@@ -82,6 +82,15 @@ dd{margin:3px 0 0;white-space:pre-wrap;overflow-wrap:anywhere}
 .bundle-summary{margin-block:16px}
 .bundle-selection{border-inline-start:2px solid var(--gold);padding-inline-start:12px}
 .receipt-bundle select{width:100%;text-overflow:ellipsis}
+.bundle-counts{font-size:14px;padding-block:8px;border-block:1px solid var(--line)}
+.attachment-card{border:1px solid var(--line);padding:12px;margin-block:10px;background:var(--ink);min-width:0}
+.attachment-card .check-label{font-weight:600;line-height:1.6}
+.attachment-badge{display:inline-block;color:var(--gold);border:1px solid var(--line);padding:1px 7px;font-size:12px;margin-bottom:8px}
+.attachment-members{list-style:none;margin:0;padding:0}
+.attachment-members li+li{border-top:1px solid var(--line);padding-top:8px;margin-top:8px}
+.attachment-members a{display:inline-flex;align-items:center;min-height:44px;font-size:14px}
+.attachment-members p{font-size:12px;margin-bottom:0}
+.attachment-card input[data-attachment-required]{opacity:.7}
 #notes-list{padding-inline-start:24px}
 #notes-list li{margin-top:16px}
 #notes-list p{white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0}
