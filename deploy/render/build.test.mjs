@@ -71,6 +71,14 @@ test('missing pinned commit fetches that exact SHA only, never a floating gh-pag
   assert.deepEqual(calls.filter(call=>call.args[1]==='fetch').map(call=>call.args),[['--no-replace-objects','fetch','--no-tags','--depth=1','origin',origin.sha]]);
 });
 
+test('a checkout without a Git remote, as on Render, fetches the pinned SHA from the public repository',t=>{
+  const origin=fixture(t),repo=fs.mkdtempSync(path.join(os.tmpdir(),'raven-noremote-'));
+  t.after(()=>fs.rmSync(repo,{recursive:true,force:true}));git(repo,['init','--object-format=sha1']);
+  const calls=[];
+  const result=buildSite({repo,commit:origin.sha,source:origin.repo,run(program,args,options){calls.push({program,args});return run(program,args,options);}});
+  assert.equal(result.commit,origin.sha);
+  assert.deepEqual(calls.filter(call=>call.args[1]==='fetch').map(call=>call.args),[['--no-replace-objects','fetch','--no-tags','--depth=1',origin.repo,origin.sha]]);
+});
 test('failed Git fetch/archive or mismatched SHA leaves the previous export untouched',t=>{
   for(const failure of ['fetch','archive','revision']) {
     const f=fixture(t),target=previousExport(f.repo);
