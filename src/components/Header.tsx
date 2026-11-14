@@ -28,14 +28,14 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="max-w-7xl mx-auto flex flex-col xl:flex-row items-center justify-between gap-4">
         {/* Brand & Studio Name */}
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-violet-600 to-pink-500 flex items-center justify-center shadow-lg shadow-indigo-500/20 ring-1 ring-white/20">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-700 via-amber-600 to-yellow-600 flex items-center justify-center shadow-lg shadow-amber-500/20 ring-1 ring-white/20">
             <Video className="w-5 h-5 text-white" />
           </div>
           <div>
             <div className="flex items-center gap-2">
               <h1 className="text-lg font-bold tracking-tight text-white flex items-center gap-1.5">
                 {isAr ? 'استوديو RAVEN' : 'RAVEN Studio'}
-                <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/30 font-medium">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 font-medium">
                   {isAr ? 'المشروع' : 'Project'}
                 </span>
               </h1>
@@ -56,7 +56,7 @@ export const Header: React.FC<HeaderProps> = ({
                 : 'text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/40'
             }`}
           >
-            <Sparkles className="w-4 h-4 text-indigo-400" />
+            <Sparkles className="w-4 h-4 text-amber-400" />
             <span>{isAr ? 'المشروع' : 'Project'}</span>
           </button>
 
@@ -130,7 +130,7 @@ export const Header: React.FC<HeaderProps> = ({
             onClick={() => setLang(isAr ? 'en' : 'ar')}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-semibold text-zinc-300 transition-colors"
           >
-            <Globe className="w-3.5 h-3.5 text-indigo-400" />
+            <Globe className="w-3.5 h-3.5 text-amber-400" />
             <span>{isAr ? 'English' : 'عربي'}</span>
           </button>
         </div>
