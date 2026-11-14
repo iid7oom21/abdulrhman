@@ -27,20 +27,20 @@
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(24, 24, 27, 0.5);
+  background: rgba(10, 9, 8, 0.5);
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(63, 63, 70, 0.8);
+  background: rgba(196, 165, 116, 0.4);
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 102, 241, 0.8);
+  background: rgba(196, 165, 116, 0.8);
 }
 
 @layer base {
   button:focus-visible, a:focus-visible, input:focus-visible,
   textarea:focus-visible, select:focus-visible, video:focus-visible {
-    outline: 2px solid #d6b98d;
+    outline: 2px solid #c4a574;
     outline-offset: 3px;
   }
 }
