@@ -13,6 +13,23 @@ const base = process.env.RAVEN_LEGACY_URL || 'http://127.0.0.1:8786/raven/';
 const work = mkdtempSync(join(tmpdir(), 'raven-legacy-episodes-'));
 const fixture = join(work, 'playback.mp4');
 execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=c=black:s=160x90:r=2', '-t', '180', '-an', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', fixture]);
+const filmBody = readFileSync(fixture);
+async function interceptFilms(context, onFilm = () => {}) {
+  await context.route('**/*', route => {
+    const url = new URL(route.request().url());
+    if (/\/episode-\d\.mp4$/.test(url.pathname)) {
+      onFilm(url.pathname);
+      const range = /bytes=(\d+)-(\d*)/.exec(route.request().headers().range || '');
+      if (range) {
+        const start = Number(range[1]), end = range[2] ? Number(range[2]) : filmBody.length - 1;
+        return route.fulfill({ status:206, contentType:'video/mp4', headers:{ 'accept-ranges':'bytes', 'content-range':`bytes ${start}-${end}/${filmBody.length}` }, body:filmBody.subarray(start,end+1) });
+      }
+      return route.fulfill({ contentType:'video/mp4', headers:{'accept-ranges':'bytes'}, body:filmBody });
+    }
+    if (url.origin !== new URL(base).origin) return route.abort();
+    return route.continue();
+  });
+}
 const useWebkit = process.env.RAVEN_BROWSER === 'webkit';
 const browser = await (useWebkit ? webkit : chromium).launch({ headless: true,
   ...(!useWebkit ? { executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', args: ['--no-sandbox'] } : {}) });
@@ -31,21 +48,7 @@ try {
     }
   });
   const requestedFilms = [];
-  await context.route('**/*', route => {
-    const url = new URL(route.request().url());
-    if (/\/episode-\d\.mp4/.test(url.pathname)) {
-      requestedFilms.push(url.pathname);
-      const body = readFileSync(fixture);
-      const range = /bytes=(\d+)-(\d*)/.exec(route.request().headers().range || '');
-      if (range) {
-        const start = Number(range[1]), end = range[2] ? Number(range[2]) : body.length - 1;
-        return route.fulfill({ status:206, contentType:'video/mp4', headers:{ 'accept-ranges':'bytes', 'content-range':`bytes ${start}-${end}/${body.length}` }, body:body.subarray(start,end+1) });
-      }
-      return route.fulfill({ contentType: 'video/mp4', headers:{'accept-ranges':'bytes'}, body });
-    }
-    if (url.origin !== new URL(base).origin) return route.abort();
-    return route.continue();
-  });
+  await interceptFilms(context, path => requestedFilms.push(path));
   const page = await context.newPage();
   await page.goto(new URL('?episode=1', base).href, { waitUntil: 'domcontentloaded' });
   const frame = await (await page.locator('#site-content').elementHandle()).contentFrame();
@@ -120,6 +123,156 @@ try {
     assert.equal(await linked.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
   }
   console.log('PASS: three original episode IDs, fixture playback/resume, isolated progress and notes, final next button, deep links 1/2/3, AR/EN switching, music-off and 320px layout.');
+  await context.close();
+
+  // These are storage failures, not mocked note implementations. The real input,
+  // episode, replay, language and modal handlers run against the native video fixture.
+  // Small focused cases cover both mobile widths without a full Cartesian product.
+  const scenarios = [
+    {mode:'blocked-getters', width:320},
+    {mode:'normal', width:390},
+    {mode:'blocked-read', width:390},
+    {mode:'write-throws', width:390},
+    {mode:'write-noop', width:320},
+  ];
+  for (const {mode, width} of scenarios) {
+    const notesContext = await browser.newContext({viewport:{width,height:844},reducedMotion:'reduce'});
+    try {
+      await notesContext.addInitScript(({mode}) => {
+        const storage = localStorage;
+        const get = Storage.prototype.getItem, set = Storage.prototype.setItem;
+        const noteKey = key => String(key).startsWith('raven_episode_note_');
+        sessionStorage.setItem('raven_music_enabled_v2', 'off');
+        sessionStorage.setItem('raven_studio_ident_v1', '1');
+        if (!get.call(storage, 'note-recovery-seeded')) {
+          for (const id of [1,2,3]) set.call(storage, `raven_episode_note_${id}`, `old-note-${id}`);
+          set.call(storage, 'other_app_preferences', 'keep');
+          set.call(storage, 'note-recovery-seeded', '1');
+        }
+        // Only the test can inspect the original storage during fault injection.
+        window.readNoteTestStorage = key => get.call(storage, key);
+        if (mode === 'blocked-getters') {
+          for (const name of ['localStorage','sessionStorage']) Object.defineProperty(window, name, {
+            configurable:true,
+            get() {throw new DOMException('Storage blocked by test', 'SecurityError');},
+          });
+        } else if (mode === 'blocked-read') {
+          Storage.prototype.getItem = function(key) {
+            if (this === storage && noteKey(key)) throw new DOMException('Note read blocked by test', 'SecurityError');
+            return get.call(this, key);
+          };
+        } else if (mode === 'write-throws' || mode === 'write-noop') {
+          Storage.prototype.setItem = function(key, value) {
+            if (this === storage && noteKey(key) && !(mode === 'write-throws' && key === 'raven_episode_note_2')) {
+              if (mode === 'write-throws') throw new DOMException('Note quota exhausted by test', 'QuotaExceededError');
+              return; // A successful return is not proof of persistence.
+            }
+            return set.call(this, key, value);
+          };
+        }
+      }, {mode});
+      const requests = [];
+      notesContext.on('request', request => requests.push(request.url() + '\n' + (request.postData() || '')));
+      await interceptFilms(notesContext);
+      const notesPage = await notesContext.newPage(), pageErrors = [];
+      notesPage.on('pageerror', error => pageErrors.push(error.message));
+      await notesPage.goto(new URL('?episode=1&lang=en', base).href, {waitUntil:'domcontentloaded'});
+      const noteFrame = await (await notesPage.locator('#site-content').elementHandle()).contentFrame();
+      await noteFrame.waitForFunction(() => document.documentElement.dataset.ravenRefinement === '2');
+      await noteFrame.evaluate(() => {window.noteTestDocument = 'same-document';});
+      const note = noteFrame.locator('#rvnEndNote'), status = noteFrame.locator('#rvnEndNoteStatus');
+      const noteVideo = noteFrame.locator('#ravenEpisodePlayer');
+      const text1 = `private-${mode}-episode-one`, text2 = `private-${mode}-episode-two`;
+      const saved = mode === 'normal';
+      const expectedStatus = (language, episode = 1) => (saved || (mode === 'write-throws' && episode === 2))
+        ? (language === 'en' ? 'Your note was saved on this device.' : 'حُفظت ملاحظتك على هذا الجهاز.')
+        : (language === 'en' ? 'Local saving is unavailable. Copy your note before leaving.' : 'تعذر الحفظ المحلي؛ انسخ ملاحظتك قبل المغادرة.');
+      const revealNote = async () => {
+        await expect.poll(() => noteVideo.evaluate(v => Number.isFinite(v.duration) && v.duration > 0)).toBe(true);
+        // Let native play() resume/restart first. Seeking an ended video and
+        // immediately playing can reset the pending seek to zero on reopen.
+        await noteVideo.evaluate(async v => {await v.play();v.currentTime=v.duration-0.1;});
+        await expect(noteFrame.locator('#rvnAfterCredits')).toBeVisible();
+        await expect.poll(() => noteVideo.evaluate(v => v.ended)).toBe(true);
+        const disclosure = noteFrame.locator('#rvnAfterCredits details');
+        if (!(await disclosure.evaluate(el => el.open))) await disclosure.locator('summary').click();
+      };
+      await noteFrame.locator('[data-rvn-episode="1"]').click();
+      await revealNote();
+      await note.fill(text1);
+      await expect(status).toHaveText(expectedStatus('en'));
+      await noteFrame.locator('#rvnAfterNext').click();
+      await revealNote();
+      await note.fill(text2);
+      await expect(status).toHaveText(expectedStatus('en', 2));
+      await noteFrame.locator('#rvnPrevEpisode').click();
+      await revealNote();
+      await expect(note).toHaveValue(text1);
+      await expect(status).toHaveText(expectedStatus('en'));
+
+      // Re-rendered status must describe this episode's persistence, in either language.
+      for (const language of ['ar','en']) {
+        await noteFrame.locator(`#episodeModal [data-rvn-lang="${language}"]`).click();
+        await expect(note).toHaveValue(text1);
+        await expect(status).toHaveText(expectedStatus(language));
+      }
+      await noteFrame.locator('#rvnAfterReplay').click();
+      await revealNote();
+      await expect(note).toHaveValue(text1);
+      await expect(status).toHaveText(expectedStatus('en'));
+
+      // Failure/retry uses the existing error control and reloads only the video.
+      await noteVideo.dispatchEvent('error');
+      await expect(noteFrame.locator('#rvnRetryVideo')).toBeVisible();
+      await noteFrame.locator('#rvnRetryVideo').click();
+      await revealNote();
+      await expect(note).toHaveValue(text1);
+      await expect(status).toHaveText(expectedStatus('en'));
+
+      await noteFrame.locator('.episodeClose').click();
+      await expect(noteFrame.locator('#episodeModal')).toHaveAttribute('aria-hidden','true');
+      await noteFrame.locator('[data-rvn-episodes]').first().click();
+      await revealNote();
+      assert.equal(await noteFrame.evaluate(() => window.noteTestDocument), 'same-document');
+      await expect(note).toHaveValue(text1);
+      await expect(status).toHaveText(expectedStatus('en'));
+
+      // Empty text is an intentional edit, even if storage still holds old-note-1.
+      await note.fill('');
+      await expect(status).toHaveText(expectedStatus('en'));
+      await noteFrame.locator('#rvnAfterNext').click();
+      await revealNote();
+      await expect(note).toHaveValue(text2);
+      await expect(status).toHaveText(expectedStatus('en', 2));
+      await noteFrame.locator('#rvnPrevEpisode').click();
+      await revealNote();
+      await expect(note).toHaveValue('');
+      await expect(status).toHaveText(expectedStatus('en'));
+      assert.equal(await noteFrame.evaluate(() => window.readNoteTestStorage('raven_episode_note_3')), 'old-note-3');
+      assert.equal(await noteFrame.evaluate(() => window.readNoteTestStorage('other_app_preferences')), 'keep');
+      if (mode === 'write-throws' || mode === 'write-noop') {
+        assert.equal(await noteFrame.evaluate(() => window.readNoteTestStorage('raven_episode_note_1')), 'old-note-1');
+        assert.equal(await noteFrame.evaluate(() => window.readNoteTestStorage('raven_episode_note_2')), mode === 'write-throws' ? text2 : 'old-note-2');
+      }
+      if (saved) {
+        // Reload clears the document cache; the original storage keys must suffice.
+        await notesPage.reload({waitUntil:'domcontentloaded'});
+        const restored = await (await notesPage.locator('#site-content').elementHandle()).contentFrame();
+        await restored.waitForFunction(() => document.documentElement.dataset.ravenRefinement === '2');
+        await expect(restored.locator('#rvnEndNote')).toHaveValue('');
+        await restored.locator('[data-rvn-episode="2"]').click();
+        await expect(restored.locator('#rvnEndNote')).toHaveValue(text2);
+      }
+      assert.equal(await notesPage.locator('#site-soundtrack').evaluate(v => v.paused), true);
+      const activeFrame = await (await notesPage.locator('#site-content').elementHandle()).contentFrame();
+      assert.equal(await activeFrame.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
+      assert.deepEqual(pageErrors, [], `${mode}: no uncaught page exceptions`);
+      for (const text of [text1,text2]) assert.ok(requests.every(request => !request.includes(text) && !request.includes(encodeURIComponent(text))), `${mode}: private note never enters a request`);
+      console.log(`PASS: ${width}px ${mode}: isolated notes, empty edit, replay, close/reopen, video retry, AR/EN status, privacy${saved ? ', durable reload' : ', no false saved claim'}.`);
+    } finally {
+      await notesContext.close();
+    }
+  }
 
 } finally {
   await browser.close();

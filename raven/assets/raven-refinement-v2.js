@@ -43,12 +43,33 @@ function openFold(hash){if(!hash||hash==='#')return;let target;try{target=docume
 document.addEventListener('click',e=>{const a=e.target.closest('a[href^="#"]');if(a)openFold(a.getAttribute('href'));});window.addEventListener('hashchange',()=>openFold(location.hash));openFold(location.hash);
 const endPanel=$('#rvnAfterCredits'),player=$('#ravenEpisodePlayer'),note=$('#rvnEndNote'),videoError=$('#rvnVideoError');
 const noteKey=()=> 'raven_episode_note_'+window.ravenEpisodeSourceId(current);
-function loadNote(){noteState='';if($('#rvnEndNoteStatus'))$('#rvnEndNoteStatus').textContent='';if(note){try{note.value=localStorage.getItem(noteKey())||'';}catch(_){note.value='';}}}
+// Keep edits for this document even when storage fails. This is not reload recovery.
+const noteDrafts=new Map();
+function loadNote(){
+  noteState='';
+  if(note){
+    const draft=noteDrafts.get(noteKey());
+    if(draft){note.value=draft.value;noteState=draft.status;}
+    else{try{note.value=localStorage.getItem(noteKey())||'';}catch(_){note.value='';}}
+  }
+  if($('#rvnEndNoteStatus'))$('#rvnEndNoteStatus').textContent=noteState?t(noteState):'';
+}
 document.addEventListener('raven:episode',e=>{++retryAttempt;const changed=current!==e.detail.id;current=e.detail.id;if(changed){if(endPanel)endPanel.hidden=true;if(videoError)videoError.hidden=true;loadNote();}else if(endPanel&&player?.ended){endPanel.hidden=false;$('#rvnAfterNext').hidden=current>=3;}translate();});
 document.addEventListener('raven:ended',e=>{if(current!==e.detail.id){current=e.detail.id;loadNote();}if(!endPanel)return;endPanel.hidden=false;$('#rvnAfterNext').hidden=current>=3;translate();endPanel.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth',block:'nearest'});});
 $('#rvnAfterReplay')?.addEventListener('click',()=>{if(!player)return;endPanel.hidden=true;player.currentTime=0;player.play().catch(()=>{});});$('#rvnAfterNext')?.addEventListener('click',()=>{if(current<3)window.ravenSelectEpisode?.(current+1,true);});
 player?.addEventListener('play',()=>{if(endPanel)endPanel.hidden=true;});
-note?.addEventListener('input',()=>{try{localStorage.setItem(noteKey(),note.value.slice(0,1500));noteState='endSaved';$('#rvnEndNoteStatus').textContent=t(noteState);}catch(_){noteState='endUnsaved';$('#rvnEndNoteStatus').textContent=t(noteState);}});
+note?.addEventListener('input',()=>{
+  const key=noteKey(),draft={value:note.value.slice(0,1500),status:'endUnsaved'};
+  // Cache empty edits too, so an older stored note cannot undo a deliberate deletion.
+  noteDrafts.set(key,draft);
+  try{
+    const storage=localStorage;
+    storage.setItem(key,draft.value);
+    if(storage.getItem(key)===draft.value)draft.status='endSaved';
+  }catch(_){/* The edit remains available in this page, with the unsaved warning. */}
+  noteState=draft.status;
+  $('#rvnEndNoteStatus').textContent=t(noteState);
+});
 const params=new URL(location.href).searchParams;
 
 function showTheoryHelp(){const subject=$('#rvnSubject'),help=$('#rvnTheoryHelp');if(help)help.hidden=subject?.value!=='theory';}
