@@ -10,14 +10,14 @@ import {checkCasePack, summarizeCheck} from '../src/case-check.js';
 
 const help = `RAVEN — فحص مسارات القضية المكتوبة (Node.js 24)
 node server/ai-dialogue/scripts/check-case.mjs --content /private/raven-case-content.json [--report /private/PRIVATE-QA-<version>.json]
-Optional: --max-states 1000000
+Optional: --max-states 1000000 · --ending-scene <id> (repeatable)
 يطبع أعدادًا فقط. المعرّفات والمسارات تُكتب في ملف التقرير الخاص، خارج Git.
 Exit: 0 سليم · 1 توجد مشكلات أو لم يكتمل الفحص · 2 استخدام أو حزمة غير صالحة.
 `;
 const fail = message => { console.error('لم يبدأ الفحص: ' + message); process.exit(2); };
 let values;
 try {
-  ({values} = parseArgs({options: {content: {type: 'string'}, report: {type: 'string'}, 'max-states': {type: 'string', default: '1000000'}, help: {type: 'boolean'}}}));
+  ({values} = parseArgs({options: {content: {type: 'string'}, report: {type: 'string'}, 'max-states': {type: 'string', default: '1000000'}, 'ending-scene': {type: 'string', multiple: true}, help: {type: 'boolean'}}}));
 } catch { fail('خيار غير معروف.\n' + help); }
 if (values.help) { console.log(help); process.exit(0); }
 if (!values.content) fail('مرّر مسار حزمة القصة.\n' + help);
@@ -42,7 +42,14 @@ let pack;
 try { pack = loadCaseContent(path.resolve(values.content)); }
 catch { fail('تعذّرت قراءة حزمة القصة. يلزم مسار مطلق لملف صالح خارج Git.'); }
 
-const report = checkCasePack(pack, {maxStates});
+let report;
+try { report = checkCasePack(pack, {maxStates, acceptedEndingSceneIds: values['ending-scene'] || []}); }
+catch (error) {
+  if (error instanceof TypeError && error.message === 'invalid_accepted_ending_scene_ids') {
+    fail('--ending-scene يجب أن يحدد مشاهد موجودة دون تكرار.');
+  }
+  throw error;
+}
 console.log(JSON.stringify(summarizeCheck(report), null, 1));
 if (reportPath) {
   fs.writeFileSync(reportPath, JSON.stringify(report, null, 1) + '\n', {mode: 0o600});

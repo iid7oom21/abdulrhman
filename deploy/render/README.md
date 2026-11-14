@@ -64,7 +64,9 @@ node --test server/ai-dialogue/tests/*.test.js
 node server/ai-dialogue/scripts/check-case.mjs --content /absolute/private/raven-case-content.json
 ```
 
-The last command plays the private story through the engine from every opening and must exit 0: every scene and choice reachable, no dead end, and an ending reachable from every state. Run it on the exact file whose SHA-256 is configured. Give changed content a new `contentVersion`. Browser checkpoints verify the whole pack's fingerprint and refuse different content under the same version. Disk saves replay the reached history and validate its saved projection, so changes confined to unseen content may not be detected at startup; this check does not replace versioning.
+The last command plays the private story through the engine from every opening and must exit 0: every scene and choice reachable, no dead end, and an ending reachable from every state. Actionless scenes count as endings by default. For an approved ending that offers return actions, append `--ending-scene <id>` for each accepted stopping scene. Unknown or duplicate IDs are rejected. The private report records these IDs; the terminal shows their count. Return actions are still explored, and reaching an accepted ending never makes a capped search pass. Do not label an ordinary scene as an ending to hide a failed path.
+
+Run the check on the exact file whose SHA-256 is configured. Give changed content a new `contentVersion`. Browser checkpoints verify the whole pack's fingerprint and refuse different content under the same version. Disk saves replay the reached history and validate its saved projection, so changes confined to unseen content may not be detected at startup; this check does not replace versioning.
 
 After deployment, verify the actual Render URL, not GitHub Pages:
 

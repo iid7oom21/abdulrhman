@@ -99,6 +99,54 @@ const protocols = [
 ];
 
 for (const protocol of protocols) {
+  test(protocol.name + ': an interrupted success body is unknown, never a completed invalid output', async () => {
+    const s = sources();
+    let calls = 0;
+    const gen = protocol.create(settings(async () => {
+      calls++;
+      let part = 0;
+      return new Response(new ReadableStream({pull(controller) {
+        if (part++ === 0) controller.enqueue(new TextEncoder().encode('{"PRIVATE_PARTIAL":'));
+        else controller.error(new TypeError('PRIVATE_TRANSPORT_DETAIL'));
+      }}));
+    }));
+    await assert.rejects(() => gen('jonas', 'x', s.contextFor('jonas')), error =>
+      error.code === 'provider_unavailable' && error.outcomeUnknown === true && !error.message.includes('PRIVATE'));
+    assert.equal(calls, 1);
+  });
+
+  test(protocol.name + ': fully received malformed JSON remains a known invalid output', async () => {
+    const s = sources();
+    const gen = protocol.create(settings(async () => new Response('{"PRIVATE_INVALID":')));
+    await assert.rejects(() => gen('jonas', 'x', s.contextFor('jonas')), error =>
+      error.code === 'provider_invalid_output' && error.outcomeUnknown === false && !error.message.includes('PRIVATE'));
+  });
+
+  test(protocol.name + ': a completed response without a body remains a known invalid output', async () => {
+    const s = sources();
+    for (const status of [200, 204, 205]) {
+      const gen = protocol.create(settings(async () => new Response(null, {status})));
+      await assert.rejects(() => gen('jonas', 'x', s.contextFor('jonas')), error =>
+        error.code === 'provider_invalid_output' && error.outcomeUnknown === false);
+    }
+  });
+
+  test(protocol.name + ': oversized bodies remain invalid even when cancel rejects and release the slot', async () => {
+    const s = sources();
+    let calls = 0;
+    const gen = protocol.create({...settings(async () => {
+      if (++calls > 1) return protocol.respond({action: 'unavailable', materialIds: []});
+      return new Response(new ReadableStream({
+        start(controller) { controller.enqueue(new Uint8Array(100001)); },
+        cancel() { throw new Error('PRIVATE_CANCEL_DETAIL'); },
+      }));
+    }), maxConcurrent: 1});
+    await assert.rejects(() => gen('jonas', 'x', s.contextFor('jonas')), error =>
+      error.code === 'provider_invalid_output' && error.outcomeUnknown === false && !error.message.includes('PRIVATE'));
+    assert.equal((await gen('jonas', 'next', s.contextFor('jonas'))).refused, true);
+    assert.equal(calls, 2);
+  });
+
   test(protocol.name + ': empty clarification asks a fixed question without quoting or inventing testimony',async()=>{
     const s=sources(),before=JSON.stringify(s.contextFor('jonas'));
     const gen=protocol.create(settings(async()=>protocol.respond({action:'clarify',materialIds:[]})));

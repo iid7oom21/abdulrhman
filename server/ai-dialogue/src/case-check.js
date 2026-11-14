@@ -161,8 +161,14 @@ function inspect(pack) {
   };
 }
 
-export function checkCasePack(input, {openings = OPENINGS, maxStates = 1000000} = {}) {
+export function checkCasePack(input, {openings = OPENINGS, maxStates = 1000000, acceptedEndingSceneIds = []} = {}) {
   const pack = validateCasePack(input);
+  if (!Array.isArray(acceptedEndingSceneIds) ||
+      [...acceptedEndingSceneIds].some(id => typeof id !== 'string' || !own(pack.scenes, id)) ||
+      new Set(acceptedEndingSceneIds).size !== acceptedEndingSceneIds.length) {
+    throw new TypeError('invalid_accepted_ending_scene_ids');
+  }
+  const acceptedEndings = new Set(acceptedEndingSceneIds);
   const structure = inspect(pack), {relevant, components, componentOf, active} = analyse(pack);
   const scenesReached = new Set(), actionsRun = new Set(), materialsHeld = new Set(), linesShown = new Set(), refused = new Map();
   let exhaustive = true, explored = 0, covered = 0, operation = 0;
@@ -224,7 +230,8 @@ export function checkCasePack(input, {openings = OPENINGS, maxStates = 1000000} 
           }
           node.next.add(nextKey);
         }
-        if (scene.actions.length === 0) node.ending = true;
+        // A declared stopping point may offer a return. Its actions were still explored above.
+        if (scene.actions.length === 0 || acceptedEndings.has(state.sceneId)) node.ending = true;
         else if (!moved) node.stuck = true;
       }
       covered += group.members.length * group.nodes.size;
@@ -277,6 +284,7 @@ export function checkCasePack(input, {openings = OPENINGS, maxStates = 1000000} 
   const lines = Object.entries(pack.scenes).flatMap(([scene, value]) => (value.lines || []).map((_, line) => ({scene, line})));
   const report = {
     format: 'raven-case-path-check-v1', caseId: pack.caseId, contentVersion: pack.contentVersion,
+    acceptedEndingSceneIds: [...acceptedEndings],
     exhaustive, statesExplored: explored, statesCovered: covered, openingsChecked: openings.length,
     scenes: {total: Object.keys(pack.scenes).length, reached: scenesReached.size, neverReached: Object.keys(pack.scenes).filter(id => !scenesReached.has(id))},
     actions: {total: actions.length, run: actionsRun.size, neverRun: actions.filter(item => !actionsRun.has(item.scene + '/' + item.action))},
@@ -302,5 +310,6 @@ export function summarizeCheck(report) {
     scenes: report.scenes.reached + '/' + report.scenes.total, actions: report.actions.run + '/' + report.actions.total,
     materials: report.materials.held + '/' + report.materials.total, lines: report.lines.shown + '/' + report.lines.total,
     endings: report.endings.length, deadEnds: report.deadEnds.length, trapped: report.trapped.length, refusedActions: report.refusedActions.length,
+    acceptedEndingScenes: report.acceptedEndingSceneIds?.length || 0,
   };
 }

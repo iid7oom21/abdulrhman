@@ -6,7 +6,7 @@ import os from 'node:os';
 import { createPreviewServer, storagePathFromEnv, DEFAULT_STORAGE_PATH } from '../src/server.js';
 import { openDiskStore } from '../src/disk-store.js';
 import { _reset, simulateReply, getRequest } from '../src/dialogue.js';
-import { ProviderError } from '../src/provider.js';
+import { ProviderError, createOpenAIReply, createCompatibleReply } from '../src/provider.js';
 
 const deferred = () => { let resolve; const promise = new Promise(r => {resolve=r;}); return {promise,resolve}; };
 const start = async (t, opts={}) => {
@@ -63,6 +63,49 @@ test('unknown provider outcome survives reads/replay; no retry under the same ID
   for(let i=0;i<3;i++)assert.equal((await(await s.post('/api/dialogue',payload())).json()).status,'unknown');
   assert.equal((await s.post('/api/dialogue',payload('new'))).status,409);assert.equal(calls,1);
 });
+
+for (const [name, create] of [['openai', createOpenAIReply], ['compatible', createCompatibleReply]]) {
+  test(name + ': body transport failure persists unknown, blocks another ID and replays after restart', async t => {
+    _reset();
+    const file = tmp(t);
+    let calls = 0;
+    const generate = create({apiKey: 'TEST_ONLY', model: 'fake-model', fetchImpl: async () => {
+      calls++;
+      return new Response(new ReadableStream({start(controller) { controller.error(new TypeError('PRIVATE_TRANSPORT_DETAIL')); }}));
+    }});
+    const s = await start(t, {storeFile: file, generate});
+    await s.post('/api/materials', {id: 'received', type: 'statement', text: 'PLAYER_TEST_CLAIM'});
+    await s.post('/api/shares', {eventId: 'received-share', materialId: 'received', recipients: ['jonas']});
+    const first = await s.post('/api/dialogue', payload('body-failure'));
+    assert.equal(first.status, 202);
+    const result = await until(s, 'body-failure', 'unknown');
+    assert.equal(result.error, 'provider_unavailable');
+    assert.equal(result.response, undefined);
+    const disk = JSON.parse(fs.readFileSync(file));
+    assert.equal(disk.requests[0].status, 'unknown');
+    for (let i = 0; i < 3; i++) {
+      const replay = await (await s.post('/api/dialogue', payload('body-failure'))).json();
+      assert.equal(replay.replayed, true);
+      assert.equal(replay.status, 'unknown');
+      assert.equal((await (await s.get('/api/operations/body-failure')).json()).status, 'unknown');
+    }
+    const blocked = await s.post('/api/dialogue', payload('new-body-failure'));
+    assert.equal(blocked.status, 409);
+    assert.equal((await blocked.json()).activeRequestId, 'body-failure');
+    assert.equal(calls, 1);
+    assert.doesNotMatch(JSON.stringify(result) + fs.readFileSync(file, 'utf8'), /PRIVATE_TRANSPORT_DETAIL/);
+    await s.close();
+    _reset();
+    const restarted = await start(t, {storeFile: file, generate});
+    const replay = await fetch(restarted.root + '/api/dialogue', {
+      method: 'POST', headers: {cookie: s.cookie, 'content-type': 'application/json'}, body: JSON.stringify(payload('body-failure')),
+    });
+    const resumed = await replay.json();
+    assert.equal(resumed.status, 'unknown');
+    assert.equal(resumed.replayed, true);
+    assert.equal(calls, 1);
+  });
+}
 
 test('restart turns a persisted in-flight operation into unknown without a second generation',async t=>{
   _reset();const file=tmp(t),gate=deferred();let calls=0;t.after(()=>gate.resolve());

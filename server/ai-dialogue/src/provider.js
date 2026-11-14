@@ -102,18 +102,29 @@ You cannot share, create, correct, deposit, or change game state. Return JSON on
           const code = response.status === 429 ? 'provider_rejected' : (response.status >= 500 ? 'provider_unavailable' : 'provider_rejected');
           throw new ProviderError(code, response.status >= 500);
         }
-        let data;
+        // A bodyless HTTP success (e.g. 204) is a complete but invalid model response.
+        if (response.body === null) throw new ProviderError('provider_invalid_output');
+        const chunks = []; let size = 0, reader;
         try {
-          const reader = response.body.getReader();
-          const chunks = []; let size = 0;
+          reader = response.body.getReader();
           while (true) {
             const { value, done } = await reader.read(); if (done) break;
             size += value.byteLength;
-            if (size > 100000) { await reader.cancel(); throw new Error('oversized'); }
+            if (size > 100000) {
+              // A size violation is known even if cancelling the rejected body fails.
+              try { await reader.cancel(); } catch { /* Do not expose transport details. */ }
+              throw new ProviderError('provider_invalid_output');
+            }
             chunks.push(Buffer.from(value));
           }
-          data = JSON.parse(Buffer.concat(chunks).toString('utf8'));
-        } catch { throw new ProviderError('provider_invalid_output'); }
+        } catch (error) {
+          if (error instanceof ProviderError) throw error;
+          // Headers can arrive before the connection fails. Accepted work may still be billed.
+          throw new ProviderError('provider_unavailable', true);
+        } finally { reader?.releaseLock(); }
+        let data;
+        try { data = JSON.parse(Buffer.concat(chunks).toString('utf8')); }
+        catch { throw new ProviderError('provider_invalid_output'); }
         let rawText;
         if (protocol === 'responses') {
           if (data.status !== 'completed' || !Array.isArray(data.output)) throw new ProviderError('provider_invalid_output');

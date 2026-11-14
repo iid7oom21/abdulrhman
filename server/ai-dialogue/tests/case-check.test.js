@@ -14,6 +14,99 @@ const is = (flag, equals) => ({flag, equals});
 const act = (id, extra = {}) => ({id, label: L('LABEL_' + id), ...extra});
 const line = (text, requires) => ({speaker: L('Guide'), text: L(text), ...(requires ? {requires} : {})});
 
+function resumablePack() {
+  return {
+    schemaVersion: 1, caseId: 'returnable', contentVersion: 'returnable-v1', locales: ['ar', 'en'], defaultLocale: 'ar',
+    initialSceneId: 'entry', initialFlags: {}, initialMaterials: [], materials: {},
+    scenes: {
+      entry: {title: L('TITLE_ENTRY'), body: L('BODY_ENTRY'), actions: [act('finish', {target: 'ending_pause'})]},
+      ending_pause: {title: L('TITLE_PAUSE'), body: L('BODY_PAUSE'), actions: [act('resume', {target: 'entry'})]},
+    },
+  };
+}
+
+test('explicit resumable endings count without silently accepting scenes named ending', () => {
+  const pack = resumablePack();
+  const before = JSON.stringify(pack);
+  const defaultReport = checkCasePack(pack);
+  assert.equal(defaultReport.ok, false);
+  assert.deepEqual(defaultReport.endings, []);
+  assert.equal(defaultReport.trapped.length, 2);
+  const report = checkCasePack(pack, {acceptedEndingSceneIds: ['ending_pause']});
+  assert.equal(report.ok, true);
+  assert.equal(report.exhaustive, true);
+  assert.deepEqual(report.endings.map(item => item.scene), ['ending_pause']);
+  assert.deepEqual(report.trapped, []);
+  assert.equal(report.actions.run, 2, 'resume is still explored');
+  assert.deepEqual(report.acceptedEndingSceneIds, ['ending_pause']);
+  assert.equal(summarizeCheck(report).acceptedEndingScenes, 1);
+  assert.equal(JSON.stringify(pack), before, 'checker options do not rewrite the pack');
+});
+
+test('accepting an ending still explores its outgoing routes and finds a real trap', () => {
+  const pack = resumablePack();
+  pack.scenes.ending_pause.actions.push(act('bad_return', {target: 'ending_unapproved'}));
+  pack.scenes.ending_unapproved = {title: L('TITLE_TRAP'), body: L('BODY_TRAP'), actions: [act('stay', {target: 'ending_unapproved'})]};
+  const report = checkCasePack(pack, {acceptedEndingSceneIds: ['ending_pause']});
+  assert.equal(report.ok, false);
+  assert.equal(report.actions.run, 4);
+  assert.deepEqual(report.trapped.map(item => item.scene), ['ending_unapproved']);
+  assert.deepEqual(report.trapped[0].path, ['finish', 'bad_return']);
+});
+
+test('a declared stopping scene may have gated resume buttons; an undeclared one is a dead end', () => {
+  const pack = resumablePack();
+  pack.initialFlags.ready = false;
+  pack.scenes.ending_pause.actions[0].requires = is('ready', true);
+  const ordinary = checkCasePack(pack);
+  assert.deepEqual(ordinary.deadEnds.map(item => item.scene), ['ending_pause']);
+  const accepted = checkCasePack(pack, {acceptedEndingSceneIds: ['ending_pause']});
+  assert.deepEqual(accepted.deadEnds, []);
+  assert.deepEqual(accepted.endings.map(item => item.scene), ['ending_pause']);
+  assert.equal(accepted.ok, false, 'the unreachable resume action must still be reported');
+  assert.deepEqual(accepted.actions.neverRun, [{scene: 'ending_pause', action: 'resume'}]);
+});
+
+test('invalid, duplicate and unknown accepted endings fail closed', () => {
+  for (const acceptedEndingSceneIds of [null, 'ending_pause', [null], Array(1), [''], ['missing'], ['toString'], ['ending_pause', 'ending_pause']]) {
+    assert.throws(() => checkCasePack(resumablePack(), {acceptedEndingSceneIds}),
+      error => error instanceof TypeError && error.message === 'invalid_accepted_ending_scene_ids');
+  }
+});
+
+test('a reached accepted ending cannot turn a capped search into a successful check', () => {
+  const pack = resumablePack();
+  const report = checkCasePack(pack, {acceptedEndingSceneIds: ['entry'], maxStates: 1});
+  assert.deepEqual(report.endings.map(item => item.scene), ['entry']);
+  assert.equal(report.exhaustive, false);
+  assert.equal(report.ok, false);
+  assert.deepEqual(report.trapped, []);
+});
+
+test('CLI accepts repeatable ending IDs, records them privately and rejects invalid configuration', t => {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'raven-ending-check-'));
+  t.after(() => fs.rmSync(directory, {recursive: true, force: true}));
+  const content = path.join(directory, 'pack.json'), report = path.join(directory, 'report.json');
+  fs.writeFileSync(content, JSON.stringify(resumablePack()));
+  const run = (...args) => spawnSync(process.execPath, [script, '--content', content, ...args], {encoding: 'utf8'});
+  const clean = run('--ending-scene', 'ending_pause', '--ending-scene', 'entry', '--report', report);
+  assert.equal(clean.status, 0, clean.stderr);
+  assert.match(clean.stdout, /"acceptedEndingScenes": 2/);
+  assert.doesNotMatch(clean.stdout + clean.stderr, /ending_pause|TITLE_|BODY_|LABEL_/);
+  assert.deepEqual(JSON.parse(fs.readFileSync(report)).acceptedEndingSceneIds, ['ending_pause', 'entry']);
+  assert.equal(fs.statSync(report).mode & 0o777, 0o600);
+  for (const args of [
+    ['--ending-scene', 'PRIVATE_UNKNOWN'],
+    ['--ending-scene', 'ending_pause', '--ending-scene', 'ending_pause'],
+    ['--ending-scene', ''], ['--ending-scene'],
+  ]) {
+    const invalid = run(...args);
+    assert.equal(invalid.status, 2);
+    assert.doesNotMatch(invalid.stdout + invalid.stderr, /PRIVATE_UNKNOWN|ending_pause|TITLE_|BODY_/);
+  }
+  assert.equal(run('--ending-scene', 'entry', '--max-states', '1').status, 1);
+});
+
 // Entirely fictional mechanics pack. Independent choices, a loop between two scenes, values
 // that stay untouched across scenes, forms, captures and receipts: everything the check has
 // to treat exactly. Options add one known fault each.

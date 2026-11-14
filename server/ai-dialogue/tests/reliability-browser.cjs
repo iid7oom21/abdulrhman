@@ -24,7 +24,7 @@ test('real browser + HTTP + provider adapter: accepted pending, recipient scope,
   const gate=deferred();t.after(()=>gate.resolve());let calls=0,contextSent;
   const generate=createOpenAIReply({apiKey:'TEST_ONLY',model:'fixture',fetchImpl:async(url,opts)=>{
     calls++;contextSent=JSON.parse(opts.body);await gate.promise;
-    return new Response(JSON.stringify({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify({action:'received_materials',materialIds:['c1']})}]}]}));
+    return new Response(JSON.stringify({status:'completed',output:[{type:'message',content:[{type:'output_text',text:JSON.stringify({action:'quote_materials',materialIds:['c1']})}]}]}));
   }});
   const {page,post,errors}=await setup(t,{generate,providerInfo:{provider:'openai',model:'fixture'}});
   await page.locator('#runtime-mode').filter({hasText:'OpenAI'}).waitFor();
