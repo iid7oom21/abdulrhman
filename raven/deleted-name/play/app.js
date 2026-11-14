@@ -3,15 +3,16 @@
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
-  const PENDING_KEY = 'raven_case_pending_operation_v1';
-  const CHECKPOINT_PREFIX = 'raven_case_checkpoint_v1.';
+  const investigationLab = document.body.hasAttribute('data-investigation-lab');
+  const PENDING_KEY = investigationLab ? 'raven_lab_pending_operation_v1' : 'raven_case_pending_operation_v1';
+  const CHECKPOINT_PREFIX = investigationLab ? 'raven_lab_checkpoint_v1.' : 'raven_case_checkpoint_v1.';
   const CHECKPOINT_FORMAT = 'raven-browser-checkpoint-v1';
   const CHECKPOINT_LIMIT = 6 * 1024 * 1024;
   const OPENING_KEY = 'raven.case.opening.v1';
   const API = '/api/case/';
   const TEXT = {
     ar: {
-      skip:'انتقل إلى القضية',title:'القضية',back:'العودة إلى صفحة القضية',language:'لغة العرض',
+      skip:'انتقل إلى القضية',title:'القضية',back:'العودة إلى صفحة القضية',language:'لغة العرض',workbench:'غرفة التحقيق — معاينة أدوات',
       actions:'ماذا تريد أن تفعل؟',review:'راجع اختيارك',materials:'المواد التي وصلت إليك',comparison:'مقارنة المواد',firstMaterial:'المادة الأولى',secondMaterial:'المادة الثانية',
       notebook:'دفتر خاص',notebookScope:'ملاحظات خاصة بجلسة القضية على الخادم. لا تصل إلى الشخصيات تلقائيًا. النص الذي لم تؤكده يبقى في هذه الصفحة فقط.',notesDownload:'تنزيل ملاحظاتي',notesDownloadScope:'التنزيل يشمل الملاحظات المؤكدة فقط، ولا يشمل نصًا ما زلت تكتبه.',
       permissions:'المواد التي شاركتها',timeline:'نطاقات التسجيل التي فحصتها',reports:'التقرير وما سجلته ومصادره',receipts:'إيصالات داخل القصة',receiptScope:'الإيصال القصصي يصف الاستلام داخل القصة؛ لا يعني إرسالًا إلى جهة حقيقية أو اعتماد صحة التقرير.',
@@ -50,7 +51,7 @@
       names:{noah:'نوح',elena:'إيلينا',claire:'كلير',jonas:'يوناس',mateo:'ماتيو',matteo:'ماتيو',victor:'فيكتور',assessment_review:'الجهة التي أصدرت التقييم',incident_followup:'الجهة المتابعة لواقعة المكتبة'}
     },
     en: {
-      skip:'Skip to the case',title:'The case',back:'Return to the case page',language:'Display language',
+      skip:'Skip to the case',title:'The case',back:'Return to the case page',language:'Display language',workbench:'Investigation room — tools preview',
       actions:'What would you like to do?',review:'Review your choice',materials:'Materials you have received',comparison:'Compare materials',firstMaterial:'First material',secondMaterial:'Second material',
       notebook:'Private notebook',notebookScope:'Notes are private to your case session on the server. They do not reach characters automatically. Unconfirmed text stays on this page only.',notesDownload:'Download my notes',notesDownloadScope:'The download includes confirmed notes only, not text you are still writing.',
       permissions:'Materials you shared',timeline:'Recording ranges you examined',reports:'Your report, recorded choices, and sources',receipts:'Receipts within the story',receiptScope:'A fictional receipt records delivery within the story. It does not mean delivery to a real organization or approval of a report’s accuracy.',
@@ -876,13 +877,26 @@
       body.append(article);
     }
   }
+  function publishLabView() {
+    if (!investigationLab) return;
+    // An optional reading surface receives only the already-earned player view.
+    // No flags, author rules, checkpoint token, receipts or private notebook leave
+    // this controller. The opaque session tag is not an authentication token.
+    document.dispatchEvent(new CustomEvent('raven:case-view', {detail:state ? {
+      caseId:state.caseId,contentVersion:state.contentVersion,revision:state.revision,
+      sessionId:state.checkpointInfo?.sessionTag || null,locale:lang,
+      materials:structuredClone(state.materials),
+      actions:state.actions.map(action => ({id:action.id,label:structuredClone(action.label)})),
+    } : {caseId:null,locale:lang}}));
+  }
   function render() {
     document.documentElement.lang = lang;document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';document.title = 'RAVEN — ' + tr('title');
     for (const node of document.querySelectorAll('[data-ui]')) node.textContent = tr(browserMode() && node.dataset.ui === 'notebookScope' ? 'browserNotebookScope' : node.dataset.ui);
     $('language-controls').setAttribute('aria-label',tr('language'));
     for (const language of ['ar','en']) $('language-' + language).setAttribute('aria-pressed',String(lang === language));
     $('home-link').href = '../../' + (lang === 'en' ? '?lang=en' : '');$('case-link').href = '../' + (lang === 'en' ? '?lang=en' : '');
-    $('case-app').hidden = !state;renderBanner();if (!state) return;
+    if ($('workbench-link')) $('workbench-link').href = '../../investigation-lab/' + (lang === 'en' ? '?lang=en' : '');
+    $('case-app').hidden = !state;renderBanner();if (!state) {publishLabView();return;}
     $('save-status').textContent = browserMode() ? tr(checkpointSaved && !checkpointIssue ? 'browserSaved' : 'browserUnsaved') : (state.readOnly && !state.contentVersionMismatch) || state.storageUnavailable || state.saveStatus === 'unconfirmed' ? tr('saveUnconfirmed') : state.persistence === 'disk-file' && state.saveStatus === 'confirmed' ? tr('confirmed') : state.persistence === 'process-memory' && state.saveStatus === 'memory' ? tr('memory') : tr('saveUnconfirmed');
     displayText($('scene-title'),localized(state.scene.title));$('scene-label').textContent = '';
     const prose = $('scene-body');prose.replaceChildren();if (localized(state.scene.body)) prose.append(element('p',localized(state.scene.body)));
@@ -898,6 +912,7 @@
     if (!state.actions.some(action => action.id !== 'case.note')) $('actions').append(element('p',tr('noActions'),'muted'));
     if (!state.actions.some(action => action.id === 'case.note')) $('notebook-actions').append(element('p',tr('noteUnavailable'),'muted'));
     renderMaterials();renderNotes();renderShares();renderTimeline();renderCaptures();renderReceipts();renderReview();setBusy(busy);
+    publishLabView();
   }
   function changeLanguage(language) {
     if (!['ar','en'].includes(language) || language === lang) return;
@@ -937,5 +952,6 @@
       compareCheckpoint(saved,envelope({format:CHECKPOINT_FORMAT,...state}));
     } catch (error) {checkpointFailure(error);render();}
   });
-  readPending();readOpening();render();void connect();
+  // A new case prototype must never silently import the other case's opening.
+  readPending();if (!investigationLab) readOpening();render();void connect();
 })();

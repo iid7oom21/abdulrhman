@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#0b0a08">
+  <meta name="robots" content="noindex">
+  <title>RAVEN — مختبر التحقيق</title>
+  <link rel="icon" href="../assets/favicon.svg">
+  <link rel="stylesheet" href="../deleted-name/play/style.css?v=case-play-5">
+  <link rel="stylesheet" href="./style.css?v=lab-1">
+  <script src="./workbench.js?v=lab-1" defer></script>
+  <script src="../deleted-name/play/app.js?v=investigation-lab-1" defer></script>
+</head>
+<body data-investigation-lab>
+  <a class="skip" href="#main" data-ui="skip">انتقل إلى القضية</a>
+  <header class="top wrap">
+    <a class="brand" href="../" id="home-link"><span class="lab-monogram" aria-hidden="true">R</span><span>RAVEN</span></a>
+    <nav class="language" aria-label="لغة العرض" id="language-controls">
+      <button type="button" id="language-ar" lang="ar" aria-pressed="true">العربية</button>
+      <button type="button" id="language-en" lang="en" aria-pressed="false">English</button>
+    </nav>
+  </header>
+  <main class="wrap" id="main" tabindex="-1">
+    <div class="page-heading lab-heading">
+      <p class="eyebrow"><span data-lab="eyebrow">مساحة مراجعة خاصة</span> <bdi id="lab-case-id"></bdi></p>
+      <h1 data-lab="title">غرفة التحقيق</h1>
+      <p class="lab-lead" data-lab="lead">اقرأ المصدر. اختبر العلاقة. واترك مكانًا لما لم يُحسم.</p>
+      <p class="lab-draft" data-lab="draft">واجهة أدوات محلية للمراجعة. النصوص من خادم القضية، والحوار المعروض مكتوب.</p>
+      <a href="../deleted-name/play/" id="case-link" data-lab="back">العودة إلى القضية</a>
+    </div>
+    <section id="connection" class="panel connection" aria-labelledby="connection-title">
+      <h2 id="connection-title" tabindex="-1">جارٍ التحقق من توفر القضية</h2>
+      <p id="connection-message">تحتاج هذه التجربة إلى خادم القضية.</p>
+      <div class="buttons" id="connection-actions"></div>
+    </section>
+    <div id="case-app" hidden>
+      <p id="save-status" class="muted"></p>
+      <section id="scene-panel" class="panel" aria-labelledby="scene-title">
+        <p class="eyebrow" id="scene-label"></p>
+        <h2 id="scene-title" tabindex="-1"></h2>
+        <div id="scene-art"></div><div id="scene-body" class="prose"></div>
+      </section>
+      <section id="action-panel" class="panel" aria-labelledby="action-title">
+        <h2 id="action-title" data-ui="actions">ماذا تريد أن تفعل؟</h2><div id="actions"></div>
+      </section>
+      <section id="review-panel" class="panel review" aria-labelledby="review-title" hidden>
+        <h2 id="review-title" tabindex="-1" data-ui="review">راجع اختيارك</h2><div id="review-body"></div><div id="review-actions" class="buttons"></div>
+      </section>
+      <section id="materials-panel" class="panel" aria-labelledby="materials-title">
+        <h2 id="materials-title" data-ui="materials">المواد التي وصلت إليك</h2>
+        <div id="materials-list" class="material-list"></div>
+        <details id="comparison"><summary data-ui="comparison">مقارنة المواد</summary>
+          <div class="comparison-controls"><div><label for="compare-a" data-ui="firstMaterial">المادة الأولى</label><select id="compare-a"></select></div><div><label for="compare-b" data-ui="secondMaterial">المادة الثانية</label><select id="compare-b"></select></div></div>
+          <div id="comparison-body" class="comparison-grid"></div>
+        </details>
+      </section>
+      <section id="lab-workbench" class="panel lab-workbench" aria-labelledby="lab-board-title" hidden>
+        <div class="lab-section-heading"><div><p class="eyebrow" data-lab="toolsEyebrow">أدوات القراءة</p><h2 id="lab-board-title" data-lab="boardTitle">مساحة ربط الأدلة</h2></div><span id="lab-material-count" class="lab-count"></span></div>
+        <p class="muted" data-lab="boardScope">الروابط أسئلتك وفرضياتك الخاصة. لا تثبت تناقضًا، ولا تمنح دليلًا أو إذنًا، ولا تصل إلى الشخصيات.</p>
+        <div class="lab-tools-grid">
+          <section class="lab-tool" aria-labelledby="lab-inspect-title"><h3 id="lab-inspect-title" data-lab="inspectTitle">افحص مادة</h3>
+            <label for="lab-inspect-select" data-lab="inspectSelect">مادة وصلت إليك</label><select id="lab-inspect-select"></select>
+            <button type="button" id="lab-inspect-open" data-lab="inspectOpen">افتح عدسة القراءة</button>
+            <p class="muted" data-lab="inspectScope">تكبير النص والتباين فقط؛ لا تكشف العدسة معلومات مخفية.</p>
+          </section>
+          <section class="lab-tool" aria-labelledby="lab-hint-title"><h3 id="lab-hint-title" data-lab="hintTitle">تحليل RAVEN</h3>
+            <p class="muted" data-lab="hintScope">إرشاد مكتوب من الخيارات المتاحة الآن، بلا توليد حي أو كشف للحل.</p>
+            <button type="button" id="lab-hint-button" data-lab="hintButton">أرني نقطة متابعة</button><p id="lab-hint-output" role="status" aria-live="polite"></p>
+          </section>
+        </div>
+        <form id="lab-link-form">
+          <div class="lab-pair"><div><label for="lab-link-a" data-lab="first">المصدر الأول</label><select id="lab-link-a" required></select></div><span class="lab-join" aria-hidden="true">↔</span><div><label for="lab-link-b" data-lab="second">المصدر الثاني</label><select id="lab-link-b" required></select></div></div>
+          <label for="lab-link-kind" data-lab="kind">نوع الرابط الذي تكتبه</label><select id="lab-link-kind"><option value="question" data-lab="question">سؤال مفتوح</option><option value="hypothesis" data-lab="hypothesis">فرضية</option><option value="observation" data-lab="observation">ملاحظة</option></select>
+          <label for="lab-link-note" data-lab="note">ما العلاقة التي تريد اختبارها؟</label><textarea id="lab-link-note" rows="3" maxlength="800" required></textarea>
+          <div class="buttons"><button type="submit" id="lab-link-add" class="primary" data-lab="add">أضف رابطًا خاصًا</button><button type="button" id="lab-board-export" data-lab="export">نزّل لوحتي</button><button type="button" id="lab-board-reload" data-lab="reload" hidden>أعد قراءة اللوحة المحفوظة</button></div>
+        </form>
+        <p id="lab-board-status" role="status" aria-live="polite" class="muted"></p>
+        <ol id="lab-links" class="lab-links"></ol>
+      </section>
+      <details id="notebook" class="panel"><summary data-ui="notebook">دفتر خاص</summary>
+        <p class="muted" data-ui="notebookScope">ملاحظات خاصة بجلسة القضية على الخادم. لا تصل إلى الشخصيات تلقائيًا. النص الذي لم تؤكده يبقى في هذه الصفحة فقط.</p>
+        <div id="notebook-actions"></div>
+        <div class="buttons"><button type="button" id="notes-download" data-ui="notesDownload">تنزيل ملاحظاتي</button></div>
+        <p data-ui="notesDownloadScope" class="muted">التنزيل يشمل الملاحظات المؤكدة فقط، ولا يشمل نصًا ما زلت تكتبه.</p>
+        <ol id="notes-list"></ol>
+      </details>
+      <section id="permissions-panel" class="panel" aria-labelledby="permissions-title" hidden><h2 id="permissions-title" data-ui="permissions">الأذونات ونطاق المشاركة</h2><div id="permissions-body"></div></section>
+      <section id="timeline-panel" class="panel" aria-labelledby="timeline-title" hidden><h2 id="timeline-title" data-ui="timeline">الخط الزمني</h2><div id="timeline-body"></div></section>
+      <section id="reports-panel" class="panel" aria-labelledby="reports-title" hidden><h2 id="reports-title" data-ui="reports">التقرير ومصادره</h2><div id="reports-body"></div></section>
+      <section id="receipts-panel" class="panel" aria-labelledby="receipts-title" hidden><h2 id="receipts-title" data-ui="receipts">إيصالات داخل القصة</h2><p data-ui="receiptScope" class="muted">الإيصال القصصي يصف الاستلام داخل القصة؛ لا يعني إرسالًا إلى جهة حقيقية أو اعتماد صحة التقرير.</p><div id="receipts-body"></div></section>
+      <div class="buttons page-tools"><button type="button" id="state-refresh" data-ui="refresh">تحديث حالة القضية</button><button type="button" id="case-export" data-ui="export">تنزيل سجل القضية</button></div>
+    </div>
+    <p id="announcement" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></p>
+    <noscript><p>يلزم تشغيل JavaScript للاتصال بخادم القضية. الافتتاح المكتوب متاح في صفحة القضية.</p></noscript>
+    <dialog id="lab-inspector" aria-labelledby="lab-inspector-title" aria-describedby="lab-inspector-scope">
+      <div class="lab-dialog-header"><h2 id="lab-inspector-title"></h2><button type="button" id="lab-inspector-close" data-lab="close">إغلاق</button></div>
+      <p id="lab-inspector-scope" class="muted" data-lab="inspectScope">تكبير النص والتباين فقط؛ لا تكشف العدسة معلومات مخفية.</p>
+      <div class="buttons lab-reading-controls"><label for="lab-zoom" data-lab="zoom">تكبير القراءة</label><input id="lab-zoom" type="range" min="100" max="180" step="20" value="100"><output id="lab-zoom-value" for="lab-zoom">100%</output><button type="button" id="lab-scan" aria-pressed="false" data-lab="scan">زيادة التباين</button></div>
+      <div id="lab-inspector-body" class="lab-inspector-body"></div><p class="lab-source-label" data-lab="source">المصدر</p><p id="lab-inspector-source"></p>
+    </dialog>
+  </main>
+</body>
+</html>
