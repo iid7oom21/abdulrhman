@@ -12,6 +12,10 @@ const PENDING_KEY = 'raven_case_pending_operation_v1';
 const OPENING_KEY = 'raven.case.opening.v1';
 const FORBIDDEN = 'FORBIDDEN_PRIVATE_FIXTURE_SENTINEL';
 const VERSION = 'fictional-browser-fixture-v1';
+const SCENE_ART = '/raven/deleted-name/assets/scenes/test-safe-scene.webp';
+const MATERIAL_ART = '/raven/deleted-name/assets/characters/test-safe-material.webp';
+// A synthetic single-pixel PNG, not a story illustration or an author asset.
+const ART_PIXEL = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a1ioAAAAASUVORK5CYII=', 'base64');
 const OPENING = { version: 'paper-opening-2026-11-05-r2', choice: 'precise', recipient: 'jonas' };
 const localized = (en, ar) => ({ en, ar });
 const clone = value => JSON.parse(JSON.stringify(value));
@@ -20,7 +24,7 @@ const materialOptions = [
   { value: 'fixture-map', label: localized('Fixture map', 'خريطة الاختبار') },
 ];
 
-function projection({ notes = true, revision = 4, receiptPreview = false, receiptBundles = false } = {}) {
+function projection({ notes = true, revision = 4, receiptPreview = false, receiptBundles = false, artwork = false } = {}) {
   const state = {
     caseId: 'fictional-browser-fixture', contentVersion: VERSION, revision,
     saveStatus: 'confirmed', persistence: 'disk-file',
@@ -54,6 +58,12 @@ function projection({ notes = true, revision = 4, receiptPreview = false, receip
     notes: [], captures: {}, shares: [], receipts: [], opening: null,
     forbiddenSentinel: FORBIDDEN,
   };
+  if (artwork) {
+    state.scene.image = SCENE_ART;
+    state.scene.imageRow = 2;
+    state.materials[0].image = MATERIAL_ART;
+    state.materials[0].imageRow = 1;
+  }
   if (receiptPreview || receiptBundles) {
     const capture = {
       actionId: 'fixture-earlier-capture', revision: 2,
@@ -113,6 +123,7 @@ function fixture(options = {}) {
     state: projection(options), requests: [], mutations: 0, seen: new Map(),
     failures: [...(options.failures || [])], started: !options.requireStart,
     holdState: null, heldState: null, holdAction: false, heldAction: null,
+    artRequests: [], artModes: new Map([[SCENE_ART, 'fail'], [MATERIAL_ART, 'fail']]), heldArt: [],
   };
   const json = (res, status, body) => {
     res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
@@ -140,6 +151,18 @@ function fixture(options = {}) {
   }
   api.server = http.createServer(async (req, res) => {
     const pathname = new URL(req.url, 'http://fixture.local').pathname;
+    if (api.artModes.has(pathname)) {
+      api.artRequests.push(req.url);
+      const sendArt = mode => {
+        if (res.destroyed || res.writableEnded) return;
+        res.writeHead(mode === 'success' ? 200 : 503, { 'Content-Type': mode === 'success' ? 'image/png' : 'text/plain', 'Cache-Control': 'no-store' });
+        res.end(mode === 'success' ? ART_PIXEL : 'Synthetic image unavailable');
+      };
+      const mode = api.artModes.get(pathname);
+      if (mode === 'hold') api.heldArt.push({ pathname, url: req.url, release: (result = 'success') => sendArt(result) });
+      else sendArt(mode);
+      return;
+    }
     if (pathname.startsWith('/api/')) {
       let raw = '';
       for await (const chunk of req) raw += chunk;
@@ -276,11 +299,12 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
   async function check(options, run) {
     const api = fixture(options);
     await new Promise(resolve => api.server.listen(0, '127.0.0.1', resolve));
-    const context = await browser.newContext({ viewport: { width: 320, height: 720 }, acceptDownloads: true });
+    const context = await browser.newContext({ viewport: { width: options.width || 320, height: 720 }, acceptDownloads: true });
     const page = await context.newPage();
     page.setDefaultTimeout(6000);
     const pageErrors = [];
     page.on('pageerror', error => pageErrors.push(error.message));
+    if (options.controlledClock) await page.clock.install();
     await page.addInitScript(({ opening, openingRaw }) => {
       if (localStorage.getItem('fixture_unrelated_preference') === null) localStorage.setItem('fixture_unrelated_preference', 'keep-local');
       if (sessionStorage.getItem('fixture_unrelated_session') === null) sessionStorage.setItem('fixture_unrelated_session', 'keep-session');
@@ -301,6 +325,162 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
       await new Promise(resolve => api.server.close(resolve));
     }
   }
+
+  await t.test('failed scene artwork keeps reading and actions available, with explicit recovery', () => check({ artwork: true }, async (page, api) => {
+    await ready(page);
+    const scene = page.locator('#scene-art .case-art');
+    await scene.locator('.case-art-retry').waitFor({ state: 'visible' });
+    assert.equal(await scene.locator('.case-art-image').isVisible(), false);
+    assert.match(await scene.locator('.case-art-status[role="status"]').innerText(), /صورة/);
+    assert.equal(await page.locator('form[data-action-id="fixture-report"]').isVisible(), true);
+    assert.equal(api.artRequests.filter(url => url.startsWith(SCENE_ART)).length, 1);
+    assert.equal(actionRequests(api).length, 0);
+  }));
+  const artCount = (api, image) => api.artRequests.filter(url => url.split('?')[0] === image).length;
+  async function restoredArt(figure, row) {
+    await eventually(() => figure.locator('img').evaluate(img => img.complete && img.naturalWidth > 0), 'the requested illustration did not decode');
+    assert.equal(await figure.locator('.case-art-image').isVisible(), true, 'a successful retry restores the frame');
+    assert.equal(await figure.locator('.case-art-image').evaluate(frame => frame.style.getPropertyValue('--image-top')), `${row * -100}%`, 'the original atlas crop remains intact');
+    assert.equal(await figure.locator('.case-art-image').evaluate(frame => frame.classList.contains('case-art-atlas')), true);
+  }
+  function unchangedByArt(api, before) {
+    assert.deepEqual(api.state, before, 'image retries do not change the projected scene, revision, captures or receipts');
+    assert.equal(actionRequests(api).length, 0, 'illustration recovery never submits an engine action');
+    assert.equal(startRequests(api).length, 0, 'illustration recovery never starts another session');
+    assert.equal(api.mutations, 0);
+  }
+
+  for (const width of [320, 390]) for (const locale of ['ar', 'en']) {
+    await t.test(`artwork recovery at ${width}px ${locale} retains text, crop, keyboard focus and unsent draft`, () => check({ artwork: true, width }, async (page, api) => {
+      await ready(page);
+      const scene = page.locator('#scene-art .case-art');
+      await scene.locator('.case-art-retry').waitFor({ state: 'visible' });
+      if (locale === 'en') await english(page);
+      const material = page.locator('#material-fixture-letter');
+      await material.locator('summary').click();
+      await material.locator('.case-art').scrollIntoViewIfNeeded();
+      await material.locator('.case-art-retry').waitFor({ state: 'visible' });
+      for (const figure of [scene, material.locator('.case-art')]) {
+        assert.equal(await figure.locator('.case-art-image').isVisible(), false);
+        assert.match(await figure.locator('.case-art-status[role="status"]').innerText(), locale === 'ar' ? /صورة/ : /illustration|image/i);
+        const bounds = await figure.locator('.case-art-retry').boundingBox();
+        assert.ok(bounds.height >= 44, 'retry remains a touch-size control');
+      }
+      assert.match(await material.locator('.material-text').innerText(), locale === 'ar' ? /خطاب خيالي/ : /Invented letter/);
+      assert.match(await page.locator('#scene-body').innerText(), locale === 'ar' ? /صفحة خيالية/ : /invented page/);
+      assert.equal(artCount(api, SCENE_ART), 1, 'language changes do not automatically retry failed artwork');
+      assert.equal(artCount(api, MATERIAL_ART), 1);
+      const draft = page.locator('form[data-action-id="fixture-report"] textarea');
+      await draft.fill('Unsubmitted fixture draft retained through illustration recovery.');
+      if (process.env.RAVEN_CASE_ART_OUTPUT && ((width === 320 && locale === 'ar') || (width === 390 && locale === 'en'))) {
+        fs.mkdirSync(process.env.RAVEN_CASE_ART_OUTPUT, { recursive: true, mode: 0o700 });
+        await page.screenshot({ path: path.join(process.env.RAVEN_CASE_ART_OUTPUT, `failed-art-${width}-${locale}.png`), fullPage: true });
+      }
+      const before = clone(api.state);
+      for (const [figure, image, row] of [[scene, SCENE_ART, 2], [material.locator('.case-art'), MATERIAL_ART, 1]]) {
+        api.artModes.set(image, 'success');
+        const retry = figure.locator('.case-art-retry');
+        await retry.focus();
+        await page.keyboard.press('Enter');
+        await restoredArt(figure, row);
+        assert.equal(await figure.locator('figcaption').evaluate(caption => document.activeElement === caption && caption.getClientRects().length > 0), true, 'successful keyboard retry moves focus to its visible caption');
+        assert.equal(artCount(api, image), 2, 'one explicit retry creates one image request');
+      }
+      await page.locator(locale === 'ar' ? '#language-en' : '#language-ar').evaluate(button => button.click());
+      await restoredArt(scene, 2);
+      await restoredArt(material.locator('.case-art'), 1);
+      assert.equal(await material.locator('.case-art figcaption').evaluate(caption => document.activeElement === caption), true, 'a language render preserves focused recovery captions when the language control did not take focus');
+      assert.equal(artCount(api, SCENE_ART), 2, 'changing language retains the loaded scene image');
+      assert.equal(artCount(api, MATERIAL_ART), 2, 'changing language retains the loaded material image');
+      assert.equal(await draft.inputValue(), 'Unsubmitted fixture draft retained through illustration recovery.');
+      await noOverflow(page, width);
+      unchangedByArt(api, before);
+    }));
+  }
+
+  await t.test('pending artwork retry has a bounded deadline, guards repeat clicks and ignores superseded responses', () => check({ artwork: true, controlledClock: true }, async (page, api) => {
+    await ready(page);
+    const scene = page.locator('#scene-art .case-art'), retry = scene.locator('.case-art-retry');
+    await retry.waitFor({ state: 'visible' });
+    const before = clone(api.state);
+    api.artModes.set(SCENE_ART, 'hold');
+    await retry.focus();
+    await retry.evaluate(button => { button.click(); button.click(); button.click(); });
+    await eventually(() => api.heldArt.length === 1, 'one held image request was not received');
+    assert.equal(await retry.getAttribute('aria-disabled'), 'true');
+    assert.equal(artCount(api, SCENE_ART), 2, 'repeated clicks cannot issue concurrent retries');
+    await page.clock.fastForward(20001);
+    await eventually(async () => await retry.getAttribute('aria-disabled') !== 'true', 'the retry deadline did not restore an available retry');
+    assert.match(await scene.locator('.case-art-status[role="status"]').innerText(), /وقتًا|وقتاً|أطول/);
+    assert.equal(await scene.locator('.case-art-image').isVisible(), false);
+    await page.clock.fastForward(60000);
+    assert.equal(artCount(api, SCENE_ART), 2, 'timeout never schedules an automatic retry');
+    api.artModes.set(SCENE_ART, 'fail');
+    await retry.evaluate(button => button.click());
+    await eventually(async () => artCount(api, SCENE_ART) === 3 && await retry.getAttribute('aria-disabled') !== 'true', 'a new explicit attempt did not finish');
+    const draft = page.locator('form[data-action-id="fixture-report"] textarea');
+    await draft.fill('Draft survives a late, superseded illustration.');
+    await draft.focus();
+    api.heldArt[0].release('success');
+    await page.waitForTimeout(100);
+    assert.equal(await scene.locator('.case-art-image').isVisible(), false, 'success from the superseded attempt cannot restore the failed current attempt');
+    assert.equal(await draft.evaluate(input => input === document.activeElement), true, 'a superseded result cannot steal focus');
+    api.artModes.set(SCENE_ART, 'success');
+    await retry.evaluate(button => button.click());
+    await restoredArt(scene, 2);
+    assert.equal(await draft.evaluate(input => input === document.activeElement), true, 'a programmatic retry does not move focus from another control');
+    assert.equal(await draft.inputValue(), 'Draft survives a late, superseded illustration.');
+    assert.equal(artCount(api, SCENE_ART), 4);
+    unchangedByArt(api, before);
+  }));
+
+  await t.test('language changes keep an in-flight image request and removed artwork cannot return on a stale response', () => check({ artwork: true }, async (page, api) => {
+    await ready(page);
+    const scene = page.locator('#scene-art .case-art'), retry = scene.locator('.case-art-retry');
+    await retry.waitFor({ state: 'visible' });
+    api.artModes.set(SCENE_ART, 'hold');
+    await retry.click();
+    await eventually(() => api.heldArt.length === 1, 'pending retry was not observed');
+    await english(page);
+    assert.equal(await retry.getAttribute('aria-disabled'), 'true');
+    assert.equal(artCount(api, SCENE_ART), 2, 'a language render reuses the in-flight image');
+    assert.equal(await page.locator('#language-en').evaluate(button => button === document.activeElement), true);
+    delete api.state.scene.image;
+    const before = clone(api.state);
+    await page.locator('#state-refresh').click();
+    await scene.waitFor({ state: 'detached' });
+    const draft = page.locator('form[data-action-id="fixture-report"] textarea');
+    await draft.fill('A newer view is still usable.');
+    await draft.focus();
+    api.heldArt[0].release('success');
+    await page.waitForTimeout(100);
+    assert.equal(await page.locator('#scene-art .case-art').count(), 0, 'removed artwork is not resurrected by an old load');
+    assert.equal(await draft.evaluate(input => input === document.activeElement), true);
+    assert.equal(await draft.inputValue(), 'A newer view is still usable.');
+    assert.equal(artCount(api, SCENE_ART), 2);
+    unchangedByArt(api, before);
+  }));
+
+  await t.test('unsafe or unsupported artwork URLs never become images or network requests', () => check({}, async (page, api) => {
+    await ready(page);
+    const unsafe = ['https://invalid.example/author-secret.webp', 'data:image/svg+xml,<svg onload="alert(1)"></svg>', '/raven/deleted-name/assets/scenes/../../secret.webp', '/raven/deleted-name/assets/scenes/bad.svg'];
+    const foreignRequests = [];
+    await page.route('https://invalid.example/**', route => { foreignRequests.push(route.request().url()); return route.abort(); });
+    for (const url of unsafe) {
+      api.state.scene.image = url;
+      api.state.materials[0].image = url;
+      const count = api.requests.filter(request => request.pathname === '/api/case/state').length;
+      await page.locator('#state-refresh').click();
+      await eventually(() => api.requests.filter(request => request.pathname === '/api/case/state').length > count, 'refresh did not request the updated fixture');
+      await page.waitForFunction(() => !document.querySelector('#state-refresh').disabled);
+      assert.equal(await page.locator('.case-art').count(), 0, 'the URL allowlist excludes ' + url);
+    }
+    assert.deepEqual(foreignRequests, []);
+    assert.equal(api.artRequests.length, 0);
+    assert.equal(actionRequests(api).length, 0);
+    assert.equal(api.state.revision, 4);
+  }));
+  if (process.env.RAVEN_CASE_ART_ONLY === '1') return;
 
   for (const unavailable of ['404', 'disabled']) {
     await t.test(`static availability ${unavailable} has no simulated start or completion`, () => check({ unavailable }, async (page, api) => {

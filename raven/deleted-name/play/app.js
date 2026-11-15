@@ -48,6 +48,7 @@
       exportScope:'الملف سجل للقراءة والاحتفاظ بنسخة، ولا يتيح استيراد الجلسة هنا.',
       noInput:'لا توجد قيم إضافية لهذا الاختيار.',yes:'نعم',no:'لا',
       sharedEntries:'مشاركات مسجلة',sceneIllustration:'تصوّر بصري للمشهد؛ المرجع في النص والمواد المعروضة.',materialIllustration:'تصوّر بصري؛ المرجع في النص والمواد المعروضة.',
+      artFailed:'تعذر تحميل الصورة التوضيحية. يمكنك متابعة النص والاختيارات أو إعادة تحميل الصورة.',artRetry:'أعد تحميل الصورة',artLoading:'جارٍ تحميل الصورة…',artTimeout:'استغرق تحميل الصورة وقتًا أطول من المتوقع. يمكنك إعادة المحاولة أو متابعة القراءة.',
       names:{noah:'نوح',elena:'إيلينا',claire:'كلير',jonas:'يوناس',mateo:'ماتيو',matteo:'ماتيو',victor:'فيكتور',assessment_review:'الجهة التي أصدرت التقييم',incident_followup:'الجهة المتابعة لواقعة المكتبة'}
     },
     en: {
@@ -87,6 +88,7 @@
       exportScope:'This file is a reading and backup copy. Importing a session is not supported here.',
       noInput:'This choice has no additional fields.',yes:'Yes',no:'No',
       sharedEntries:'recorded shares',sceneIllustration:'Scene illustration; refer to the text and available materials.',materialIllustration:'Illustration; refer to the text and available materials.',
+      artFailed:'The illustration could not load. You can continue with the text and choices or retry the image.',artRetry:'Retry image',artLoading:'Loading image…',artTimeout:'The image is taking longer than expected. You can retry or continue reading.',
       names:{noah:'Noah',elena:'Elena',claire:'Claire',jonas:'Jonas',mateo:'Mateo',matteo:'Mateo',victor:'Victor',assessment_review:'The organization that issued the assessment',incident_followup:'The organization following up the library incident'}
     }
   };
@@ -98,6 +100,8 @@
   const checkpointKey = () => CHECKPOINT_PREFIX + encodeURIComponent(config.caseId);
   const checkpointLock = () => 'raven-case-save:' + config.caseId;
   const drafts = new Map();
+  const artworkRecords = new Map();
+  let usedArtwork = new Set(), artworkSequence = 0;
   const bundleSelections = new Map();
   const openMaterials = new Set();
   const openShares = new Set(),captureAnchors = new Map();
@@ -141,12 +145,72 @@
   };
   function artwork(item, isScene = false) {
     const src = safeImage(item?.image);if (!src) return null;
+    const row = Number.isInteger(item.imageRow) && item.imageRow >= 0 && item.imageRow <= 2 ? item.imageRow : null;
+    const key = JSON.stringify([state.caseId,state.contentVersion,state.checkpointInfo?.sessionTag || null,isScene,item.id,src,row]);
+    usedArtwork.add(key);
+    let record = artworkRecords.get(key);
+    if (record) {record.title = localized(item.title);record.update();return record.figure;}
     const figure = element('figure', undefined, 'case-art'),frame = element('div',undefined,'case-art-image');
-    const image = element('img');image.src = src;image.alt = '';image.loading = 'lazy';image.decoding = 'async';
-    if (Number.isInteger(item.imageRow) && item.imageRow >= 0 && item.imageRow <= 2) {
-      frame.classList.add('case-art-atlas');frame.style.setProperty('--image-top', String(item.imageRow * -100) + '%');
+    const image = element('img');image.alt = '';image.loading = 'lazy';image.decoding = 'async';
+    if (row !== null) {
+      frame.classList.add('case-art-atlas');frame.style.setProperty('--image-top', String(row * -100) + '%');
     }
-    frame.append(image);figure.append(frame,element('figcaption',tr(isScene ? 'sceneIllustration' : 'materialIllustration'),'muted'));return figure;
+    const caption = element('figcaption',undefined,'muted');caption.tabIndex = -1;
+    const status = element('p',undefined,'case-art-status');status.id = 'case-art-status-' + (++artworkSequence);
+    caption.id = 'case-art-caption-' + artworkSequence;
+    status.setAttribute('role','status');status.setAttribute('aria-live','polite');status.setAttribute('aria-atomic','true');
+    const retry = button('case-art-retry-' + artworkSequence,'',() => {
+      if (record.disposed || !figure.isConnected || !['failed','timeout'].includes(record.phase)) return;
+      clearTimeout(record.timer);
+      const attempt = ++record.attempt;
+      record.phase = 'retrying';record.update();
+      record.timer = setTimeout(() => {
+        if (record.disposed || record.attempt !== attempt || record.phase !== 'retrying') return;
+        record.phase = 'timeout';record.update();
+      },20000);
+      // Validate only the original local path. Retry parameters never come from
+      // story data, and an explicit retry must not wait for lazy-load visibility.
+      image.loading = 'eager';image.src = src + '?raven-art-retry=' + attempt;
+    });
+    retry.className = 'case-art-retry';retry.setAttribute('aria-describedby',status.id);
+    record = {
+      figure, title:localized(item.title), phase:'pending', attempt:0, timer:null, disposed:false,
+      update() {
+        const unavailable = ['failed','retrying','timeout'].includes(record.phase);
+        frame.hidden = unavailable;
+        caption.textContent = tr(isScene ? 'sceneIllustration' : 'materialIllustration');
+        const message = record.phase === 'retrying' ? 'artLoading' : record.phase === 'timeout' ? 'artTimeout' : 'artFailed';
+        status.hidden = !unavailable;status.textContent = unavailable ? tr(message) : '';
+        retry.hidden = !unavailable;retry.textContent = tr(record.phase === 'retrying' ? 'artLoading' : 'artRetry');
+        retry.setAttribute('aria-label',tr('artRetry') + ': ' + record.title);
+        retry.setAttribute('aria-disabled',String(record.phase === 'retrying'));
+      },
+      dispose() {
+        record.disposed = true;clearTimeout(record.timer);
+        image.removeEventListener('error',failed);image.removeEventListener('load',loaded);
+        image.removeAttribute('src');
+      }
+    };
+    const failed = () => {
+      if (record.disposed) return;
+      clearTimeout(record.timer);record.phase = 'failed';record.update();
+    };
+    const loaded = () => {
+      if (record.disposed || !image.naturalWidth) return;
+      clearTimeout(record.timer);
+      const restoreFocus = document.activeElement === retry;
+      record.phase = 'loaded';record.update();
+      if (restoreFocus && figure.isConnected && caption.getClientRects().length) caption.focus({preventScroll:true});
+    };
+    image.addEventListener('error',failed);image.addEventListener('load',loaded);
+    frame.append(image);figure.append(frame,caption,status,retry);
+    artworkRecords.set(key,record);record.update();image.src = src;
+    return figure;
+  }
+  function pruneArtwork() {
+    // Retain only artwork in the current earned projection. This in-page cache
+    // prevents language/status renders from silently retrying failed images.
+    for (const [key,record] of artworkRecords) if (!usedArtwork.has(key)) {record.dispose();artworkRecords.delete(key);}
   }
   function pair(list, label, value) {
     const group = element('div');group.append(element('dt',label));
@@ -890,13 +954,15 @@
     } : {caseId:null,locale:lang}}));
   }
   function render() {
+    const focusedArtwork = document.activeElement?.matches('.case-art-retry,.case-art figcaption') ? document.activeElement.id : null;
+    usedArtwork = new Set();
     document.documentElement.lang = lang;document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';document.title = 'RAVEN — ' + tr('title');
     for (const node of document.querySelectorAll('[data-ui]')) node.textContent = tr(browserMode() && node.dataset.ui === 'notebookScope' ? 'browserNotebookScope' : node.dataset.ui);
     $('language-controls').setAttribute('aria-label',tr('language'));
     for (const language of ['ar','en']) $('language-' + language).setAttribute('aria-pressed',String(lang === language));
     $('home-link').href = '../../' + (lang === 'en' ? '?lang=en' : '');$('case-link').href = '../' + (lang === 'en' ? '?lang=en' : '');
     if ($('workbench-link')) $('workbench-link').href = '../../investigation-lab/' + (lang === 'en' ? '?lang=en' : '');
-    $('case-app').hidden = !state;renderBanner();if (!state) {publishLabView();return;}
+    $('case-app').hidden = !state;renderBanner();if (!state) {pruneArtwork();publishLabView();return;}
     $('save-status').textContent = browserMode() ? tr(checkpointSaved && !checkpointIssue ? 'browserSaved' : 'browserUnsaved') : (state.readOnly && !state.contentVersionMismatch) || state.storageUnavailable || state.saveStatus === 'unconfirmed' ? tr('saveUnconfirmed') : state.persistence === 'disk-file' && state.saveStatus === 'confirmed' ? tr('confirmed') : state.persistence === 'process-memory' && state.saveStatus === 'memory' ? tr('memory') : tr('saveUnconfirmed');
     displayText($('scene-title'),localized(state.scene.title));$('scene-label').textContent = '';
     const prose = $('scene-body');prose.replaceChildren();if (localized(state.scene.body)) prose.append(element('p',localized(state.scene.body)));
@@ -912,6 +978,8 @@
     if (!state.actions.some(action => action.id !== 'case.note')) $('actions').append(element('p',tr('noActions'),'muted'));
     if (!state.actions.some(action => action.id === 'case.note')) $('notebook-actions').append(element('p',tr('noteUnavailable'),'muted'));
     renderMaterials();renderNotes();renderShares();renderTimeline();renderCaptures();renderReceipts();renderReview();setBusy(busy);
+    pruneArtwork();
+    if (focusedArtwork && $(focusedArtwork) && !$(focusedArtwork).hidden) $(focusedArtwork).focus({preventScroll:true});
     publishLabView();
   }
   function changeLanguage(language) {
