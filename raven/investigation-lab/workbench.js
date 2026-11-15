@@ -62,7 +62,12 @@
     $('lab-link-add').disabled=locked || !view?.sessionId || view.materials.length<2;
     for (const id of ['lab-link-a','lab-link-b','lab-link-kind','lab-link-note','lab-board-export']) $(id).disabled=!view?.sessionId;
     $('lab-board-reload').hidden=!key || !locked;
-    setStatus();if(focused?.startsWith('lab-remove-'))$(focused)?.focus({preventScroll:true});
+    setStatus();
+    if(focused?.startsWith('lab-remove-')) {
+      const replacement=$(focused),recovery=$('lab-board-reload');
+      if(replacement && !replacement.disabled) replacement.focus({preventScroll:true});
+      else if(locked && !recovery.hidden) recovery.focus({preventScroll:true});
+    }
   }
   function fillSelect(id) {
     const el=$(id),value=el.value;
@@ -101,7 +106,15 @@
     if(links.length>=24){setStatus('limit');return;}
     links.push({id:crypto.randomUUID(),a,b,kind,note});saveBoard();$('lab-link-note').value='';renderLinks();
   });
-  $('lab-board-reload').addEventListener('click',()=>{if(!view)return;readBoard();renderLinks();});
+  $('lab-board-reload').addEventListener('click',()=>{
+    if(!view)return;
+    const recovery=$('lab-board-reload'),wasFocused=document.activeElement===recovery;
+    readBoard();renderLinks();
+    if(wasFocused && recovery.hidden) {
+      const next=$('lab-links').querySelector('button:not(:disabled)') || (!$('lab-link-note').disabled ? $('lab-link-note') : null);
+      next?.focus({preventScroll:true});
+    }
+  });
   $('lab-board-export').addEventListener('click',()=>{
     if(!view?.sessionId)return;const blob=new Blob([JSON.stringify({...boardObject(),scope:'private-player-hypotheses-not-evidence'},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='raven-private-board.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
   });
