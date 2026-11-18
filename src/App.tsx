@@ -229,10 +229,11 @@ console.log(result);`;
             {/* Prompt & Controls Panel */}
             <div className="order-2 self-start lg:col-span-4 space-y-5 bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5">
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
+                <label htmlFor="studio-prompt" className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
                   {isAr ? 'وصف المشهد السينمائي (Prompt)' : 'Cinematic Scene Prompt'}
                 </label>
                 <textarea
+                  id="studio-prompt"
                   rows={4}
                   value={promptText}
                   onChange={(e) => setPromptText(e.target.value)}
@@ -268,11 +269,12 @@ console.log(result);`;
               {/* Camera & Format Settings */}
               <div className="grid grid-cols-2 gap-3 pt-2 border-t border-zinc-800/80">
                 <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5 flex items-center gap-1">
+                  <label htmlFor="studio-camera-motion" className="block text-xs text-zinc-400 mb-1.5 flex items-center gap-1">
                     <Camera className="w-3.5 h-3.5 text-indigo-400" />
                     <span>{isAr ? 'حركة الكاميرا' : 'Camera Motion'}</span>
                   </label>
                   <select
+                    id="studio-camera-motion"
                     value={cameraMotion}
                     onChange={(e) => setCameraMotion(e.target.value as CameraMotion)}
                     className="w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-xs text-zinc-200"
@@ -286,11 +288,12 @@ console.log(result);`;
                 </div>
 
                 <div>
-                  <label className="block text-xs text-zinc-400 mb-1.5 flex items-center gap-1">
+                  <label htmlFor="studio-duration" className="block text-xs text-zinc-400 mb-1.5 flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5 text-indigo-400" />
                     <span>{isAr ? 'المدة (ثواني)' : 'Duration (sec)'}</span>
                   </label>
                   <select
+                    id="studio-duration"
                     value={duration}
                     onChange={(e) => setDuration(Number(e.target.value))}
                     className="w-full rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-xs text-zinc-200"
@@ -338,6 +341,7 @@ console.log(result);`;
                   </div>
                   <input
                     type="range"
+                    aria-label={isAr ? 'سرعة الحركة' : 'Motion Speed'}
                     min={1}
                     max={10}
                     value={cameraSpeed}
@@ -392,7 +396,7 @@ console.log(result);`;
                         <div className="text-xs font-semibold text-zinc-200 truncate">
                           {!isAr && proj.titleEn ? proj.titleEn : proj.title}
                         </div>
-                        <div className="text-[11px] text-zinc-500 font-mono mt-0.5">
+                        <div className="text-[11px] text-zinc-400 font-mono mt-0.5">
                           {proj.status === 'idle' ? (isAr ? 'مسودة' : 'Draft') : 'RAVEN'} · {proj.duration}s
                         </div>
                       </div>
@@ -424,6 +428,7 @@ console.log(result);`;
                 <input
                   type="text"
                   value={newSceneTitle}
+                  aria-label={isAr ? 'عنوان المشهد' : 'Scene title'}
                   onChange={(e) => setNewSceneTitle(e.target.value)}
                   placeholder={isAr ? 'عنوان المشهد...' : 'Scene title...'}
                   className="rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-xs text-zinc-100"
@@ -431,6 +436,7 @@ console.log(result);`;
                 <input
                   type="text"
                   value={newScenePrompt}
+                  aria-label={isAr ? 'وصف اللقطة' : 'Shot prompt'}
                   onChange={(e) => setNewScenePrompt(e.target.value)}
                   placeholder={isAr ? 'وصف اللقطة...' : 'Shot prompt...'}
                   className="rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-xs text-zinc-100 min-w-56"

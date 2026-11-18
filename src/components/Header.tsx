@@ -101,10 +101,11 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="flex max-w-full flex-wrap justify-center items-center gap-2.5">
           {/* Active Model Selector */}
           <div className="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1">
-            <span className="text-[11px] text-zinc-500 uppercase tracking-wider font-semibold">
+            <span aria-hidden="true" className="text-[11px] text-zinc-400 uppercase tracking-wider font-semibold">
               {isAr ? 'النموذج:' : 'Model:'}
             </span>
             <select
+              aria-label={isAr ? 'النموذج' : 'Model'}
               value={activeModel}
               onChange={(e) => setActiveModel(e.target.value as ModelType)}
               className="bg-transparent text-xs text-zinc-200 font-medium focus:outline-none cursor-pointer"
