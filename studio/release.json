@@ -1,7 +1,8 @@
 {
-  "release": "20261107",
+  "release": "20261118-a11y",
   "sourceCommit": "ea0987178721ddf0dd00ad96fc3d3566d3a0f5b9",
   "base": "/abdulrhman/studio/",
   "homepage": "/abdulrhman/raven/#studio",
-  "storyBase": "c163d5a4f6672b1e7156cec336c0c30c5a7c6620"
+  "storyBase": "c163d5a4f6672b1e7156cec336c0c30c5a7c6620",
+  "sourcePatch": "claude/alo-pd6toj@24c5e9b: form-control labels only, applied to sourceCommit; build otherwise byte-identical"
 }
