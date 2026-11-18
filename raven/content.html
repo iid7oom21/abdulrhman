@@ -32,6 +32,8 @@ window.ravenIntro={complete:true,finish:function(){}};
 <style id="raven-critical">html{background:#07090b}body{margin:0;background:#07090b;color:#eee9df}html.rvn-intro-pending,html.rvn-intro-pending body{overflow:hidden!important;background:#000!important}html.rvn-intro-pending body>*:not(#rvnStudioIntro){visibility:hidden!important}.rvnStudioIntro[hidden]{display:none!important}.refHeroBg .rvnMusicToggle{position:absolute;left:12px;bottom:12px;z-index:3;display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;max-width:calc(100% - 80px);padding:8px 12px;border:1px solid rgba(197,154,97,.4);border-radius:2px;background:rgba(5,7,9,.9);color:#dec9a9;font:500 12px/1.4 "IBM Plex Sans Arabic",sans-serif;cursor:pointer;touch-action:manipulation}.refHeroBg .rvnMusicToggle:focus-visible{outline:2px solid #dec9a9;outline-offset:3px}.rvnViewing .rvnMusicToggle{visibility:hidden}@media(hover:hover){.refHeroBg .rvnMusicToggle:hover{background:#161a1c;border-color:#d5b17e}}@media(min-width:651px){.refHeroBg .rvnMusicToggle{left:24px;bottom:18px}}</style>
 <link href="./assets/raven-homepage-v6.css?v=mobile-puzzle-1" rel="stylesheet"/>
 <link href="./assets/raven-home-focus.css?v=focus-2" rel="stylesheet"/>
+<link href="./assets/raven-redesign-v1.css?v=redesign-4" rel="stylesheet"/>
+<link href="./assets/raven-polish-v2.css?v=polish-2-1" rel="stylesheet"/>
 <link href="./assets/raven-media-fallback.css?v=1" rel="stylesheet"/>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="RAVEN">
@@ -169,34 +171,34 @@ window.ravenIntro={complete:true,finish:function(){}};
 <div class="rvnCaseHeading"><span class="eyebrow" data-dn-k="eyebrow">قضية تفاعلية · قيد التطوير</span><h2 id="rvnDeletedNameTitle" data-dn-k="title">RAVEN — الاسم المحذوف</h2></div>
 <div class="rvnCaseEntry">
   <div>
-    <p data-dn-k="blurb">خانة ممسوحة، ودعوة بعد العشاء، ومكتبة ما رجع منها صاحبها. اقرأ الافتتاح وجرّب اختياراته.</p>
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(135px,1fr));gap:10px;margin:14px 0;">
-      <a href="./deleted-name/" data-raven-route="./deleted-name/" data-dn-entry style="text-decoration:none;background:rgba(15,13,11,0.88);border:1px solid rgba(197,160,89,0.35);border-radius:8px;overflow:hidden;display:block;">
-        <img src="./assets/images/deleted-name/jonas.jpg" alt="يوناس" data-dn-alt="jonasName" style="width:100%;height:120px;object-fit:cover;display:block;"/>
-        <div style="padding:8px;"><strong data-dn-k="jonasName" style="color:#dec9a9;font-size:0.85rem;display:block;">يوناس</strong><span data-dn-k="jonasRole" style="color:#9e9488;font-size:0.74rem;">طالب مراجعة الوثيقة</span></div>
+    <p class="rvnCaseBlurb" data-dn-k="blurb">خانة ممسوحة، ودعوة بعد العشاء، ومكتبة ما رجع منها صاحبها. اقرأ الافتتاح وجرّب اختياراته.</p>
+    <div class="rvnCastGrid">
+      <a href="./deleted-name/" data-raven-route="./deleted-name/" data-dn-entry class="rvnCastCard">
+        <img src="./assets/images/deleted-name/jonas.jpg" alt="يوناس" data-dn-alt="jonasName"/>
+        <div class="rvnCastCopy"><strong data-dn-k="jonasName">يوناس</strong><span data-dn-k="jonasRole">طالب مراجعة الوثيقة</span></div>
       </a>
-      <a href="./deleted-name/" data-raven-route="./deleted-name/" data-dn-entry style="text-decoration:none;background:rgba(15,13,11,0.88);border:1px solid rgba(197,160,89,0.35);border-radius:8px;overflow:hidden;display:block;">
-        <img src="./assets/images/deleted-name/claire.jpg" alt="كلير" data-dn-alt="claireName" style="width:100%;height:120px;object-fit:cover;display:block;"/>
-        <div style="padding:8px;"><strong data-dn-k="claireName" style="color:#dec9a9;font-size:0.85rem;display:block;">كلير</strong><span data-dn-k="claireRole" style="color:#9e9488;font-size:0.74rem;">منسقة الدعوات والمقاعد</span></div>
+      <a href="./deleted-name/" data-raven-route="./deleted-name/" data-dn-entry class="rvnCastCard">
+        <img src="./assets/images/deleted-name/claire.jpg" alt="كلير" data-dn-alt="claireName"/>
+        <div class="rvnCastCopy"><strong data-dn-k="claireName">كلير</strong><span data-dn-k="claireRole">منسقة الدعوات والمقاعد</span></div>
       </a>
-      <a href="./deleted-name/" data-raven-route="./deleted-name/" data-dn-entry style="text-decoration:none;background:rgba(15,13,11,0.88);border:1px solid rgba(197,160,89,0.35);border-radius:8px;overflow:hidden;display:block;">
-        <img src="./assets/images/deleted-name/elena.jpg" alt="إيلينا" data-dn-alt="elenaName" style="width:100%;height:120px;object-fit:cover;display:block;"/>
-        <div style="padding:8px;"><strong data-dn-k="elenaName" style="color:#dec9a9;font-size:0.85rem;display:block;">إيلينا</strong><span data-dn-k="dinnerGuestFemale" style="color:#9e9488;font-size:0.74rem;">ضيفة على العشاء</span></div>
+      <a href="./deleted-name/" data-raven-route="./deleted-name/" data-dn-entry class="rvnCastCard">
+        <img src="./assets/images/deleted-name/elena.jpg" alt="إيلينا" data-dn-alt="elenaName"/>
+        <div class="rvnCastCopy"><strong data-dn-k="elenaName">إيلينا</strong><span data-dn-k="dinnerGuestFemale">ضيفة على العشاء</span></div>
       </a>
-      <a href="./deleted-name/" data-raven-route="./deleted-name/" data-dn-entry style="text-decoration:none;background:rgba(15,13,11,0.88);border:1px solid rgba(197,160,89,0.35);border-radius:8px;overflow:hidden;display:block;">
-        <img src="./assets/images/deleted-name/mateo.jpg" alt="ماتيو" data-dn-alt="mateoName" style="width:100%;height:120px;object-fit:cover;display:block;"/>
-        <div style="padding:8px;"><strong data-dn-k="mateoName" style="color:#dec9a9;font-size:0.85rem;display:block;">ماتيو</strong><span data-dn-k="mateoRole" style="color:#9e9488;font-size:0.74rem;">أول الواصلين للمكتبة</span></div>
+      <a href="./deleted-name/" data-raven-route="./deleted-name/" data-dn-entry class="rvnCastCard">
+        <img src="./assets/images/deleted-name/mateo.jpg" alt="ماتيو" data-dn-alt="mateoName"/>
+        <div class="rvnCastCopy"><strong data-dn-k="mateoName">ماتيو</strong><span data-dn-k="mateoRole">أول الواصلين للمكتبة</span></div>
       </a>
-      <a href="./deleted-name/" data-raven-route="./deleted-name/" data-dn-entry style="text-decoration:none;background:rgba(15,13,11,0.88);border:1px solid rgba(197,160,89,0.35);border-radius:8px;overflow:hidden;display:block;">
-        <img src="./assets/images/deleted-name/noah.jpg" alt="نوح" data-dn-alt="noahName" style="width:100%;height:120px;object-fit:cover;display:block;"/>
-        <div style="padding:8px;"><strong data-dn-k="noahName" style="color:#dec9a9;font-size:0.85rem;display:block;">نوح</strong><span data-dn-k="dinnerGuest" style="color:#9e9488;font-size:0.74rem;">ضيف على العشاء</span></div>
+      <a href="./deleted-name/" data-raven-route="./deleted-name/" data-dn-entry class="rvnCastCard">
+        <img src="./assets/images/deleted-name/noah.jpg" alt="نوح" data-dn-alt="noahName"/>
+        <div class="rvnCastCopy"><strong data-dn-k="noahName">نوح</strong><span data-dn-k="dinnerGuest">ضيف على العشاء</span></div>
       </a>
-      <a href="./deleted-name/" data-raven-route="./deleted-name/" data-dn-entry style="text-decoration:none;background:rgba(15,13,11,0.88);border:1px solid rgba(197,160,89,0.35);border-radius:8px;overflow:hidden;display:block;">
-        <img src="./assets/images/deleted-name/evidence_table.jpg" alt="تصور فني لطاولة الأوراق" data-dn-alt="tableAlt" style="width:100%;height:120px;object-fit:cover;display:block;"/>
-        <div style="padding:8px;"><strong data-dn-k="tableName" style="color:#dec9a9;font-size:0.85rem;display:block;">طاولة الصالة</strong><span data-dn-k="tableRole" style="color:#9e9488;font-size:0.74rem;">تصور فني — ليس دليلًا</span></div>
+      <a href="./deleted-name/" data-raven-route="./deleted-name/" data-dn-entry class="rvnCastCard">
+        <img src="./assets/images/deleted-name/evidence_table.jpg" alt="تصور فني لطاولة الأوراق" data-dn-alt="tableAlt"/>
+        <div class="rvnCastCopy"><strong data-dn-k="tableName">طاولة الصالة</strong><span data-dn-k="tableRole">تصور فني — ليس دليلًا</span></div>
       </a>
     </div>
-    <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:12px;">
+    <div class="rvnCaseActions">
       <a class="rvnEnterCase" id="rvnEnterDeletedName" data-dn-k="enter" href="./deleted-name/">ادخل القضية</a>
     </div>
     <p class="rvnCaseDuration" data-dn-k="illustrationNote">الصور تصورات فنية للشخصيات والأماكن؛ أدلة القضية تأتي من المواد المكتوبة.</p>
@@ -365,7 +367,7 @@ window.ravenIntro={complete:true,finish:function(){}};
 </div>
 <details class="rvnFileInfo"><summary data-rvn-v2="fileInfo">عن العمل وطريقة المشاهدة</summary><p data-rvn-v2="fileCopy">RAVEN 17 متاح هنا في ثلاث حلقات مرتبة 01 ثم 02 ثم 03. القضية التفاعلية إضافة اختيارية، وليست شرطًا للمشاهدة.</p><p><span data-rvn-v2="duration">مدة هذا الجزء</span>: <b dir="ltr" id="rvnDuration">—</b></p></details>
 <div class="rvnScreen">
-<video controls="" id="ravenEpisodePlayer" playsinline="" poster="https://cdn.websitepublisher.ai/custom/wid25762/images/raven-film-card.jpg" preload="none" src="https://res.cloudinary.com/du88n6b83/video/upload/v1789985735/raven17/episode-2.mp4"></video>
+<video controls="" id="ravenEpisodePlayer" playsinline="" poster="https://cdn.websitepublisher.ai/custom/wid25762/images/raven-film-card.jpg" preload="none" src="https://res.cloudinary.com/du88n6b83/video/upload/v1789985712/raven17/episode-1.mp4"></video>
 </div>
 <div class="rvnVideoMessage" hidden="" id="rvnVideoError" role="status"><span data-rvn-v2="videoError">تعذر تحميل الفيديو. جرّب مرة أخرى؛ ملاحظاتك وتقدمك لن يتغيرا.</span><button data-rvn-v2="retry" id="rvnRetryVideo" type="button">إعادة المحاولة</button></div>
 <div class="rvnAfterCredits" hidden="" id="rvnAfterCredits"><h3 data-rvn-v2="partComplete" id="rvnAfterTitle">اكتمل الجزء.</h3><div class="rvnAfterActions"><button data-rvn-v2="nextEpisode" id="rvnAfterNext" type="button">شاهد الجزء التالي</button><button data-rvn-v2="again" id="rvnAfterReplay" type="button">إعادة المشاهدة</button><a data-raven-route="./deleted-name/" data-dn-link="afterEpisode" data-dn-entry href="./deleted-name/">افتح قضية الاسم المحذوف</a></div><details><summary data-rvn-v2="endQuestion">ما التفصيل الذي غيّر تفسيرك؟</summary><textarea aria-label="ملاحظتك بعد المشاهدة" dir="auto" id="rvnEndNote" maxlength="1500"></textarea><p data-rvn-v2="endPrivacy">ملاحظتك تُحفظ على جهازك فقط، ولا تُرسل تلقائيًا.</p><p id="rvnEndNoteStatus" role="status"></p></details></div>
