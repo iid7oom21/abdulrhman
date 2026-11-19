@@ -37,6 +37,9 @@ const files = [
   'raven/assets/raven-homepage-v6.css', 'raven/assets/raven-redesign-v1.css',
   'raven/assets/raven-polish-v2.css', 'raven/assets/raven-i18n.js',
   'raven/assets/raven-visual-scenes.js', 'raven/assets/raven-visual-scenes.css',
+  // Reviewed silent atmosphere clips and their posters, never a directory wildcard.
+  ...['archive-opening', 'paper-detail', 'over-shoulder'].flatMap(name =>
+    ['mp4', 'webp'].map(extension => `raven/assets/atmosphere-v1/${name}.${extension}`)),
   // Runtime files used by the pinned homepage and its linked studio, not the source/download bundle.
   'studio/index.html', 'studio/assets/index-DdtjoBKO.js', 'studio/assets/index-DO0lVgqN.css',
   'studio/visual-lab/assets/ibm-plex-arabic.woff2',
