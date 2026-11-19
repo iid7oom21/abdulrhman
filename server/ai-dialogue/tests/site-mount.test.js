@@ -188,8 +188,9 @@ test('visual scenes and linked studio serve reviewed assets across root and lega
   const assets = [
     ['raven/assets/raven-visual-scenes.js', 'text/javascript; charset=utf-8', 'SCENE_SCRIPT'],
     ['raven/assets/raven-visual-scenes.css', 'text/css; charset=utf-8', '.scene { display:block; }'],
+    ['raven/assets/raven-polish-v2.css', 'text/css; charset=utf-8', '.rvnCastGrid { display:grid; }'],
     ['studio/index.html', 'text/html; charset=utf-8', '<!doctype html><div id="root"></div>'],
-    ['studio/assets/index-BvmsDJTf.js', 'text/javascript; charset=utf-8', 'STUDIO_SCRIPT'],
+    ['studio/assets/index-DdtjoBKO.js', 'text/javascript; charset=utf-8', 'STUDIO_SCRIPT'],
     ['studio/assets/index-DO0lVgqN.css', 'text/css; charset=utf-8', '.studio { display:block; }'],
     ['studio/visual-lab/assets/ibm-plex-arabic.woff2', 'font/woff2', 'FONT_FIXTURE'],
     ['studio/visual-lab/assets/01-manor.webp', 'image/webp', 'MANOR_PREVIEW'],

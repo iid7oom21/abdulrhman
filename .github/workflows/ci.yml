@@ -42,3 +42,6 @@ jobs:
 
       - name: Dialogue server tests
         run: npm test
+
+      - name: Public export and Render startup tests
+        run: node --test deploy/render/*.test.mjs

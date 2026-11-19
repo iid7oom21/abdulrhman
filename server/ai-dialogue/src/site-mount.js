@@ -34,10 +34,11 @@ const files = [
   'raven/assets/favicon.svg',
   ...['jonas', 'claire', 'elena', 'mateo', 'noah', 'evidence_table'].map(name =>
     `raven/assets/images/deleted-name/${name}.jpg`),
-  'raven/assets/raven-homepage-v6.css', 'raven/assets/raven-redesign-v1.css', 'raven/assets/raven-i18n.js',
+  'raven/assets/raven-homepage-v6.css', 'raven/assets/raven-redesign-v1.css',
+  'raven/assets/raven-polish-v2.css', 'raven/assets/raven-i18n.js',
   'raven/assets/raven-visual-scenes.js', 'raven/assets/raven-visual-scenes.css',
   // Runtime files used by the pinned homepage and its linked studio, not the source/download bundle.
-  'studio/index.html', 'studio/assets/index-BvmsDJTf.js', 'studio/assets/index-DO0lVgqN.css',
+  'studio/index.html', 'studio/assets/index-DdtjoBKO.js', 'studio/assets/index-DO0lVgqN.css',
   'studio/visual-lab/assets/ibm-plex-arabic.woff2',
   ...['01-manor', '02-archive', '03-desk', '04-corridor'].flatMap(name =>
     ['webp', 'png'].map(extension => `studio/visual-lab/assets/${name}.${extension}`)),

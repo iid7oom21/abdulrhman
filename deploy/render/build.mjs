@@ -4,7 +4,7 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 
-export const SITE_COMMIT = 'd25ea0698ef9a0c48fe5af039771ebef6ce7c670';
+export const SITE_COMMIT = 'bd54fb2703489e3af997cd2bf199b2fa922eb338';
 export const PUBLIC_RELEASE = '2026-11-15-investigation-tools-1';
 export const EXPORT_MARKER = '.raven-render-export.json';
 // Render builds from a shallow, single-branch checkout and removes its Git
@@ -28,7 +28,9 @@ export const CORE_FILES = [
   'raven/deleted-name/play/app.js','raven/deleted-name/play/style.css',
   'raven/investigation-lab/index.html','raven/investigation-lab/style.css',
   'raven/investigation-lab/workbench.js',
-  'raven/assets/raven-homepage-v6.css','raven/terminal-preview/raven-17/index.html',
+  'raven/assets/raven-homepage-v6.css','raven/assets/raven-polish-v2.css',
+  'studio/index.html','studio/assets/index-DdtjoBKO.js','studio/assets/index-DO0lVgqN.css',
+  'raven/terminal-preview/raven-17/index.html',
   'raven/terminal-preview/assets/hero-poster.jpg',
   'raven/terminal-preview/assets/hero-loop.mp4',
   'raven/assets/images/deleted-name/claire.jpg',
