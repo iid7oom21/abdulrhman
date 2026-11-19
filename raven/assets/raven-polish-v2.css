@@ -1,0 +1,108 @@
+/* RAVEN homepage — polish v2 (2026-11-16). Presentation only.
+   Loaded last, after raven-redesign-v1.css. It changes no copy, no script, no media
+   URL and no image bytes. To revert, remove its <link> in raven/content.html.
+
+   Why it exists (measured on the published page, 390px and 1280px):
+   - about 1,900 characters of copy rendered at 11–13px, including Arabic sentences;
+   - 19 different font sizes with no scale; body copy did not grow on wide screens;
+   - the case spotlight kept a two-column grid for a scene video that no longer
+     exists, so its content used 40% of the row on desktop;
+   - cast cards carried inline styles, so they had no hover, focus or shared radius. */
+
+:root{
+  /* One type scale. Every text role below maps to one of these four steps. */
+  --rvn-fs-label:13px;   /* eyebrows, status chips, meta keys, handles */
+  --rvn-fs-small:14px;   /* captions, secondary lines, notes */
+  --rvn-fs-body:16px;    /* paragraphs */
+  --rvn-fs-lead:17px;    /* the sentence under a section title */
+  --rvn-lh-body:1.9;     /* Arabic body copy needs the taller line */
+  --rvn-radius:2px;      /* the site's frames are sharp; one radius everywhere */
+  --rvn-card-line:rgba(197,154,97,.3);
+  --rvn-card-line-hi:rgba(214,185,141,.75);
+}
+@media(min-width:900px){
+  :root{--rvn-fs-small:15px;--rvn-fs-body:17px;--rvn-fs-lead:18px}
+}
+
+/* ── 1. Type floor: nothing on the page renders below 13px ─────────────── */
+html:root .eyebrow,html:root .status,html:root .premiereEyebrow,html:root .premiereMeta,
+html:root .metaItem span:first-child,html:root .rvnStudioCard small,html:root .rvnPressCopy small,
+html:root .rvnPressAssets strong,html:root .rvnPressAssets small,
+html:root .rvnVaultGrid strong,html:root .rvnVaultGrid small,
+html:root .rvnSelectedRow>small,html:root .rvnSelectedRow>span:first-child,
+html:root .socialIcon strong,html:root .socialIcon small,
+html:root .rvnLanguage,html:root .rvnLanguage>span,html:root a[data-rvn-lang],
+html:root .foot>span,html:root .foot>a,html:root .rvnFootPrivacy,html:root footer,
+html:root .rvnStudioRail small,html:root .rvnStudioRail span,
+html:root .rvnEpisodeTabs small,html:root .rvnNowPlaying small,html:root .rvnNowPlaying span,
+html:root .modalTitle>span,html:root .rvnTheaterBar button,html:root .rvnProductionLog small,
+html:root .rvnCaseMotion,html:root .rvnCopyFallback,html:root .rvnFormNotice,
+html:root .rvnCaseEntry .rvnCaseMeta{
+  font-size:var(--rvn-fs-label);
+  line-height:1.6;
+}
+/* Latin micro-labels were tracked out for 8–10px type; at 13px they need less. */
+html:root .socialIcon strong,html:root .rvnVaultGrid strong,html:root .rvnEpisodeTabs small,
+html:root .rvnNowPlaying small,html:root .rvnStudioRail small{letter-spacing:.06em}
+html[lang="en"]:root .eyebrow,html[lang="en"]:root .status,html[lang="en"]:root .premiereEyebrow,
+html[lang="en"]:root .premiereMeta{letter-spacing:.1em}
+
+/* ── 2. Secondary copy ──────────────────────────────────────────────────── */
+html:root .ravenNavLinks a,html:root .rvnFileTools>summary,html:root .rvnSearchStatus,
+html:root .metaItem span:last-child,html:root .rvnContactIntro .rvnContactNote,
+html:root .rvnPrivacyBody,html:root .rvnPrivacyLink,html:root .rvnPrivacyLinks a,
+html:root .rvnSelectedRow p,html:root .rvnSelectedRow div>span,html:root .rvnSelectedRow div>small,
+html:root .modalTitle p,html:root .rvnAfterCredits p,html:root .rvnConsent,
+html:root .rvnCaseSpotlight .rvnCaseEntry .rvnCaseDuration{
+  font-size:var(--rvn-fs-small);
+}
+html:root .rvnPrivacyBody{line-height:var(--rvn-lh-body)}
+
+/* ── 3. Body copy: one size per breakpoint, and it grows on wide screens ── */
+html:root .refHeroCopy>p,html:root .filmContent>p,html:root .rvnStudioCard p,
+html:root .rvnProductionLog p,html:root .rvnCaseSpotlight .rvnCaseEntry .rvnCaseBlurb{
+  font-size:var(--rvn-fs-body);
+  line-height:var(--rvn-lh-body);
+}
+html:root .sectionHead p{font-size:var(--rvn-fs-lead);line-height:1.85}
+html[lang="en"]:root .refHeroCopy>p,html[lang="en"]:root .filmContent>p,html[lang="en"]:root .rvnStudioCard p,
+html[lang="en"]:root .rvnProductionLog p,html[lang="en"]:root .rvnCaseBlurb{line-height:1.7}
+
+/* ── 4. Case spotlight ──────────────────────────────────────────────────── */
+/* The old grid reserved 1.4fr for .rvnCaseScene, which is no longer in the page. */
+.rvnCaseSpotlight .wrap{display:block}
+.rvnCaseSpotlight .rvnCaseEntry{display:block;padding:8px 0 0}
+.rvnCaseSpotlight .rvnCaseEntry>div{max-width:none}
+.rvnCaseSpotlight .rvnCaseEntry .rvnCaseBlurb{max-width:36em;margin:0 0 20px;color:var(--rvn-body-soft,#cdc5ba)}
+.rvnCastGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 20px}
+.rvnCastCard{display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--rvn-card-line);
+  border-radius:var(--rvn-radius);background:#15120f;color:inherit;text-decoration:none;
+  transition:border-color .2s ease,transform .2s ease}
+.rvnCastCard img{display:block;width:100%;height:auto;aspect-ratio:4/5;object-fit:cover;object-position:center 22%}
+.rvnCastCopy{display:grid;gap:2px;padding:10px 12px 12px}
+.rvnCastCopy strong{color:#e6d5b8;font-size:15px;font-weight:600;line-height:1.5}
+.rvnCastCopy span{color:#b9ae9f;font-size:var(--rvn-fs-label);line-height:1.6}
+.rvnCastCard:focus-visible{outline:2px solid #d6b98d;outline-offset:3px}
+@media(hover:hover){.rvnCastCard:hover{border-color:var(--rvn-card-line-hi);transform:translateY(-2px)}}
+.rvnCaseActions{display:flex;flex-wrap:wrap;gap:12px}
+.rvnCaseSpotlight .rvnCaseActions .rvnEnterCase{min-height:var(--rvn-btn-h,48px);font-size:16px}
+.rvnCaseSpotlight .rvnCaseEntry .rvnCaseDuration{max-width:36em;margin:14px 0 0;color:var(--rvn-muted,#aaa196)}
+@media(min-width:560px){.rvnCastGrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:900px){
+  /* Copy and the single call to action on the reading side; the six cards beside them. */
+  .rvnCaseSpotlight .rvnCaseEntry>div{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);
+    grid-template-areas:"blurb cast" "actions cast" "note cast";grid-template-rows:auto auto 1fr;gap:0 clamp(32px,5vw,72px);align-items:start}
+  .rvnCaseBlurb{grid-area:blurb}
+  .rvnCastGrid{grid-area:cast;margin:0;gap:14px}
+  .rvnCaseActions{grid-area:actions}
+  .rvnCaseDuration{grid-area:note}
+  .rvnCaseSpotlight .rvnCaseActions .rvnEnterCase{width:auto;min-width:220px}
+}
+
+/* ── 5. Controls keep one height and one edge ──────────────────────────── */
+html:root .rvnLanguage a{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px}
+html:root .socialIcon{min-height:72px}
+.rvnFileTools>summary{min-height:48px}
+
+/* ── 6. Motion preference ──────────────────────────────────────────────── */
+@media(prefers-reduced-motion:reduce){.rvnCastCard{transition:none}.rvnCastCard:hover{transform:none}}
