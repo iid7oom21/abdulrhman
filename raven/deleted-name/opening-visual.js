@@ -9,6 +9,7 @@
   };
   const english = () => document.documentElement.lang === 'en';
   const words = () => strings[english() ? 'en' : 'ar'];
+  const messageTitle = () => english() ? 'What brought me here' : 'اللي جابني هنا';
   const make = (tag, text, className) => {
     const node = document.createElement(tag);
     if (text !== undefined) node.textContent = text;
@@ -26,6 +27,7 @@
   const scope = make('p', words().scope, 'opening-chip');
   inner.append(close, title, body, scope);dialog.append(inner);document.body.append(dialog);
   function sourceFor(id) {
+    if (id === 'message') return document.querySelector('#assignment-stage .thread');
     if (id === 'paper') return document.getElementById('hook-document');
     return document.querySelector('.cast > [data-character="'+id+'"]:not([hidden])');
   }
@@ -33,7 +35,16 @@
     const original = sourceFor(activeCard);
     if (!original) { if (dialog.open) dialog.close();return false; }
     body.replaceChildren();close.textContent = words().close;scope.textContent = words().scope;
-    if (activeCard === 'paper') {
+    if (activeCard === 'message') {
+      title.textContent = messageTitle();
+      const transcript = make('ol',undefined,'message-transcript');
+      original.querySelectorAll('.msg').forEach(message => {
+        const row = make('li',undefined,'message-row');
+        row.append(make('strong',message.querySelector('.who')?.textContent || '', 'message-speaker'),make('p',message.querySelector('p')?.textContent || ''));
+        transcript.append(row);
+      });
+      body.append(transcript,make('p',english() ? 'An earlier conversation. Your reply in it has already happened.' : 'محادثة سابقة. ردّك المكتوب فيها حدث بالفعل.','opening-chip'));
+    } else if (activeCard === 'paper') {
       title.textContent = original.querySelector('h3')?.textContent || words().paper;
       const list = make('dl');
       original.querySelectorAll(':scope > dl > div').forEach(group => {
@@ -61,6 +72,19 @@
     title.focus({preventScroll:true});
   }
   close.addEventListener('click', () => dialog.close());
+  dialog.addEventListener('keydown', event => {
+    if (event.key !== 'Tab' || !dialog.open) return;
+    // Keep the modal keyboard boundary inside this iframe. Native dialog focus
+    // alone can otherwise continue into the parent page's soundtrack controls.
+    const controls = [...dialog.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')]
+      .filter(node => node.getClientRects().length && getComputedStyle(node).visibility !== 'hidden');
+    const first = controls[0], last = controls[controls.length - 1];
+    if (!first) {event.preventDefault();title.focus();return;}
+    const outside = !controls.includes(document.activeElement);
+    if (outside || (event.shiftKey ? document.activeElement === first : document.activeElement === last)) {
+      event.preventDefault();(event.shiftKey ? last : first).focus();
+    }
+  });
   dialog.addEventListener('click', event => { if (event.target === dialog) {
     const r = dialog.getBoundingClientRect();
     if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) dialog.close();
@@ -93,6 +117,12 @@
   document.addEventListener('keydown', event => {if(event.key === 'Escape' && !dialog.open && !exit.hidden) {event.preventDefault();leaveFocus();}});
   function enhance() {
     const c = words();exit.textContent = c.exit;
+    const messageTools = document.querySelector('.journey-message-tools');
+    if (messageTools) addOpenButton(messageTools,'message',english() ? 'Open the earlier conversation' : 'افتح المحادثة السابقة');
+    const oldQuote = document.getElementById('old-message-quote');
+    const oldMessage = document.querySelector('[data-k="m3"]')?.textContent;
+    if (oldQuote && oldMessage) oldQuote.textContent = oldMessage.replace(/^[^.]+\.\s*/, '');
+    document.querySelector('.opening-journey-nav')?.setAttribute('aria-label',english() ? 'Opening path' : 'مسار الافتتاح');
     document.querySelectorAll('.cast > [data-character]:not([hidden])').forEach(card => addOpenButton(card,card.dataset.character,c.open));
     const paper = document.getElementById('hook-document');
     if (paper) {
@@ -127,5 +157,25 @@
   }
   hook.addEventListener('raven:opening-render',enhance);
   document.addEventListener('raven:language',enhance);
+  document.querySelector('[data-journey-paper]')?.addEventListener('click', () => {
+    // This is the same explicit opening action. Returning never restarts a scene.
+    if (hook.dataset.phase === 'start') hook.querySelector('[data-hook-action="open"]')?.click();
+  });
+  const appointment = document.querySelector('[data-appointment-art] img');
+  if (appointment) {
+    const showAppointment = () => {
+      // Let the existing recovery script adopt the approved fallback first.
+      // A failed new image therefore never removes that working illustration.
+      if (!window.RavenOpeningArtwork) return;
+      const image = new Image();
+      image.onload = () => {
+        const current = document.querySelector('[data-appointment-art] img');
+        if (current) {current.src = image.src;current.width = image.naturalWidth;current.height = image.naturalHeight;}
+      };
+      image.src = '../assets/visual-20261119/appointment-phone' + (matchMedia('(max-width:650px)').matches ? '-mobile' : '') + '.webp';
+    };
+    if (document.readyState === 'complete') showAppointment();
+    else window.addEventListener('load',showAppointment,{once:true});
+  }
   enhance();
 })();

@@ -2,13 +2,13 @@
   "date": "2026-11-19",
   "state": "local review; not a replacement for approved production artwork",
   "producer": "built-in image_gen; local Pillow crop/resize/WebP export",
-  "originalCount": 6,
+  "originalCount": 7,
   "privateReferencesUploaded": false,
   "imageText": "none; all interface copy is HTML",
   "costOrQuota": "not exposed by the image tool; no third-party subscription purchased",
   "rights": "Generated with built-in image tool under its applicable terms; no independent exclusive-rights audit. Existing assets retain their provenance.",
   "originals": "Full PNG originals preserved outside the public site and Git checkout",
-  "totalExportBytes": 458594,
+  "totalExportBytes": 590480,
   "assets": [
     {
       "file": "case-entry-mobile.webp",
@@ -99,6 +99,24 @@
       "sha256": "5ae35b6df187f8d985b91e9d8e34beb894e6a268a59352f262badc33c8401637",
       "use": "Optional opening references divider",
       "variant": "standard"
+    },
+    {
+      "file": "appointment-phone.webp",
+      "width": 1600,
+      "height": 900,
+      "bytes": 93748,
+      "sha256": "f47a9685e50b6cef51864daded0b7196d31d78ee7feaac2ea3f720c99d192115",
+      "use": "Opening earlier-conversation card; approved case-record retained as fallback",
+      "variant": "standard"
+    },
+    {
+      "file": "appointment-phone-mobile.webp",
+      "width": 720,
+      "height": 900,
+      "bytes": 38138,
+      "sha256": "d48d9d0bdf7033f60bdbc8d2cffae6cf5f6d7924cce7f13b581f8f0f0e5e96ee",
+      "use": "Opening earlier-conversation card; approved case-record retained as fallback",
+      "variant": "mobile"
     }
   ]
 }

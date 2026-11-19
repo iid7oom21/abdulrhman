@@ -140,7 +140,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
 #reading-tools :focus-visible{outline:2px solid var(--gold-hi);outline-offset:3px}
 #reading-tools h4{margin-block:16px 8px}
 </style>
-<link rel="stylesheet" href="opening-visual.css?v=visual-review-1">
+<link rel="stylesheet" href="opening-visual.css?v=visual-review-2">
 </head>
 <body class="opening-visual">
 <a class="skip" href="#main" data-k="skip">تخطَّ إلى المحتوى</a>
@@ -162,20 +162,29 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       <a class="opening-main-action" href="#t-assign"><span data-visual-lang="ar">أقرأ الرسالة</span><span data-visual-lang="en">Read the message</span><span aria-hidden="true"> ↙</span></a>
       <p class="opening-chip"><span data-visual-lang="ar">افتتاح محلي. المتابعة المتصلة خطوة منفصلة؛ تُراجع طريقة نقل الاختيار عندها.</span><span data-visual-lang="en">A local opening. The connected case is a separate step; its choice-transfer rules are shown there.</span></p>
     </div>
+    <nav class="opening-journey-nav" aria-label="مسار الافتتاح">
+      <a href="#t-assign"><span aria-hidden="true">01</span> <span data-visual-lang="ar">الرسالة</span><span data-visual-lang="en">The message</span></a>
+      <a href="#t-arrive"><span aria-hidden="true">02</span> <span data-visual-lang="ar">البوابة</span><span data-visual-lang="en">The gate</span></a>
+      <a href="#t-hook"><span aria-hidden="true">03</span> <span data-visual-lang="ar">الورقة</span><span data-visual-lang="en">The paper</span></a>
+    </nav>
   </section>
 
   <section class="block journey-stage" id="assignment-stage" aria-labelledby="t-assign"><div class="wrap">
+    <p class="journey-step-label"><span aria-hidden="true">01 · </span><span data-visual-lang="ar">اللي جابني هنا</span><span data-visual-lang="en">What brought me here</span></p>
     <h2 id="t-assign" tabindex="-1" data-k="assignTitle">التكليف</h2>
     <p class="lead" data-k="assignLead">أنت مرمّم سجلات. بينك وبين فيكتور شغل قديم على سجل ناقص. الليلة يرسل لك جزءًا منه.</p>
-    <figure class="dnVisual"><img src="./assets/case-record.webp" width="1672" height="941" alt="" loading="lazy" decoding="async"></figure>
+    <figure class="dnVisual" data-appointment-art><img src="./assets/case-record.webp" width="1672" height="941" alt="" loading="lazy" decoding="async"></figure>
+    <div class="journey-message-tools"></div>
     <ol class="thread">
       <li class="msg"><span class="who" data-k="victor">فيكتور</span><p data-k="m1">أرسلت لك جزء من السجل. خانة المُحيل. أبي فيها اسم الليلة.</p></li>
       <li class="msg you"><span class="who" data-k="you">أنت</span><p data-k="m2">اللي وصلني ما يكفي. الاسم يحتاج الأصل، ومقارنة النسخ.</p></li>
       <li class="msg"><span class="who" data-k="victor">فيكتور</span><p data-k="m3">تعال بعد العشاء. الأصل عندي.</p></li>
     </ol>
+    <div class="journey-actions"><a class="opening-main-action" href="#t-arrive"><span data-visual-lang="ar">إلى البوابة</span><span data-visual-lang="en">Go to the gate</span></a></div>
   </div></section>
 
   <section class="block journey-stage" id="arrival-stage" aria-labelledby="t-arrive"><div class="wrap">
+    <p class="journey-step-label"><span aria-hidden="true">02 · </span><span data-visual-lang="ar">قبل أن تدخل</span><span data-visual-lang="en">Before you enter</span></p>
     <h2 id="t-arrive" tabindex="-1" data-k="arriveTitle">الوصول</h2>
     <p class="scene" data-k="arriveScene">22:20. أضواء الإسعاف تبتعد عن البوابة. كلير عند الباب.</p>
     <figure class="dnVisual"><img src="./assets/case-arrival.webp" width="1350" height="759" alt="" loading="lazy" decoding="async"></figure>
@@ -184,6 +193,8 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       <li class="msg you"><span class="who" data-k="you">أنت</span><p data-k="a2">جيت للمقارنة.</p></li>
       <li class="msg"><span class="who" data-k="claire">كلير</span><p data-k="a3">ما فيه مقارنة الليلة.</p></li>
     </ol>
+    <figure class="old-message-echo"><figcaption><span data-visual-lang="ar">فيكتور · من المحادثة السابقة</span><span data-visual-lang="en">Victor · from the earlier conversation</span></figcaption><blockquote id="old-message-quote"></blockquote></figure>
+    <div class="journey-actions"><a class="opening-main-action" href="#t-hook" data-journey-paper><span data-visual-lang="ar">أشوف الورقة</span><span data-visual-lang="en">See the paper</span></a><a class="opening-secondary" href="#t-assign"><span data-visual-lang="ar">أرجع للرسالة</span><span data-visual-lang="en">Return to the message</span></a></div>
   </div></section>
 
 
@@ -192,6 +203,8 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
 
 
   <section class="block" id="hook" aria-labelledby="t-hook"><div class="wrap">
+    <p class="journey-step-label"><span aria-hidden="true">03 · </span><span data-visual-lang="ar">الورقة على الطاولة</span><span data-visual-lang="en">The paper on the table</span></p>
+    <figure class="journey-table-art"><div class="raven-scene-art" data-scene-art="journey-table" aria-hidden="true"><img src="./assets/scenes/case-scenes-v1.webp" width="1024" height="1536" alt="" loading="lazy" decoding="async"></div><figcaption><span data-visual-lang="ar">تصور بصري، ليس دليلًا</span><span data-visual-lang="en">Visual interpretation, not evidence</span></figcaption></figure>
     <h2 id="t-hook" tabindex="-1" data-k="hookTitle">الورقة</h2>
     <p class="lead" data-k="hookLead">رسالتك ومسودة على الطاولة. افحصهما قبل أن تختار ردك.</p>
     <p class="hook-note" data-k="hookNote">هذا المشهد مستقل عن معاينة الحوار — حالة محلية أثناء الجلسة الحالية فقط. تحديث الصفحة يبدأه من جديد.</p>
@@ -699,6 +712,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
 <script src="reading-tools.js?v=7"></script>
 <script src="case-entry.js?v=1"></script>
 <script src="opening-artwork.js?v=2" async></script>
-<script src="opening-visual.js?v=visual-review-1" defer></script>
+<script src="opening-visual.js?v=visual-review-2" defer></script>
+<script src="reading-continuity.js?v=visual-review-2" defer></script>
 </body>
 </html>

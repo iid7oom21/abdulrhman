@@ -49,7 +49,7 @@ test('visual opening keeps the approved script, readable cards and local choice 
    assert.equal(await page.locator('#optional-rules').evaluate(x=>x.open),false);
    assert.equal(await page.locator('#hook').evaluate(x=>Boolean(x.compareDocumentPosition(document.querySelector('#optional-cast'))&Node.DOCUMENT_POSITION_FOLLOWING)),true,'the opening precedes optional reference cards');
    const layout=await overflows(page);assert.ok(layout.document<=layout.viewport+1,JSON.stringify(layout));
-   const entry=page.locator('.opening-main-action');assert.ok((await entry.boundingBox()).height>=44);
+   const entry=page.locator('.opening-entry-card .opening-main-action');assert.ok((await entry.boundingBox()).height>=44);
    if(RESULTS&&[390,1440].includes(width)){fs.mkdirSync(RESULTS,{recursive:true});await page.screenshot({path:path.join(RESULTS,'after-direct-'+lang+'-'+width+'.png'),fullPage:true});}
    const initial=await readState(page),initialWrites=await page.evaluate(()=>window.__visualWrites);
    await page.locator('#optional-cast>summary').click();
