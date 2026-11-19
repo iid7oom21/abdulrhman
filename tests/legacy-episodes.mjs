@@ -18,7 +18,9 @@ async function interceptFilms(context, onFilm = () => {}) {
   await context.route('**/*', route => {
     const url = new URL(route.request().url());
     if (/\/episode-\d\.mp4$/.test(url.pathname)) {
-      onFilm(url.pathname);
+      if (onFilm(url.pathname) === false) {
+        return route.fulfill({status:503, contentType:'text/plain', body:'Fixture film temporarily unavailable'});
+      }
       const range = /bytes=(\d+)-(\d*)/.exec(route.request().headers().range || '');
       if (range) {
         const start = Number(range[1]), end = range[2] ? Number(range[2]) : filmBody.length - 1;
@@ -50,6 +52,7 @@ try {
   const requestedFilms = [];
   await interceptFilms(context, path => requestedFilms.push(path));
   const page = await context.newPage();
+  await page.clock.install();
   await page.goto(new URL('?episode=1', base).href, { waitUntil: 'domcontentloaded' });
   const frame = await (await page.locator('#site-content').elementHandle()).contentFrame();
   await frame.waitForFunction(() => document.documentElement.dataset.ravenRefinement === '2');
@@ -85,7 +88,13 @@ try {
     await video.evaluate(async v => { v.currentTime = v.duration - 0.1; await v.play(); });
     await expect(frame.locator('#rvnAfterCredits')).toBeVisible();
     await expect.poll(() => video.evaluate(v => v.ended)).toBe(true);
+    await page.clock.fastForward(60000);
     expectedProgress[id] = null; // A completed film intentionally clears only its resume key.
+    await expect(frame.locator('#rvnResumeNote')).toBeEmpty();
+    await expect(video).toHaveAttribute('src', new RegExp(`episode-${id}\\.mp4$`));
+    assert.equal(new URL(page.url()).searchParams.get('episode'), String(id));
+    assert.ok(requestedFilms.every(path => Number(/episode-(\d+)\.mp4$/.exec(path)[1]) <= id));
+    assert.equal(await frame.locator('#rvnAfterCredits img, #rvnAfterCredits video').count(), 0);
     const details = frame.locator('#rvnAfterCredits details');
     if (!(await details.evaluate(el => el.open))) await details.locator('summary').click();
     expectedNotes[id] = `new-note-for-original-${id}`;
@@ -124,6 +133,63 @@ try {
   }
   console.log('PASS: three original episode IDs, fixture playback/resume, isolated progress and notes, final next button, deep links 1/2/3, AR/EN switching, music-off and 320px layout.');
   await context.close();
+
+  // Fail the actual MP4 response before metadata arrives. At this point a native
+  // player's currentTime is zero even when this episode has a saved position.
+  for (const savedTime of [42, 0]) {
+    const offline = await browser.newContext({viewport:{width:390,height:844}, reducedMotion:'reduce'});
+    try {
+      await offline.addInitScript(time => {
+        sessionStorage.setItem('raven_music_enabled_v2', 'off');
+        sessionStorage.setItem('raven_studio_ident_v1', '1');
+        localStorage.setItem('raven17_episode_1_progress', '71');
+        if (time) localStorage.setItem('raven17_episode_2_progress', String(time));
+      }, savedTime);
+      const requests = [];
+      let available = false;
+      await interceptFilms(offline, path => {
+        requests.push(path);
+        return available;
+      });
+      const page = await offline.newPage();
+      await page.goto(new URL('?episode=2&lang=en', base).href, {waitUntil:'domcontentloaded'});
+      const film = page.frameLocator('#site-content');
+      const video = film.locator('#ravenEpisodePlayer'), resume = film.locator('#rvnResumeNote');
+      const retry = film.locator('#rvnRetryVideo'), next = film.locator('#rvnNextEpisode');
+      await expect(film.locator('#rvnEpisodeStatus')).toHaveText('Episode 2');
+      assert.equal(await video.evaluate(v => v.paused), true, 'A direct link opens the viewer paused');
+      await film.locator('[data-rvn-episode="2"]').click();
+      await expect(retry).toBeVisible();
+      await expect(next).toBeEnabled();
+      await expect(film.locator('.episodeClose')).toBeEnabled();
+      await expect(film.locator('#rvnAfterCredits')).toBeHidden();
+      if (savedTime) await expect(resume).toContainText('Resume');
+      else await expect(resume).toBeEmpty();
+      assert.ok(requests.length > 0 && requests.every(path => path.endsWith('/episode-2.mp4')));
+      available = true;
+      await retry.press('Enter');
+      await expect.poll(() => video.evaluate(v => v.readyState >= 2 && !v.paused)).toBe(true);
+      const position = await video.evaluate(v => { v.pause(); return v.currentTime; });
+      assert.ok(position >= savedTime && position < savedTime + 4, `Expected ${savedTime}s after retry, got ${position}s`);
+      if (!savedTime) await expect(resume).toBeEmpty();
+      await expect(retry).toBeHidden();
+      assert.ok(requests.every(path => path.endsWith('/episode-2.mp4')), 'Retry loads only the chosen film');
+      assert.equal(await video.evaluate(() => localStorage.getItem('raven17_episode_1_progress')), '71');
+
+      // Choose a different episode explicitly; it must also be possible to leave
+      // the theater while its file is unavailable.
+      available = false;
+      await next.click();
+      await expect(retry).toBeVisible();
+      await expect(resume).toBeEmpty();
+      await film.locator('.episodeClose').click();
+      await expect(film.locator('#episodeModal')).toBeHidden();
+      assert.equal(new URL(page.url()).searchParams.get('episode'), null);
+      console.log(`PASS: episode failure, navigation and explicit same-film retry with ${savedTime}s progress.`);
+    } finally {
+      await offline.close();
+    }
+  }
 
   // These are storage failures, not mocked note implementations. The real input,
   // episode, replay, language and modal handlers run against the native video fixture.

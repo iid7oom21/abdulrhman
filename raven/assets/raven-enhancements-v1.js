@@ -174,16 +174,39 @@ window.ravenResumeEpisode=(event,n)=>{
  n=Number(n);if(!readProgress(n).available)return false;
  openEpisodes(event,n);const playing=theaterPlayer?.play();playing?.catch(()=>{});return true;
 };
-window.ravenRetryEpisode=()=>{if(!theaterPlayer)return Promise.resolve();if(retryAt===null)retryAt=Number.isFinite(theaterPlayer.currentTime)&&theaterPlayer.currentTime>=0?theaterPlayer.currentTime:savedProgress(currentEpisode);saveProgress();resumeApplied=false;theaterPlayer.load();return theaterPlayer.play();};
+window.ravenRetryEpisode=()=>{
+ if(!theaterPlayer)return Promise.resolve();
+ // Before metadata, currentTime is zero even if this film has a saved position.
+ if(retryAt===null&&resumeApplied&&Number.isFinite(theaterPlayer.currentTime))retryAt=theaterPlayer.currentTime;
+ saveProgress();
+ resumeApplied=false;
+ theaterPlayer.load();
+ return theaterPlayer.play();
+};
 all('[data-rvn-episodes],.film.raven').forEach(a=>{a.removeAttribute('onclick');a.addEventListener('click',openEpisodes)});const closer=$('.episodeClose');if(closer){closer.removeAttribute('onclick');closer.addEventListener('click',closeEpisodes)}const modal=$('#episodeModal');if(modal){modal.removeAttribute('onclick');modal.addEventListener('click',e=>{if(e.target===modal)closeEpisodes()})}
 all('[data-rvn-episode]').forEach(b=>b.addEventListener('click',()=>selectEpisode(Number(b.dataset.rvnEpisode),true)));prevEpisode?.addEventListener('click',()=>selectEpisode(currentEpisode-1,true));nextEpisode?.addEventListener('click',()=>selectEpisode(currentEpisode+1,true));
 if(theaterPlayer){
- theaterPlayer.addEventListener('loadedmetadata',()=>{if(resumeApplied)return;resumeApplied=true;const retry=retryAt!==null,saved=retry?retryAt:savedProgress(currentEpisode);retryAt=null;if(retry?saved>=0&&saved<theaterPlayer.duration:saved>0&&saved<theaterPlayer.duration-4){theaterPlayer.currentTime=saved;if(resumeNote)resumeNote.textContent=(lang==='en'?'Resuming at ':'متابعة من ')+Math.floor(saved/60)+':'+String(Math.floor(saved%60)).padStart(2,'0')}});
+ theaterPlayer.addEventListener('loadedmetadata',()=>{
+  if(resumeApplied)return;
+  resumeApplied=true;
+  const retry=retryAt!==null,saved=retry?retryAt:savedProgress(currentEpisode);
+  const limit=retry?theaterPlayer.duration:theaterPlayer.duration-4;
+  retryAt=null;
+  if(resumeNote)resumeNote.textContent='';
+  if(saved>0&&saved<limit){
+   theaterPlayer.currentTime=saved;
+   if(resumeNote)resumeNote.textContent=(lang==='en'?'Resuming at ':'متابعة من ')+Math.floor(saved/60)+':'+String(Math.floor(saved%60)).padStart(2,'0');
+  }
+ });
  theaterPlayer.addEventListener('timeupdate',()=>{if(theaterPlayer.currentTime-lastProgressWrite>5||theaterPlayer.currentTime<lastProgressWrite){lastProgressWrite=theaterPlayer.currentTime;saveProgress()}});
  theaterPlayer.addEventListener('play',()=>{const music=$('#ravenOpeningMusic');if(music&&!music.paused)music.pause();});
  theaterPlayer.addEventListener('pause',()=>saveProgress());
  window.addEventListener('pagehide',()=>saveProgress());
- theaterPlayer.addEventListener('ended',()=>{if(!theaterPlayer.ended||theaterPlayer.error)return;clearProgress(currentEpisode);document.dispatchEvent(new CustomEvent('raven:ended',{detail:{id:currentEpisode}}));});
+ theaterPlayer.addEventListener('ended',()=>{
+  if(!theaterPlayer.ended||theaterPlayer.error)return;
+  clearProgress(currentEpisode);
+  document.dispatchEvent(new CustomEvent('raven:ended',{detail:{id:currentEpisode}}));
+ });
 }
 shareEpisode?.addEventListener('click',async()=>{const u=new URL(localizedRoute('/'),location.origin);u.searchParams.set('episode',String(currentEpisode));u.hash='episodeModal';const data={title:'RAVEN 17 — '+episodeText(currentEpisode),url:u.toString()};try{if(navigator.share){try{await navigator.share(data);return;}catch(error){if(error.name==='AbortError')return;}}await navigator.clipboard.writeText(data.url);shareEpisode.textContent=t('copied');setTimeout(()=>shareEpisode.textContent=lang==='en'?'Share episode':'مشاركة الحلقة',1600);}catch(_){shareEpisode.textContent=t('copyFailed');}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(modal&&modal.classList.contains('open'))closeEpisodes();else if(menu&&menu.getAttribute('aria-expanded')==='true'){setMenu(false);menu.focus()}return}if(e.key==='Tab'&&modal&&modal.classList.contains('open')){const focusables=all('#episodeModal button,#episodeModal video[controls],#episodeModal a[href],#episodeModal [tabindex="0"]').filter(el=>el.getClientRects().length&&!el.disabled&&!el.closest('[hidden],[inert]'));const first=focusables[0],last=focusables[focusables.length-1];if(!first)return;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});

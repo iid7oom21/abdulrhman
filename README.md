@@ -54,6 +54,10 @@ RAVEN 17 shows all three original episodes. Display numbers and saved media IDs 
 
 `tests/restore-episode-one.mjs` checks the three-episode manifest and source IDs. `tests/legacy-episodes.mjs` checks navigation, playback progress, notes and language in Chromium. Run it with `node tests/legacy-episodes.mjs` after serving this directory on port 8786, or set `RAVEN_LEGACY_URL` to the served `/raven/` URL. It requires `ffmpeg` to generate a temporary playback fixture; this does not test streaming the original films in full.
 
+The theater uses a native HTML video inside the site frame. Opening an episode link leaves it paused. When playback starts, the player can seek to that episode’s saved time on the same browser. After completion it clears the episode’s position and waits for the viewer to choose replay, the next episode when available, or an exit. The series has one shared poster. The end panel contains text and navigation.
+
+The browser test also serves an HTTP 503 for the selected film before its metadata loads, then supplies a local MP4 on manual retry. It checks recovery with and without saved progress and closing the theater while a film is unavailable. The fixture covers Chromium’s native controls inside the site frame. The production CDN, Safari and physical devices were outside this check.
+
 ## Metadata and recovery
 
 Each public entry includes canonical, Open Graph, Twitter and structured metadata in its initial HTML; the persistent host updates its metadata on navigation and language changes without replacing the audio. The entry HTML exposes a direct-content link if the player module fails, and content loading has a retry action after 12 seconds.
