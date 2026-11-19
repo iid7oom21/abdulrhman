@@ -6,9 +6,9 @@
   <meta name="theme-color" content="#0b0a08">
   <meta name="robots" content="noindex">
   <title>RAVEN — القضية</title>
-  <link rel="stylesheet" href="./style.css?v=case-play-6">
+  <link rel="stylesheet" href="./style.css?v=case-play-8">
   <script src="../../../site-bridge.js?v=watching-1" defer></script>
-  <script src="./app.js?v=case-play-7" defer></script>
+  <script src="./app.js?v=case-play-8" defer></script>
 </head>
 <body>
   <a class="skip" href="#main" data-ui="skip">انتقل إلى القضية</a>
@@ -43,8 +43,10 @@
         <h2 id="materials-title" data-ui="materials">المواد التي وصلت إليك</h2>
         <div id="materials-list" class="material-list"></div>
         <details id="comparison"><summary data-ui="comparison">مقارنة المواد</summary>
+          <p class="muted" data-ui="comparisonScope">اختيار المواد هنا للقراءة فقط؛ لا يشاركها مع أحد.</p>
           <div class="comparison-controls"><div><label for="compare-a" data-ui="firstMaterial">المادة الأولى</label><select id="compare-a"></select></div><div><label for="compare-b" data-ui="secondMaterial">المادة الثانية</label><select id="compare-b"></select></div></div>
           <div id="comparison-body" class="comparison-grid"></div>
+          <button type="button" id="comparison-return" data-ui="comparisonReturn" hidden>العودة إلى موضع القراءة</button>
         </details>
       </section>
       <details id="notebook" class="panel"><summary data-ui="notebook">دفتر خاص</summary>

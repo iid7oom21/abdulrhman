@@ -68,6 +68,12 @@ details:not(.panel){border-top:1px solid var(--line);margin-top:18px;padding-top
 .material-list>.material{margin:0;padding:12px 16px}
 .material-list>.material>summary{font-size:18px;font-weight:600}
 .material-list>.material[open]>summary{margin-bottom:12px}
+.source-reference{min-width:0}
+details.comparison-source-tools{margin:8px 0 0;padding:0;border:0}
+.comparison-source-tools>summary{font-size:14px;font-weight:400}
+.comparison-source-tools .buttons{align-items:stretch}
+.comparison-source-tools button{font-size:14px;overflow-wrap:anywhere;flex:1 1 180px}
+#comparison-return{margin-top:16px}
 .source-list{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;padding:0;list-style:none}
 .source-list a{display:inline-flex;align-items:center;min-height:44px;padding:4px 8px;border:1px solid var(--line)}
 .shared-materials{padding-inline-start:24px}

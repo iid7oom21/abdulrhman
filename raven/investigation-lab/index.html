@@ -7,10 +7,10 @@
   <meta name="robots" content="noindex">
   <title>RAVEN — مختبر التحقيق</title>
   <link rel="icon" href="../assets/favicon.svg">
-  <link rel="stylesheet" href="../deleted-name/play/style.css?v=case-play-6">
+  <link rel="stylesheet" href="../deleted-name/play/style.css?v=case-play-8">
   <link rel="stylesheet" href="./style.css?v=lab-1">
   <script src="./workbench.js?v=lab-2" defer></script>
-  <script src="../deleted-name/play/app.js?v=case-play-7" defer></script>
+  <script src="../deleted-name/play/app.js?v=case-play-8" defer></script>
 </head>
 <body data-investigation-lab>
   <a class="skip" href="#main" data-ui="skip">انتقل إلى القضية</a>
@@ -51,8 +51,10 @@
         <h2 id="materials-title" data-ui="materials">المواد التي وصلت إليك</h2>
         <div id="materials-list" class="material-list"></div>
         <details id="comparison"><summary data-ui="comparison">مقارنة المواد</summary>
+          <p class="muted" data-ui="comparisonScope">اختيار المواد هنا للقراءة فقط؛ لا يشاركها مع أحد.</p>
           <div class="comparison-controls"><div><label for="compare-a" data-ui="firstMaterial">المادة الأولى</label><select id="compare-a"></select></div><div><label for="compare-b" data-ui="secondMaterial">المادة الثانية</label><select id="compare-b"></select></div></div>
           <div id="comparison-body" class="comparison-grid"></div>
+          <button type="button" id="comparison-return" data-ui="comparisonReturn" hidden>العودة إلى موضع القراءة</button>
         </details>
       </section>
       <section id="lab-workbench" class="panel lab-workbench" aria-labelledby="lab-board-title" hidden>
