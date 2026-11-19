@@ -128,10 +128,10 @@ test('opening artwork recovers independently of choices and private reading note
     assert.equal(retryRequests(requests,NOTEBOOK).length,count);assert.deepEqual(await state(page),before);
   }));
   await t.test('double activation is single flight; timed-out attempts can be retried and obsolete responses cannot replace current artwork',()=>check({failures:[COVER],clock:true},async({page,failed,requests,holdRetries,held})=>{
-    const cover=art(page,selectors.cover);await waitState(cover,'failed');failed.delete(COVER);holdRetries.add(COVER);
+    const cover=art(page,selectors.cover);await cover.scrollIntoViewIfNeeded();await waitState(cover,'failed');failed.delete(COVER);holdRetries.add(COVER);
     const retry=cover.locator('.dn-art-retry');await retry.focus();await page.keyboard.press('Enter');await page.keyboard.press('Enter');
     await waitState(cover,'retrying');assert.equal(await retry.getAttribute('aria-disabled'),'true');
-    await page.waitForFunction(()=>document.querySelector('.dn-artwork').dataset.artState==='retrying');
+    await page.waitForFunction(()=>document.querySelector('[data-scene-art="case-cover"]').closest('.dn-artwork').dataset.artState==='retrying');
     await until(()=>held.length===1);assert.equal(retryRequests(requests,COVER).length,1);assert.equal(held.length,1);
     await page.clock.fastForward(20001);await waitState(cover,'failed');assert.equal(await retry.getAttribute('aria-disabled'),'false');
     holdRetries.delete(COVER);await retry.click();await waitState(cover,'loaded');assert.equal(retryRequests(requests,COVER).length,2);
@@ -144,7 +144,10 @@ test('opening artwork recovers independently of choices and private reading note
     assert.equal(held.length,1);await successful(held[0]);await waitState(cover,'loaded');assert.equal(retryRequests(requests,COVER).length,1);
   }));
   await t.test('a visible initial image that never finishes offers recovery without reloading the opening',()=>check({clock:true,holdInitial:[COVER]},async({page,holds,held,requests})=>{
-    const cover=art(page,selectors.cover);await until(()=>held.length===1);await waitState(cover,'pending');
+    const cover=art(page,selectors.cover);await until(()=>held.length===1);await cover.scrollIntoViewIfNeeded();await waitState(cover,'pending');
+    // The task now precedes the cover. Wait for its real visibility turn before
+    // advancing the controlled deadline; scrolling alone does not deliver IO.
+    await cover.evaluate(node=>new Promise(resolve=>{const observer=new IntersectionObserver(entries=>{if(entries.some(entry=>entry.isIntersecting)){observer.disconnect();resolve();}});observer.observe(node);}));
     await page.clock.runFor(100);await page.clock.fastForward(20001);await waitState(cover,'failed');
     assert.ok(await cover.locator('.dn-art-retry').isVisible());
     holds.delete(COVER);await cover.locator('.dn-art-retry').click();await waitState(cover,'loaded');
@@ -181,7 +184,7 @@ test('opening artwork recovers independently of choices and private reading note
     assert.equal(await page.locator('[data-hook-action="confirm"]').isEnabled(),true);assert.equal(await page.locator('.dn-artwork').count(),0);
   }));
   await t.test('page lifecycle restoration re-arms a pending visible image deadline',()=>check({clock:true,holdInitial:[COVER]},async({page,held,holds})=>{
-    const cover=art(page,selectors.cover);await until(()=>held.length===1);await waitState(cover,'pending');await page.clock.runFor(100);
+    const cover=art(page,selectors.cover);await until(()=>held.length===1);await cover.scrollIntoViewIfNeeded();await waitState(cover,'pending');await page.clock.runFor(100);
     // Exercise BFCache lifecycle handlers deterministically; this is not a claim
     // that Chromium placed this network-intercepted document in its BFCache.
     await page.evaluate(()=>{dispatchEvent(new PageTransitionEvent('pagehide',{persisted:true}));dispatchEvent(new PageTransitionEvent('pageshow',{persisted:true}));});

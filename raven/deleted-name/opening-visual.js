@@ -122,7 +122,28 @@
     const oldQuote = document.getElementById('old-message-quote');
     const oldMessage = document.querySelector('[data-k="m3"]')?.textContent;
     if (oldQuote && oldMessage) oldQuote.textContent = oldMessage.replace(/^[^.]+\.\s*/, '');
+    const taskQuote = document.getElementById('task-message-quote');
+    const taskMessage = document.querySelector('[data-k="m1"]')?.textContent;
+    if (taskQuote && taskMessage) taskQuote.textContent = taskMessage.replace(/^.*\.\s*(?=[^.]+\.$)/, '');
     document.querySelector('.opening-journey-nav')?.setAttribute('aria-label',english() ? 'Opening path' : 'مسار الافتتاح');
+    if (hook.dataset.phase === 'respond') {
+      const effects = english() ? {
+        precise:'Opens a draft, then a preview of the text and recipient before confirmation.',
+        wait:'A spoken response only. No written draft or recipient is created.',
+        refuse:'A spoken response only. No written draft or recipient is created.'
+      } : {
+        precise:'يفتح مسودة، ثم معاينة للنص والمستلم قبل التأكيد.',
+        wait:'قول داخل المشهد فقط؛ لا ينشئ مسودة أو مستلمًا.',
+        refuse:'قول داخل المشهد فقط؛ لا ينشئ مسودة أو مستلمًا.'
+      };
+      for (const [action,effect] of Object.entries(effects)) {
+        const control = hook.querySelector('[data-hook-action="'+action+'"]');
+        if (!control || control.parentElement.classList.contains('choice-with-effect')) continue;
+        const row = make('div',undefined,'choice-with-effect'),hint = make('p',effect,'decision-effect');
+        hint.id = 'opening-effect-'+action;control.setAttribute('aria-describedby',hint.id);
+        control.before(row);row.append(control,hint);
+      }
+    }
     document.querySelectorAll('.cast > [data-character]:not([hidden])').forEach(card => addOpenButton(card,card.dataset.character,c.open));
     const paper = document.getElementById('hook-document');
     if (paper) {
@@ -157,6 +178,7 @@
   }
   hook.addEventListener('raven:opening-render',enhance);
   document.addEventListener('raven:language',enhance);
+  document.getElementById('task-message-preview')?.addEventListener('click',event => openCard('message',event.currentTarget));
   document.querySelector('[data-journey-paper]')?.addEventListener('click', () => {
     // This is the same explicit opening action. Returning never restarts a scene.
     if (hook.dataset.phase === 'start') hook.querySelector('[data-hook-action="open"]')?.click();

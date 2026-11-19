@@ -1,0 +1,16 @@
+/* Bounded resume UI; real progress only, no story preview. */
+.rvnCaseResume[hidden],.rvnEpisodeResumeControls [hidden],.rvnFilmSaveStatus[hidden]{display:none!important}
+.rvnCaseResume{display:flex;align-items:center;justify-content:space-between;gap:24px;margin:0 0 24px;padding:22px 26px;border:1px solid #ad8c57;background:#211c14;text-align:start}
+.rvnCaseResume>div{min-width:0}
+.rvnCaseResume h3{font-size:24px;line-height:1.5;margin:4px 0 8px}
+.rvnCaseResume p{font-size:15px;line-height:1.8;color:#d8c8ad;margin:0}
+.rvnCaseResume .rvnResumeKicker{color:#e0c18f;font-size:13px}
+.rvnCaseResume>a,.rvnEpisodeResumeControls button{display:inline-flex;justify-content:center;align-items:center;min-height:46px;padding:10px 16px;border:1px solid #cbae80;background:#e0c499;color:#17130e;text-decoration:none;font:inherit;font-size:15px;line-height:1.6;cursor:pointer;overflow-wrap:anywhere}
+.rvnCaseResume>a{flex-shrink:0;max-width:100%}
+.rvnEpisodeResumeControls{display:flex;flex-wrap:wrap;gap:8px;padding:0 18px 18px;min-width:0}
+.rvnEpisodeResumeControls .rvnEpisodeProgress{flex-basis:100%;font-size:13px;line-height:1.8;color:#d7c6aa;margin:0 0 4px;overflow-wrap:anywhere}
+.rvnEpisodeResumeControls button{flex:1 1 140px}
+.rvnEpisodeResumeControls [data-film-start]{background:transparent;color:#eadac1}
+.rvnFilmSaveStatus{margin:16px 0;padding:14px 18px;background:#33291c;border:1px solid #b8955d;color:#f4e0bd;font-size:14px;line-height:1.9}
+.rvnCaseResume a:focus-visible,.rvnEpisodeResumeControls button:focus-visible,#rvnAfterBackstage:focus-visible,#rvnAfterBack:focus-visible{outline:2px solid #fff2d6;outline-offset:4px}
+@media(max-width:650px){.rvnCaseResume{display:block;padding:20px}.rvnCaseResume>a{display:flex;margin-top:18px;width:100%}.rvnEpisodeResumeControls{padding:0 14px 14px}}

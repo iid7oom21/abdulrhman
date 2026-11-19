@@ -299,6 +299,12 @@ body.opening-visual footer {
 }
 
 /* Presentation-only focus mode. The exit remains reachable with or without images. */
+body.opening-visual .opening-task-first { padding-block: 28px 34px; border-bottom: 1px solid var(--line); }
+body.opening-visual #task-message-quote { margin: 16px 0 24px; font-size: clamp(26px,5vw,42px); line-height: 1.6; color: var(--text); }
+body.opening-visual #task-message-preview { min-height: 48px; font: inherit; cursor: pointer; }
+body.opening-visual .choice-with-effect { width: 100%; min-width: 0; }
+body.opening-visual .choice-with-effect > button { width: 100%; }
+body.opening-visual .decision-effect { margin: 6px 0 16px; color: var(--muted); font-size: 14px; line-height: 1.8; }
 body.opening-visual.paper-focus #main > section:not(#hook),
 body.opening-visual.paper-focus footer { display: none; }
 body.opening-visual.paper-focus #hook { border: 0; padding-top: 20px; }

@@ -1,0 +1,38 @@
+/* One private reading tool. No atmosphere or state signalling by correctness. */
+.belief-review { min-width:0; border-inline-start:2px solid #a58b66; }
+.belief-review[hidden] { display:none; }
+.belief-review>summary { min-height:48px; cursor:pointer; padding-block:10px; font-size:clamp(20px,3vw,26px); line-height:1.6; }
+.belief-review :where(p,label,summary,dt,dd,a,button) { overflow-wrap:anywhere; }
+.belief-review .belief-scope { max-width:68ch; color:#e6dac4; }
+.belief-review .belief-save-status { color:#c5b79f; padding:12px 0; border-block:1px solid #594936; font-size:14px; line-height:1.9; }
+.belief-review .belief-field { min-width:0; margin-block:18px; }
+.belief-review label { display:block; margin-bottom:6px; }
+.belief-review :where(textarea,select) { display:block; width:100%; min-width:0; max-width:100%; font:inherit; line-height:1.8; color:#eadfc9; background:#15120f; border:1px solid #887052; padding:12px; }
+.belief-review textarea { resize:vertical; min-height:116px; }
+.belief-review textarea[readonly] { background:#241e16; border-style:dashed; }
+.belief-review .belief-buttons { display:flex; flex-wrap:wrap; gap:10px; }
+.belief-review button { min-height:48px; max-width:100%; white-space:normal; font:inherit; text-align:start; }
+.belief-review :focus-visible { outline:3px solid #ead5ac; outline-offset:4px; }
+.belief-review #belief-status:empty { display:none; }
+.belief-review .belief-linked { padding:12px; border-inline-start:2px solid #a58b66; }
+.belief-review .belief-linked blockquote { margin:10px 0; white-space:pre-wrap; font-size:15px; line-height:1.9; }
+.belief-review .belief-history { list-style:none; margin:16px 0; padding:0; display:grid; gap:14px; }
+.belief-review .belief-record { min-width:0; background:#e8deca; color:#2a251e; border:1px solid #b6a78d; padding:16px; border-radius:3px; }
+.belief-review .belief-record>summary { min-height:44px; cursor:pointer; color:#2a251e; line-height:1.8; }
+.belief-review .belief-record dl { margin:0 0 20px; }
+.belief-review .belief-record-text { white-space:pre-wrap; line-height:1.9; margin-block:12px; }
+.belief-review .belief-record-source { color:#625644; font-size:14px; border-top:1px solid #b6a78d; padding-top:12px; }
+.belief-review .belief-record dl>div { padding-block:14px; border-bottom:1px solid #b6a78d; }
+.belief-review .belief-record dt { color:#625644; font-size:14px; }
+.belief-review .belief-record dd { margin:5px 0 0; white-space:pre-wrap; line-height:1.9; }
+.belief-review .belief-record a { display:inline-flex; align-items:center; min-height:44px; color:#403423; text-underline-offset:4px; }
+.belief-review .belief-record button { background:transparent; border:1px solid #77654c; color:#30281c; padding:10px 14px; }
+.belief-review .belief-record :focus-visible { outline-color:#3d3325; }
+.belief-review .belief-record .belief-buttons { margin-top:10px; }
+@media(max-width:420px) {
+  .belief-review .belief-buttons>* { width:100%; }
+  .belief-review .belief-record { padding:14px; }
+}
+@media(prefers-reduced-motion:reduce) {
+  .belief-review * { scroll-behavior:auto; transition:none; animation:none; }
+}

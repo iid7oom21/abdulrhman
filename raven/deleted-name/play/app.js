@@ -414,6 +414,7 @@
     const locked = busy || browserLocked() || Boolean(pending) || corruptPending !== null || Boolean(state?.readOnly || state?.storageUnavailable || state?.saveStatus === 'unconfirmed');
     for (const control of document.querySelectorAll('#actions input,#actions textarea,#actions select,#actions button,#notebook-actions input,#notebook-actions textarea,#notebook-actions select,#notebook-actions button,#review-actions button')) control.disabled = locked || control.hasAttribute('data-attachment-required');
     $('state-refresh').disabled = busy;$('case-export').disabled = busy;renderBanner();
+    publishReviewView();
   }
   class ApiError extends Error {
     constructor(status,code) {super(code);this.status = status;this.code = code;}
@@ -941,6 +942,34 @@
       body.append(article);
     }
   }
+  function beliefView() {
+    if (!state) return {caseId:null,locale:lang,materials:[],notes:[],locked:true};
+    return {
+      caseId:state.caseId,contentVersion:state.contentVersion,revision:state.revision,locale:lang,
+      materials:state.materials.map(material => ({id:material.id,title:structuredClone(material.title)})),
+      notes:state.notes.map(note => ({id:note.id,text:note.text,sourceId:note.sourceId})),
+      saveStatus:state.saveStatus,persistence:state.persistence,
+      checkpointSaved:Boolean(browserMode() && checkpointSaved && !checkpointIssue),
+      locked:Boolean(busy || pending || corruptPending !== null || browserLocked() || state.readOnly || state.storageUnavailable || state.saveStatus === 'unconfirmed'),
+    };
+  }
+  function publishReviewView() {
+    document.dispatchEvent(new CustomEvent('raven:case-view',{detail:beliefView()}));
+  }
+  function prepareBeliefNote({text,sourceId,returnFocus} = {}) {
+    if (!state || beliefView().locked || review) return {ok:false,reason:'locked'};
+    const action = state.actions.find(item => item.id === 'case.note');
+    if (!action) return {ok:false,reason:'unavailable'};
+    if (String(drafts.get('case.note')?.text || '').trim()) return {ok:false,reason:'draft-exists'};
+    const maximum = Math.min(2000,action.fields?.find(field => field.id === 'text')?.maxLength || 2000);
+    if (typeof text !== 'string' || !text.trim() || text.length > maximum || typeof sourceId !== 'string' || !materialById(sourceId)) return {ok:false,reason:'invalid'};
+    // Reuse the normal review/confirmation and idempotent save path. Preparing
+    // this private note is not a write and never replaces the notebook draft.
+    review = {action,values:{text,sourceId},revision:state.revision,contentVersion:state.contentVersion,
+      ...(typeof returnFocus === 'string' && document.getElementById(returnFocus) ? {returnFocus} : {})};
+    renderReview();focus('review-title');return {ok:true};
+  }
+  window.RavenBeliefReview = Object.freeze({getView:beliefView,prepareNote:prepareBeliefNote});
   function publishLabView() {
     if (!investigationLab) return;
     // An optional reading surface receives only the already-earned player view.
@@ -962,7 +991,7 @@
     for (const language of ['ar','en']) $('language-' + language).setAttribute('aria-pressed',String(lang === language));
     $('home-link').href = '../../' + (lang === 'en' ? '?lang=en' : '');$('case-link').href = '../' + (lang === 'en' ? '?lang=en' : '');
     if ($('workbench-link')) $('workbench-link').href = '../../investigation-lab/' + (lang === 'en' ? '?lang=en' : '');
-    $('case-app').hidden = !state;renderBanner();if (!state) {pruneArtwork();publishLabView();return;}
+    $('case-app').hidden = !state;renderBanner();if (!state) {pruneArtwork();publishLabView();publishReviewView();return;}
     $('save-status').textContent = browserMode() ? tr(checkpointSaved && !checkpointIssue ? 'browserSaved' : 'browserUnsaved') : (state.readOnly && !state.contentVersionMismatch) || state.storageUnavailable || state.saveStatus === 'unconfirmed' ? tr('saveUnconfirmed') : state.persistence === 'disk-file' && state.saveStatus === 'confirmed' ? tr('confirmed') : state.persistence === 'process-memory' && state.saveStatus === 'memory' ? tr('memory') : tr('saveUnconfirmed');
     displayText($('scene-title'),localized(state.scene.title));$('scene-label').textContent = '';
     const prose = $('scene-body');prose.replaceChildren();if (localized(state.scene.body)) prose.append(element('p',localized(state.scene.body)));

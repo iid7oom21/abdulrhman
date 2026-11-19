@@ -149,6 +149,27 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
   <a href="?lang=en" data-raven-language="en" id="lang-switch" data-k="langSwitch" lang="en">English</a>
 </header>
 <main id="main">
+  <section class="wrap opening-task-first" aria-labelledby="task-message-label">
+    <p class="opening-chip" id="task-message-label"><span data-visual-lang="ar">فيكتور · من المحادثة السابقة</span><span data-visual-lang="en">Victor · from the earlier conversation</span></p>
+    <blockquote id="task-message-quote"></blockquote>
+    <button type="button" id="task-message-preview" class="opening-main-action" aria-haspopup="dialog"><span data-visual-lang="ar">افتح المعاينة</span><span data-visual-lang="en">Open the preview</span></button>
+  </section>
+
+
+  <section class="block journey-stage" id="assignment-stage" aria-labelledby="t-assign"><div class="wrap">
+    <p class="journey-step-label"><span aria-hidden="true">01 · </span><span data-visual-lang="ar">اللي جابني هنا</span><span data-visual-lang="en">What brought me here</span></p>
+    <h2 id="t-assign" tabindex="-1" data-k="assignTitle">التكليف</h2>
+    <p class="lead" data-k="assignLead">أنت مرمّم سجلات. بينك وبين فيكتور شغل قديم على سجل ناقص. الليلة يرسل لك جزءًا منه.</p>
+    <figure class="dnVisual" data-appointment-art><img src="./assets/case-record.webp" width="1672" height="941" alt="" loading="lazy" decoding="async"></figure>
+    <div class="journey-message-tools"></div>
+    <ol class="thread">
+      <li class="msg"><span class="who" data-k="victor">فيكتور</span><p data-k="m1">أرسلت لك جزء من السجل. خانة المُحيل. أبي فيها اسم الليلة.</p></li>
+      <li class="msg you"><span class="who" data-k="you">أنت</span><p data-k="m2">اللي وصلني ما يكفي. الاسم يحتاج الأصل، ومقارنة النسخ.</p></li>
+      <li class="msg"><span class="who" data-k="victor">فيكتور</span><p data-k="m3">تعال بعد العشاء. الأصل عندي.</p></li>
+    </ol>
+    <div class="journey-actions"><a class="opening-main-action" href="#t-arrive"><span data-visual-lang="ar">إلى البوابة</span><span data-visual-lang="en">Go to the gate</span></a></div>
+  </div></section>
+
   <section class="wrap hero" aria-labelledby="title">
     <p class="eyebrow" data-k="eyebrow">RAVEN · قضية تفاعلية</p>
     <h1 id="title" data-k="title" tabindex="-1">الاسم المحذوف</h1>
@@ -168,20 +189,6 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       <a href="#t-hook"><span aria-hidden="true">03</span> <span data-visual-lang="ar">الورقة</span><span data-visual-lang="en">The paper</span></a>
     </nav>
   </section>
-
-  <section class="block journey-stage" id="assignment-stage" aria-labelledby="t-assign"><div class="wrap">
-    <p class="journey-step-label"><span aria-hidden="true">01 · </span><span data-visual-lang="ar">اللي جابني هنا</span><span data-visual-lang="en">What brought me here</span></p>
-    <h2 id="t-assign" tabindex="-1" data-k="assignTitle">التكليف</h2>
-    <p class="lead" data-k="assignLead">أنت مرمّم سجلات. بينك وبين فيكتور شغل قديم على سجل ناقص. الليلة يرسل لك جزءًا منه.</p>
-    <figure class="dnVisual" data-appointment-art><img src="./assets/case-record.webp" width="1672" height="941" alt="" loading="lazy" decoding="async"></figure>
-    <div class="journey-message-tools"></div>
-    <ol class="thread">
-      <li class="msg"><span class="who" data-k="victor">فيكتور</span><p data-k="m1">أرسلت لك جزء من السجل. خانة المُحيل. أبي فيها اسم الليلة.</p></li>
-      <li class="msg you"><span class="who" data-k="you">أنت</span><p data-k="m2">اللي وصلني ما يكفي. الاسم يحتاج الأصل، ومقارنة النسخ.</p></li>
-      <li class="msg"><span class="who" data-k="victor">فيكتور</span><p data-k="m3">تعال بعد العشاء. الأصل عندي.</p></li>
-    </ol>
-    <div class="journey-actions"><a class="opening-main-action" href="#t-arrive"><span data-visual-lang="ar">إلى البوابة</span><span data-visual-lang="en">Go to the gate</span></a></div>
-  </div></section>
 
   <section class="block journey-stage" id="arrival-stage" aria-labelledby="t-arrive"><div class="wrap">
     <p class="journey-step-label"><span aria-hidden="true">02 · </span><span data-visual-lang="ar">قبل أن تدخل</span><span data-visual-lang="en">Before you enter</span></p>

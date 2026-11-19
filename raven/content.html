@@ -36,6 +36,7 @@ window.ravenIntro={complete:true,finish:function(){}};
 <link href="./assets/raven-polish-v2.css?v=polish-2-1" rel="stylesheet"/>
 <link href="./assets/raven-media-fallback.css?v=1" rel="stylesheet"/>
 <link href="./assets/raven-visual-home.css?v=20261119" rel="stylesheet"/>
+<link href="./assets/raven-home-resume.css?v=20261119" rel="stylesheet"/>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="RAVEN">
 <meta property="og:locale" content="ar_SA">
@@ -119,6 +120,10 @@ window.ravenIntro={complete:true,finish:function(){}};
 <div class="refHeroCopy reveal">
 <p class="rvnVisualKicker" data-rvn-visual="world">من عالم RAVEN</p>
 <h2 class="rvnVisualHeadline" data-rvn-visual="choose">اختر كيف تدخل الحكاية.</h2>
+<aside class="rvnCaseResume" id="rvnCaseResume" hidden aria-labelledby="rvnCaseResumeTitle">
+<div><p class="rvnResumeKicker" data-home-resume="caseKicker">جلسة قضية متاحة</p><h3 id="rvnCaseResumeTitle" data-home-resume="caseTitle">ارجع للقضية</h3><p id="rvnCaseResumeStatus"></p></div>
+<a id="rvnCaseResumeLink" href="./deleted-name/play/" data-home-resume="caseAction">ارجع للقضية</a>
+</aside>
 <div class="rvnVisualRoutes">
 <article class="rvnVisualRoute rvnVisualRouteFilm">
 <span class="rvnVisualNumber" aria-hidden="true">01</span>
@@ -374,7 +379,8 @@ window.ravenIntro={complete:true,finish:function(){}};
 <video controls="" id="ravenEpisodePlayer" playsinline="" poster="https://cdn.websitepublisher.ai/custom/wid25762/images/raven-film-card.jpg" preload="none" src="https://res.cloudinary.com/du88n6b83/video/upload/v1789985712/raven17/episode-1.mp4"></video>
 </div>
 <div class="rvnVideoMessage" hidden="" id="rvnVideoError" role="status"><span data-rvn-v2="videoError">تعذر تحميل الفيديو. جرّب مرة أخرى؛ ملاحظاتك وتقدمك لن يتغيرا.</span><button data-rvn-v2="retry" id="rvnRetryVideo" type="button">إعادة المحاولة</button></div>
-<div class="rvnAfterCredits" hidden="" id="rvnAfterCredits"><h3 data-rvn-v2="partComplete" id="rvnAfterTitle">اكتمل الجزء.</h3><div class="rvnAfterActions"><button data-rvn-v2="nextEpisode" id="rvnAfterNext" type="button">شاهد الجزء التالي</button><button data-rvn-v2="again" id="rvnAfterReplay" type="button">إعادة المشاهدة</button><a data-raven-route="./deleted-name/" data-dn-link="afterEpisode" data-dn-entry href="./deleted-name/">افتح قضية الاسم المحذوف</a></div><details><summary data-rvn-v2="endQuestion">ما التفصيل الذي غيّر تفسيرك؟</summary><textarea aria-label="ملاحظتك بعد المشاهدة" dir="auto" id="rvnEndNote" maxlength="1500"></textarea><p data-rvn-v2="endPrivacy">ملاحظتك تُحفظ على جهازك فقط، ولا تُرسل تلقائيًا.</p><p id="rvnEndNoteStatus" role="status"></p></details></div>
+<div class="rvnAfterCredits" hidden="" id="rvnAfterCredits"><h3 data-rvn-v2="partComplete" id="rvnAfterTitle">اكتمل الجزء.</h3><div class="rvnAfterActions"><button data-rvn-v2="nextEpisode" id="rvnAfterNext" type="button">شاهد الجزء التالي</button><button data-rvn-v2="again" id="rvnAfterReplay" type="button">إعادة المشاهدة</button><button id="rvnAfterBackstage" data-home-resume="backstage" type="button">خلف الكادر</button><button id="rvnAfterBack" data-home-resume="back" type="button">العودة للحلقات</button><a data-raven-route="./deleted-name/" data-dn-link="afterEpisode" data-dn-entry href="./deleted-name/">افتح قضية الاسم المحذوف</a></div><details><summary data-rvn-v2="endQuestion">ما التفصيل الذي غيّر تفسيرك؟</summary><textarea aria-label="ملاحظتك بعد المشاهدة" dir="auto" id="rvnEndNote" maxlength="1500"></textarea><p data-rvn-v2="endPrivacy">ملاحظتك تُحفظ على جهازك فقط، ولا تُرسل تلقائيًا.</p><p id="rvnEndNoteStatus" role="status"></p></details></div>
+<p class="rvnFilmSaveStatus" id="rvnFilmSaveStatus" role="status" aria-live="polite" hidden></p>
 <div class="rvnTheaterBar">
 <button aria-label="الحلقة السابقة" id="rvnPrevEpisode" type="button">← <span data-rvn-v2="previous">السابق</span></button>
 <div class="rvnNowPlaying"><small data-rvn-i18n="nowPlaying" dir="auto">يُعرض الآن</small><strong id="rvnNowEpisode">FILE 01</strong><span id="rvnResumeNote"></span></div>
@@ -396,6 +402,7 @@ window.ravenIntro={complete:true,finish:function(){}};
 <script defer src="./assets/raven-media-fallback.js?v=2"></script>
 <script defer src="./assets/raven-deleted-name-home.js?v=player-entry-4"></script>
 <script defer src="./assets/raven-visual-home.js?v=20261119"></script>
+<script defer src="./assets/raven-home-resume.js?v=20261119"></script>
 <script>
     (()=>{
       const video=document.getElementById('ravenHeroMotion');

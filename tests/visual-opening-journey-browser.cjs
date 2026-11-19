@@ -56,16 +56,29 @@ test('message, gate, comparison and response remain usable with no images or aud
     });
     try {
       await page.goto(base + '/raven/deleted-name/?lang=' + language, { waitUntil: 'domcontentloaded' });
-      await page.frameLocator('#site-content').locator('[data-visual-open="message"]').waitFor();
+      await page.frameLocator('#site-content').locator('#task-message-preview').waitFor();
       const frame = await (await page.locator('#site-content').elementHandle()).contentFrame();
       assert.ok(frame);
-      const activate = async locator => { if (input === 'touch') await locator.tap(); else { await locator.focus(); await page.keyboard.press('Enter'); } };
+      await frame.waitForFunction(() => document.querySelector('#task-message-quote')?.textContent.trim() && document.querySelector('#opening-card-dialog'));
+      const activate = async locator => {
+        if (input === 'touch') await locator.tap(); else { await locator.focus(); await page.keyboard.press('Enter'); }
+        // Finish the existing hash-navigation focus restoration before sending
+        // the next keyboard action; otherwise its RAF can steal the next focus.
+        await settle(frame);
+      };
       const closeCard = async () => { if (input === 'touch') await activate(frame.locator('.card-dialog-close')); else await page.keyboard.press('Escape'); };
       await frame.evaluate(() => { window.__inspectCalls = 0; document.querySelector('#hook').addEventListener('raven:inspect-part', () => window.__inspectCalls++); });
       assert.equal(await frame.locator('html').getAttribute('dir'), language === 'ar' ? 'rtl' : 'ltr');
+      assert.equal(await frame.locator('#main > section').first().getAttribute('aria-labelledby'), 'task-message-label', 'the first scene starts with Victor’s task');
+      assert.equal(await frame.locator('#assignment-stage').evaluate(node => Boolean(node.compareDocumentPosition(document.querySelector('#title')) & Node.DOCUMENT_POSITION_FOLLOWING)), true, 'the assignment precedes the case title');
+      const firstMessage = await frame.locator('[data-k="m1"]').textContent();
+      const taskQuote = await frame.locator('#task-message-quote').textContent();
+      assert.equal(taskQuote, firstMessage.trim().split(/\.\s*/).filter(Boolean).at(-1) + '.', 'the opening quote is the final sentence of the existing first message');
+      assert.ok((await frame.locator('#task-message-preview').boundingBox()).height >= 44);
       const initial = await state(frame);
       const sourceMessages = await frame.locator('#assignment-stage .thread .msg').evaluateAll(rows => rows.map(row => ({ speaker: row.querySelector('.who').textContent, text: row.querySelector('p').textContent })));
-      const messageButton = frame.locator('[data-visual-open="message"]'); await messageButton.scrollIntoViewIfNeeded(); const messageY = await frame.evaluate(() => scrollY);
+      assert.equal(sourceMessages.length, 3, 'the preview uses the three existing messages only');
+      const messageButton = frame.locator('#task-message-preview'); await messageButton.scrollIntoViewIfNeeded(); const messageY = await frame.evaluate(() => scrollY);
       await activate(messageButton);
       assert.deepEqual(await frame.locator('.message-row').evaluateAll(rows => rows.map(row => ({ speaker: row.querySelector('strong').textContent, text: row.querySelector('p').textContent }))), sourceMessages);
       assert.deepEqual(await state(frame), initial, 'reading the letter grants no choice, recipient or draft');
@@ -111,11 +124,29 @@ test('message, gate, comparison and response remain usable with no images or aud
       assert.ok(Math.abs((await comparison.boundingBox()).y - comparisonTop) <= 2);
       if (output) { fs.mkdirSync(output, { recursive: true }); await page.screenshot({ path: path.join(output, `journey-comparison-${language}-${width}-${input}.png`) }); }
       await activate(frame.locator('[data-hook-action="continue"]'));
+      const expectedEffects = language === 'ar' ? {
+        precise: 'يفتح مسودة، ثم معاينة للنص والمستلم قبل التأكيد.',
+        wait: 'قول داخل المشهد فقط؛ لا ينشئ مسودة أو مستلمًا.',
+        refuse: 'قول داخل المشهد فقط؛ لا ينشئ مسودة أو مستلمًا.'
+      } : {
+        precise: 'Opens a draft, then a preview of the text and recipient before confirmation.',
+        wait: 'A spoken response only. No written draft or recipient is created.',
+        refuse: 'A spoken response only. No written draft or recipient is created.'
+      };
+      assert.equal(await frame.locator('.decision-effect').count(), 3);
+      for (const [action, text] of Object.entries(expectedEffects)) {
+        assert.equal(await frame.locator('#opening-effect-' + action).textContent(), text, 'effect captions describe writing and delivery, not a character reaction');
+        assert.equal(await frame.locator('[data-hook-action="' + action + '"]').getAttribute('aria-describedby'), 'opening-effect-' + action);
+      }
+      const beforeEffectLanguage = await state(frame);
+      await activate(frame.locator('#lang-switch')); await settle(frame); await activate(frame.locator('#lang-switch')); await settle(frame);
+      assert.deepEqual(await state(frame), beforeEffectLanguage); assert.equal(await frame.locator('.decision-effect').count(), 3);
       if (width === 320) {
-        await activate(frame.locator('[data-hook-action="wait"]'));
+        const spokenChoice = input === 'touch' ? 'wait' : 'refuse';
+        await activate(frame.locator('[data-hook-action="' + spokenChoice + '"]'));
         const deferred = await state(frame); assert.equal(deferred.phase, 'after'); assert.equal(deferred.layers.draftWritten, null); assert.equal(deferred.layers.sceneShared, null); assert.equal(deferred.recipient, '');
         assert.equal(await frame.locator('#hook-draft,#hook-share-review,[data-hook-action^="recipient-"]').count(), 0);
-        record.branch = 'spoken deferral only';
+        record.branch = 'spoken ' + spokenChoice + ' only';
       } else {
         await activate(frame.locator('[data-hook-action="precise"]')); await activate(frame.locator('[data-hook-action="recipient-both"]'));
         const review = await state(frame); assert.equal(review.phase, 'review'); assert.equal(review.layers.sceneShared, null); assert.equal(review.recipient, 'both');
