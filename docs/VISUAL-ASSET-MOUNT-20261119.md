@@ -1,16 +1,13 @@
-# Local visual asset mount
+# Local RAVEN integration mount
 
-Base `main`: `4acce380d563792bf7cab76a382356c01aef253c`.
-Branch: `codex/visual-hook-source-local-20261119`.
+The source branch integrates upstream main **c16e6a5** while retaining the local resume-summary endpoint and exact visual-asset allowlist. Frontend gh-pages **9a9bd1c**, including dd0aa5d comparison, is integrated separately. AGENTS.md and the current project scope decision were read before merging. No service settings or live deployment were changed.
 
-`server/ai-dialogue/src/site-mount.js` adds ten explicit frontend CSS/JS files and twelve decorative WebP exports for the separate local frontend review branch, including the first batches of the owner's40-task addendum and later thirty-idea brief. No wildcard static serving or private pack exposure. The four latest paths are homepage resume CSS/JS and private-reflection CSS/JS.
+The mount allows ten local visual CSS/JS files, twelve decorative WebP exports and the single investigation-lab/content.html page. It also retains the six reviewed atmosphere derivatives from upstream. There is no wildcard directory serving. The retired poster is not served; its original bytes are preserved separately outside Git/public roots.
 
-Validation: existing site-mount suite11 passed. The local case server served all15 new paths with bytes matching the frontend and denied9 private/traversal probes. Four AR/EN initial handoffs at390/1440 passed; a separate reload check preserved the initial case session, revision, scene and earned material IDs. Provider calls remained disabled. These tests are local, not production verification.
+GET /api/case/resume-summary authenticates the existing session and returns exactly schemaVersion, caseId, contentVersion, resumable, persistence and saveStatus. It creates or restores no session and reveals no scene, material, note or recovery credential.
 
-The three addendum paths also returned200 with bytes identical to disk, and the site-mount suite11 was rerun successfully after the allowlist extension. The local server was restarted with the same isolated test-data folder; no production service was touched.
+Authenticated state responses also include clientSessionTag, using the existing domain-separated opaque session hash. This lets private reading tools scope their browser data in disk and memory modes as well as checkpoint mode. The tag cannot authenticate or restore a session. It is not added to persisted projections, the sealed checkpoint payload, exports or the six-field homepage summary. The storage schema and story engine are unchanged.
 
-The later batch adds `GET /api/case/resume-summary` after the existing session authentication check. It returns exactly schemaVersion, caseId, contentVersion, resumable, persistence and saveStatus. It neither creates nor restores a session and returns no scene, notes, materials or checkpoint credential. Unavailable sessions return401; read-only or unconfirmed state does not claim resumability. Seven new endpoint tests and23 existing restart/checkpoint/failure tests passed. The state engine, model configuration, deployment pin and service settings remain unchanged.
+Relevant checks passed: scoped interrogation/provider/summary/service/mount tests122, existing local Render contracts30, new client-session-tag and storage regression35, and final shell/content mount13. Counts overlap and are not a unique grand total. Launcher and actual-files HTTP checks use local temporary sessions; fixture cases are explicitly labelled. Actual local browser journeys cover opening, explicit case start and investigation-room navigation. The model remains disabled. No production verification is implied.
 
-Final verification after all22 asset additions: site-mount11/11 passed with local Chromium, all four latest files returned exact frontend bytes, and a390px browser journey started a real local session before returning to the homepage. Anonymous requests kept the resume card hidden; authenticated Arabic/English links worked without exposing private content. An initial test invocation omitted `CHROMIUM_PATH` and could not launch the browser; the corrected invocation passed. No production-service claim follows from these local checks.
-
-Revert this change independently of the frontend commit. Keep source and frontend branches separate; use the local launcher's explicit `--site` path to review them together.
+Render's build pin remains the incoming9a9bd1c release. The new local room content is allowlisted without making it a required file in that older pinned export. Integrating these local changes for a future publication requires a separately coordinated frontend release; no publication is performed here.
