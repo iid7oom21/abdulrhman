@@ -242,6 +242,16 @@ export function createCaseService({contentPath = null, storagePath = null, pack:
           json(200, response); return true;
         }
         if (!session) throw new CaseError('session_unavailable',401);
+        if (req.method === 'GET' && url.pathname === '/api/case/resume-summary') {
+          // A public homepage only needs availability, not the player's reading
+          // copy or opaque recovery credential. Never create/restore a session
+          // here or infer that the browser has retained a checkpoint.
+          const view = viewOf(session);
+          json(200, {schemaVersion:1,caseId:view.caseId,contentVersion:view.contentVersion,
+            resumable:!view.readOnly && !view.storageUnavailable && view.saveStatus !== 'unconfirmed',
+            persistence:view.persistence,saveStatus:view.saveStatus});
+          return true;
+        }
         if (req.method === 'GET' && url.pathname === '/api/case/state') { json(200,responseOf(session)); return true; }
         if (req.method === 'GET' && url.pathname === '/api/case/export') {
           const view = viewOf(session); delete view.actions;
