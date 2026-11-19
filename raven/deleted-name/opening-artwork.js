@@ -24,7 +24,12 @@
   function paint(record) {
     const c = words(), visible = ['failed', 'retrying'].includes(record.state);
     record.wrapper.dataset.artState = record.state;
-    record.wrapper.setAttribute('aria-label', c.label);
+    // Decorative art stays out of the accessibility tree while it works. It is a
+    // named group only while it needs the reader (failed, retrying) or holds the
+    // focus returned to it after a successful retry.
+    if (visible || document.activeElement === record.wrapper) {
+      record.wrapper.setAttribute('role', 'group'); record.wrapper.setAttribute('aria-label', c.label);
+    } else { record.wrapper.removeAttribute('role'); record.wrapper.removeAttribute('aria-label'); }
     record.notice.hidden = !visible;
     record.status.textContent = visible ? c[record.state === 'retrying' ? 'loading' : record.timedOut ? 'timeout' : 'failed'] : '';
     record.button.textContent = c[record.state === 'retrying' ? 'loading' : 'retry'];
@@ -78,7 +83,7 @@
     const image = frame.querySelector('img'), original = source(image?.getAttribute('src'));
     if (!image || !original) return frame;
     const wrapper = element('div', 'dn-artwork');
-    wrapper.tabIndex = -1; wrapper.setAttribute('role', 'group');
+    wrapper.tabIndex = -1;
     if (id) wrapper.dataset.artId = id;
     const notice = element('div', 'dn-art-notice'), status = element('p', 'dn-art-status');
     const button = element('button', 'dn-art-retry'); button.type = 'button';
@@ -90,6 +95,7 @@
     const record = {wrapper, image, original, notice, status, button, timer:null, attempt:0, timedOut:false,
       state:image.complete ? (image.naturalWidth ? 'loaded' : 'failed') : 'pending'};
     records.push(record); button.addEventListener('click', () => retry(record)); listen(record, image); paint(record);
+    wrapper.addEventListener('blur', () => paint(record));
     if (record.state === 'pending') observer?.observe(wrapper);
     return wrapper;
   }

@@ -93,6 +93,17 @@ test('opening artwork recovers independently of choices and private reading note
     assert.equal(await cover.evaluate(node=>document.activeElement===node),true);
     assert.ok(await cover.locator('img').evaluate(img=>img.naturalWidth>0));await overflow(page);
   }));
+  await t.test('loaded artwork stays silent for screen readers; only failed or focused artwork is a named group',()=>check({failures:[COVER]},async({page,failed})=>{
+    const cover=art(page,selectors.cover);await waitState(cover,'failed');
+    assert.equal(await cover.getAttribute('role'),'group');assert.ok(await cover.getAttribute('aria-label'));
+    const loaded=page.locator('.dn-artwork[data-art-state="loaded"]').first();await loaded.waitFor({state:'attached'});
+    assert.equal(await loaded.getAttribute('role'),null);assert.equal(await loaded.getAttribute('aria-label'),null);
+    failed.delete(COVER);const retry=cover.locator('.dn-art-retry');await retry.focus();await page.keyboard.press('Enter');await waitState(cover,'loaded');
+    assert.equal(await cover.evaluate(node=>document.activeElement===node),true);
+    assert.equal(await cover.getAttribute('role'),'group','the recovered illustration keeps a name while it holds focus');
+    await page.locator('[data-hook-action="open"]').focus();
+    await until(async()=>await cover.getAttribute('role')===null&&await cover.getAttribute('aria-label')===null);
+  }));
   await t.test('retry preserves review recipient, written draft and notebook notes without storage or API writes',()=>check({failures:[NOTEBOOK]},async({page,failed,requests})=>{
     await notebook(page);await page.locator('#reading-source').selectOption('document-original');
     await page.locator('#reading-note').fill('Saved private fixture question');await page.locator('#reading-add').click();
