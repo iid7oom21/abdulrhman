@@ -1,0 +1,104 @@
+{
+  "date": "2026-11-19",
+  "state": "local review; not a replacement for approved production artwork",
+  "producer": "built-in image_gen; local Pillow crop/resize/WebP export",
+  "originalCount": 6,
+  "privateReferencesUploaded": false,
+  "imageText": "none; all interface copy is HTML",
+  "costOrQuota": "not exposed by the image tool; no third-party subscription purchased",
+  "rights": "Generated with built-in image tool under its applicable terms; no independent exclusive-rights audit. Existing assets retain their provenance.",
+  "originals": "Full PNG originals preserved outside the public site and Git checkout",
+  "totalExportBytes": 458594,
+  "assets": [
+    {
+      "file": "case-entry-mobile.webp",
+      "width": 720,
+      "height": 900,
+      "bytes": 45030,
+      "sha256": "84115458080ea9694ad7de154e6cd7c00f0f87c49884101196db8104908bc376",
+      "use": "Homepage case entrance, labelled visual concept",
+      "variant": "mobile"
+    },
+    {
+      "file": "case-entry.webp",
+      "width": 1600,
+      "height": 900,
+      "bytes": 88738,
+      "sha256": "3f9518f7c991106e0cbaf9315ac12a26292fcc945f8930189eb7787a07311d72",
+      "use": "Homepage case entrance, labelled visual concept",
+      "variant": "standard"
+    },
+    {
+      "file": "cinema-atmosphere-mobile.webp",
+      "width": 720,
+      "height": 900,
+      "bytes": 42650,
+      "sha256": "bb44e7aa5492545a18e5d6e6d8f82108f9bca394d206f32aacfef16c6a0f9e85",
+      "use": "Homepage surroundings, beside the retained original poster",
+      "variant": "mobile"
+    },
+    {
+      "file": "cinema-atmosphere.webp",
+      "width": 1600,
+      "height": 900,
+      "bytes": 75570,
+      "sha256": "b1f8463c8d2cd7a878e38da0a891f4d787214068e8f448e9bc1e939a7eb58359",
+      "use": "Homepage surroundings, beside the retained original poster",
+      "variant": "standard"
+    },
+    {
+      "file": "comparison-surface-mobile.webp",
+      "width": 720,
+      "height": 900,
+      "bytes": 27380,
+      "sha256": "292403a5a35d9143e300df8df45621dd950fbac6262178fbf8817314c3e295de",
+      "use": "Opening sharing guide background",
+      "variant": "mobile"
+    },
+    {
+      "file": "comparison-surface.webp",
+      "width": 1600,
+      "height": 900,
+      "bytes": 76436,
+      "sha256": "335d893ec0573de1bced92cb06df96912542320e5efe2ebcf3bca0dfb497bf21",
+      "use": "Opening sharing guide background",
+      "variant": "standard"
+    },
+    {
+      "file": "notebook-surface-mobile.webp",
+      "width": 600,
+      "height": 800,
+      "bytes": 41858,
+      "sha256": "8e349a7978dfa5a71d523cb475ffd8b9693d09d31fc2a759e37c1ae2de2e2163",
+      "use": "Connected player notebook background",
+      "variant": "mobile"
+    },
+    {
+      "file": "notebook-surface.webp",
+      "width": 1280,
+      "height": 720,
+      "bytes": 41728,
+      "sha256": "a365d8684b58c4a8b2ce9ba301e0429a1eba08a21389c29f29435e47447fbdc3",
+      "use": "Connected player notebook background",
+      "variant": "standard"
+    },
+    {
+      "file": "paper-grain.webp",
+      "width": 256,
+      "height": 256,
+      "bytes": 402,
+      "sha256": "db46364453dbea8c190c0e5c5ea9a198c24d430c04eb0d8056f707cc2867a96e",
+      "use": "Readable document and comparison panel texture",
+      "variant": "standard"
+    },
+    {
+      "file": "section-divider.webp",
+      "width": 1600,
+      "height": 533,
+      "bytes": 18802,
+      "sha256": "5ae35b6df187f8d985b91e9d8e34beb894e6a268a59352f262badc33c8401637",
+      "use": "Optional opening references divider",
+      "variant": "standard"
+    }
+  ]
+}

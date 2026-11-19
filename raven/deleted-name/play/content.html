@@ -7,10 +7,11 @@
   <meta name="robots" content="noindex">
   <title>RAVEN — القضية</title>
   <link rel="stylesheet" href="./style.css?v=case-play-6">
+  <link rel="stylesheet" href="./play-visual.css?v=visual-review-20261119">
   <script src="../../../site-bridge.js?v=watching-1" defer></script>
   <script src="./app.js?v=case-play-7" defer></script>
 </head>
-<body>
+<body class="raven-play-visual">
   <a class="skip" href="#main" data-ui="skip">انتقل إلى القضية</a>
   <header class="top wrap">
     <a class="brand" href="../../" id="home-link">RAVEN</a>
@@ -41,6 +42,26 @@
       </section>
       <section id="materials-panel" class="panel" aria-labelledby="materials-title">
         <h2 id="materials-title" data-ui="materials">المواد التي وصلت إليك</h2>
+        <details class="play-reading-guide">
+          <summary><span data-visual-lang="ar" lang="ar">ثلاث وقفات أثناء القراءة</span><span data-visual-lang="en" lang="en">Three pauses while reading</span></summary>
+          <div class="play-guide-grid">
+            <article class="play-guide-card">
+              <span class="play-guide-number" aria-hidden="true">01</span>
+              <h3><span data-visual-lang="ar" lang="ar">ابدأ من السطر</span><span data-visual-lang="en" lang="en">Start with the line</span></h3>
+              <p><span data-visual-lang="ar" lang="ar">افتح المادة واقرأ النص كاملًا. العنوان يعرّف بما أمامك، ولا يغني عن القراءة.</span><span data-visual-lang="en" lang="en">Open a material and read its full text. Its title tells you what is in front of you; it does not replace the reading.</span></p>
+            </article>
+            <article class="play-guide-card">
+              <span class="play-guide-number" aria-hidden="true">02</span>
+              <h3><span data-visual-lang="ar" lang="ar">ارجع إلى الأصل</span><span data-visual-lang="en" lang="en">Return to the source</span></h3>
+              <p><span data-visual-lang="ar" lang="ar">اختر مادتين من قائمة المقارنة، وراجع كل نص مع مصدره المعروض.</span><span data-visual-lang="en" lang="en">Choose two materials in the comparison below, and read each text alongside its displayed source.</span></p>
+            </article>
+            <article class="play-guide-card">
+              <span class="play-guide-number" aria-hidden="true">03</span>
+              <h3><span data-visual-lang="ar" lang="ar">لمن تصل هذه النسخة؟</span><span data-visual-lang="en" lang="en">Who receives this version?</span></h3>
+              <p><span data-visual-lang="ar" lang="ar">عند إتاحة المشاركة، راجع النص والمستلم قبل التأكيد. وجود المادة أمامك لا يعني أنها وصلت إلى الجميع.</span><span data-visual-lang="en" lang="en">When sharing is available, review the text and recipient before confirming. A material in front of you has not necessarily reached everyone.</span></p>
+            </article>
+          </div>
+        </details>
         <div id="materials-list" class="material-list"></div>
         <details id="comparison"><summary data-ui="comparison">مقارنة المواد</summary>
           <div class="comparison-controls"><div><label for="compare-a" data-ui="firstMaterial">المادة الأولى</label><select id="compare-a"></select></div><div><label for="compare-b" data-ui="secondMaterial">المادة الثانية</label><select id="compare-b"></select></div></div>

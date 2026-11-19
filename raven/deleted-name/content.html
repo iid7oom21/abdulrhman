@@ -140,8 +140,9 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
 #reading-tools :focus-visible{outline:2px solid var(--gold-hi);outline-offset:3px}
 #reading-tools h4{margin-block:16px 8px}
 </style>
+<link rel="stylesheet" href="opening-visual.css?v=visual-review-1">
 </head>
-<body>
+<body class="opening-visual">
 <a class="skip" href="#main" data-k="skip">تخطَّ إلى المحتوى</a>
 <header class="wrap top">
   <a class="brand" href="../" data-k="back">RAVEN</a>
@@ -154,10 +155,17 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     <figure class="raven-scene-art raven-scene-art--cover" data-scene-art="case-cover" aria-hidden="true"><img src="./assets/scenes/case-scenes-v1.webp" width="1024" height="1536" alt="" decoding="async"></figure>
     <p class="tagline" data-k="tagline">خانة ممسوحة، ودعوة بعد العشاء، ومكتبة ما رجع منها صاحبها.</p>
     <p class="status" data-k="status">قيد التطوير</p>
+    <div class="opening-entry-card" data-design-card="entry">
+      <p class="opening-chip"><span data-visual-lang="ar">افتتاح قابل للعب</span><span data-visual-lang="en">A playable opening</span></p>
+      <h2><span data-visual-lang="ar">ابدأ من السطر.</span><span data-visual-lang="en">Start with a line.</span></h2>
+      <p><span data-visual-lang="ar">اقرأ الرسالة، ثم افحص الورقة قبل أن تختار ردك.</span><span data-visual-lang="en">Read the message. Examine the paper before choosing your reply.</span></p>
+      <a class="opening-main-action" href="#t-assign"><span data-visual-lang="ar">أقرأ الرسالة</span><span data-visual-lang="en">Read the message</span><span aria-hidden="true"> ↙</span></a>
+      <p class="opening-chip"><span data-visual-lang="ar">افتتاح محلي. المتابعة المتصلة خطوة منفصلة؛ تُراجع طريقة نقل الاختيار عندها.</span><span data-visual-lang="en">A local opening. The connected case is a separate step; its choice-transfer rules are shown there.</span></p>
+    </div>
   </section>
 
-  <section class="block" aria-labelledby="t-assign"><div class="wrap">
-    <h2 id="t-assign" data-k="assignTitle">التكليف</h2>
+  <section class="block journey-stage" id="assignment-stage" aria-labelledby="t-assign"><div class="wrap">
+    <h2 id="t-assign" tabindex="-1" data-k="assignTitle">التكليف</h2>
     <p class="lead" data-k="assignLead">أنت مرمّم سجلات. بينك وبين فيكتور شغل قديم على سجل ناقص. الليلة يرسل لك جزءًا منه.</p>
     <figure class="dnVisual"><img src="./assets/case-record.webp" width="1672" height="941" alt="" loading="lazy" decoding="async"></figure>
     <ol class="thread">
@@ -167,8 +175,8 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     </ol>
   </div></section>
 
-  <section class="block" aria-labelledby="t-arrive"><div class="wrap">
-    <h2 id="t-arrive" data-k="arriveTitle">الوصول</h2>
+  <section class="block journey-stage" id="arrival-stage" aria-labelledby="t-arrive"><div class="wrap">
+    <h2 id="t-arrive" tabindex="-1" data-k="arriveTitle">الوصول</h2>
     <p class="scene" data-k="arriveScene">22:20. أضواء الإسعاف تبتعد عن البوابة. كلير عند الباب.</p>
     <figure class="dnVisual"><img src="./assets/case-arrival.webp" width="1350" height="759" alt="" loading="lazy" decoding="async"></figure>
     <ol class="thread">
@@ -178,32 +186,13 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     </ol>
   </div></section>
 
-  <section class="block" aria-labelledby="t-cast"><div class="wrap">
-    <h2 id="t-cast" data-k="castTitle">في البيت الليلة</h2>
-    <dl class="cast">
-      <div data-character="victor"><dt><span class="cast-portrait" aria-hidden="true" style="--portrait-left:0%;--portrait-top:0%"><img src="./assets/characters/cast-portraits-v1.webp" width="1254" height="1254" alt="" loading="lazy" decoding="async"></span><span class="cast-name" data-k="victor">فيكتور</span></dt><dd data-k="cVictor">صاحب التكليف. ما رجع للقهوة.</dd></div>
-      <div data-character="claire"><dt><span class="cast-portrait cast-portrait--single" aria-hidden="true"><img src="../assets/images/deleted-name/claire.jpg" width="896" height="1200" alt="" loading="lazy" decoding="async"></span><span class="cast-name" data-k="claire">كلير</span></dt><dd data-k="cClaire">رتّبت الدعوات والمقاعد.</dd></div>
-      <div data-character="jonas"><dt><span class="cast-portrait cast-portrait--single" aria-hidden="true"><img src="../assets/images/deleted-name/jonas.jpg" width="896" height="1200" alt="" loading="lazy" decoding="async"></span><span class="cast-name" data-k="jonas">يوناس</span></dt><dd data-k="cJonas">يطلب مساعدتك.</dd></div>
-      <div data-character="mateo"><dt><span class="cast-portrait cast-portrait--single" aria-hidden="true"><img src="../assets/images/deleted-name/mateo.jpg" width="896" height="1200" alt="" loading="lazy" decoding="async"></span><span class="cast-name" data-k="mateo">ماتيو</span></dt><dd data-k="cMateo">أول من وصل للمكتبة.</dd></div>
-      <div data-character="elena"><dt><span class="cast-portrait cast-portrait--single" aria-hidden="true"><img src="../assets/images/deleted-name/elena.jpg" width="896" height="1200" alt="" loading="lazy" decoding="async"></span><span class="cast-name" data-k="elena">إيلينا</span></dt><dd data-k="cGuestF">ضيفة على العشاء.</dd></div>
-      <div data-character="noah"><dt><span class="cast-portrait cast-portrait--single" aria-hidden="true"><img src="../assets/images/deleted-name/noah.jpg" width="896" height="1200" alt="" loading="lazy" decoding="async"></span><span class="cast-name" data-k="noah">نوح</span></dt><dd data-k="cGuestM">ضيف على العشاء.</dd></div>
-    </dl>
-  </div></section>
 
-  <section class="block" aria-labelledby="t-rules"><div class="wrap">
-    <h2 id="t-rules" data-k="rulesTitle">قواعد القضية</h2>
-    <ul class="rules">
-      <li data-k="r1">ما تكتب اسمًا ما يثبته الأصل.</li>
-      <li data-k="r2">الكذب اختيار صريح، مو فخ في الكلام.</li>
-      <li data-k="r3">الصمت ما يدينك.</li>
-      <li data-k="r4">اللي تقوله يبقى. والتصحيح يبان جنبه.</li>
-      <li data-k="r5">ماضيك ثابت. اختياراتك ما تغيّره.</li>
-    </ul>
-  </div></section>
+
+
 
 
   <section class="block" id="hook" aria-labelledby="t-hook"><div class="wrap">
-    <h2 id="t-hook" data-k="hookTitle">الورقة</h2>
+    <h2 id="t-hook" tabindex="-1" data-k="hookTitle">الورقة</h2>
     <p class="lead" data-k="hookLead">رسالتك ومسودة على الطاولة. افحصهما قبل أن تختار ردك.</p>
     <p class="hook-note" data-k="hookNote">هذا المشهد مستقل عن معاينة الحوار — حالة محلية أثناء الجلسة الحالية فقط. تحديث الصفحة يبدأه من جديد.</p>
     <ol id="hook-log" class="hook-log" aria-label="الحوار المكتوب"></ol>
@@ -214,6 +203,28 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     <section id="hook-ending" class="hook-ending" hidden></section>
     <p id="hook-announcement" class="hook-sr" role="status" aria-live="polite" aria-atomic="true"></p>
   </div></section>
+
+  <section class="block" aria-labelledby="t-cast"><div class="wrap"><details class="opening-optional" id="optional-cast"><summary><span lang="ar" data-visual-lang="ar">بطاقات الشخصيات · مرجع اختياري</span><span lang="en" data-visual-lang="en">Character cards · optional reference</span></summary>
+    <h2 id="t-cast"><span data-visual-lang="ar">تعرف إلى الأسماء التي ظهرت</span><span data-visual-lang="en">Names you have encountered</span></h2>
+    <dl class="cast">
+      <div data-character="victor"><dt><span class="cast-portrait" aria-hidden="true" style="--portrait-left:0%;--portrait-top:0%"><img src="./assets/characters/cast-portraits-v1.webp" width="1254" height="1254" alt="" loading="lazy" decoding="async"></span><span class="cast-name" data-k="victor">فيكتور</span></dt><dd data-k="cVictor">صاحب التكليف. ما رجع للقهوة.</dd></div>
+      <div data-character="claire"><dt><span class="cast-portrait cast-portrait--single" aria-hidden="true"><img src="../assets/images/deleted-name/claire.jpg" width="896" height="1200" alt="" loading="lazy" decoding="async"></span><span class="cast-name" data-k="claire">كلير</span></dt><dd data-k="cClaire">رتّبت الدعوات والمقاعد.</dd></div>
+      <div data-character="jonas"><dt><span class="cast-portrait cast-portrait--single" aria-hidden="true"><img src="../assets/images/deleted-name/jonas.jpg" width="896" height="1200" alt="" loading="lazy" decoding="async"></span><span class="cast-name" data-k="jonas">يوناس</span></dt><dd data-k="cJonas">يطلب مساعدتك.</dd></div>
+      <div data-character="mateo" hidden><dt><span class="cast-portrait cast-portrait--single" aria-hidden="true"><img src="../assets/images/deleted-name/mateo.jpg" width="896" height="1200" alt="" loading="lazy" decoding="async"></span><span class="cast-name" data-k="mateo">ماتيو</span></dt><dd data-k="cMateo">أول من وصل للمكتبة.</dd></div>
+      <div data-character="elena"><dt><span class="cast-portrait cast-portrait--single" aria-hidden="true"><img src="../assets/images/deleted-name/elena.jpg" width="896" height="1200" alt="" loading="lazy" decoding="async"></span><span class="cast-name" data-k="elena">إيلينا</span></dt><dd data-k="cGuestF">ضيفة على العشاء.</dd></div>
+      <div data-character="noah" hidden><dt><span class="cast-portrait cast-portrait--single" aria-hidden="true"><img src="../assets/images/deleted-name/noah.jpg" width="896" height="1200" alt="" loading="lazy" decoding="async"></span><span class="cast-name" data-k="noah">نوح</span></dt><dd data-k="cGuestM">ضيف على العشاء.</dd></div>
+    </dl>
+  </details></div></section>
+  <section class="block" aria-labelledby="t-rules"><div class="wrap"><details class="opening-optional" id="optional-rules"><summary><span lang="ar" data-visual-lang="ar">قبل أن تختار · قواعد القراءة</span><span lang="en" data-visual-lang="en">Before you choose · reading rules</span></summary>
+    <h2 id="t-rules" data-k="rulesTitle">قواعد القضية</h2>
+    <ul class="rules">
+      <li data-k="r1">ما تكتب اسمًا ما يثبته الأصل.</li>
+      <li data-k="r2">الكذب اختيار صريح، مو فخ في الكلام.</li>
+      <li data-k="r3">الصمت ما يدينك.</li>
+      <li data-k="r4">اللي تقوله يبقى. والتصحيح يبان جنبه.</li>
+      <li data-k="r5">ماضيك ثابت. اختياراتك ما تغيّره.</li>
+    </ul>
+  </details></div></section>
 
   <section class="block" aria-labelledby="t-now"><div class="wrap">
     <h2 id="t-now" data-k="nowTitle">المتاح الآن</h2>
@@ -688,5 +699,6 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
 <script src="reading-tools.js?v=7"></script>
 <script src="case-entry.js?v=1"></script>
 <script src="opening-artwork.js?v=2" async></script>
+<script src="opening-visual.js?v=visual-review-1" defer></script>
 </body>
 </html>

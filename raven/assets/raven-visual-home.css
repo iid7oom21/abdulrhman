@@ -1,0 +1,115 @@
+/* Local visual review, 2026-11-19. Presentation only; original media and player remain. */
+@font-face{font-family:RavenLocalArabic;src:url('../terminal-preview/assets/ibm-plex-arabic.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap}
+:root{--rvn-visual-ink:#100f0d;--rvn-visual-panel:#1c1914;--rvn-visual-paper:#f1e6d3;--rvn-visual-muted:#c8bda9;--rvn-visual-line:#5d4d36;--rvn-visual-copper:#d6b784}
+html,body{overflow-x:visible}
+body{background:var(--rvn-visual-ink);color:var(--rvn-visual-paper)}
+html[lang='ar'] body{font-family:RavenLocalArabic,'IBM Plex Sans Arabic',sans-serif}
+main,section,header,.wrap,.refHeroCopy{min-width:0}
+main :where(h1,h2,h3,p,a,button,summary){overflow-wrap:anywhere}
+.ravenNav{height:auto;border-bottom:1px solid #4b3d2d;background:#100f0df5}
+.ravenNavInner{display:flex;justify-content:space-between;max-width:1240px;flex-wrap:wrap;row-gap:6px;height:auto;min-height:var(--rvn-nav-height,62px);padding-block:8px}
+.ravenReferenceHero{background-color:#15130f;background-image:linear-gradient(0deg,#100f0d,transparent 70%);padding-bottom:0}
+.ravenReferenceHero.has-visual-atmosphere{background-image:linear-gradient(0deg,#100f0d 4%,#100f0d99 80%),var(--rvn-visual-atmosphere);background-size:cover;background-position:center top}
+.ravenReferenceHero .refHeroBg{max-width:1180px;margin-inline:auto;aspect-ratio:910/512;border-inline:1px solid #4b3d2d;box-shadow:0 22px 80px #0008}
+.ravenReferenceHero .refHeroVideo{object-fit:contain}
+.ravenReferenceHero .refHeroCopy{max-width:1180px;padding-block:clamp(28px,5vw,64px) 0;text-align:start}
+.rvnVisualKicker{font-size:13px!important;line-height:1.6!important;color:var(--rvn-visual-copper)!important;margin:0 0 8px!important;letter-spacing:.03em}
+.rvnVisualHeadline{font-size:clamp(27px,4.4vw,48px);line-height:1.45;letter-spacing:0;margin:0 0 26px;font-weight:400}
+.rvnVisualRoutes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.rvnVisualRoute{position:relative;padding:clamp(22px,3.4vw,40px);border:1px solid var(--rvn-visual-line);background:#191611;min-width:0}
+.rvnVisualRouteFilm{background:linear-gradient(140deg,#242018,#15130f)}
+.rvnVisualRouteCase{background:linear-gradient(140deg,#30281c,#1a1712)}
+.rvnVisualNumber{position:absolute;inset-inline-end:22px;top:18px;color:#a08b69;font:400 14px/1.8 Georgia,serif;direction:ltr}
+.rvnVisualRoute>.rvnVisualKicker{padding-inline-end:32px}
+.rvnVisualRoute h3{font-size:clamp(26px,3vw,34px);line-height:1.5;letter-spacing:0;margin:4px 0 12px;color:var(--rvn-visual-paper)}
+.rvnVisualRoute h3[translate='no']{font-family:Georgia,'Cinzel',serif;letter-spacing:.08em}
+.rvnVisualRoute>p:not(.rvnVisualKicker){font-size:16px!important;color:var(--rvn-visual-muted);line-height:1.95;margin:0 0 24px;max-width:48ch}
+.rvnVisualRoute :is(.rvnHeroWatch,.rvnEnterCase){display:flex;align-items:center;justify-content:center;width:100%;min-height:52px;padding:12px 18px;margin:0;border:1px solid var(--rvn-visual-copper);border-radius:2px;background:#dec394;color:#19140d;font-family:inherit;font-size:16px;font-weight:600;line-height:1.6;text-align:center;cursor:pointer}
+.rvnVisualRouteFilm .rvnHeroWatch{background:transparent;color:#f1e6d3}
+.rvnVisualTextLink{display:inline-flex;align-items:center;min-height:44px;margin-top:8px;color:var(--rvn-visual-muted);text-decoration:underline;text-underline-offset:5px;font-size:14px}
+.rvnVisualRoute :is(button,a):focus-visible,.rvnVisualEpisodeOpen:focus-visible,.rvnVisualCastReference>summary:focus-visible{outline:2px solid #fff1ce;outline-offset:4px}
+#films{padding-block:clamp(48px,7vw,88px)}
+#films .films{display:block}
+#films .film.raven{display:grid;grid-template-columns:minmax(0,.55fr) minmax(0,1fr);min-height:0;background:#1b1813;margin-bottom:24px;align-items:center}
+#films .film.raven::before{aspect-ratio:16/10;width:100%;height:100%;min-height:190px;grid-column:1;grid-row:1;background-size:cover;background-position:center}
+#films .film.raven .filmContent{min-width:0;grid-column:2;grid-row:1;direction:inherit;padding:24px 28px}
+#films .film.raven h3{font-size:clamp(24px,3vw,40px);margin-block:8px}
+#films .film.raven .filmContent p{max-width:55ch}
+#films .film.raven.rvnMediaFilmUnavailable{display:block}
+#films .film.raven.rvnMediaFilmUnavailable::before{display:none}
+.rvnVisualEpisodes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.rvnVisualEpisode{display:flex;flex-direction:column;min-width:0;background:#1b1813;border:1px solid var(--rvn-visual-line);border-radius:2px}
+.rvnVisualEpisodeOpen{display:block;flex:1;color:inherit;text-decoration:none}
+.rvnVisualEpisodeFrame{position:relative;min-width:0;width:100%;aspect-ratio:5/4;background:#252016;overflow:hidden}
+.rvnVisualEpisodeFrame::after{content:'';position:absolute;inset:50% 0 0;background:linear-gradient(transparent,#100f0d99);pointer-events:none}
+.rvnVisualEpisodeFrame img{display:block;width:100%;height:100%;object-fit:cover;object-position:50% 29%;filter:none}
+.rvnVisualEpisodeNumber{position:absolute;z-index:1;inset-inline-start:18px;bottom:12px;direction:ltr;font:400 30px/1.3 Georgia,serif;color:#fff3d9;text-shadow:0 2px 5px #000}
+.rvnVisualEpisodeCopy{padding:20px}
+.rvnVisualEpisodeCopy h3{margin:0 0 18px;font-size:23px;line-height:1.5;font-weight:400}
+.rvnVisualEpisodeAction{display:inline-flex;min-height:44px;align-items:center;font-size:15px;color:#e3c99e;text-decoration:underline;text-underline-offset:5px}
+.rvnVisualFootnote{font-size:13px!important;line-height:1.8!important;color:#c0b49f!important;margin-block:16px 0}
+.rvnVisualEpisodeFrame.is-image-unavailable img,.rvnVisualCaseArt.is-image-unavailable>img{opacity:0}
+.rvnVisualEpisodeFrame.is-image-unavailable{aspect-ratio:5/3}
+.rvnVisualCaseArt.is-image-unavailable{min-height:160px}
+.rvnVisualRetry{position:absolute;inset-inline-start:12px;bottom:12px;z-index:3;min-height:44px;max-width:calc(100% - 24px);padding:10px 14px;border:1px solid #cbb184;background:#15130f;color:#eee1cb;font:inherit;cursor:pointer}
+.rvnVisualRetry[hidden]{display:none}
+.rvnVisualEpisode>.rvnVisualRetry{position:static;margin:0 14px 14px;max-width:calc(100% - 28px)}
+.rvnVisualRetry:focus-visible{outline:2px solid #fff1ce;outline-offset:2px}
+.rvnVisualCaseArt:has(.rvnVisualRetry:not([hidden])) .rvnVisualArtCaption{top:12px;bottom:auto}
+#dialogue-preview{background:#191611;border-block:1px solid #584832}
+#dialogue-preview .wrap{display:grid;grid-template-columns:minmax(0,1.08fr) minmax(0,1fr);column-gap:clamp(24px,4vw,58px);align-items:start}
+#dialogue-preview .rvnCaseHeading{grid-column:1/-1;margin-bottom:32px}
+#dialogue-preview .rvnCaseHeading h2{font-size:clamp(28px,4vw,44px);line-height:1.5}
+.rvnVisualCaseArt{position:relative;grid-column:1;grid-row:2;min-width:0;aspect-ratio:16/10;overflow:hidden;background:#30291e;border:1px solid #665236}
+.rvnVisualCaseArt>img{display:block;width:100%;height:100%;object-fit:cover;object-position:center}
+.rvnVisualArtCaption{position:absolute;inset-inline-start:12px;bottom:12px;max-width:calc(100% - 24px);padding:7px 10px;background:#100f0ded;border:1px solid #776243;color:#e9dbc4;font-size:12px;line-height:1.6}
+#dialogue-preview .rvnCaseEntry{grid-column:2;grid-row:2;min-width:0;display:block;padding:0;border:0}
+#dialogue-preview .rvnCaseEntry>div{max-width:none}
+#dialogue-preview .rvnCaseEntry .rvnVisualCaseInvitation{font-size:clamp(27px,3.4vw,38px);line-height:1.5;margin-block:20px 12px;color:#f1e6d3}
+#dialogue-preview .rvnCaseEntry .rvnCaseBlurb{color:#cdbfa9;font-size:16px}
+#dialogue-preview .rvnCaseActions{display:block;margin-block:24px 16px}
+#dialogue-preview .rvnCaseActions .rvnEnterCase{display:flex;justify-content:center;align-items:center;min-height:52px;padding:12px 20px;border:1px solid #dfc394;background:#dfc394;color:#19140d;font-size:17px}
+#dialogue-preview .rvnCaseEntry .rvnVisualScope{font-size:13px;line-height:1.9;color:#c7b9a4}
+.rvnVisualCastReference{border-top:1px solid #655037;margin-top:26px}
+.rvnVisualCastReference>summary{cursor:pointer;min-height:48px;padding-block:12px;color:#e2c99f;font-size:15px}
+.rvnVisualCastReference .rvnCastGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:18px}
+.rvnVisualCastReference .rvnCastCard{display:block;min-width:0;border:1px solid #5a4933;background:#13110e}
+.rvnVisualCastReference .rvnCastCard img{display:block;width:100%;height:auto;aspect-ratio:4/5;object-fit:cover}
+.rvnVisualCastReference .rvnCastCopy{padding:9px;font-size:14px;min-width:0}
+.rvnVisualCastReference .rvnCastCopy strong{font-size:15px}
+.rvnVisualCastReference .rvnCastCopy span{font-size:12px}
+#dialogue-preview .rvnCaseDuration{line-height:1.9;color:#c1b5a0}
+.rvnStudioCard{border:1px solid #54442f;padding:26px;background:#1a1712}
+.rvnStudioCard h3{color:#e8d5b5}
+@media(hover:hover){.rvnVisualEpisodeOpen:hover .rvnVisualEpisodeAction,.rvnVisualTextLink:hover{color:#fff2d6}.rvnVisualEpisode:hover{border-color:#d1b17b}.rvnVisualRouteFilm .rvnHeroWatch:hover{background:#362c1e}.rvnVisualRouteCase .rvnEnterCase:hover,#dialogue-preview .rvnCaseActions .rvnEnterCase:hover{background:#ead2a9}}
+@media(min-width:900px){.rvnVisualRoute>p:not(.rvnVisualKicker){min-height:94px}.rvnVisualRoute .rvnVisualTextLink{margin-bottom:0}}
+@media(max-width:767px){
+ .rvnVisualRoutes{grid-template-columns:minmax(0,1fr);gap:14px}
+ .rvnVisualRoute{padding:24px}
+ .rvnVisualRoute>p:not(.rvnVisualKicker){margin-bottom:18px}
+ #dialogue-preview .wrap{grid-template-columns:minmax(0,1fr)}
+ #dialogue-preview .rvnCaseHeading{grid-column:1;margin-bottom:22px}
+ .rvnVisualCaseArt{grid-column:1;grid-row:2;aspect-ratio:4/5}
+ #dialogue-preview .rvnCaseEntry{grid-column:1;grid-row:3;padding-top:26px}
+ .rvnVisualEpisodes{gap:14px}
+ .rvnVisualEpisodeCopy{padding:14px}
+ .rvnVisualEpisodeCopy h3{font-size:19px}
+ #films .film.raven{grid-template-columns:minmax(0,.6fr) minmax(0,1fr)}
+ #films .film.raven .filmContent{padding:20px}
+}
+@media(max-width:540px){
+ .rvnVisualEpisodes{grid-template-columns:minmax(0,1fr)}
+ .rvnVisualEpisodeOpen{display:grid;grid-template-columns:minmax(0,.82fr) minmax(0,1fr);align-items:center}
+ .rvnVisualEpisodeFrame{aspect-ratio:4/5;height:auto;align-self:stretch}
+ .rvnVisualEpisodeFrame img{position:absolute;inset:0}
+ .rvnVisualEpisodeCopy h3{font-size:22px;margin-bottom:10px}
+ .rvnVisualEpisodeFrame.is-image-unavailable{aspect-ratio:4/5}
+ #films .film.raven{grid-template-columns:minmax(0,1fr)}
+ #films .film.raven::before{grid-column:1;grid-row:1;aspect-ratio:16/8;min-height:0}
+ #films .film.raven .filmContent{grid-column:1;grid-row:2;padding:20px}
+ .rvnVisualCastReference .rvnCastGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .rvnVisualRoute{padding:20px}
+ .rvnVisualRoute :is(.rvnHeroWatch,.rvnEnterCase){font-size:15px}
+ .rvnVisualHeadline{font-size:27px}
+}
+@media(prefers-reduced-motion:reduce){.rvnVisualEpisodeOpen,.rvnVisualRoute a,.rvnVisualRoute button{transition:none;animation:none}}

@@ -1,0 +1,396 @@
+/* RAVEN visual review: existing markup and interaction contracts remain unchanged. */
+@font-face {
+  font-family: "Raven Arabic";
+  src: url("../terminal-preview/assets/ibm-plex-arabic.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Raven Display";
+  src: url("../terminal-preview/assets/cinzel.woff2") format("woff2");
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+}
+body.opening-visual {
+  --ink: #0b0a08;
+  --alt: #100e0b;
+  --panel: #171410;
+  --line: #514533;
+  --gold: #c59a61;
+  --gold-hi: #dfc292;
+  --text: #eee9df;
+  --soft: #d0c7ba;
+  --muted: #b8ad9d;
+  --paper: #e7ddca;
+  --paper-ink: #28231c;
+  --paper-muted: #625748;
+  --paper-line: #b5a58d;
+  background: radial-gradient(ellipse at 85% 0, #211b13 0, var(--ink) 42rem);
+  color: var(--text);
+  font-family: "Raven Arabic", system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.85;
+  color-scheme: dark;
+}
+html[lang="en"] body.opening-visual { font-family: system-ui, sans-serif; line-height: 1.75; }
+html[lang="ar"] body.opening-visual [data-visual-lang="en"],
+html[lang="en"] body.opening-visual [data-visual-lang="ar"] { display: none; }
+body.opening-visual [hidden] { display: none; }
+body.opening-visual .wrap { width: min(100% - 64px, 1160px); }
+body.opening-visual :where(button,input,textarea,select) { font: inherit; }
+body.opening-visual :where(button,a,input,textarea,select):focus-visible { outline: 3px solid var(--gold-hi); outline-offset: 4px; }
+body.opening-visual :where(button,textarea,p,dd,h1,h2,h3,h4) { overflow-wrap: anywhere; }
+body.opening-visual button { touch-action: manipulation; }
+body.opening-visual button:disabled { cursor: default; opacity: .6; }
+
+/* Keep the approved artwork, compact enough to reach the invitation on mobile. */
+body.opening-visual .top { padding-block: 10px; border-color: var(--line); }
+body.opening-visual .top .brand { font: 500 21px "Raven Display", Georgia, serif; letter-spacing: .22em; color: var(--text); }
+body.opening-visual .top a { min-height: 44px; font-size: 15px; }
+body.opening-visual .hero {
+  display: grid;
+  grid-template-columns: minmax(0,1fr) minmax(260px,.72fr);
+  gap: 0 42px;
+  padding-block: 30px 28px;
+  align-items: center;
+}
+body.opening-visual .hero > :not(.dn-artwork):not(figure) { grid-column: 1; }
+body.opening-visual .hero > .dn-artwork,
+body.opening-visual .hero > figure { grid-column: 2; grid-row: 1 / 7; align-self: stretch; }
+body.opening-visual .hero .raven-scene-art { margin: 0; max-width: none; width: 100%; aspect-ratio: 2 / 1; border: 1px solid var(--line); }
+body.opening-visual .hero .eyebrow { margin-bottom: 8px; color: var(--gold-hi); font-size: 14px; }
+body.opening-visual .hero h1 { font-size: clamp(30px,4.6vw,48px); line-height: 1.4; }
+body.opening-visual .hero .tagline { max-width: 54ch; margin-top: 10px; font-size: 17px; }
+body.opening-visual .hero .status { border: 0; padding: 0; margin-top: 10px; color: var(--muted); }
+body.opening-visual .hero nav,
+body.opening-visual .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+body.opening-visual .hero > .opening-entry-card {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: minmax(0,1fr) auto;
+  gap: 8px 30px;
+  margin-top: 24px;
+  padding: 22px 26px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background-color: var(--panel);
+  background-image: linear-gradient(90deg,rgba(11,10,8,.96),rgba(11,10,8,.87)),url("../assets/visual-20261119/case-entry.webp");
+  background-size: auto,cover;
+  background-position: center;
+}
+body.opening-visual .opening-entry-card > :not(.opening-main-action) { grid-column: 1; }
+body.opening-visual .opening-entry-card h2 { margin: 0; font-size: 25px; }
+body.opening-visual .opening-entry-card p { margin: 0; }
+body.opening-visual .opening-entry-card > .opening-main-action { grid-column: 2; grid-row: 2 / 4; align-self: center; }
+body.opening-visual .opening-entry-card > .opening-chip:last-child { grid-column: 1 / -1; margin-top: 6px; }
+body.opening-visual .opening-chip { color: var(--muted); font-size: 14px; line-height: 1.75; }
+body.opening-visual section.block { padding-block: 26px 36px; background: transparent; border-color: var(--line); }
+body.opening-visual :where(#assignment-stage,#arrival-stage,#hook) { scroll-margin-block-start: 22px; }
+body.opening-visual h2 { color: var(--text); font-size: clamp(22px,3vw,28px); line-height: 1.6; }
+body.opening-visual :where(.lead,.scene) { max-width: 68ch; }
+
+/* The same images sit beside the written scene; they never gate the text. */
+body.opening-visual :is(#assignment-stage,#arrival-stage) > .wrap {
+  display: grid;
+  grid-template-columns: minmax(0,.94fr) minmax(0,1.06fr);
+  gap: 0 30px;
+  align-items: start;
+}
+body.opening-visual :is(#assignment-stage,#arrival-stage) h2,
+body.opening-visual :is(#assignment-stage,#arrival-stage) :is(.lead,.scene) { grid-column: 1 / -1; }
+body.opening-visual :is(#assignment-stage,#arrival-stage) > .wrap > :is(.dn-artwork,.dnVisual) { grid-column: 1; grid-row: 3; }
+body.opening-visual :is(#assignment-stage,#arrival-stage) .thread { grid-column: 2; grid-row: 3; }
+body.opening-visual :is(#assignment-stage,#arrival-stage) .dnVisual { margin: 0; border-color: var(--line); border-radius: 3px; }
+body.opening-visual :is(#assignment-stage,#arrival-stage) .dnVisual img { display: block; width: 100%; height: 330px; object-fit: cover; }
+body.opening-visual .thread,
+body.opening-visual .hook-log { gap: 14px; }
+body.opening-visual .msg { padding: 15px 20px; max-width: min(100%,640px); border-radius: 3px; }
+body.opening-visual .msg.you { background: #211d17; }
+body.opening-visual .msg p { margin-top: 5px; }
+body.opening-visual .who { font-size: 14px; font-weight: 600; color: var(--gold-hi); }
+
+/* All actions have the same neutral affordances; color is never an answer cue. */
+body.opening-visual :where(.btn,.hook-next,.opening-main-action) {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 50px;
+  max-width: 100%;
+  padding: 12px 22px;
+  border: 1px solid var(--gold);
+  border-radius: 3px;
+  background: var(--gold);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+  line-height: 1.65;
+  white-space: normal;
+  cursor: pointer;
+}
+body.opening-visual :where(.hook-secondary,.opening-secondary,.card-dialog-close,.card-open,.opening-card-open) {
+  min-height: 46px;
+  max-width: 100%;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  line-height: 1.65;
+  text-align: start;
+  white-space: normal;
+  cursor: pointer;
+}
+body.opening-visual .choices { gap: 12px; margin-block: 22px 10px; }
+body.opening-visual .choices > button { padding: 16px 20px; border-radius: 3px; }
+body.opening-visual .hook-step { margin-block: 22px 14px; font-size: 22px; line-height: 1.65; }
+body.opening-visual :where(.hook-note,.note) { font-size: 15px; line-height: 1.85; }
+body.opening-visual .opening-toolsbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-block: 18px; }
+
+/* Existing full-text materials; the source and the unsigned draft stay distinct. */
+body.opening-visual .hook-document,
+body.opening-visual .hook-draft,
+body.opening-visual .hook-review {
+  min-width: 0;
+  padding: clamp(20px,3vw,30px);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--panel);
+}
+body.opening-visual #hook-document { display: grid; grid-template-columns: minmax(0,1fr) minmax(180px,.38fr); gap: 18px 24px; }
+body.opening-visual #hook-document > h3 { grid-column: 1 / -1; margin: 0; color: var(--text); font-size: 23px; }
+body.opening-visual #hook-document > :is(.dn-artwork,figure) { grid-column: 2; grid-row: 2; align-self: start; }
+body.opening-visual #hook-document > dl { grid-column: 1; grid-row: 2; }
+body.opening-visual #hook-document > :is(button,.hook-comparison,.hook-note) { grid-column: 1 / -1; }
+body.opening-visual #hook-document > .opening-toolsbar { grid-column: 1 / -1; margin: 0; }
+body.opening-visual #hook-document .raven-scene-art { margin: 0; border: 1px solid var(--line); }
+body.opening-visual #hook-document > dl,
+body.opening-visual .hook-comparison > section,
+body.opening-visual .hook-draft > p:first-of-type,
+body.opening-visual .card-dialog-body > dl,
+body.opening-visual .document-paper {
+  min-width: 0;
+  padding: clamp(18px,3vw,28px);
+  border: 1px solid var(--paper-line);
+  border-radius: 2px;
+  background-color: var(--paper);
+  background-image: linear-gradient(rgba(231,221,202,.97),rgba(231,221,202,.97)),url("../assets/visual-20261119/paper-grain.webp");
+  background-size: auto,480px;
+  color: var(--paper-ink);
+  line-height: 1.95;
+  color-scheme: light;
+}
+body.opening-visual #hook-document > dl { gap: 18px; }
+body.opening-visual #hook-document > dl > div + div { padding-top: 18px; border-top: 1px solid var(--paper-line); }
+body.opening-visual #hook-document > dl dt { color: var(--paper-muted); font-size: 15px; }
+body.opening-visual #hook-document > dl dd { margin-top: 4px; }
+body.opening-visual #hook-document > dl button {
+  display: block;
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 8px;
+  margin: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--paper-ink);
+  font: inherit;
+  line-height: 1.95;
+  text-align: start;
+  white-space: normal;
+}
+body.opening-visual #hook-document > dl button:focus-visible { outline-color: var(--paper-ink); }
+body.opening-visual #hook-document .hook-signature { border-color: var(--paper-muted); }
+body.opening-visual #hook-document > button { justify-self: start; margin: 0; }
+body.opening-visual #hook-source-note { margin: 0; color: var(--soft); max-width: 70ch; }
+body.opening-visual .hook-comparison { gap: 18px; margin: 0; align-items: start; }
+body.opening-visual .hook-comparison > section h4 { color: var(--paper-ink); font-size: 17px; border-bottom: 1px solid var(--paper-line); padding-bottom: 12px; margin-bottom: 16px; }
+body.opening-visual .hook-comparison > section p + p { margin-top: 16px; }
+body.opening-visual .hook-draft > h3,
+body.opening-visual .hook-review > h3 { color: var(--text); font-size: 23px; }
+body.opening-visual .hook-review dl { gap: 18px; }
+body.opening-visual .hook-review dt { font-size: 15px; color: var(--gold-hi); }
+body.opening-visual .hook-review dd { line-height: 1.9; }
+body.opening-visual .hook-state { padding: 12px 16px; background: var(--panel); }
+
+/* The same portrait assets, offered after the opening as optional reading. */
+body.opening-visual .opening-optional { margin: 0; }
+body.opening-visual .opening-optional > summary { cursor: pointer; padding-block: 12px; min-height: 48px; color: var(--soft); font-size: 19px; }
+body.opening-visual .opening-optional > summary h2 { display: inline; font: inherit; color: inherit; }
+body.opening-visual .opening-optional[open] > summary { margin-bottom: 20px; }
+body.opening-visual .cast { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 18px; }
+body.opening-visual .cast > div { border-color: var(--line); border-radius: 3px; }
+body.opening-visual .cast .cast-portrait { aspect-ratio: 2 / 3; }
+body.opening-visual .cast .cast-name { font-size: 20px; }
+body.opening-visual .cast dd { font-size: 16px; line-height: 1.85; }
+body.opening-visual .cast button { margin: 14px 16px 0; max-width: calc(100% - 32px); min-height: 46px; }
+
+/* Shared full-reading card: native dialog retains the focus boundary. */
+body.opening-visual #opening-card-dialog {
+  width: min(760px,calc(100% - 32px));
+  max-width: none;
+  max-height: min(85dvh,900px);
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: var(--panel);
+  color: var(--text);
+  box-shadow: 0 24px 100px rgba(0,0,0,.65);
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+body.opening-visual #opening-card-dialog::backdrop { background: rgba(5,5,4,.82); }
+body.opening-visual .card-dialog-inner { padding: clamp(18px,4vw,32px); min-width: 0; }
+body.opening-visual .card-dialog-heading { margin-block: 20px 22px; font-size: 24px; line-height: 1.6; }
+body.opening-visual .card-dialog-close { min-width: 46px; text-align: center; }
+body.opening-visual .card-dialog-body { line-height: 1.95; min-width: 0; }
+body.opening-visual .card-dialog-body > :first-child { margin-top: 0; }
+body.opening-visual .card-dialog-body > :last-child { margin-bottom: 0; }
+body.opening-visual .card-dialog-body .cast-portrait { max-width: 260px; margin: 0 auto 22px; }
+body.opening-visual .card-dialog-body .hook-comparison { grid-template-columns: 1fr; }
+body.opening-visual .card-dialog-body > dl > div + div { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--paper-line); }
+body.opening-visual .card-dialog-body dt { color: var(--paper-muted); font-size: 15px; }
+body.opening-visual .card-dialog-body dd { margin: 8px 0 0; white-space: pre-wrap; }
+body.opening-visual .card-dialog-inner > .opening-chip { margin: 18px 0 0; }
+body.opening-visual .opening-guide-card {
+  margin-block: 20px;
+  padding: 20px 24px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background-color: var(--panel);
+  background-image: linear-gradient(90deg,rgba(23,20,16,.98),rgba(23,20,16,.9)),url("../assets/visual-20261119/comparison-surface.webp");
+  background-size: auto,cover;
+  background-position: center;
+}
+body.opening-visual .opening-guide-card h3 { margin: 0 0 10px; font-size: 21px; }
+body.opening-visual .opening-guide-card p { margin: 0; color: var(--soft); }
+
+body.opening-visual .hook-ending { margin-top: 34px; padding: 26px; background: var(--alt); border-radius: 3px; }
+body.opening-visual .hook-ending nav { gap: 12px; }
+body.opening-visual .hook-ending > .dn-artwork { max-width: 360px; }
+body.opening-visual #reading-tools {
+  border-radius: 3px;
+  padding: 20px;
+  background-color: var(--panel);
+  background-image: linear-gradient(90deg,rgba(23,20,16,.99),rgba(23,20,16,.92)),url("../assets/visual-20261119/notebook-surface.webp");
+  background-size: auto,cover;
+  background-position: center;
+}
+body.opening-visual #reading-tools :where(input,textarea,select) { font-size: 16px; line-height: 1.85; }
+body.opening-visual #reading-tools :where(.reading-source,li > span) { font-size: 15px; }
+body.opening-visual #reading-tools button { font-size: 16px; min-height: 46px; }
+body.opening-visual .dn-art-status,
+body.opening-visual .dn-art-retry { font-size: 16px; }
+body.opening-visual .dn-art-notice { border-radius: 3px; }
+body.opening-visual footer {
+  margin-top: 26px;
+  padding-block: 36px;
+  font-size: 14px;
+  background-image: linear-gradient(rgba(11,10,8,.92),rgba(11,10,8,.92)),url("../assets/visual-20261119/section-divider.webp");
+  background-size: auto,cover;
+  background-position: center;
+}
+
+/* Presentation-only focus mode. The exit remains reachable with or without images. */
+body.opening-visual.paper-focus #main > section:not(#hook),
+body.opening-visual.paper-focus footer { display: none; }
+body.opening-visual.paper-focus #hook { border: 0; padding-top: 20px; }
+body.opening-visual.paper-focus #hook .raven-scene-art { display: none; }
+body.opening-visual.paper-focus #paper-focus-exit {
+  position: sticky;
+  top: 12px;
+  z-index: 5;
+  min-height: 48px;
+  padding: 10px 16px;
+  background: var(--gold);
+  color: var(--ink);
+  border: 1px solid var(--gold);
+  border-radius: 3px;
+  font: inherit;
+  font-weight: 700;
+}
+
+@media (hover: hover) {
+  body.opening-visual :where(.btn,.hook-next,.opening-main-action):not(:disabled):hover { background: var(--gold-hi); border-color: var(--gold-hi); }
+  body.opening-visual :where(.hook-secondary,.opening-secondary,.card-dialog-close,.card-open,.opening-card-open):not(:disabled):hover { border-color: var(--muted); background: rgba(231,221,202,.06); }
+  body.opening-visual #hook-document > dl button:hover { background: rgba(40,35,28,.04); border-color: var(--paper-line); }
+}
+@media (max-width: 760px) {
+  body.opening-visual { font-size: 16px; line-height: 1.85; }
+  body.opening-visual .wrap { width: calc(100% - 32px); }
+  body.opening-visual .hero { display: block; padding-block: 24px; }
+  body.opening-visual .hero h1 { font-size: 32px; }
+  body.opening-visual .hero .raven-scene-art { margin-block: 14px; aspect-ratio: 2.7 / 1; }
+  body.opening-visual .hero .tagline { font-size: 16px; }
+  body.opening-visual .hero nav,
+  body.opening-visual .hero-actions { display: grid; grid-template-columns: 1fr; }
+  body.opening-visual .hero > .opening-entry-card {
+    display: block;
+    padding: 18px;
+    margin-top: 18px;
+    background-image: linear-gradient(90deg,rgba(11,10,8,.96),rgba(11,10,8,.87)),url("../assets/visual-20261119/case-entry-mobile.webp");
+  }
+  body.opening-visual .opening-entry-card h2 { margin-block: 8px; }
+  body.opening-visual .opening-entry-card > .opening-main-action { margin-block: 14px; width: 100%; }
+  body.opening-visual .opening-entry-card > .opening-chip:last-child { margin-top: 0; }
+  body.opening-visual .opening-chip { font-size: 15px; }
+  body.opening-visual :is(#assignment-stage,#arrival-stage) > .wrap { display: block; }
+  body.opening-visual :is(#assignment-stage,#arrival-stage) .dnVisual { margin-bottom: 18px; }
+  body.opening-visual :is(#assignment-stage,#arrival-stage) .dnVisual img { height: 170px; object-fit: cover; }
+  body.opening-visual section.block { padding-block: 22px 28px; }
+  body.opening-visual .msg { padding: 14px 16px; max-width: 100%; }
+  body.opening-visual :where(.who,.hook-note,.note,.hero .eyebrow,.hero .status) { font-size: 16px; }
+  body.opening-visual #hook-document { display: block; padding: 18px; }
+  body.opening-visual #hook-document > h3 { margin-bottom: 16px; font-size: 22px; }
+  body.opening-visual #hook-document > .dn-artwork,
+  body.opening-visual #hook-document > figure { max-width: 240px; margin-bottom: 18px; }
+  body.opening-visual #hook-document > dl { margin-bottom: 18px; padding: 16px; }
+  body.opening-visual #hook-document > button { margin-block: 0 18px; width: 100%; }
+  body.opening-visual #hook-document > .opening-toolsbar > * { flex: 1 1 200px; text-align: center; }
+  body.opening-visual #hook-document > dl dt { font-size: 16px; }
+  body.opening-visual #hook-document > dl button { padding: 8px 2px; }
+  body.opening-visual .hook-comparison { grid-template-columns: 1fr; gap: 14px; margin-bottom: 18px; }
+  body.opening-visual .hook-comparison > section { padding: 18px; }
+  body.opening-visual .hook-review,
+  body.opening-visual .hook-draft,
+  body.opening-visual .hook-ending { padding: 18px; }
+  body.opening-visual .hook-draft > p:first-of-type { padding: 18px; }
+  body.opening-visual .hook-review dt { font-size: 16px; }
+  body.opening-visual .choices > button { padding: 14px 16px; }
+  body.opening-visual .cast { grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+  body.opening-visual .cast .cast-name { padding-inline: 12px; font-size: 19px; }
+  body.opening-visual .cast dd { padding-inline: 12px; }
+  body.opening-visual .cast button { margin-inline: 12px; max-width: calc(100% - 24px); font-size: 16px; }
+  body.opening-visual #opening-card-dialog { width: calc(100% - 20px); max-height: 90dvh; }
+  body.opening-visual .card-dialog-inner { padding: 18px; }
+  body.opening-visual .card-dialog-heading { font-size: 22px; }
+  body.opening-visual .card-dialog-close { padding-inline: 10px; font-size: 16px; }
+  body.opening-visual .card-dialog-body dt { font-size: 16px; }
+  body.opening-visual .opening-guide-card { padding: 18px; background-image: linear-gradient(90deg,rgba(23,20,16,.98),rgba(23,20,16,.9)),url("../assets/visual-20261119/comparison-surface-mobile.webp"); }
+  body.opening-visual #reading-tools { padding: 16px; background-image: linear-gradient(90deg,rgba(23,20,16,.99),rgba(23,20,16,.92)),url("../assets/visual-20261119/notebook-surface-mobile.webp"); }
+  body.opening-visual #reading-tools :where(.reading-source,li > span) { font-size: 16px; }
+}
+@media (max-width: 359px) {
+  body.opening-visual .wrap { width: calc(100% - 24px); }
+  body.opening-visual .hero h1 { font-size: 29px; }
+  body.opening-visual #hook-document { padding: 14px; }
+  body.opening-visual #hook-document > dl,
+  body.opening-visual .hook-comparison > section { padding: 14px; }
+  body.opening-visual .cast { grid-template-columns: 1fr; }
+  body.opening-visual .cast .cast-portrait { max-height: 280px; }
+  body.opening-visual .cast .cast-portrait:not(.cast-portrait--single) { max-width: 186.667px; margin-inline: auto; }
+}
+@media (prefers-reduced-motion: reduce) {
+  body.opening-visual,
+  body.opening-visual *,
+  body.opening-visual *::before,
+  body.opening-visual *::after { animation: none; transition: none; scroll-behavior: auto; }
+}
+@media (forced-colors: active) {
+  body.opening-visual :where(.hook-document,.hook-draft,.hook-review,.hook-comparison > section,#opening-card-dialog) { border: 1px solid CanvasText; }
+}
