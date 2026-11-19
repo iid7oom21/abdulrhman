@@ -1,0 +1,179 @@
+/* Shared presentation for the independent RAVEN dialogue previews. */
+.rvnInterviewRoom {
+  --room-ink: #122a29;
+  --room-paper: #f3eee3;
+  --room-copper: #bd8861;
+  --room-line: rgba(108, 75, 48, .2);
+  background: radial-gradient(ellipse at 14% 8%, #23423d 0, transparent 48%), #101b1c;
+  color: #eee9df;
+  min-height: 100vh;
+}
+.rvnInterviewRoom .rvnRoomHeader {
+  max-width: 1200px;
+  margin-inline: auto;
+  min-height: 110px;
+  padding: 24px 32px;
+  background: transparent;
+  border: 0;
+  align-items: center;
+}
+.rvnInterviewRoom .rvnRoomHeader h1 {
+  color: #f3eee3;
+  font-size: clamp(1.15rem, 2vw, 1.55rem);
+  letter-spacing: 0;
+  line-height: 1.5;
+}
+.rvnInterviewRoom .rvnRoomEyebrow {
+  display: block;
+  color: #cdb49a;
+  font-size: .75rem;
+  line-height: 1.7;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.rvnInterviewRoom .rvnRoomBrand > .rvnRoomEyebrow { letter-spacing: 0; }
+.rvnInterviewRoom .badge {
+  color: #e1c3a5;
+  background: rgba(229, 204, 177, .05);
+  border-color: rgba(229, 204, 177, .26);
+  border-radius: 40px;
+  padding: 7px 14px;
+}
+.rvnInterviewRoom .rvnRoomMain { max-width: 1200px; padding: 0 32px 40px; }
+.rvnInterviewRoom .rvnRoomLayout {
+  display: grid;
+  grid-template-columns: minmax(230px, 28%) minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid rgba(224, 199, 164, .23);
+  border-radius: 14px;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, .18);
+}
+.rvnInterviewRoom .rvnRoomStage { min-width: 0; background: #152d2c; padding-bottom: 14px; }
+.rvnInterviewRoom .rvnRoomPortrait { position: relative; height: 292px; overflow: hidden; background: #182523; }
+.rvnInterviewRoom .rvnRoomPortrait::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, #152d2c 0, rgba(21, 45, 44, .04) 45%);
+  pointer-events: none;
+}
+.rvnInterviewRoom .rvnRoomPortrait img { width: 100%; height: 100%; object-fit: cover; object-position: center 22%; display: block; }
+.rvnInterviewRoom .rvnRoomMonogram { display: grid; place-items: center; height: 100%; color: #cba980; font: 5rem "Cinzel", Georgia, serif; }
+.rvnInterviewRoom .rvnRoomIdentity { position: relative; padding: 0 26px; margin-top: -19px; }
+.rvnInterviewRoom .rvnRoomIdentity h2 { margin: 0; color: #f4ebdb; font-size: 2rem; font-weight: 500; line-height: 1.5; }
+.rvnInterviewRoom .rvnRoomSelector { padding: 12px 26px 0; }
+.rvnInterviewRoom .rvnRoomSelector label { font-size: .78rem; color: #c6d0c8; margin: 0 0 5px; }
+.rvnInterviewRoom .rvnRoomSelector select { width: 100%; background: #102321; color: #f3eee3; border-color: #4b635a; border-radius: 6px; }
+.rvnInterviewRoom details.rvnRoomContext { margin: 12px 26px 0; padding: 0; border: 0; background: transparent; }
+.rvnInterviewRoom .rvnRoomContext summary { color: #d9bf9e; font-size: .78rem; display: list-item; align-content: center; }
+.rvnInterviewRoom .rvnRoomContext p { color: #d0d7cf; font-size: .8rem; line-height: 1.9; margin: 4px 0 12px; }
+.rvnInterviewRoom #runtime-description { margin: 10px 26px; font-size: .8rem; line-height: 1.8; color: #d0d7cf; }
+.rvnInterviewRoom .rvnRoomDesk { min-width: 0; background: var(--room-paper); color: var(--room-ink); }
+.rvnInterviewRoom .rvnRoomTranscriptHeader { display: flex; gap: 16px; align-items: center; justify-content: space-between; padding: 24px 28px 18px; border-bottom: 1px solid var(--room-line); }
+.rvnInterviewRoom .rvnRoomTranscriptHeader .rvnRoomEyebrow { color: #806046; }
+.rvnInterviewRoom .rvnRoomTranscriptHeader h2 { margin: 0; font-size: 1.55rem; font-weight: 500; line-height: 1.5; }
+.rvnInterviewRoom .rvnRoomDesk #dialogue-scope { margin: 0; padding: 12px 28px; border: 0; border-bottom: 1px solid var(--room-line); border-radius: 0; background: #e4e9df; color: #355246; font-size: .8rem; line-height: 1.8; }
+.rvnInterviewRoom .rvnRoomDesk #dialogue-scope strong { color: #355246; }
+.rvnInterviewRoom .rvnRoomDesk button.secondary { color: #39554b; border: 1px solid #c4c5b6; background: transparent; border-radius: 6px; }
+.rvnInterviewRoom .rvnRoomTranscriptHeader #clear { font-size: .75rem; padding: 8px 12px; flex-shrink: 0; }
+.rvnInterviewRoom .rvnRoomTranscript { padding: 0 28px; }
+.rvnInterviewRoom .rvnRoomEmpty { min-height: 262px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding: 22px 12px; }
+.rvnInterviewRoom .rvnRoomPaperMark { font-family: "Cinzel", Georgia, serif; color: #a27650; font-size: 2.25rem; line-height: 1.25; margin-bottom: 18px; }
+.rvnInterviewRoom .rvnRoomEmpty h3 { margin: 0 0 7px; font-size: 1.25rem; font-weight: 500; }
+.rvnInterviewRoom .rvnRoomEmpty p { margin: 0; max-width: 36em; color: #5c655d; font-size: .9rem; line-height: 1.9; }
+.rvnInterviewRoom #log { background: transparent; border: 0; padding: 12px 0; min-height: 262px; max-height: 440px; border-radius: 0; scrollbar-color: #a79e8d transparent; }
+.rvnInterviewRoom #log:empty { display: none; }
+.rvnInterviewRoom .msg { margin: 12px 0; border: 0; border-radius: 0; padding: 12px 16px; line-height: 1.9; font-size: .95rem; }
+.rvnInterviewRoom .msg.me { background: #163d37; color: #faf5e9; border-radius: 8px 8px 0 8px; margin-inline-start: 11%; text-align: start; }
+.rvnInterviewRoom .msg.them { background: transparent; border-inline-start: 2px solid #b88460; margin-inline-end: 6%; color: #243d36; }
+.rvnInterviewRoom .msg .name { font-family: inherit; color: #775338; font-size: .75rem; font-weight: 700; margin-bottom: 5px; }
+.rvnInterviewRoom .msg.me .name { color: #e2c8a7; }
+.rvnInterviewRoom .msg.operation { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; margin: 4px 0 18px; padding: 0 4px 8px; border: 0; border-bottom: 1px solid var(--room-line); color: #56625a; font-size: .75rem; line-height: 1.7; }
+.rvnInterviewRoom .msg.operation .name { font-size: inherit; margin: 0; color: #56625a; }
+.rvnInterviewRoom .rvnRoomComposer { padding: 18px 28px 0; border-top: 1px solid var(--room-line); }
+.rvnInterviewRoom .rvnRoomComposer label { margin: 0 0 8px; font-size: .78rem; font-weight: 600; color: #455e52; }
+.rvnInterviewRoom .rvnRoomComposer .row { flex-wrap: nowrap; align-items: stretch; margin-bottom: 0; gap: 10px; }
+.rvnInterviewRoom #input { resize: vertical; min-height: 78px; max-height: 240px; flex: 1; background: #fcf8f0; color: #203e35; border: 1px solid #aaa995; border-radius: 7px; padding: 12px 14px; line-height: 1.7; }
+.rvnInterviewRoom #input::placeholder { color: #687062; opacity: 1; }
+.rvnInterviewRoom #send { min-width: 74px; background: #19483e; border-color: #19483e; color: #f9f1e2; border-radius: 7px; padding-inline: 18px; }
+.rvnInterviewRoom .rvnRoomOperations { padding: 12px 28px 22px; }
+.rvnInterviewRoom .rvnRoomOperations .row { margin: 0; gap: 6px; }
+.rvnInterviewRoom .rvnRoomOperations button.secondary { font-size: .75rem; padding: 6px 9px; min-height: 44px; border-color: transparent; text-decoration: underline; text-decoration-color: #afbaaa; text-underline-offset: 4px; }
+.rvnInterviewRoom .rvnRoomDesk #status { margin-top: 8px; color: #59665b; font-size: .75rem; line-height: 1.8; }
+.rvnInterviewRoom .rvnRoomDesk .error { color: #943e32; }
+.rvnInterviewRoom .rvnRoomDesk #status.is-error { color: #943e32; font-weight: 600; }
+.rvnInterviewRoom .msg.service-error { border-inline-start-color: #ac5a43; background: #efe0d4; color: #713c2b; }
+.rvnInterviewRoom .msg.knowledge-refusal { border-inline-start-color: #718778; background: #e6e9dd; color: #365244; }
+.rvnInterviewRoom #player-help, .rvnInterviewRoom #materials-panel { background: #152a29; border-color: #3a5048; border-radius: 9px; margin-top: 16px; padding: 14px 22px; }
+.rvnInterviewRoom #player-help summary { display: list-item; align-content: center; color: #d8bd9b; }
+.rvnInterviewRoom #player-help summary h2 { display: inline; margin: 0; color: #e7d0af; font-size: .95rem; font-weight: 500; }
+.rvnInterviewRoom #player-help p, .rvnInterviewRoom #player-help ol { color: #cbd6cd; font-size: .85rem; line-height: 1.9; }
+.rvnInterviewRoom #player-help[open] summary, .rvnInterviewRoom #materials-panel[open] > summary { margin-bottom: 12px; }
+.rvnInterviewRoom #player-help .hint { color: #dcc4a5; }
+.rvnInterviewRoom #materials-panel > summary { color: #e7d0af; font-size: .95rem; font-weight: 500; }
+.rvnInterviewRoom #materials-panel > p { font-size: .85rem; color: #cbd6cd; }
+.rvnInterviewRoom #materials-panel input, .rvnInterviewRoom #materials-panel select, .rvnInterviewRoom #materials-panel textarea { background: #0e2322; border-color: #52675d; border-radius: 5px; }
+.rvnInterviewRoom #materials-panel button { border-radius: 5px; }
+.rvnInterviewRoom footer { max-width: 1136px; margin-inline: auto; border-color: #344842; padding: 20px 32px 36px; color: #aebdb2; text-align: start; line-height: 1.9; }
+.rvnInterviewRoom :focus-visible { outline: 3px solid #d6a879; outline-offset: 4px; }
+.rvnInterviewRoom .rvnRoomDesk :focus-visible { outline-color: #9c5935; }
+.rvnInterviewRoom button:not(:disabled):hover { filter: brightness(1.08); }
+.rvnInterviewRoom .rvnRoomDesk button:not(:disabled):hover { filter: none; box-shadow: inset 0 0 0 1px currentColor; }
+@media (min-width: 1600px) {
+  .rvnInterviewRoom .rvnRoomHeader { padding-top: 42px; padding-bottom: 32px; }
+  .rvnInterviewRoom .rvnRoomMain { padding-bottom: 56px; }
+}
+@media (max-width: 760px) {
+  .rvnInterviewRoom .rvnRoomHeader { min-height: 94px; padding: 18px 18px; gap: 10px; }
+  .rvnInterviewRoom .rvnRoomBrand > .rvnRoomEyebrow { font-size: .75rem; letter-spacing: 0; }
+  .rvnInterviewRoom .rvnRoomHeader h1 { font-size: 1rem; }
+  .rvnInterviewRoom .badge { font-size: .75rem; padding: 5px 10px; }
+  .rvnInterviewRoom .rvnRoomMain { padding: 0 14px 24px; }
+  .rvnInterviewRoom .rvnRoomLayout { grid-template-columns: minmax(0, 1fr); border-radius: 10px; }
+  .rvnInterviewRoom .rvnRoomStage { display: grid; grid-template-columns: 104px minmax(0, 1fr); column-gap: 16px; padding: 16px; align-items: start; }
+  .rvnInterviewRoom .rvnRoomPortrait { grid-row: 1 / 4; height: 142px; border-radius: 6px; }
+  .rvnInterviewRoom .rvnRoomPortrait::after { background: linear-gradient(0deg, rgba(21, 45, 44, .3), transparent 50%); }
+  .rvnInterviewRoom .rvnRoomPortrait img { object-position: 58% 20%; }
+  .rvnInterviewRoom .rvnRoomIdentity { padding: 0; margin: 0; }
+  .rvnInterviewRoom .rvnRoomIdentity .rvnRoomEyebrow { font-size: .75rem; }
+  .rvnInterviewRoom .rvnRoomIdentity h2 { font-size: 1.5rem; line-height: 1.3; }
+  .rvnInterviewRoom .rvnRoomSelector { padding: 8px 0 0; }
+  .rvnInterviewRoom .rvnRoomSelector label { font-size: .75rem; margin-bottom: 3px; }
+  .rvnInterviewRoom .rvnRoomSelector select { padding: 7px 10px; font-size: .8rem; }
+  .rvnInterviewRoom details.rvnRoomContext { grid-column: 2; margin: 2px 0 0; }
+  .rvnInterviewRoom .rvnRoomContext summary { font-size: .75rem; min-height: 44px; }
+  .rvnInterviewRoom .rvnRoomContext p { font-size: .76rem; }
+  .rvnInterviewRoom #runtime-description { grid-column: 1 / -1; margin: 10px 0 0; }
+  .rvnInterviewRoom .rvnRoomDesk #dialogue-scope { padding: 12px 18px; }
+  .rvnInterviewRoom .rvnRoomTranscriptHeader { padding: 17px 18px 14px; gap: 8px; }
+  .rvnInterviewRoom .rvnRoomTranscriptHeader h2 { font-size: 1.3rem; }
+  .rvnInterviewRoom .rvnRoomTranscriptHeader #clear { padding: 6px 9px; font-size: .75rem; }
+  .rvnInterviewRoom .rvnRoomTranscript { padding-inline: 18px; }
+  .rvnInterviewRoom .rvnRoomEmpty { min-height: 196px; padding: 18px 0; }
+  .rvnInterviewRoom .rvnRoomPaperMark { font-size: 1.65rem; margin-bottom: 9px; }
+  .rvnInterviewRoom .rvnRoomEmpty h3 { font-size: 1.1rem; }
+  .rvnInterviewRoom .rvnRoomEmpty p { font-size: .8rem; }
+  .rvnInterviewRoom #log { min-height: 196px; max-height: 360px; }
+  .rvnInterviewRoom .msg { padding: 10px 12px; font-size: .85rem; }
+  .rvnInterviewRoom .msg.me { margin-inline-start: 5%; }
+  .rvnInterviewRoom .msg.them { margin-inline-end: 0; }
+  .rvnInterviewRoom .rvnRoomComposer { padding: 14px 18px 0; }
+  .rvnInterviewRoom #input { min-height: 78px; font-size: 16px; padding: 10px; }
+  .rvnInterviewRoom #send { min-width: 58px; padding: 10px; font-size: .85rem; }
+  .rvnInterviewRoom .rvnRoomOperations { padding: 10px 14px 16px; }
+  .rvnInterviewRoom .rvnRoomOperations button.secondary { font-size: .75rem; padding: 5px; }
+  .rvnInterviewRoom #player-help, .rvnInterviewRoom #materials-panel { padding: 12px 16px; }
+  .rvnInterviewRoom footer { padding: 16px 20px 28px; font-size: .75rem; }
+}
+@media (max-width: 350px) {
+  .rvnInterviewRoom .rvnRoomHeader { padding-inline: 14px; }
+  .rvnInterviewRoom .rvnRoomMain { padding-inline: 10px; }
+  .rvnInterviewRoom .rvnRoomStage { grid-template-columns: 88px minmax(0, 1fr); gap: 0 12px; padding: 14px; }
+  .rvnInterviewRoom .rvnRoomPortrait { height: 138px; }
+  .rvnInterviewRoom .rvnRoomTranscriptHeader, .rvnInterviewRoom .rvnRoomTranscript { padding-inline: 14px; }
+  .rvnInterviewRoom .rvnRoomComposer { padding-inline: 14px; }
+  .rvnInterviewRoom .rvnRoomComposer .row { gap: 7px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rvnInterviewRoom *, .rvnInterviewRoom *::before, .rvnInterviewRoom *::after { scroll-behavior: auto; animation: none; transition: none; }
+}
