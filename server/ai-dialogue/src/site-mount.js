@@ -49,7 +49,7 @@ const files = [
   'raven/terminal-preview/case-017/index.html', 'raven/terminal-preview/zarqa/index.html',
   'raven/terminal-preview/raven-17/index.html',
   ...[1, 2, 3].map(n => `raven/terminal-preview/raven-17/part-${n}/index.html`),
-  ...['zarqa-poster.jpg', 'episode-1.jpg', 'episode-2.jpg', 'episode-3.jpg', 'cinzel.woff2',
+  ...['episode-1.jpg', 'episode-2.jpg', 'episode-3.jpg', 'cinzel.woff2',
     'ibm-plex-arabic.woff2', 'raven-intro-poster.jpg', 'hero-poster.jpg', 'hero-loop.mp4',
     'raven-intro.mp4'].map(name => 'raven/terminal-preview/assets/' + name),
   'fourth-signature/index.html', 'fourth-signature/favicon.svg',
