@@ -70,31 +70,54 @@ export function createInterrogationMemory({
   const buckets = new Map();
   const keyFor = (sessionId, actorId) => `${sessionId}::${actorId}`;
   const clip = text => (typeof text === 'string' ? text.slice(0, maxEntryChars) : '');
+  const scopeFields = ['caseId', 'contentVersion', 'policyVersion', 'ownSourceIds', 'receivedSourceIds', 'sourceFingerprints'];
+  const validScope = scope => keysOnly(scope, scopeFields) &&
+    ['caseId', 'contentVersion', 'policyVersion'].every(key => identifier(scope[key])) &&
+    ['ownSourceIds', 'receivedSourceIds'].every(key => Array.isArray(scope[key]) && scope[key].length <= 40 && scope[key].every(identifier)) &&
+    plain(scope.sourceFingerprints) && Object.keys(scope.sourceFingerprints).length <= 40 &&
+    Object.entries(scope.sourceFingerprints).every(([id, hash]) => identifier(id) && typeof hash === 'string' && /^[a-f0-9]{64}$/.test(hash)) &&
+    [...scope.ownSourceIds, ...scope.receivedSourceIds].every(id => own(scope.sourceFingerprints, id));
+  const entries = turns => turns.flatMap(turn => turn.entries);
+  const allowed = (previous, current) => validScope(previous) && validScope(current) &&
+    ['caseId', 'contentVersion', 'policyVersion'].every(key => previous[key] === current[key]) &&
+    ['ownSourceIds', 'receivedSourceIds'].every(key => previous[key].every(id => current[key].includes(id))) &&
+    Object.entries(previous.sourceFingerprints).every(([id, hash]) => current.sourceFingerprints[id] === hash);
 
-  function getTurns(sessionId, actorId) {
+  function getTurns(sessionId, actorId, sourceScope) {
     if (!identifier(sessionId) || !identifier(actorId)) return [];
-    return clone(buckets.get(keyFor(sessionId, actorId)) || []);
+    const key = keyFor(sessionId, actorId);
+    let turns = buckets.get(key) || [];
+    if (sourceScope !== undefined) {
+      // A reply may use any supplied source, not only its cited IDs. Drop both
+      // sides of a turn if any of its original knowledge/disclosure scope is
+      // no longer allowed. Unscoped legacy history cannot establish permission.
+      turns = turns.filter(turn => allowed(turn.sourceScope, sourceScope));
+      buckets.set(key, turns);
+    }
+    // Provenance stays inside memory: the provider sees the existing entry
+    // contract, never the private permission bookkeeping.
+    return clone(entries(turns));
   }
 
-  function recordTurn(sessionId, actorId, { playerMessage, replyText, replyType, citedSourceIds = [] }) {
+  function recordTurn(sessionId, actorId, { playerMessage, replyText, replyType, citedSourceIds = [] }, sourceScope) {
     if (!identifier(sessionId) || !identifier(actorId)) return;
     const key = keyFor(sessionId, actorId);
     const list = [...(buckets.get(key) || [])];
-    list.push({
+    const turn = [{
       role: 'player_claim',
       text: clip(playerMessage),
       epistemicStatus: 'unverified-player-claim',
       untrusted: true,
-    });
-    list.push({
+    }, {
       role: 'actor_reply',
       text: clip(replyText),
       replyType,
       citedSourceIds: [...citedSourceIds],
-    });
-    // Enforce turn count cap (2 entries per turn) and byte/char ceiling without summarizing.
-    while (list.length > maxTurns * 2) list.shift();
-    while (list.length > 0 && JSON.stringify(list).length > maxChars) list.shift();
+    }];
+    list.push({ entries: turn, sourceScope: validScope(sourceScope) ? clone(sourceScope) : null });
+    // Preserve whole question/reply pairs under both limits, without summarizing.
+    while (list.length > 0 && list.length > maxTurns) list.shift();
+    while (list.length > 0 && JSON.stringify(entries(list)).length > maxChars) list.shift();
     buckets.set(key, list);
   }
 
@@ -536,7 +559,17 @@ export function createInterrogationExecutor({
       }
     }
 
-    const recentMemory = memory.getTurns(sessionId, actorId);
+    const sourceScope = {
+      caseId: context.caseId, contentVersion: context.contentVersion, policyVersion: context.policyVersion,
+      ownSourceIds: context.ownSources.map(source => source.id),
+      receivedSourceIds: context.receivedSources.map(source => source.id),
+      // Hash authoritative materials, including every translation. Switching
+      // display language must not discard valid history; editing a source under
+      // the same ID/version must not silently carry its older text forward.
+      sourceFingerprints: Object.fromEntries(context.sourceIds.map(id => [id, caseFingerprint(pack.materials[id])])),
+    };
+    // Apply current permissions before either provider input or cache lookup.
+    const recentMemory = memory.getTurns(sessionId, actorId, sourceScope);
     const scopedCacheKey = caseFingerprint({ contextCacheKey: context.cacheKey, memory: recentMemory });
 
     const record = {
@@ -566,7 +599,7 @@ export function createInterrogationExecutor({
           replyText: cached.text,
           replyType: cached.replyType,
           citedSourceIds: cached.citedSourceIds,
-        });
+        }, sourceScope);
         emitTrace({
           requestId, caseId: context.caseId, contentVersion: context.contentVersion,
           policyVersion: context.policyVersion, revision: context.revision, actorId,
@@ -597,7 +630,7 @@ export function createInterrogationExecutor({
           replyText: finalResponse.text,
           replyType: finalResponse.replyType,
           citedSourceIds: finalResponse.citedSourceIds,
-        });
+        }, sourceScope);
         emitTrace({
           requestId, caseId: context.caseId, contentVersion: context.contentVersion,
           policyVersion: context.policyVersion, revision: context.revision, actorId,
