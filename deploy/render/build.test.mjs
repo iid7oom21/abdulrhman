@@ -120,7 +120,7 @@ test('wrong release, missing files, fourteen tracks, mismatched playlist and mis
 });
 
 test('an export missing any investigation-lab entrypoint preserves the previous site',t=>{
-  for(const name of ['index.html','style.css','workbench.js']) {
+  for(const name of ['index.html','content.html','style.css','workbench.js']) {
     const f=fixture(t);
     fs.rmSync(path.join(f.repo,'raven/investigation-lab',name));
     const sha=commit(f.repo),target=previousExport(f.repo);

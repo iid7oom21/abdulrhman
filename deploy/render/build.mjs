@@ -4,7 +4,7 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 
-export const SITE_COMMIT = '8ba08674be61fada3f4bfef90251e98c9d2acb3e';
+export const SITE_COMMIT = '3d81a2aeff81579e59e70c80f3c2d62840233aee';
 export const PUBLIC_RELEASE = '2026-11-15-investigation-tools-1';
 export const EXPORT_MARKER = '.raven-render-export.json';
 // Render builds from a shallow, single-branch checkout and removes its Git
@@ -27,8 +27,20 @@ export const CORE_FILES = [
   'raven/deleted-name/reading-tools.js','raven/deleted-name/case-entry.js',
   'raven/deleted-name/play/index.html','raven/deleted-name/play/content.html',
   'raven/deleted-name/play/app.js','raven/deleted-name/play/style.css',
-  'raven/investigation-lab/index.html','raven/investigation-lab/style.css',
+  'raven/investigation-lab/index.html','raven/investigation-lab/content.html','raven/investigation-lab/style.css',
   'raven/investigation-lab/workbench.js',
+  // The merged interface needs its reading controls and responsive artwork in
+  // the same export; do not silently deploy a partial visual release.
+  'raven/assets/raven-visual-home.css','raven/assets/raven-visual-home.js',
+  'raven/assets/raven-home-resume.css','raven/assets/raven-home-resume.js',
+  'raven/deleted-name/opening-artwork.js',
+  'raven/deleted-name/opening-visual.css','raven/deleted-name/opening-visual.js',
+  'raven/deleted-name/reading-continuity.js',
+  'raven/deleted-name/play/play-visual.css',
+  'raven/deleted-name/play/belief-review.css','raven/deleted-name/play/belief-review.js',
+  ...['appointment-phone','case-entry','cinema-atmosphere','comparison-surface','notebook-surface']
+    .flatMap(name => ['', '-mobile'].map(size => `raven/assets/visual-20261119/${name}${size}.webp`)),
+  'raven/assets/visual-20261119/paper-grain.webp','raven/assets/visual-20261119/section-divider.webp',
   'raven/assets/raven-homepage-v6.css','raven/assets/raven-polish-v2.css',
   ...['archive-opening','paper-detail','over-shoulder'].flatMap(name =>
     ['mp4','webp'].map(extension => `raven/assets/atmosphere-v1/${name}.${extension}`)),
