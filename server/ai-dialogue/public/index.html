@@ -24,14 +24,19 @@
     .me { background:#1e2a3a; text-align:left; }
     .them { background:#2a2520; }
     .name { font-size:0.8125rem; color:var(--muted); margin-bottom:2px; }
-    .status { font-size:0.85rem; color:var(--muted); margin-top:8px; }
+    .msg.service-error { border-inline-start:3px solid var(--danger); background:#251517; }
+    .msg.knowledge-refusal { border-inline-start:3px solid var(--gold); background:#1d1914; }
+    .scope-box { margin-bottom:10px; padding:10px 12px; border:1px solid #3a342e; border-radius:10px; background:#141210; font-size:0.875rem; line-height:1.55; overflow-wrap:anywhere; }
+    .scope-box strong { color:var(--gold); }
+    .status { font-size:0.85rem; color:var(--muted); margin-top:8px; line-height:1.5; }
+    .status.is-error { color:#f08a98; }
     .error { color:var(--danger); }
     textarea { min-width:0 !important; width:100%; }
     :focus-visible { outline:3px solid var(--gold); outline-offset:3px; }
     button, select { min-height:44px; max-width:100%; }
     #status { overflow-wrap:anywhere; }
     details { margin-top:18px; border:1px solid #3a342e; border-radius:10px; padding:12px; }
-    summary { cursor:pointer; min-height:44px; }
+    summary { cursor:pointer; min-height:44px; padding-block:10px; line-height:1.5; }
     label { display:block; margin-block:8px; }
     .material { overflow-wrap:anywhere; white-space:pre-wrap; border-bottom:1px solid #3a342e; padding:10px 0; }
     #materials-list, #knowledge-list { max-height:35vh; overflow:auto; }
@@ -46,6 +51,7 @@
     #player-help ol { padding-inline-start:20px; }
     #player-help .hint { margin:0; color:var(--gold); }
     footer { text-align:center; font-size:0.8125rem; color:var(--muted); padding:16px; }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; } }
   </style>
 </head>
 <body>
@@ -63,7 +69,8 @@
     </div>
     <p>معاينة تقنية محدودة: اللاعب مرمّم سجلات وصل بعد واقعة المكتبة والاستجابة الأولى. الإفادات الأصلية الكاملة غير متاحة؛ الحوار لا ينشئ أدلة. هذه المعاينة مستقلة عن افتتاح القضية المنشور.</p>
     <p id="runtime-description" role="status">جارٍ قراءة إعدادات الخادم…</p>
-    <div id="log" role="log" aria-label="سجل الشخصية"></div>
+    <div id="dialogue-scope" class="scope-box" aria-live="polite">نطاق عرض المواد للشخصية المختارة: جارٍ التحقق…</div>
+    <div id="log" role="log" aria-label="سجل الشخصية" aria-busy="false"></div>
     <!-- Mati help texts, verbatim from src/player_help_texts_bilingual_v1.0.0.json (tests/player-help.test.js). -->
     <section id="player-help" aria-labelledby="player-help-title">
       <h2 id="player-help-title">كيف تسأل في RAVEN</h2>
@@ -79,7 +86,7 @@
       <textarea aria-label="سؤالك للشخصية" maxlength="8000" id="input" rows="2" style="flex:1; min-width:180px;" placeholder="اكتب سؤالك..."></textarea>
       <button id="send">إرسال</button>
     </div>
-    <div class="row"><button id="check" class="secondary">متابعة العملية الأصلية</button><button id="stop" class="secondary">إيقاف الانتظار فقط</button><button id="history" class="secondary">تحميل السجل</button></div>
+    <div class="row"><button id="check" class="secondary">متابعة العملية الأصلية</button><button id="stop" class="secondary">إيقاف الانتظار فقط</button><button id="history" class="secondary">تحميل السجل</button><button id="retry-safe" class="secondary" type="button" hidden>إعادة المحاولة الآمنة</button></div>
     <div id="status" class="status" role="status" aria-live="polite"></div>
     <details id="materials-panel">
       <summary>الأقوال والتصحيحات ومواد المشاركة</summary>
@@ -98,6 +105,7 @@
       <label for="share-material">المادة التي تريد مشاركتها</label><select id="share-material"></select>
       <label for="share-recipient">المستلم</label><select id="share-recipient"><option value="jonas">يوناس</option><option value="claire">كلير</option><option value="matteo">ماتيو</option><option value="elena">إيلينا</option></select>
       <p>المشاركة ترسل المادة المختارة فقط. مسودة التقرير ترسل مرفقاتها المحددة؛ لا تُرفق دوافعك أو محادثاتك تلقائيًا.</p>
+      <div id="share-scope-preview" class="scope-box" aria-live="polite">اختر مادة لعرض نطاق مشاركتها قبل الإرسال.</div>
       <div class="row"><button id="material-share" type="button">مشاركة المادة المحددة</button><button id="material-check" class="secondary" type="button">متابعة الإجراء الأصلي</button><button id="material-resend" class="secondary" type="button" hidden>إعادة إرسال الإجراء المعلق بالمعرف نفسه</button><button id="material-refresh" class="secondary" type="button">تحديث المواد</button><button id="material-export" class="secondary" type="button">تنزيل نسخة</button></div>
       <div id="material-status" class="status" role="status" aria-live="polite"></div>
       <h2 style="font-size:1rem">المواد التي وصلت إلى المستلم المختار</h2><div id="knowledge-list"></div>
@@ -153,11 +161,37 @@
     const characterEl = document.getElementById('character');
     const checkBtn = document.getElementById('check');
     const stopBtn = document.getElementById('stop');
+    const retryBtn = document.getElementById('retry-safe');
+    const scopeEl = document.getElementById('dialogue-scope');
     const KEY = 'raven_deleted_name_preview_v2';
     const states = Object.fromEntries(['jonas', 'claire'].map(id => [id, {
       draft: '', records: new Map(), active: null, notice: '', localSaved: true, hidden: false,
     }]));
     const names = { jonas: 'يوناس', claire: 'كلير' };
+    const errorHints = {
+      provider_unavailable: 'تعذّر الوصول لخدمة الحوار (عطل خدمة مؤقت، وليس امتناعًا من الشخصية).',
+      provider_rejected: 'رفض المزوّد الطلب أو بلغ حد الاستخدام (عطل خدمة، وليس امتناعًا من الشخصية).',
+      provider_busy: 'خدمة الحوار مشغولة الآن (عطل خدمة مؤقت، وليس امتناعًا من الشخصية).',
+      provider_invalid_output: 'أعاد المزوّد مخرجًا غير صالح وتم رفضه حفاظًا على القصة (عطل خدمة، وليس امتناعًا من الشخصية).',
+      storage_unavailable: 'تعذّر حفظ العملية على الخادم قبل الإرسال (عطل تخزين، وليس امتناعًا من الشخصية).',
+    };
+    let scopeVersion = 0;
+    async function refreshScope() {
+      const version = ++scopeVersion, id = characterEl.value;
+      try {
+        const res = await fetch('/api/knowledge?characterId=' + encodeURIComponent(id), { credentials:'same-origin' });
+        if (!res.ok) throw new Error('scope');
+        const data = await res.json();
+        if (version !== scopeVersion || data.actor !== id || !Array.isArray(data.materials)) return;
+        const count = data.materials.length;
+        scopeEl.textContent = count
+          ? 'نطاق العرض للشخصية (' + names[id] + '): وصلت إليها ' + count + ' مادة من موادك المسجلة. ملاحظاتك ومسوداتك غير المشاركة تبقى خاصة.'
+          : 'نطاق العرض للشخصية (' + names[id] + '): لم تُشارك معها أي مادة بعد. ملاحظاتك ومسوداتك تبقى خاصة ولا تُرسل مع السؤال.';
+      } catch {
+        if (version === scopeVersion) scopeEl.textContent = 'نطاق العرض للشخصية (' + names[id] + '): تعذر التحقق من المواد الواصلة حاليًا؛ لا تُرسل ملاحظاتك غير المشاركة.';
+      }
+    }
+    window.addEventListener('raven:materials-updated', () => refreshScope());
     // Isolate Latin IDs inside Arabic text so a UUID renders as one left-to-right unit.
     const iso = value => '\u2068' + value + '\u2069';
     // 'unavailable': the server answered that this session has no such operation (restart or lost
@@ -186,11 +220,12 @@
       for (const [id, entry] of Object.entries(saved)) {
         if (!plain(entry) || !keysOnly(entry, ['draft','records']) || typeof entry.draft !== 'string' || !Array.isArray(entry.records)) throw new Error('journal_schema');
         for (const r of entry.records) {
-          if (!plain(r) || !keysOnly(r, ['id','characterId','message','status','response','confirmed']) ||
+          if (!plain(r) || !keysOnly(r, ['id','characterId','message','status','response','confirmed','error']) ||
               typeof r.id !== 'string' || !/^[\w-]{1,100}$/.test(r.id) || seen.has(r.id) ||
               r.characterId !== id || typeof r.message !== 'string' ||
               !['pending','unknown','unavailable','completed','error'].includes(r.status) ||
               (r.confirmed !== undefined && typeof r.confirmed !== 'boolean') ||
+              (r.error !== undefined && typeof r.error !== 'string') ||
               (r.response !== undefined && (!plain(r.response) || !keysOnly(r.response, ['text','refused','source']) || typeof r.response.text !== 'string' || (r.response.refused !== undefined && typeof r.response.refused !== 'boolean') || (r.response.source !== undefined && !['grounded-model','deterministic-fallback'].includes(r.response.source)))) ||
               (r.status === 'completed' && !r.response?.text)) throw new Error('journal_schema');
           seen.add(r.id);
@@ -209,9 +244,9 @@
       canPersist = false; // Syntax errors AND incompatible schemas are preserved verbatim.
       for (const s of Object.values(states)) s.localSaved = false;
     }
-    function addMsg(who, text, isMe) {
+    function addMsg(who, text, isMe, extraClass = '') {
       const div = document.createElement('div');
-      div.className = 'msg ' + (isMe ? 'me' : 'them');
+      div.className = 'msg ' + (isMe ? 'me' : 'them') + (extraClass ? ' ' + extraClass : '');
       const name = document.createElement('div');
       name.className = 'name'; name.textContent = who;
       const content = document.createElement('div'); content.textContent = text;
@@ -219,26 +254,33 @@
     }
     function render() {
       const id = characterEl.value, s = states[id], op = unresolved(s);
+      const lastRecord = [...s.records.values()].at(-1);
+      log.setAttribute('aria-busy', s.active ? 'true' : 'false');
       log.replaceChildren();
       if (!s.hidden) for (const r of s.records.values()) {
         addMsg('أنت', r.message, true);
         if (r.response?.text) {
-          addMsg(names[id], r.response.text, false);
+          addMsg(names[id], r.response.text, false, r.response.refused ? 'knowledge-refusal' : '');
+          if (r.response.refused) addMsg('نوع الرد', 'امتناع لغياب المصدر لدى هذه الشخصية — وليس عطلًا في الخدمة.', false, 'knowledge-refusal');
           if (r.response.source === 'grounded-model') addMsg('المصدر', 'اختار النموذج مواد وصلت هذه الشخصية؛ عرض الخادم نصوصها منسوبة للاعب، وليست شهادة جديدة.', false);
           else if (r.response.source === 'deterministic-fallback') addMsg('المصدر', 'رد مكتوب من الخادم؛ لم يُنشأ دليل.', false);
         }
         const label = r.status === 'completed'
           ? (r.confirmed ? replySavedNotice() : 'الرد ظاهر هنا، وحفظه على الخادم غير مؤكد.')
-          : r.status === 'error' ? 'سُجّل خطأ للعملية، ولم يثبت نجاحها.'
+          : r.status === 'error' ? 'سُجّل خطأ للعملية، ولم يثبت نجاحها.' + (r.error && errorHints[r.error] ? ' ' + errorHints[r.error] : ' هذا عطل خدمة وليس امتناعًا من الشخصية.')
           : r.status === 'unavailable' ? (r.response?.text ? 'وصل هذا الرد، لكن ' : '') + 'العملية غير معروفة للخادم في جلستك الحالية. ربما أُعيد تشغيله أو انتهت جلسة المتصفح. '
             + (r.response?.text ? 'حفظ الرد على الخادم غير مؤكد، ولم نُعد إرسال السؤال.' : 'لم يثبت نجاح العملية أو فشلها، ولم نُعد إرسالها.') + ' المعرف: ' + iso(r.id)
           : (r.response?.text ? 'وصل الرد؛ حفظه غير مؤكد. ' : '') + 'حالة العملية غير محسومة. معرف المتابعة: ' + iso(r.id);
-        addMsg('حالة العملية', label, false);
+        addMsg('حالة العملية', label, false, r.status === 'error' ? 'service-error' : '');
       }
       input.value = s.draft;
       sendBtn.disabled = !!op || !!s.active;
       checkBtn.disabled = !!s.active || !s.records.size;
       stopBtn.disabled = !s.active;
+      const canSafeRetry = !op && !s.active && lastRecord?.status === 'error';
+      retryBtn.hidden = !canSafeRetry;
+      retryBtn.disabled = !canSafeRetry;
+      statusEl.className = 'status' + (lastRecord?.status === 'error' && !op ? ' is-error' : '');
       statusEl.textContent = s.notice + (s.localSaved ? '' : ' الحفظ المحلي غير مؤكد، لكن الرد والمسودة ما زالا في الصفحة.') + (canPersist ? '' : ' تعذرت قراءة النسخة المخزنة، أو أنها غير متوافقة. احتفظنا بها كما هي.');
       log.scrollTop = log.scrollHeight;
     }
@@ -253,7 +295,7 @@
       if (old?.response?.text && (r.status !== 'completed' || r.response?.text !== old.response.text)) return false;
       if (old?.status === 'error' && r.status !== 'error') return false;
       s.records.set(r.id, { ...old, id:r.id, characterId:id, message:r.message,
-        status:r.status, response:typeof r.response?.text === 'string' ? { text:r.response.text,
+        status:r.status, ...(typeof r.error === 'string' ? {error:r.error} : {}), response:typeof r.response?.text === 'string' ? { text:r.response.text,
           ...(typeof r.response.refused === 'boolean' ? {refused:r.response.refused} : {}),
           ...(['grounded-model','deterministic-fallback'].includes(r.response.source) ? {source:r.response.source} : {}) } : old?.response, confirmed:r.storage === 'server-memory' && r.saveStatus !== 'unconfirmed' });
       return true;
@@ -309,8 +351,9 @@
           // Even an error/202/empty response is not proof of a committed operation.
           s.notice = statusText('status_read_failed') + ' — تعذر تأكيد الحالة (' + res.status + '). احتفظنا بالمعرف وبالرد إن وُجد. المتابعة لن تولد ردًا جديدًا.';
         } else {
+          if (data.status === 'error' && !s.draft) s.draft = op.message;
           s.notice = data.status === 'completed' ? 'وصل الرد. ' + (data.saveStatus === 'unconfirmed' ? statusText('save_unconfirmed') + ' — حفظه على القرص غير مؤكد؛ احتفظنا بالرد ولن نولده مجددًا.' : statusText('save_confirmed') + ' — ' + replySavedNotice())
-            : data.status === 'error' ? 'سُجّل خطأ، ولم يؤكد الاستعلام نجاح العملية.'
+            : data.status === 'error' ? 'سُجّل خطأ، ولم يؤكد الاستعلام نجاح العملية. بقي سؤالك في المسودة لإعادة المحاولة الآمنة.' + (data.error && errorHints[data.error] ? ' ' + errorHints[data.error] : '')
             : data.status === 'unknown' ? 'الخادم لا يملك نتيجة مؤكدة للعملية الأصلية. لم يُعد توليدها؛ يحتفظ بمعرفها.'
             : statusText('request_pending') + ' تابع العملية الأصلية لقراءة النتيجة.';
         }
@@ -353,7 +396,7 @@
       render();
     }
     input.oninput = () => { states[characterEl.value].draft = input.value; persist(); };
-    characterEl.onchange = () => { render(); loadHistory(); };
+    characterEl.onchange = () => { render(); loadHistory(); refreshScope(); };
     sendBtn.onclick = send;
     input.onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); send(); } };
     checkBtn.onclick = () => {
@@ -368,9 +411,16 @@
       s.notice = 'توقف انتظار المتصفح فقط. لم نتأكد من إلغاء العملية على الخادم، ومعرفها محفوظ للمتابعة.';
       s.active.abort(); render();
     };
+    retryBtn.onclick = () => {
+      const id = characterEl.value, s = states[id];
+      const last = [...s.records.values()].at(-1);
+      if (unresolved(s) || s.active || last?.status !== 'error') return;
+      if (!s.draft.trim()) s.draft = last.message;
+      send();
+    };
     document.getElementById('history').onclick = loadHistory;
     document.getElementById('clear').onclick = () => { states[characterEl.value].hidden = true; render(); };
-    render(); loadHistory();
+    render(); loadHistory(); refreshScope();
   </script>
   <script>
   (() => {
@@ -425,6 +475,29 @@
       line.textContent = (labels[item.type] || item.type) + (item.isLatestKnownCorrection === true ? ' — أحدث تصحيح معروف' : '') + ': ' + item.text;
       return line;
     }
+    const recipientNames = { jonas:'يوناس', claire:'كلير', matteo:'ماتيو', elena:'إيلينا' };
+    function updateSharePreview() {
+      const preview = $('share-scope-preview');
+      const selectedId = $('share-material').value;
+      const recipient = $('share-recipient').value;
+      const item = items.find(it => it.id === selectedId);
+      if (!item) {
+        preview.textContent = 'لا توجد مادة مختارة للمشاركة بعد. سجّل مادة أولًا لعرض نطاق مشاركتها.';
+        return;
+      }
+      const typeLabel = labels[item.type] || item.type;
+      const excerpt = item.text.length > 70 ? item.text.slice(0, 70) + '…' : item.text;
+      let summary = 'معاينة نطاق المشاركة: سيُرسل («' + typeLabel + '»: ' + excerpt + ') إلى ' + (recipientNames[recipient] || recipient) + ' فقط.';
+      if (item.type === 'report') {
+        const count = Array.isArray(item.attachments) ? item.attachments.length : 0;
+        summary += count
+          ? ' مرفقات مسودة التقرير المحددة (' + count + ') ستُرسل معه؛ الملاحظات والدوافع غير المرفقة تبقى خاصة.'
+          : ' بلا مرفقات إضافية؛ الملاحظات والدوافع الأخرى تبقى خاصة.';
+      } else {
+        summary += ' لن تُرسل موادك الأخرى أو ملاحظاتك الخاصة.';
+      }
+      preview.textContent = summary;
+    }
     function renderItems() {
       const selected = $('share-material').value;
       $('materials-list').replaceChildren(...items.map(materialLine));
@@ -437,6 +510,7 @@
         box.type = 'checkbox'; box.value = it.id; box.checked = noteDraft.attachments.includes(it.id);
         box.onchange = readDraft; label.append(box, document.createTextNode((labels[it.type] || it.type) + ': ' + it.text.slice(0,65)));return label;
       }));
+      updateSharePreview();
       controls();
     }
     async function knowledge() {
@@ -475,7 +549,7 @@
         } else if (pending && (pending.path === '/api/materials' ? items.some(it => confirms(pending,it)) : data.events.some(it => confirms(pending,undefined,it)))) {
           pending = null; saveLocal();notice('تأكد تسجيل الإجراء الأصلي. ' + savedNotice());
         } else notice(done || (pending ? 'حالة الإجراء غير مؤكدة. احتفظنا بمعرفه ومحتواه، ولم نُعد إرساله. إذا لم يظهر بعد إعادة تشغيل الخادم أو انتهاء الجلسة، يمكنك إرساله مجددًا بالمعرف نفسه. لن يكرر الخادم إجراءً سبق تسجيله بهذا المعرف.' : 'المواد المسجلة على الخادم معروضة. نزّل نسخة للاحتفاظ بها.'));
-        renderItems(); await knowledge();
+        renderItems(); await knowledge(); window.dispatchEvent(new Event('raven:materials-updated'));
       } catch (e) {
         notice(e?.message === 'session' ? (done ? done + ' ' : '') + SESSION_LOST_MATERIALS
           : done ? done + ' تعذر تحديث القائمة بعده؛ بقيت النسخة المعروضة.' : 'تعذر تحديث المواد؛ بقيت النسخة المعروضة والإجراء المعلق.');
@@ -520,7 +594,15 @@
     $('material-type').value = noteDraft.type;$('material-text').value = noteDraft.text;
     $('material-type').onchange = () => { typeFields();readDraft(); };
     $('material-text').oninput = readDraft;$('material-original').onchange = readDraft;
-    $('share-recipient').onchange = knowledge;
+    $('share-material').onchange = updateSharePreview;
+    $('share-recipient').onchange = () => { updateSharePreview(); knowledge(); };
+    $('materials-panel').addEventListener('keydown', e => {
+      if (e.key === 'Escape' && $('materials-panel').open) {
+        e.preventDefault();
+        $('materials-panel').open = false;
+        $('materials-panel').querySelector('summary')?.focus();
+      }
+    });
     $('material-refresh').onclick = () => refresh();$('material-check').onclick = () => refresh();$('material-resend').onclick = () => submit();
     $('material-export').onclick = () => {
       const blob = new Blob([JSON.stringify({version:1,storage:'browser-copy',materials:items,pending,draft:noteDraft},null,2)],{type:'application/json'});

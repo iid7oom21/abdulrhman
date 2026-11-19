@@ -49,11 +49,17 @@ export function createPreviewServer({
   caseCheckpointKey = null,
   casePack = null, // injected fictional fixtures; CLI only loads a private file
   openCaseStore = undefined,
+  // Isolated opt-in interrogation policy/provider; remains closed until author policy is approved.
+  interrogationPolicy = null,
+  interrogationProvider = null,
+  onInterrogationTrace = null,
 } = {}) {
   const site = siteRoot ? createSiteMount(siteRoot) : null;
   if (hostedRootRedirect !== null && (!site || hostedRootRedirect !== '/raven/')) throw new Error('invalid_hosted_root_redirect');
   const writtenCase = createCaseService({contentPath:caseContentPath,storagePath:caseStoragePath,
-    pack:casePack,siteRoot,secureCookie,checkpointKey:caseCheckpointKey,...(openCaseStore ? {openStore:openCaseStore} : {})});
+    pack:casePack,siteRoot,secureCookie,checkpointKey:caseCheckpointKey,
+    interrogationPolicy,interrogationProvider,onInterrogationTrace,
+    ...(openCaseStore ? {openStore:openCaseStore} : {})});
   // owner -> { materials, touchedAt }. Map order is least-recently-used first (re-inserted on each use).
   const sessions = new Map();
   const dropSession = owner => { sessions.delete(owner); forgetOwner(owner); };

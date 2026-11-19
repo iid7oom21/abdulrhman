@@ -6,6 +6,8 @@ import {openCaseStore} from './case-store.js';
 import {createCaseCheckpoint, checkpointSessionTag, MAX_CHECKPOINT_BODY_BYTES} from './case-checkpoint.js';
 import {CaseError, canonical, caseFingerprint, validateCasePack, validateOpening, createCaseState,
   applyCaseAction, projectCaseState, validateCaseRequest, validateStoredCaseState} from './case-engine.js';
+import {buildInvestigationHint, InterrogationContextError} from './interrogation-context.js';
+import {createInterrogationExecutor, InterrogationError} from './interrogation-dialogue.js';
 
 export const DEFAULT_CASE_STORAGE_PATH = fileURLToPath(new URL('../.data/case-store.json', import.meta.url));
 const COOKIE = 'raven_case_session';
@@ -73,7 +75,8 @@ function projectionMatches(stored, current) {
 }
 
 export function createCaseService({contentPath = null, storagePath = null, pack:injectedPack = null,
-  siteRoot = null, secureCookie = false, openStore = openCaseStore, maxSessions = 10000, maxOperations = 4096, checkpointKey = null} = {}) {
+  siteRoot = null, secureCookie = false, openStore = openCaseStore, maxSessions = 10000, maxOperations = 4096, checkpointKey = null,
+  interrogationPolicy = null, interrogationProvider = null, onInterrogationTrace = null, interrogationEnableCache = true} = {}) {
   const checkpoints = checkpointKey === null || checkpointKey === undefined ? null : createCaseCheckpoint(checkpointKey);
   if (checkpoints && storagePath) throw new CaseError('case_checkpoint_configuration_invalid');
   if (checkpoints) {
@@ -81,6 +84,9 @@ export function createCaseService({contentPath = null, storagePath = null, pack:
     maxSessions = Math.min(maxSessions,128); maxOperations = Math.min(maxOperations,4096);
   }
   const pack = injectedPack ? validateCasePack(injectedPack) : contentPath ? loadCaseContent(contentPath, {siteRoot}) : null;
+  const interrogation = pack && interrogationPolicy && interrogationProvider
+    ? createInterrogationExecutor({pack, policy:interrogationPolicy, provider:interrogationProvider, enableCache:interrogationEnableCache, onTrace:onInterrogationTrace})
+    : null;
   const packFingerprint = pack ? caseFingerprint(pack) : null;
   const persistence = checkpoints ? 'browser-checkpoint' : storagePath ? 'disk-file' : 'process-memory';
   let sessions = new Map(), writeBlocked = false;
@@ -172,7 +178,9 @@ export function createCaseService({contentPath = null, storagePath = null, pack:
       throw new CaseError('checkpoint_invalid');
     }
   };
-  const config = () => ({enabled:!!pack, ...(pack ? {caseId:pack.caseId,contentVersion:pack.contentVersion,locales:[...pack.locales],defaultLocale:pack.defaultLocale} : {}),scope:'written-story',persistence});
+  const config = () => ({enabled:!!pack, ...(pack ? {caseId:pack.caseId,contentVersion:pack.contentVersion,locales:[...pack.locales],defaultLocale:pack.defaultLocale} : {}),
+    ...(interrogation ? {interrogationEnabled:true,policyVersion:interrogationPolicy.policyVersion,actors:Object.keys(interrogationPolicy.actors)} : {}),
+    scope:'written-story',persistence});
   const readBody = async (req, limit = 65536) => {
     fail(req.headers['content-type']?.split(';')[0].trim().toLowerCase() === 'application/json', 'json_required', 415);
     if (req.headers['sec-fetch-site'] === 'cross-site') throw new CaseError('cross_site',403);
@@ -239,6 +247,40 @@ export function createCaseService({contentPath = null, storagePath = null, pack:
           const view = viewOf(session); delete view.actions;
           json(200,{format:'raven-case-reading-export-v1',scope:'reading-copy-not-an-import',...view}); return true;
         }
+        if (req.method === 'GET' && url.pathname === '/api/case/hint') {
+          const limitParam = url.searchParams.get('limit');
+          const options = limitParam !== null ? {limit:Number(limitParam)} : {};
+          const hint = buildInvestigationHint(viewOf(session), options);
+          json(200, hint); return true;
+        }
+        if (req.method === 'GET' && url.pathname.startsWith('/api/case/dialogue/')) {
+          if (!interrogation) throw new CaseError('interrogation_policy_unavailable', 503);
+          const reqId = decodeURIComponent(url.pathname.slice('/api/case/dialogue/'.length));
+          const op = interrogation.getOperation(id, reqId);
+          if (!op) { json(404, {error:'operation_unavailable'}); return true; }
+          const {sessionId: _sid, fingerprint: _fp, ...publicOp} = op;
+          json(200, publicOp); return true;
+        }
+        if (req.method === 'POST' && url.pathname === '/api/case/dialogue') {
+          if (!interrogation) throw new CaseError('interrogation_policy_unavailable', 503);
+          const body = await readBody(req);
+          fail(only(body, ['requestId','actorId','message','locale','presentedMaterialIds','contentVersion']), 'invalid_request');
+          session = sessions.get(id);
+          if (!session) throw new CaseError('session_unavailable', 401);
+          if (!compatible(session)) throw new CaseError('content_version_mismatch', 409);
+          const result = await interrogation.execute({
+            sessionId: id,
+            state: session.state,
+            requestId: body.requestId,
+            actorId: body.actorId,
+            locale: body.locale,
+            message: body.message,
+            presentedMaterialIds: body.presentedMaterialIds ?? [],
+            contentVersion: body.contentVersion,
+          });
+          const {sessionId: _sid, fingerprint: _fp, ...publicResult} = result;
+          json(publicResult.status === 'pending' ? 202 : 200, publicResult); return true;
+        }
         if (req.method === 'POST' && url.pathname === '/api/case/actions') {
           const request = validateCaseRequest(await readBody(req));
           // Body streaming yields to other requests. Read the latest committed
@@ -261,6 +303,8 @@ export function createCaseService({contentPath = null, storagePath = null, pack:
         }
         json(404,{error:'not_found'}); return true;
       } catch (error) {
+        if (error instanceof InterrogationError) { json(error.status, {error:error.code}); return true; }
+        if (error instanceof InterrogationContextError) { json(400, {error:error.code}); return true; }
         json(error instanceof CaseError ? error.status : 503, {error:error instanceof CaseError ? error.code : 'case_unavailable'}); return true;
       }
     },

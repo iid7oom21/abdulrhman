@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Play,
   Sparkles,
@@ -13,11 +13,25 @@ import {
   Layers,
   Wand2,
   Eye,
+  RotateCcw,
+  FileDown,
+  FileJson,
 } from 'lucide-react';
 import { Header } from './components/Header';
 import { StudioPreview, type PreviewCue } from './components/StudioPreview';
 import { RavenSceneLibrary } from './components/RavenSceneLibrary';
 import { RAVEN_HOME_URL, RAVEN_PROJECTS, RAVEN_SCENES, type RavenScene } from './data/ravenAssets';
+import {
+  clearStudioDraft,
+  isSameDraft,
+  loadStudioDraft,
+  saveStudioDraft,
+  type StudioSettingsDraft,
+} from './utils/studioDraftStorage';
+import {
+  downloadStoryboardJson,
+  downloadStoryboardPdf,
+} from './utils/storyboardExport';
 import {
   INITIAL_STORYBOARD,
 } from './data/mockData';
@@ -42,21 +56,33 @@ const CAMERA_MOTIONS: { value: CameraMotion; labelEn: string; labelAr: string }[
 
 const ASPECT_RATIOS: AspectRatio[] = ['16:9', '9:16', '21:9', '1:1', '4:3'];
 
+const DEFAULT_STUDIO_DRAFT: StudioSettingsDraft = {
+  promptText: RAVEN_PROJECTS[0].promptText,
+  negativePrompt: RAVEN_PROJECTS[0].negativePrompt || '',
+  cameraMotion: RAVEN_PROJECTS[0].camera.motion,
+  duration: RAVEN_PROJECTS[0].duration,
+  aspectRatio: RAVEN_PROJECTS[0].aspectRatio,
+  cameraSpeed: RAVEN_PROJECTS[0].camera.speed,
+  activeModel: RAVEN_PROJECTS[0].model,
+};
+
 export const App: React.FC = () => {
+  const [initialDraftState] = useState(() => loadStudioDraft(DEFAULT_STUDIO_DRAFT));
   const [currentTab, setCurrentTab] = useState<'studio' | 'storyboard' | 'pexafy' | 'code'>('studio');
-  const [activeModel, setActiveModel] = useState<ModelType>('raven');
+  const [activeModel, setActiveModel] = useState<ModelType>(initialDraftState.draft.activeModel);
   const [lang, setLang] = useState<'en' | 'ar'>(() => new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'ar');
 
   const [projects, setProjects] = useState<VideoProject[]>(RAVEN_PROJECTS);
   const [selectedProject, setSelectedProject] = useState<VideoProject>(RAVEN_PROJECTS[0]);
-  const [promptText, setPromptText] = useState<string>(RAVEN_PROJECTS[0].promptText);
-  const [negativePrompt, setNegativePrompt] = useState<string>(
-    RAVEN_PROJECTS[0].negativePrompt || ''
-  );
-  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('16:9');
-  const [duration, setDuration] = useState<number>(24);
-  const [cameraMotion, setCameraMotion] = useState<CameraMotion>('dolly-zoom');
-  const [cameraSpeed, setCameraSpeed] = useState<number>(2);
+  const [promptText, setPromptText] = useState<string>(initialDraftState.draft.promptText);
+  const [negativePrompt, setNegativePrompt] = useState<string>(initialDraftState.draft.negativePrompt);
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>(initialDraftState.draft.aspectRatio);
+  const [duration, setDuration] = useState<number>(initialDraftState.draft.duration);
+  const [cameraMotion, setCameraMotion] = useState<CameraMotion>(initialDraftState.draft.cameraMotion);
+  const [cameraSpeed, setCameraSpeed] = useState<number>(initialDraftState.draft.cameraSpeed);
+  const [hasSavedDraft, setHasSavedDraft] = useState<boolean>(initialDraftState.restored);
+
+  const lastPersistedDraftRef = useRef<StudioSettingsDraft>(initialDraftState.draft);
 
   const [storyboard, setStoryboard] = useState<StoryboardScene[]>(INITIAL_STORYBOARD);
   const [newSceneTitle, setNewSceneTitle] = useState('');
@@ -64,15 +90,58 @@ export const App: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedCode, setCopiedCode] = useState(false);
+  const [exportedFormat, setExportedFormat] = useState<'json' | 'pdf' | null>(null);
+  const exportTimerRef = useRef<number | null>(null);
 
   const isAr = lang === 'ar';
   const [previewCue, setPreviewCue] = useState<PreviewCue | null>(null);
   const [draftThumbnail, setDraftThumbnail] = useState(RAVEN_SCENES[0].preview);
 
+  const currentDraft: StudioSettingsDraft = {
+    promptText,
+    negativePrompt,
+    cameraMotion,
+    duration,
+    aspectRatio,
+    cameraSpeed,
+    activeModel,
+  };
+
   useEffect(() => {
     document.documentElement.lang = lang;
     document.documentElement.dir = isAr ? 'rtl' : 'ltr';
   }, [lang, isAr]);
+
+  useEffect(() => {
+    const nextDraft: StudioSettingsDraft = {
+      promptText,
+      negativePrompt,
+      cameraMotion,
+      duration,
+      aspectRatio,
+      cameraSpeed,
+      activeModel,
+    };
+    if (isSameDraft(nextDraft, lastPersistedDraftRef.current)) {
+      return;
+    }
+    const saved = saveStudioDraft(nextDraft);
+    lastPersistedDraftRef.current = nextDraft;
+    if (saved) setHasSavedDraft(true);
+  }, [promptText, negativePrompt, cameraMotion, duration, aspectRatio, cameraSpeed, activeModel]);
+
+  const handleResetDraft = () => {
+    clearStudioDraft();
+    lastPersistedDraftRef.current = DEFAULT_STUDIO_DRAFT;
+    setHasSavedDraft(false);
+    setPromptText(DEFAULT_STUDIO_DRAFT.promptText);
+    setNegativePrompt(DEFAULT_STUDIO_DRAFT.negativePrompt);
+    setCameraMotion(DEFAULT_STUDIO_DRAFT.cameraMotion);
+    setDuration(DEFAULT_STUDIO_DRAFT.duration);
+    setAspectRatio(DEFAULT_STUDIO_DRAFT.aspectRatio);
+    setCameraSpeed(DEFAULT_STUDIO_DRAFT.cameraSpeed);
+    setActiveModel(DEFAULT_STUDIO_DRAFT.activeModel);
+  };
 
   const selectProject = (project: VideoProject) => {
     setSelectedProject(project);
@@ -146,6 +215,38 @@ export const App: React.FC = () => {
         .map((s, idx) => ({ ...s, sceneNumber: idx + 1 }))
     );
   };
+
+  useEffect(() => {
+    return () => {
+      if (exportTimerRef.current !== null) {
+        window.clearTimeout(exportTimerRef.current);
+      }
+    };
+  }, []);
+
+  const handleExportStoryboard = (format: 'json' | 'pdf') => {
+    if (storyboard.length === 0) return;
+    const meta = {
+      model: activeModel,
+      aspectRatio,
+      lang,
+    };
+    if (format === 'json') {
+      downloadStoryboardJson(storyboard, meta);
+    } else {
+      downloadStoryboardPdf(storyboard, meta);
+    }
+    setExportedFormat(format);
+    if (exportTimerRef.current !== null) {
+      window.clearTimeout(exportTimerRef.current);
+    }
+    exportTimerRef.current = window.setTimeout(() => {
+      setExportedFormat(null);
+      exportTimerRef.current = null;
+    }, 2000);
+  };
+
+  const totalStoryboardDuration = storyboard.reduce((sum, s) => sum + s.duration, 0);
 
   const apiSnippet = `// Illustrative UI snippet only; this is not a verified provider API contract.
 const response = await fetch('https://api.dev.runwayml.com/v1/generate/video', {
@@ -229,9 +330,21 @@ console.log(result);`;
             {/* Prompt & Controls Panel */}
             <div className="order-2 self-start lg:col-span-4 space-y-5 bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5">
               <div>
-                <label htmlFor="studio-prompt" className="block text-xs font-semibold uppercase tracking-wider text-zinc-400 mb-2">
-                  {isAr ? 'وصف المشهد السينمائي (Prompt)' : 'Cinematic Scene Prompt'}
-                </label>
+                <div className="flex items-center justify-between gap-2 mb-2">
+                  <label htmlFor="studio-prompt" className="block text-xs font-semibold uppercase tracking-wider text-zinc-400">
+                    {isAr ? 'وصف المشهد السينمائي (Prompt)' : 'Cinematic Scene Prompt'}
+                  </label>
+                  {(hasSavedDraft || !isSameDraft(currentDraft, DEFAULT_STUDIO_DRAFT)) && (
+                    <button
+                      type="button"
+                      onClick={handleResetDraft}
+                      className="inline-flex items-center gap-1 text-[11px] text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+                    >
+                      <RotateCcw className="w-3 h-3" />
+                      <span>{isAr ? 'إعادة تعيين المسودة' : 'Reset draft'}</span>
+                    </button>
+                  )}
+                </div>
                 <textarea
                   id="studio-prompt"
                   rows={4}
@@ -410,21 +523,61 @@ console.log(result);`;
 
         {currentTab === 'storyboard' && (
           <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5">
-              <div>
-                <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                  <Layers className="w-5 h-5 text-amber-400" />
-                  <span>
-                    {isAr ? 'لوحة تسلسل المشاهد السينمائية' : 'Cinematic Storyboard Sequence'}
-                  </span>
-                </h2>
-                <p className="text-xs text-zinc-400 mt-1">
-                  {isAr
-                    ? 'رتّب مشاهدك واضبط الانتقالات وحركة الكاميرا لكل لقطة قبل التصدير النهائي.'
-                    : 'Arrange scenes, camera moves, and transitions for your production.'}
-                </p>
+            <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 space-y-4">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                    <Layers className="w-5 h-5 text-amber-400" />
+                    <span>
+                      {isAr ? 'لوحة تسلسل المشاهد السينمائية' : 'Cinematic Storyboard Sequence'}
+                    </span>
+                  </h2>
+                  <p className="text-xs text-zinc-400 mt-1">
+                    {isAr
+                      ? `رتّب مشاهدك واضبط الانتقالات وحركة الكاميرا لكل لقطة قبل التصدير (${storyboard.length} مشاهد · ${totalStoryboardDuration} ثانية).`
+                      : `Arrange scenes, camera moves, and transitions before exporting (${storyboard.length} scenes · ${totalStoryboardDuration}s).`}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleExportStoryboard('pdf')}
+                    disabled={storyboard.length === 0}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-100 border border-zinc-700/80 font-medium text-xs transition-colors cursor-pointer"
+                  >
+                    {exportedFormat === 'pdf' ? (
+                      <>
+                        <Check className="w-4 h-4 text-emerald-400" />
+                        <span>{isAr ? 'تم تنزيل PDF' : 'PDF Downloaded'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <FileDown className="w-4 h-4 text-amber-400" />
+                        <span>{isAr ? 'تنزيل PDF' : 'Export PDF'}</span>
+                      </>
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleExportStoryboard('json')}
+                    disabled={storyboard.length === 0}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-zinc-800 hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-100 border border-zinc-700/80 font-medium text-xs transition-colors cursor-pointer"
+                  >
+                    {exportedFormat === 'json' ? (
+                      <>
+                        <Check className="w-4 h-4 text-emerald-400" />
+                        <span>{isAr ? 'تم تنزيل JSON' : 'JSON Downloaded'}</span>
+                      </>
+                    ) : (
+                      <>
+                        <FileJson className="w-4 h-4 text-cyan-400" />
+                        <span>{isAr ? 'تنزيل JSON' : 'Export JSON'}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 pt-4 border-t border-zinc-800/70">
                 <input
                   type="text"
                   value={newSceneTitle}
@@ -439,7 +592,7 @@ console.log(result);`;
                   aria-label={isAr ? 'وصف اللقطة' : 'Shot prompt'}
                   onChange={(e) => setNewScenePrompt(e.target.value)}
                   placeholder={isAr ? 'وصف اللقطة...' : 'Shot prompt...'}
-                  className="rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-xs text-zinc-100 min-w-56"
+                  className="rounded-lg bg-zinc-950 border border-zinc-800 px-3 py-2 text-xs text-zinc-100 min-w-56 flex-1 sm:flex-initial"
                 />
                 <button
                   type="button"
