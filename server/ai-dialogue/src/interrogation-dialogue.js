@@ -198,7 +198,6 @@ export function buildInterrogationPromptPayload(context, recentMemory = []) {
   const untrustedInput = {
     caseId: context.caseId,
     contentVersion: context.contentVersion,
-    policyVersion: context.policyVersion,
     locale: context.locale,
     actor: { id: context.actor.id, name: context.actor.name },
     playerQuestion: { text: context.input.text, untrusted: true, presentedMaterialIds: context.input.presentedMaterialIds },
@@ -610,7 +609,10 @@ export function createInterrogationExecutor({
       }
 
       try {
-        const providerResult = await provider(clone(context), clone(recentMemory), { signal });
+        // Cache identity, policy version and revision belong to the executor.
+        const {caseId, contentVersion, locale, actor, input, ownSources, receivedSources, sourceIds} = context;
+        const providerContext = clone({caseId, contentVersion, locale, actor, input, ownSources, receivedSources, sourceIds});
+        const providerResult = await provider(providerContext, clone(recentMemory), { signal });
         const raw = plain(providerResult) && own(providerResult, 'raw') ? providerResult.raw : providerResult;
         const attempts = plain(providerResult) && Number.isInteger(providerResult.attempts) ? providerResult.attempts : 1;
         const responseSource = plain(providerResult) && typeof providerResult.source === 'string'

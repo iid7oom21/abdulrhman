@@ -1,5 +1,7 @@
 # Investigation tools — local review
 
+[تشغيل المختبر محليًا بقضية تجريبية والتحقق من الحفظ](./INVESTIGATION-QUICKSTART.ar.md)
+
 The review room reuses the existing written-case player, action preview, revision checks and encrypted browser checkpoints. It does not add a second story engine or publish a case pack. The normal player links to `/raven/investigation-lab/` when the matching frontend files are installed.
 
 The room adds a text inspector (zoom and contrast), private connections between acquired materials, and written navigation hints. Connections are player questions or hypotheses, not established contradictions. Hints use only currently displayed action labels; neither tool unlocks evidence, sends a report, grants character knowledge or calls a model. The green contrast pulse is a reading effect, not a forensic finding, and respects reduced motion.
@@ -24,7 +26,7 @@ The lab uses separate pending-operation/checkpoint keys and does not import the 
 
 The result references source IDs, separates received and own sources, and carries a private cache identity scoped by session, actor, revisions, language and inputs. Never expose raw private policies or pass browser-supplied state as authority. Do not serialize cache metadata into model input. `buildInvestigationHint(projected)` returns only available action/material IDs from an engine projection; it performs no deduction or state transition.
 
-No live provider, new character voice or psychological profile is enabled by this module. A future integration requires approved character knowledge/disclosure policy and bounded provider evaluation. Do not add automatic paid-provider fallback to an operation whose outcome is unknown.
+The case service has an optional interrogation executor. It is constructed only when a pack, a trusted character policy and a provider adapter are supplied together. The local lab launcher supplies the fixture or private pack and leaves those two interrogation dependencies unset. The ordinary technical dialogue preview is a separate simulation.
 
 ## Verify
 
@@ -39,7 +41,7 @@ In the frontend checkout, using the existing Playwright installation and Chromiu
 
 ```bash
 CHROMIUM_PATH=/usr/bin/chromium node --test tests/investigation-workbench-browser.cjs
-CHROMIUM_PATH=/usr/bin/chromium node --test tests/case-play-browser.cjs tests/case-checkpoint-browser.cjs
+RAVEN_CASE_SERVICE_ROOT=/absolute/main-checkout/server/ai-dialogue CHROMIUM_PATH=/usr/bin/chromium node --test tests/case-play-browser.cjs tests/case-checkpoint-browser.cjs
 ```
 
 Fixtures are invented, not the private case. Keep real-story path reports and character-policy evaluations outside the checkout. Tests cover specific boundaries; passing them does not prove every story path, every browser or live-model behavior.

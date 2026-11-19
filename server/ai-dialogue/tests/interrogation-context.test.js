@@ -58,6 +58,45 @@ test('unknown, unseen and duplicate presentation IDs fail closed', () => {
   assert.throws(()=>buildInterrogationContext(pack,state,policy,'guide',options({presentedMaterialIds:['card','card']})),code('invalid_context_request'));
 });
 
+test('changing only the delivery target changes received sources independently of personal knowledge', () => {
+  const {pack, policy, state} = setup();
+  policy.actors.witness.knowledge = [{materialId:'card'}];
+  pack.scenes.desk.actions.push({id:'share-witness', label:L('Deliver card to witness'),
+    effects:{share:[{materialId:'card', recipient:'witness'}]}});
+  const read = applyCaseAction(pack, state, action(0, 'read'));
+  for (const [delivery, recipient] of [['share', 'guide'], ['share-witness', 'witness']]) {
+    const branch = applyCaseAction(pack, read, action(1, delivery));
+    for (const actorId of ['guide', 'witness']) {
+      const result = buildInterrogationContext(pack, branch, policy, actorId, options());
+      assert.deepEqual(result.ownSources.map(source => source.id), actorId === 'guide' ? ['sealed'] : ['card']);
+      assert.deepEqual(result.receivedSources.map(source => source.id), actorId === recipient ? ['card'] : []);
+      const present = () => buildInterrogationContext(pack, branch, policy, actorId, options({presentedMaterialIds:['card']}));
+      if (actorId === recipient) assert.deepEqual(present().input.presentedMaterialIds, ['card']);
+      else assert.throws(present, code('material_unavailable'));
+    }
+  }
+});
+
+test('withdrawn player material disappears from the entire projection while an independent source stays readable', () => {
+  const {pack, policy, state} = setup();
+  pack.materials.card = {type:'note', title:L('WITHHELD_TITLE'), source:L('WITHHELD_ATTRIBUTION'), body:L('WITHHELD_BODY')};
+  pack.scenes.desk.actions.push(
+    {id:'withdraw', label:L('Withdraw permission'), effects:{set:{allowReceived:false}}},
+    {id:'restore', label:L('Restore permission'), effects:{set:{allowReceived:true}}},
+  );
+  const delivered = readAndShare({pack, state});
+  const withdrawn = applyCaseAction(pack, delivered, action(2, 'withdraw'));
+  const restored = applyCaseAction(pack, withdrawn, action(3, 'restore'));
+  const project = snapshot => buildInterrogationContext(pack, snapshot, policy, 'guide', options());
+  const hidden = project(withdrawn);
+  assert.doesNotMatch(JSON.stringify(hidden), /WITHHELD_/);
+  assert.deepEqual(hidden.sourceIds, ['sealed']);
+  assert.equal(hidden.ownSources[0].body, pack.materials.sealed.body.ar);
+  assert.deepEqual(project(restored).receivedSources, project(delivered).receivedSources);
+  assert.equal(project(restored).receivedSources[0].body, 'WITHHELD_BODY');
+  assert.deepEqual(restored.shares, delivered.shares);
+});
+
 test('revoking current received-source permission excludes text and rejects presentation', () => {
   const {pack,policy,state} = setup();
   const shared = readAndShare({pack,state});

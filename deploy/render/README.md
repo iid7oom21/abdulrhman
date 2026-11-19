@@ -56,6 +56,30 @@ Set `RAVEN_CASE_CONTENT_SHA256` to the SHA-256 of the **decoded JSON bytes**. If
 
 ## Release verification
 
+### Match a Pages checkout to the server's static export
+
+`raven/release.json` is tracked in `gh-pages`. A maintainer edits it when the public interface or inventory changes. The build reads and validates it. Multiple visual revisions can therefore have the same `release` value. The exact file revision comes from `SITE_COMMIT` on `main`.
+
+From the server checkout, set `pages_dir` to the local frontend checkout. These commands show pending edits and compare its revision with the server pin. The subshell exits with status 1 if the two commits differ.
+
+```sh
+pages_dir=/absolute/path/to/pages-checkout
+site_pin=$(node --input-type=module -e "import {SITE_COMMIT} from './deploy/render/build.mjs'; console.log(SITE_COMMIT)")
+git -C "$pages_dir" status --short --untracked-files=all
+( candidate=$(git -C "$pages_dir" rev-parse HEAD) &&
+  printf 'Pages %s\nServer pin %s\n' "$candidate" "$site_pin" &&
+  test "$candidate" = "$site_pin" )
+```
+
+The following builds a local `.render-site/` from the pinned commit and records the commit and release together.
+
+```sh
+node deploy/render/build.mjs
+cat .render-site/.raven-render-export.json
+```
+
+Use the Pages checkout itself for tests of uncommitted candidate files. The build tests include a deliberately mismatched manifest and verify that the previous export survives a rejection.
+
 Before deployment:
 
 ```sh

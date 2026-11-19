@@ -73,6 +73,42 @@ const okResponsesBody = payload => new Response(JSON.stringify({
 
 const readAndShare = (pack, state) => applyCaseAction(pack, applyCaseAction(pack, state, action(0, 'read')), action(1, 'share'));
 
+for (const protocol of ['responses', 'chat']) {
+  test(`the ${protocol} request sends permitted sources and omits private policy and cache metadata`, async () => {
+    const {pack, policy, state} = makeSyntheticSetup();
+    const reply = {text:'Fixture reply', replyType:'answer', citedSourceIds:['own_life']};
+    const sessionId = 'private-fixture-session';
+    const requestId = 'private-fixture-operation';
+    policy.actors.witness.voiceStyle = L('UNRELATED_ACTOR_STYLE');
+    let request;
+    let adapterContext;
+    const adapter = createInterrogationProviderAdapter({
+      apiKey:'TEST_ONLY', model:'fixture', protocol,
+      fetchImpl: async (_url, options) => {
+        request = JSON.parse(options.body);
+        return protocol === 'responses' ? okResponsesBody(reply)
+          : Response.json({choices:[{finish_reason:'stop', message:{content:JSON.stringify(reply)}}]});
+      },
+    });
+    const executor = createInterrogationExecutor({pack, policy, provider: (context, memory, options) => {
+      adapterContext = context;
+      return adapter(context, memory, options);
+    }});
+    const result = await executor.execute({state, sessionId, requestId, actorId:'guide', locale:'en', message:'What is your job?'});
+    assert.equal(result.status, 'completed');
+    const modelData = JSON.parse(protocol === 'responses' ? request.input : request.messages[1].content);
+    assert.deepEqual(modelData.ownSources.map(source => source.id), ['own_life']);
+    assert.deepEqual(modelData.receivedSources, []);
+    for (const data of [request, adapterContext]) {
+      const serialized = JSON.stringify(data);
+      for (const hidden of [sessionId, requestId, policy.policyVersion, 'policyVersion', 'cacheKey', 'receivedRequires',
+        'allowReceived', 'UNRELATED_ACTOR_STYLE', pack.materials.card.body.en, pack.materials.sealed.body.en]) {
+        assert.ok(!serialized.includes(hidden), `private value in ${protocol}: ${hidden}`);
+      }
+    }
+  });
+}
+
 // Scenario 1 & 20: Legitimate question about known information + avoiding excessive refusal
 test('1 & 20: legitimate question about known source returns grounded answer in voiceStyle without blanket refusal', async () => {
   const { pack, policy, state } = makeSyntheticSetup();
