@@ -153,6 +153,6 @@
     if(parentId && !matchingParent())parentId=null;
     section.hidden=false;render();if(confirmed)announce('confirmed');
   }
-  document.addEventListener('raven:case-view',event=>receive(window.RavenBeliefReview?.getView?.() || event.detail));
+  document.addEventListener('raven:belief-view',event=>receive(window.RavenBeliefReview?.getView?.() || event.detail));
   const initial=window.RavenBeliefReview?.getView?.();if(initial)receive(initial);else render();
 })();

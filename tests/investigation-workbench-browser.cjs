@@ -126,3 +126,32 @@ test('review workbench: earned sources, private board, scope, storage and access
   }));
  }finally{await browser.close();}
 });
+
+test('independent review bridges preserve workbench and belief drafts during busy, language and refresh',async t=>{
+ const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox']});
+ t.after(()=>browser.close());
+ for(const width of [320,390])for(const lang of ['ar','en'])await t.test(width+'px '+lang,async()=>{
+  const api=fixture();await new Promise(r=>api.server.listen(0,'127.0.0.1',r));
+  const base='http://127.0.0.1:'+api.server.address().port,context=await browser.newContext({viewport:{width,height:900},reducedMotion:'reduce'}),page=await context.newPage();
+  let release=null;const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  await page.addInitScript(()=>{window.reviewBridgeEvents=[];for(const type of ['raven:case-view','raven:belief-view'])document.addEventListener(type,event=>window.reviewBridgeEvents.push({type,hasCase:Boolean(event.detail?.caseId),hasActions:Array.isArray(event.detail?.actions),hasNotes:Array.isArray(event.detail?.notes)}));});
+  try{
+   await page.goto(base+'/raven/investigation-lab/?lang='+lang);await page.locator('#case-app').waitFor({state:'visible'});await page.waitForFunction(()=>document.body.getAttribute('aria-busy')==='false');
+   assert.equal(await page.locator('#lab-workbench').isVisible(),true,'a valid case must keep the investigation workbench visible after the controller becomes idle');
+   // Exercise both actual components together; this only injects the public
+   // belief component into the test page, without changing production markup.
+   await page.addScriptTag({url:base+'/raven/deleted-name/play/belief-review.js'});await page.locator('#belief-review>summary').click();
+   await page.fill('#belief-before','Fixture belief draft');await page.fill('#belief-after','Revised fixture belief');await page.selectOption('#belief-source','letter');
+   await page.selectOption('#lab-link-a','letter');await page.selectOption('#lab-link-b','map');await page.fill('#lab-link-note','KEEP UNSAVED FIXTURE QUESTION');
+   const checkDrafts=async()=>{assert.equal(await page.locator('#lab-workbench').isVisible(),true);assert.equal(await page.locator('#lab-link-note').inputValue(),'KEEP UNSAVED FIXTURE QUESTION');assert.equal(await page.locator('#lab-link-a').inputValue(),'letter');assert.equal(await page.locator('#lab-link-b').inputValue(),'map');assert.equal(await page.locator('#belief-before').inputValue(),'Fixture belief draft');assert.equal(await page.locator('#belief-after').inputValue(),'Revised fixture belief');assert.equal(await page.locator('#belief-source').inputValue(),'letter');};
+   await page.route('**/api/case/state',async route=>{await new Promise(resolve=>{release=resolve;});await route.continue();});
+   await page.locator('#state-refresh').click();await page.waitForFunction(()=>document.body.getAttribute('aria-busy')==='true');await checkDrafts();
+   api.state.revision++;assert.ok(release);release();release=null;await page.waitForFunction(()=>document.body.getAttribute('aria-busy')==='false');await page.unroute('**/api/case/state');await checkDrafts();
+   const other=lang==='ar'?'en':'ar';await page.click('#language-'+other);await checkDrafts();await page.click('#language-'+lang);await checkDrafts();
+   const events=await page.evaluate(()=>window.reviewBridgeEvents.filter(item=>item.hasCase));assert.ok(events.some(item=>item.type==='raven:case-view'));assert.ok(events.some(item=>item.type==='raven:belief-view'));
+   assert.ok(events.filter(item=>item.type==='raven:case-view').every(item=>item.hasActions&&!item.hasNotes),'workbench events cannot carry private notebook notes');assert.ok(events.filter(item=>item.type==='raven:belief-view').every(item=>item.hasNotes&&!item.hasActions),'belief events keep their own narrow contract');
+   assert.equal(api.requests.some(r=>r.method!=='GET'),false);assert.deepEqual(errors,[]);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);
+   if(process.env.RAVEN_WORKBENCH_ARTIFACTS){await page.locator('#lab-workbench').screenshot({path:path.join(process.env.RAVEN_WORKBENCH_ARTIFACTS,`bridge-after-${lang}-${width}.png`)});}
+  }finally{release?.();await context.close();api.server.closeAllConnections?.();await new Promise(r=>api.server.close(r));}
+ });
+});

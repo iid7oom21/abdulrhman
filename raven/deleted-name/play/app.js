@@ -954,7 +954,7 @@
     };
   }
   function publishReviewView() {
-    document.dispatchEvent(new CustomEvent('raven:case-view',{detail:beliefView()}));
+    document.dispatchEvent(new CustomEvent('raven:belief-view',{detail:beliefView()}));
   }
   function prepareBeliefNote({text,sourceId,returnFocus} = {}) {
     if (!state || beliefView().locked || review) return {ok:false,reason:'locked'};
