@@ -4,8 +4,8 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 
-export const SITE_COMMIT = 'e80bbac6e11c24eb14656649a02e6f01e023bf71';
-export const PUBLIC_RELEASE = '2026-11-12-case-play-2';
+export const SITE_COMMIT = 'd25ea0698ef9a0c48fe5af039771ebef6ce7c670';
+export const PUBLIC_RELEASE = '2026-11-15-investigation-tools-1';
 export const EXPORT_MARKER = '.raven-render-export.json';
 // Render builds from a shallow, single-branch checkout and removes its Git
 // remote, so a missing pinned commit is fetched from here by its SHA.
@@ -26,6 +26,8 @@ export const CORE_FILES = [
   'raven/deleted-name/reading-tools.js','raven/deleted-name/case-entry.js',
   'raven/deleted-name/play/index.html','raven/deleted-name/play/content.html',
   'raven/deleted-name/play/app.js','raven/deleted-name/play/style.css',
+  'raven/investigation-lab/index.html','raven/investigation-lab/style.css',
+  'raven/investigation-lab/workbench.js',
   'raven/assets/raven-homepage-v6.css','raven/terminal-preview/raven-17/index.html',
   'raven/terminal-preview/assets/hero-poster.jpg',
   'raven/terminal-preview/assets/hero-loop.mp4',

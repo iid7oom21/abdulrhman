@@ -119,6 +119,18 @@ test('wrong release, missing files, fourteen tracks, mismatched playlist and mis
   }
 });
 
+test('an export missing any investigation-lab entrypoint preserves the previous site',t=>{
+  for(const name of ['index.html','style.css','workbench.js']) {
+    const f=fixture(t);
+    fs.rmSync(path.join(f.repo,'raven/investigation-lab',name));
+    const sha=commit(f.repo),target=previousExport(f.repo);
+    assert.throws(()=>buildSite({repo:f.repo,commit:sha}),fails('invalid_public_export'),name);
+    assertPrevious(target);
+    assert.equal(fs.existsSync(path.join(f.repo,'.render-site.build-lock')),false,name);
+    assert.equal(fs.readdirSync(f.repo).some(entry=>entry.startsWith('.render-build-')),false,name);
+  }
+});
+
 test('Git symlinks, submodules and private files never reach extraction or replace the previous site',t=>{
   for(const type of ['symlink','submodule','private']) {
     const f=fixture(t);
