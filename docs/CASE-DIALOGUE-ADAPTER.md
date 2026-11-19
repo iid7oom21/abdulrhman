@@ -86,3 +86,25 @@ createCaseDialogueAdapter({
 3. مزود حقيقي لـ`selectSources`: موافقة صريحة على مزود وتكلفة، وتعليمات مراجعة.
 4. مسار HTTP يأخذ `sessionId` من كوكي القضية فقط، بنفس قيود المصدر وحجم الجسم في `case-service`، وواجهة تعرض الأسباب بصوت النظام.
 5. سجل الطلبات حاليًا في الذاكرة. يلزم قرار تخزين قبل الإنتاج (وضع browser-checkpoint في Render لا يحفظ على قرص).
+
+## 9) التجربة المحلية المتكاملة (2026-11-19)
+
+حزمة اصطناعية + سياسة اصطناعية مربوطة بها (`caseId`/`contentVersion`) + مزود وهمي حتمي. لا مزود مدفوع، ولا مسار إنتاجي جديد: `server.js` و`case-service.js` لا يستوردان المحوّل ولا الحاضنة.
+
+- الحاضنة: `server/ai-dialogue/tests/fixtures/dialogue-harness.js` (كود اختبار). ترفض العمل إذا كان `caseId` هو `deleted-name`.
+- التشغيل اليدوي: `node server/ai-dialogue/tests/fixtures/dialogue-harness.js --port 8799` ثم افتح `http://127.0.0.1:8799/`.
+- المسار المختبر: كوكي `raven_case_session` ← `readSessionState` (نسخة) ← سياق يقرره المحرك والسياسة ← المحوّل ← اختيار معرّفات من المزود ← تحقق مغلق ← اقتباسات منسوبة تُعرض بـ`textContent` تحت CSP صارم.
+- الاختبارات: `node --test server/ai-dialogue/tests/case-dialogue-e2e.test.js` (HTTP) و`node server/ai-dialogue/tests/case-dialogue-e2e-browser.cjs` (عرض آمن عند 320 و390).
+- الجسم لا يسمّي الجلسة: `sessionId` أو `state` أو `flags` أو `knowledge` في الجسم ← 400. بلا كوكي ← 401.
+
+## 10) علاقة المحوّل بطبقة الاستجواب في main (`4acce38`)
+
+في main الآن مسار ثانٍ مستقل: `interrogation-dialogue.js` مع `POST /api/case/dialogue` (معطل افتراضيًا، 503 بلا سياسة ومزود). الفرق الجوهري:
+
+| | هذا المحوّل | `interrogation-dialogue.js` |
+|---|---|---|
+| ما يرجع من النموذج | معرّفات مصادر فقط؛ النص يركّبه الخادم من مواد المؤلف | نص حر `text` + `citedSourceIds` |
+| التحقق | لا يمكن ظهور جملة لم يكتبها المؤلف | `verificationScope: 'structural-only'`: النص نفسه غير متحقق منه |
+| مسار HTTP | لا يوجد (حاضنة اختبار فقط) | موجود ومعطل افتراضيًا |
+
+لم أضف مسارًا ثالثًا ولم أعدّل طبقة main. قبل أي تفعيل يلزم قرار واحد: أي طبقة تبقى للقضية الحقيقية. التوصية: إبقاء مسار main الواحد، مع جعل مخرجه اقتباسات منسوبة (منطق هذا المحوّل) بدل النص الحر، لأن قاعدة القصة تمنع أي دليل أو شاهد أو رسالة مخترعة.
