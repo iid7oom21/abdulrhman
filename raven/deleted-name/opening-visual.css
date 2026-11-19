@@ -507,6 +507,44 @@ body.opening-visual .card-dialog-body .message-row p { margin: 8px 0 0; color: v
 @media (max-width: 420px) {
   html[lang="en"] body.opening-visual .opening-journey-nav a { flex-direction: column; }
 }
+/* The existing reader owns optional display controls; the documents stay text. */
+body.opening-visual .opening-reading-panel { margin-block: 0 18px; border-block: 1px solid var(--line); }
+body.opening-visual .opening-reading-panel > summary { min-height: 44px; padding-block: 8px; cursor: pointer; color: var(--soft); }
+body.opening-visual .opening-reading-settings {
+  display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 8px 12px;
+  min-width: 0; margin: 0; padding: 12px 0 16px; border: 0;
+  font-size: 16px; line-height: 1.75;
+}
+body.opening-visual .opening-reading-settings > label[for] { align-self: center; }
+body.opening-visual .opening-reading-settings select { width: 100%; min-width: 0; min-height: 44px; padding: 6px 10px; color: var(--text); background: var(--ink); border: 1px solid var(--line); }
+body.opening-visual .opening-night-control { display: flex; align-items: center; gap: 9px; min-height: 44px; cursor: pointer; }
+body.opening-visual .opening-night-control input { flex: 0 0 auto; width: 20px; height: 20px; accent-color: var(--gold-hi); }
+body.opening-visual #opening-reading-reset { min-height: 44px; white-space: normal; }
+body.opening-visual #opening-reading-status { grid-column: 1 / -1; margin: 4px 0 0; }
+body.opening-visual[data-reading-size="large"] { --reading-text-size: 21px; }
+body.opening-visual[data-reading-size="largest"] { --reading-text-size: 24px; }
+body.opening-visual:is([data-reading-size="large"],[data-reading-size="largest"]) :is(
+  #assignment-stage .thread p,
+  #hook-document > dl .hook-part,
+  .hook-comparison > section p,
+  .hook-draft > p,
+  .hook-review dd,
+  .card-dialog-body p,
+  .card-dialog-body dd,
+  #reading-source-preview,
+  #reading-note,
+  #reading-notes p,
+  #reading-notes blockquote
+) { font-size: var(--reading-text-size); line-height: 1.95; overflow-wrap: anywhere; }
+body.opening-visual[data-reading-night="true"] { --paper: #181a19; --paper-ink: #eee9df; --paper-muted: #c8bfae; --paper-line: #72756f; }
+body.opening-visual[data-reading-night="true"] :is(
+  #hook-document > dl,.hook-comparison > section,.hook-draft > p:first-of-type,
+  .card-dialog-body > dl,.document-paper,.card-dialog-body .message-transcript
+) { background: var(--paper); color: var(--paper-ink); color-scheme: dark; }
+@media (max-width: 480px) {
+  body.opening-visual .opening-reading-settings { grid-template-columns: minmax(0,1fr); }
+  body.opening-visual #opening-reading-status { grid-column: 1; }
+}
 @media (prefers-reduced-motion: reduce) {
   body.opening-visual,
   body.opening-visual *,

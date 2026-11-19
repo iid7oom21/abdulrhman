@@ -1,4 +1,4 @@
-/* Presentation only. No storage, game actions, network requests or source edits. */
+/* Presentation only. Storage contains display preferences, never notes or game state. */
 (() => {
   'use strict';
   const hook = document.getElementById('hook');
@@ -25,7 +25,62 @@
   const title = make('h2', '', 'card-dialog-heading');title.id = 'opening-card-title';title.tabIndex = -1;
   const body = make('div', undefined, 'card-dialog-body');
   const scope = make('p', words().scope, 'opening-chip');
-  inner.append(close, title, body, scope);dialog.append(inner);document.body.append(dialog);
+  const readingCopy = {
+    ar: {legend:'راحة القراءة',size:'حجم النص',standard:'عادي',large:'أكبر',largest:'كبير جدًا',night:'قراءة ليلية',reset:'العرض الافتراضي',session:'تفضيلات عرض فقط؛ لا تحفظ تقدم القضية.',saved:'حُفظت تفضيلات القراءة على هذا المتصفح فقط؛ لا تحفظ تقدم القضية.',restored:'تفضيلات القراءة المحفوظة على هذا المتصفح؛ تقدم القضية منفصل.',unavailable:'تُطبق التفضيلات هنا مؤقتًا؛ تعذر حفظها في المتصفح.'},
+    en: {legend:'Reading comfort',size:'Text size',standard:'Standard',large:'Larger',largest:'Largest',night:'Night reading',reset:'Default display',session:'Display preferences only. They do not save case progress.',saved:'Reading preferences saved in this browser only. They do not save case progress.',restored:'Reading preferences restored from this browser. Case progress is separate.',unavailable:'Preferences apply temporarily here; they could not be saved in this browser.'}
+  };
+  const preferenceKey = 'raven_opening_readability_v1';
+  const validSizes = new Set(['standard','large','largest']);
+  let preferences = {size:'standard',night:false}, preferenceStatus = 'session', readingRevision = 0;
+  try {
+    const stored = localStorage.getItem(preferenceKey);
+    let parsed = null;try {parsed = stored ? JSON.parse(stored) : null;} catch { /* Ignore invalid preferences. */ }
+    if (parsed?.version === 1 && validSizes.has(parsed.size) && typeof parsed.night === 'boolean') {
+      preferences = {size:parsed.size,night:parsed.night};preferenceStatus = 'restored';
+    }
+  } catch {preferenceStatus = 'unavailable';}
+  const readingPanel = make('details',undefined,'opening-reading-panel');readingPanel.id = 'opening-reading-settings';
+  const readingSummary = make('summary');readingSummary.id = 'opening-reading-summary';
+  const readingSettings = make('fieldset',undefined,'opening-reading-settings');
+  const readingLegend = make('legend',undefined,'hook-sr');
+  const sizeLabel = make('label');sizeLabel.htmlFor = 'opening-reading-size';
+  const textSize = make('select');textSize.id = 'opening-reading-size';
+  for (const value of validSizes) {const option = make('option');option.value = value;textSize.append(option);}
+  const nightLabel = make('label',undefined,'opening-night-control');
+  const night = make('input');night.type = 'checkbox';night.id = 'opening-reading-night';
+  const nightText = make('span');nightLabel.append(night,nightText);
+  const resetReading = make('button',undefined,'opening-secondary');resetReading.type = 'button';resetReading.id = 'opening-reading-reset';
+  const preferenceNote = make('p',undefined,'opening-chip');preferenceNote.id = 'opening-reading-status';preferenceNote.setAttribute('role','status');
+  readingSettings.append(readingLegend,sizeLabel,textSize,nightLabel,resetReading,preferenceNote);
+  readingPanel.append(readingSummary,readingSettings);
+  function renderReadingSettings() {
+    const c = readingCopy[english() ? 'en' : 'ar'];
+    readingSummary.textContent = c.legend;readingLegend.textContent = c.legend;sizeLabel.textContent = c.size;
+    for (const option of textSize.options) option.textContent = c[option.value];
+    textSize.value = preferences.size;night.checked = preferences.night;nightText.textContent = c.night;
+    resetReading.textContent = c.reset;preferenceNote.textContent = c[preferenceStatus];
+  }
+  function applyReadingPreferences(save = false) {
+    document.body.dataset.readingSize = preferences.size;
+    document.body.dataset.readingNight = String(preferences.night);
+    if (save) {
+      readingRevision++;
+      const serialized = JSON.stringify({version:1,...preferences});
+      try {
+        localStorage.setItem(preferenceKey,serialized);
+        preferenceStatus = localStorage.getItem(preferenceKey) === serialized ? 'saved' : 'unavailable';
+      } catch {preferenceStatus = 'unavailable';}
+    }
+    renderReadingSettings();
+  }
+  textSize.addEventListener('change',() => {
+    if (!validSizes.has(textSize.value)) return;
+    preferences.size = textSize.value;applyReadingPreferences(true);
+  });
+  night.addEventListener('change',() => {preferences.night = night.checked;applyReadingPreferences(true);});
+  resetReading.addEventListener('click',() => {preferences = {size:'standard',night:false};applyReadingPreferences(true);});
+  applyReadingPreferences();
+  inner.append(close, title, readingPanel, body, scope);dialog.append(inner);document.body.append(dialog);
   function sourceFor(id) {
     if (id === 'message') return document.querySelector('#assignment-stage .thread');
     if (id === 'paper') return document.getElementById('hook-document');
@@ -34,7 +89,7 @@
   function renderCard() {
     const original = sourceFor(activeCard);
     if (!original) { if (dialog.open) dialog.close();return false; }
-    body.replaceChildren();close.textContent = words().close;scope.textContent = words().scope;
+    body.replaceChildren();close.textContent = words().close;scope.textContent = words().scope;renderReadingSettings();
     if (activeCard === 'message') {
       title.textContent = messageTitle();
       const transcript = make('ol',undefined,'message-transcript');
@@ -66,7 +121,7 @@
     return true;
   }
   function openCard(id, trigger) {
-    activeCard = id;returnedTo = trigger;savedPosition = {x:scrollX,y:scrollY};
+    activeCard = id;returnedTo = trigger;savedPosition = {x:scrollX,y:scrollY,anchorTop:trigger.getBoundingClientRect().top,readingRevision};
     if (!renderCard()) return;
     if (!dialog.open) dialog.showModal();
     title.focus({preventScroll:true});
@@ -76,7 +131,7 @@
     if (event.key !== 'Tab' || !dialog.open) return;
     // Keep the modal keyboard boundary inside this iframe. Native dialog focus
     // alone can otherwise continue into the parent page's soundtrack controls.
-    const controls = [...dialog.querySelectorAll('button:not([disabled]),a[href],input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')]
+    const controls = [...dialog.querySelectorAll('button:not([disabled]),a[href],summary,input:not([disabled]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])')]
       .filter(node => node.getClientRects().length && getComputedStyle(node).visibility !== 'hidden');
     const first = controls[0], last = controls[controls.length - 1];
     if (!first) {event.preventDefault();title.focus();return;}
@@ -92,7 +147,11 @@
   dialog.addEventListener('close', () => {
     const target = returnedTo?.isConnected ? returnedTo : document.querySelector('[data-visual-open="'+activeCard+'"]');
     target?.focus({preventScroll:true});
-    if (savedPosition) window.scrollTo({left:savedPosition.x,top:savedPosition.y,behavior:'instant'});
+    if (savedPosition) {
+      const top = target?.isConnected && savedPosition.readingRevision !== readingRevision
+        ? scrollY + target.getBoundingClientRect().top - savedPosition.anchorTop : savedPosition.y;
+      window.scrollTo({left:savedPosition.x,top,behavior:'instant'});
+    }
     activeCard = null;
   });
   function addOpenButton(parent,id,label) {
@@ -109,14 +168,18 @@
   let beforeFocus = null;
   function leaveFocus(restorePosition = true) {
     document.body.classList.remove('paper-focus');exit.hidden = true;
-    hook.querySelector('[data-visual-focus]')?.focus({preventScroll:true});
-    if (restorePosition && beforeFocus) window.scrollTo({left:beforeFocus.x,top:beforeFocus.y,behavior:'instant'});
+    const target = hook.querySelector('[data-visual-focus]');target?.focus({preventScroll:true});
+    if (restorePosition && beforeFocus) {
+      const top = target && beforeFocus.readingRevision !== readingRevision
+        ? scrollY + target.getBoundingClientRect().top - beforeFocus.anchorTop : beforeFocus.y;
+      window.scrollTo({left:beforeFocus.x,top,behavior:'instant'});
+    }
     beforeFocus = null;
   }
   exit.addEventListener('click',() => leaveFocus());
   document.addEventListener('keydown', event => {if(event.key === 'Escape' && !dialog.open && !exit.hidden) {event.preventDefault();leaveFocus();}});
   function enhance() {
-    const c = words();exit.textContent = c.exit;
+    const c = words();exit.textContent = c.exit;renderReadingSettings();
     const messageTools = document.querySelector('.journey-message-tools');
     if (messageTools) addOpenButton(messageTools,'message',english() ? 'Open the earlier conversation' : 'افتح المحادثة السابقة');
     const oldQuote = document.getElementById('old-message-quote');
@@ -153,7 +216,7 @@
         addOpenButton(bar,'paper',c.document);
         const focus = make('button',c.focus,'opening-secondary');focus.type = 'button';focus.dataset.visualFocus = '';
         focus.addEventListener('click', () => {
-          beforeFocus = {x:scrollX,y:scrollY};
+          beforeFocus = {x:scrollX,y:scrollY,anchorTop:focus.getBoundingClientRect().top,readingRevision};
           document.body.classList.add('paper-focus');exit.hidden = false;exit.focus({preventScroll:true});
           window.scrollTo({left:0,top:Math.max(0,scrollY + paper.getBoundingClientRect().top - exit.offsetHeight - 28),behavior:'instant'});
         });
