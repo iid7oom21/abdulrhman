@@ -34,7 +34,7 @@ const files = [
   'raven/deleted-name/play/index.html', 'raven/deleted-name/play/content.html',
   'raven/deleted-name/play/app.js', 'raven/deleted-name/play/style.css',
   // Generic review surface only; case packs and author policies stay private.
-  'raven/investigation-lab/index.html', 'raven/investigation-lab/style.css',
+  'raven/investigation-lab/index.html', 'raven/investigation-lab/content.html', 'raven/investigation-lab/style.css',
   'raven/investigation-lab/workbench.js',
   'raven/deleted-name/assets/case-record.webp', 'raven/deleted-name/assets/case-arrival.webp',
   'raven/deleted-name/assets/case-og-v4.jpg',

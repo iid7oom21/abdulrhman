@@ -67,6 +67,31 @@ test('hosting can land on RAVEN without creating a preview session or accepting 
   assert.throws(() => createPreviewServer({siteRoot:f.root,hostedRootRedirect:'https://example.com/'}),/invalid_hosted_root_redirect/);
 });
 
+test('investigation lab audio shell and exact content page are public without exposing adjacent review files', async t => {
+  const f = fixture(t);
+  const pages = [
+    ['raven/investigation-lab/index.html','<!doctype html><iframe src="content.html"></iframe>'],
+    ['raven/investigation-lab/content.html','<!doctype html><main>PUBLIC_LAB_CONTENT</main>'],
+  ];
+  for (const [name,body] of pages) f.write(name,body);
+  const privateFiles = ['author-notes.json','content-review.html','private-board.json'];
+  for (const name of privateFiles) f.write('raven/investigation-lab/'+name,'PRIVATE_LAB_SENTINEL');
+  const s = await start(t,{siteRoot:f.root});
+  for (const method of ['GET','HEAD']) {
+    for (const [name,body] of pages) {
+      const response = await fetch(s.root+'/'+name+'?lang=en',{method});
+      assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),'text/html; charset=utf-8');
+      assert.equal(response.headers.get('set-cookie'),null);assert.equal(response.headers.get('x-frame-options'),'SAMEORIGIN');
+      assert.equal(await response.text(),method==='HEAD'?'':body);
+    }
+    for (const name of privateFiles) {
+      const response = await fetch(s.root+'/raven/investigation-lab/'+name,{method});
+      assert.equal(response.status,404);assert.doesNotMatch(await response.text(),/PRIVATE_LAB_SENTINEL/);
+    }
+  }
+  assert.equal((await fetch(s.root+'/api/case/state')).status,401,'reading the shell never starts a case');
+});
+
 test('retired poster stays inaccessible in stale exports while legacy landing and shared media remain available', async t => {
   const f = fixture(t);
   const retiredPoster = 'raven/terminal-preview/assets/zarqa-poster.jpg';

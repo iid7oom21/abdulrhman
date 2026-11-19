@@ -132,7 +132,9 @@ export function createCaseService({contentPath = null, storagePath = null, pack:
     return writeBlocked ? {...view,saveStatus:'unconfirmed',actions:[],readOnly:true,storageUnavailable:true} : view;
   };
   const responseOf = session => {
-    const view = viewOf(session);
+    // Scope optional local reading tools without exposing the bearer cookie.
+    // Response metadata only: never persist it in a projection or recovery copy.
+    const view = {...viewOf(session),clientSessionTag:checkpointSessionTag(session.id)};
     if (!checkpoints) return view;
     // Select the session fields explicitly: no pack, future scenes, or arbitrary
     // service metadata can be included in a browser's encrypted recovery copy.
