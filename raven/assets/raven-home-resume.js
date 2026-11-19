@@ -65,6 +65,16 @@
   document.addEventListener('raven:ended',render);
   window.addEventListener('storage',event=>{if(event.key===null||event.key?.startsWith('raven17_episode_'))render();});
   window.addEventListener('pageshow',event=>{if(event.persisted)checkSession();});
+  const retryButton=document.getElementById('rvnRetryVideo'),filmPlayer=document.getElementById('ravenEpisodePlayer');
+  retryButton?.addEventListener('click',()=>{
+    if(document.activeElement!==retryButton)return;
+    // The existing retry handler hides its own focused control while loading.
+    requestAnimationFrame(()=>{
+      if(!document.getElementById('episodeModal')?.classList.contains('open'))return;
+      if(document.activeElement!==retryButton&&document.activeElement!==document.body)return;
+      (retryButton.getClientRects().length?retryButton:filmPlayer)?.focus({preventScroll:true});
+    });
+  },true);
   document.getElementById('rvnAfterBack')?.addEventListener('click',()=>window.closeEpisodes?.());
   document.getElementById('rvnAfterBackstage')?.addEventListener('click',()=>{
     window.closeEpisodes?.();

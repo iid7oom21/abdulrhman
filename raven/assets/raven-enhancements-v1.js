@@ -158,7 +158,14 @@ function showEpisodes(n){
  if(window.ravenIntro?.complete===false){if(!theaterWaitingForIntro){theaterWaitingForIntro=true;document.addEventListener('raven:intro-complete',()=>{theaterWaitingForIntro=false;syncTheaterRoute();},{once:true});}return;}
  const modal=$('#episodeModal');if(!modal)return;if(modal.classList.contains('open')){selectEpisode(n,false,false);return;}setMenu(false);lastFocus=document.activeElement;previousOverflow=document.body.style.overflow;modal.classList.add('open');modal.setAttribute('aria-hidden','false');document.body.classList.add('rvnViewing');document.body.style.overflow='hidden';$('#ravenHeroMotion')?.pause();$('.premiereVideo')?.pause();document.dispatchEvent(new CustomEvent('raven:theater',{detail:{open:true}}));selectEpisode(n,false,false);$('.episodeClose')?.focus({preventScroll:true});
 }
-function hideEpisodes(){const modal=$('#episodeModal');if(!modal?.classList.contains('open'))return;saveProgress();modal.classList.remove('open');modal.setAttribute('aria-hidden','true');theaterPlayer?.pause();document.body.classList.remove('rvnViewing');document.body.style.overflow=previousOverflow;document.dispatchEvent(new CustomEvent('raven:theater',{detail:{open:false}}));if(lastFocus?.isConnected)lastFocus.focus({preventScroll:true});}
+function hideEpisodes(){
+ const modal=$('#episodeModal');if(!modal?.classList.contains('open'))return;
+ saveProgress();modal.classList.remove('open');modal.setAttribute('aria-hidden','true');theaterPlayer?.pause();document.body.classList.remove('rvnViewing');document.body.style.overflow=previousOverflow;document.dispatchEvent(new CustomEvent('raven:theater',{detail:{open:false}}));
+ // A completed film or failed save can hide the original resume button.
+ const targets=[lastFocus,lastFocus?.closest('.rvnVisualEpisode')?.querySelector('[data-visual-episode]'),$('[data-visual-episode="'+currentEpisode+'"]'),$('.rvnHeroWatch')];
+ const target=targets.find(node=>node?.isConnected&&node!==document.body&&!node.disabled&&node.getClientRects().length&&!node.closest('[hidden],[inert]')&&getComputedStyle(node).visibility!=='hidden');
+ target?.focus({preventScroll:true});
+}
 function openEpisodes(e,requested){e?.preventDefault?.();const n=requested??readEpisodeRoute()??currentEpisode;const modal=$('#episodeModal'),push=!modal?.classList.contains('open')&&!theaterWaitingForIntro&&readEpisodeRoute()===null;writeEpisodeRoute(Math.max(1,Math.min(EPISODES.length,Math.trunc(Number(n)||1))),push);showEpisodes(readEpisodeRoute());}
 function closeEpisodes(){if(!$('#episodeModal')?.classList.contains('open')&&!theaterWaitingForIntro)return;hideEpisodes();if(history.state?.rvnTheaterEntry)history.back();else removeEpisodeRoute();}
 function syncTheaterRoute(){const n=readEpisodeRoute();if(n===null){hideEpisodes();return;}showEpisodes(n);}
