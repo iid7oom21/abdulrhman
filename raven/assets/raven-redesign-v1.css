@@ -10,9 +10,9 @@
 }
 
 /* 1. Legibility floor. Arabic labels were 8–10px; nothing small is below 11px now. */
-.eyebrow,.status,.premiereEyebrow,.metaItem>span:first-child,.rvnStudioCard small,
+.eyebrow,.status,.metaItem>span:first-child,.rvnStudioCard small,
 .rvnPressCopy small,.rvnSelectedRow>small,.rvnSelectedRow>span:first-child,
-.rvnNowPlaying small,.modalTitle>span,.premiereMeta,.rvnProductionLog small{
+.rvnNowPlaying small,.modalTitle>span,.rvnProductionLog small{
   font-size:11px;
   line-height:1.6;
   color:var(--rvn-label);
@@ -103,7 +103,5 @@ html,body{background:#0b0a08}
 .rvnAfterCredits{background:#1a1612}
 /* The archive search row was a tall empty band for a single line. */
 .rvnArchiveExperience{padding-block:clamp(20px,3vw,36px);border-block-color:rgba(197,154,97,.1)}
-/* The upcoming-film section kept a blue gradient that now clashed with the warm page. */
-.nextPremiere{background:linear-gradient(135deg,#14110d,#0b0a08 65%)}
 /* Mobile audit 2026-11-05: footer and language toggle text stayed at 11px; floor at 12px. */
 .foot>span,.foot>a,a[data-rvn-lang],.rvnLanguage>span{font-size:12px}

@@ -26,7 +26,7 @@ section{padding-block:68px}
 .rvnSkipLink{position:fixed;inset-block-start:10px;inset-inline-start:12px;z-index:10000;padding:10px 18px;background:var(--rvn-gold);color:#07090b;transform:translateY(-160%)}
 .rvnSkipLink:focus{transform:none}
 /* Retained nodes from retired visual treatments. */
-.orb,.filmDecor,.premiereGlow,.rvnCursor{display:none!important}
+.orb,.filmDecor,.rvnCursor{display:none!important}
 body.rvnCursorOn{cursor:auto}
 
 /* Navigation: scoped away from the studio rail. */
@@ -72,7 +72,7 @@ body.rvnCursorOn{cursor:auto}
 /* Film and the separate case entrance. */
 #films{background:#07090b}
 .films{display:block}
-#films .film.zarqa,#films .film.next{display:none}
+#films .film.next{display:none}
 .film.raven{position:relative;display:grid;grid-template-columns:1fr;overflow:hidden;background:#0b0e11;border:1px solid var(--rvn-line);border-radius:2px;transition:border-color .2s ease}
 .film.raven::before{content:"";display:block;aspect-ratio:16/11;background:url("https://cdn.websitepublisher.ai/custom/wid25762/images/raven-film-card.jpg") center 20%/cover no-repeat}
 .filmContent{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;width:100%;min-width:0;padding:22px;direction:rtl;text-align:start;background:#0b0e11}
@@ -82,6 +82,17 @@ body.rvnCursorOn{cursor:auto}
 .film p{max-width:540px;margin:0;color:#c0c4c7;font-size:15px;line-height:1.9}
 .filmLink{display:inline-flex;align-items:center;gap:18px;min-height:44px;margin-top:16px;color:#eadac2;font-size:14px;font-weight:600}
 .rvnArchiveExperience{position:relative;padding-block:clamp(40px,6vw,80px);border-block:1px solid rgba(197,154,97,.14);background:#0b0e11}
+/* User-started silent artistic clips; separate from the case and episode player. */
+.rvnAtmosphereGrid{display:grid;grid-template-columns:minmax(0,1fr);gap:22px}
+.rvnAtmosphereCard{min-width:0;padding:16px;border:1px solid var(--rvn-line);background:var(--rvn-panel)}
+.rvnAtmosphereCard h3{margin:0 0 14px;color:var(--rvn-warm);font-size:19px;font-weight:500}
+.rvnAtmosphereCard video{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:contain;background:#000;border:1px solid rgba(255,255,255,.08)}
+.rvnAtmosphereCard video:focus-visible{outline:2px solid #d6b17b;outline-offset:4px}
+.rvnAtmosphereActions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
+.rvnAtmosphereActions button{min-width:44px;min-height:44px;max-width:100%;padding:10px 16px;border:1px solid var(--rvn-line);border-radius:2px;background:#171b1e;color:var(--rvn-gold);text-align:start;overflow-wrap:anywhere}
+.rvnAtmosphereStatus{margin:12px 0 0;color:var(--rvn-muted);font-size:14px;line-height:1.8}
+@media(min-width:651px){.rvnAtmosphereGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(min-width:1001px){.rvnAtmosphereGrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .rvnCaseEntry{position:relative;display:grid;gap:24px;align-items:center}
 .rvnCaseEntry>div{min-width:0}
 .rvnCaseCopy .eyebrow{direction:inherit;font-family:inherit;letter-spacing:0;text-transform:none}
@@ -93,23 +104,6 @@ body.rvnCursorOn{cursor:auto}
 .rvnCaseEntry .rvnEnterCase{width:100%}
 /* Retained legacy DOM is kept out of the primary film sequence. */
 .rvnArchiveActions,#drops,.final{display:none}
-
-/* Next project retains its original portrait teaser. */
-.nextPremiere{background:linear-gradient(135deg,#101216,#080b0e 65%);border-bottom:1px solid rgba(197,154,97,.14)}
-.nextPremiereGrid{display:grid;gap:32px;align-items:center}
-.nextPremiereMedia{display:flex;justify-content:center;min-width:0}
-.premiereFrame{position:relative;width:min(100%,340px);aspect-ratio:9/16;border:1px solid rgba(197,154,97,.3);background:#030405}
-.premiereVideo{display:block;width:100%;height:100%;object-fit:contain;background:#030405}
-.nextPremiereCopy{min-width:0;max-width:680px;direction:rtl;text-align:start}
-.premiereEyebrow{margin-bottom:18px;color:#b0956f;font:500 10px/1.7 "Space Grotesk",sans-serif;letter-spacing:.14em}
-.nextPremiereCopy h2{margin:0 0 24px;color:#eee8de;font-family:"Cinzel","IBM Plex Sans Arabic",serif;font-size:clamp(40px,5.5vw,78px);font-weight:500;line-height:1.3}
-.nextPremiereCopy h2 span{display:inline-block;color:#c6a474;font-size:.55em;letter-spacing:.18em;direction:ltr}
-.premiereLead{margin:0 0 22px;padding-inline-start:18px;border-inline-start:1px solid rgba(197,154,97,.5);color:#e5d6bf;font-family:"Noto Naskh Arabic","IBM Plex Sans Arabic",serif;font-size:clamp(21px,2vw,28px);line-height:1.8}
-.premiereStory{max-width:620px;margin:0 0 14px;color:#adb5bc;font-size:16px;line-height:1.95}
-.premiereStory strong{color:#e6ddd0}
-.premiereStory em{color:#c7a16b;font-style:normal}
-.premiereMeta{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:26px;color:#9a9e9f;font:500 9px/1.4 "Space Grotesk",sans-serif;letter-spacing:.15em}
-.premiereMeta i{display:block;width:14px;height:1px;background:var(--rvn-line)}
 
 /* Selected works: editorial rows rather than a second wall of posters. */
 .rvnSelectedWorks{background:#090c0f}
@@ -277,11 +271,11 @@ html.rvn-intro-pending .rvnStudioIntro,.rvnStudioIntro.is-exiting{display:flex}
 .rvnIntroMeta{position:absolute;z-index:4;left:max(18px,env(safe-area-inset-left));bottom:max(28px,calc(env(safe-area-inset-bottom) + 18px));color:#8c867b;font:500 7px/1.4 "Space Grotesk",sans-serif;letter-spacing:.18em;direction:ltr}
 
 /* Translation follows document direction. */
-html[lang="ar"] .eyebrow,html[lang="ar"] .status,html[lang="ar"] .premiereEyebrow{font-family:"IBM Plex Sans Arabic",sans-serif;letter-spacing:.04em;font-size:11px}
+html[lang="ar"] .eyebrow,html[lang="ar"] .status{font-family:"IBM Plex Sans Arabic",sans-serif;letter-spacing:.04em;font-size:11px}
 html[lang="en"] body{font-family:"Space Grotesk",system-ui,sans-serif}
 html[lang="en"] .ravenNavLinks{direction:ltr}
-html[lang="en"] .filmContent,html[lang="en"] .nextPremiereCopy{direction:ltr}
-html[lang="en"] .rvnContactIntro .rvnContactLead,html[lang="en"] .premiereLead{font-family:Georgia,serif}
+html[lang="en"] .filmContent{direction:ltr}
+html[lang="en"] .rvnContactIntro .rvnContactLead{font-family:Georgia,serif}
 html[lang="en"] .rvnField input,html[lang="en"] .rvnField select,html[lang="en"] .rvnField textarea{font-family:"Space Grotesk",system-ui,sans-serif}
 
 /* Additive breakpoints; mobile is the baseline. */
@@ -307,7 +301,6 @@ html[lang="en"] .rvnField input,html[lang="en"] .rvnField select,html[lang="en"]
   .rvnCaseEntry{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:48px}
   .rvnCaseArtwork{aspect-ratio:4/3}
   .rvnCaseEntry .rvnEnterCase{width:auto}
-  .premiereFrame{width:min(100%,380px)}
   .rvnVaultGrid{grid-template-columns:repeat(3,minmax(0,1fr))}
   .rvnVaultGrid a{min-height:230px}
   .socialDock{grid-template-columns:repeat(3,minmax(0,1fr));gap:0 24px}
@@ -326,7 +319,6 @@ html[lang="en"] .rvnField input,html[lang="en"] .rvnField select,html[lang="en"]
 }
 @media(min-width:901px){
   .sectionHead{grid-template-columns:1.1fr .9fr;gap:48px}
-  .nextPremiereGrid{grid-template-columns:minmax(280px,.85fr) minmax(0,1.15fr);gap:clamp(40px,6vw,86px)}
   .aboutGrid{grid-template-columns:.8fr 1.2fr;gap:70px}
   .rvnStudioGrid{grid-template-columns:repeat(3,minmax(0,1fr));gap:32px}
   .rvnProductionLog{grid-template-columns:.8fr 1.2fr auto;gap:28px}
@@ -362,12 +354,10 @@ html[lang="en"] .rvnField input,html[lang="en"] .rvnField select,html[lang="en"]
 .rvnVaultGrid a img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:0}
 .rvnVaultGrid a>span,.rvnVaultGrid a>strong,.rvnVaultGrid a>small{position:relative;z-index:2}
 .rvnVaultGrid a::before{z-index:1}
-.nextPremiere .rvnProductionLog{grid-template-columns:1fr;margin:22px 0 0;padding:16px 0}
 
 .rvnCaseSearch{margin-top:24px;max-width:720px}.rvnCaseSearch label{display:block;margin-bottom:8px;color:var(--rvn-warm);font-size:14px}.rvnCaseSearch input{width:100%;min-height:48px;padding:10px 14px;border:1px solid var(--rvn-line);border-radius:2px;background:#07090b;color:var(--rvn-warm);font:inherit}.rvnSearchStatus{color:var(--rvn-muted);font-size:13px}.rvnSearchResults{list-style:none;padding:0;margin:0}.rvnSearchResults a{display:block;padding:12px 0;border-top:1px solid var(--rvn-line);color:#d6b98d}
 /* Readability floor for Arabic labels and container focus cleanup */
-html[lang="ar"] .eyebrow,html[lang="ar"] .status,html[lang="ar"] .premiereEyebrow,html[lang="ar"] .rvnFootPrivacy{font-size:12px;letter-spacing:0}
-html[lang="ar"] .premiereMeta{font:500 12px/1.6 "IBM Plex Sans Arabic",sans-serif;letter-spacing:0}
+html[lang="ar"] .eyebrow,html[lang="ar"] .status,html[lang="ar"] .rvnFootPrivacy{font-size:12px;letter-spacing:0}
 html[lang="ar"] .metaItem span:first-child,html[lang="ar"] .rvnStudioCard small,html[lang="ar"] .rvnPressCopy small{font-family:"IBM Plex Sans Arabic",sans-serif;font-size:12px;letter-spacing:0}
 html[lang="ar"] .rvnPressAssets strong{font-family:"IBM Plex Sans Arabic",sans-serif;font-size:12px;letter-spacing:0}
 main[tabindex="-1"]:focus{outline:none}

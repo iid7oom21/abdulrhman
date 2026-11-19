@@ -6,6 +6,8 @@ const path = require('node:path');
 const { chromium } = require('playwright');
 
 // These fixtures describe an invented browser test, never the private case pack.
+// Target action submits and top-level disclosure summaries explicitly: sources
+// also contain independent comparison tools that remain available for reading.
 const ROOT = path.resolve(__dirname, '..');
 const PLAY_PATH = '/raven/deleted-name/play/content.html';
 const PENDING_KEY = 'raven_case_pending_operation_v1';
@@ -357,7 +359,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
       await scene.locator('.case-art-retry').waitFor({ state: 'visible' });
       if (locale === 'en') await english(page);
       const material = page.locator('#material-fixture-letter');
-      await material.locator('summary').click();
+      await material.locator(':scope > summary').click();
       await material.locator('.case-art').scrollIntoViewIfNeeded();
       await material.locator('.case-art-retry').waitFor({ state: 'visible' });
       for (const figure of [scene, material.locator('.case-art')]) {
@@ -610,7 +612,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
   await t.test('receipt review shows the exact captured correction, recipients and earned attachments before confirmation in both languages', () => check({ receiptPreview: true }, async (page, api) => {
     await ready(page);
     const before = clone(api.state), preview = clone(api.state.actions[0].receiptPreview);
-    const action = page.locator('form[data-action-id="fixture-file-correction"] button');
+    const action = page.locator('form[data-action-id="fixture-file-correction"] button[type="submit"]');
     await action.focus();await page.keyboard.press('Enter');
     await page.locator('#review-panel').waitFor({ state: 'visible' });
     assert.equal(await page.evaluate(() => document.activeElement.id), 'review-title');
@@ -626,7 +628,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     await textIncludes(page, '.receipt-preview', 'The organization that issued the assessment');
     await textIncludes(page, '.receipt-preview', 'The organization following up the library incident');
     assert.doesNotMatch(await page.locator('.receipt-preview').innerText(), /LATEST_ALIAS_MUST_NOT_REPLACE_REVIEW|Unattached earned sheet|fixture-unrelated-recipient|fixture-receipt-5/);
-    assert.deepEqual(await page.locator('.receipt-attachments>li>a').evaluateAll(links => links.map(link => [link.textContent, link.getAttribute('href')])), [['Fixture letter', '#material-fixture-letter'], ['Fixture map', '#material-fixture-map']]);
+    assert.deepEqual(await page.locator('.receipt-attachments > li a[href^="#material-"]').evaluateAll(links => links.map(link => [link.textContent, link.getAttribute('href')])), [['Fixture letter', '#material-fixture-letter'], ['Fixture map', '#material-fixture-map']]);
     await textIncludes(page, '.receipt-attachments', 'Source: Fictional desk');
     await textIncludes(page, '.receipt-attachments', 'Source: Fictional folder');
     assert.equal(await page.locator('.receipt-attachments>li').nth(0).innerText().then(text => text.includes('The organization following up the library incident')), false, 'each attachment shows only its actual recipients');
@@ -661,7 +663,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     const draft = page.locator('form[data-action-id="fixture-report"]').getByLabel('Report summary', { exact: true });
     await draft.fill('Unsubmitted local draft survives receipt review.');
     const before = clone(api.state);
-    await page.locator('form[data-action-id="fixture-file-correction"] button').click();
+    await page.locator('form[data-action-id="fixture-file-correction"] button[type="submit"]').click();
     await page.locator('#language-ar').click();
     await page.locator('#review-edit').focus();await page.keyboard.press('Enter');
     assert.equal(await page.locator('#review-panel').isVisible(), false);
@@ -671,7 +673,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     assert.equal(await page.evaluate(key => sessionStorage.getItem(key), PENDING_KEY), null);
     assert.equal(actionRequests(api).length, 0);
     assert.deepEqual(api.state, before);
-    await page.locator('form[data-action-id="fixture-advance"] button').click();
+    await page.locator('form[data-action-id="fixture-advance"] button[type="submit"]').click();
     await eventually(() => actionRequests(api).length === 1, 'ordinary no-field actions should still submit directly');
     assert.equal(await page.locator('#review-panel').isVisible(), false);
     assertActionRequest(actionRequests(api)[0], 'fixture-advance', before.revision);
@@ -679,7 +681,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
 
   await t.test('changed case state rejects an old receipt review and refresh requires reviewing the new snapshot', () => check({ receiptPreview: true }, async (page, api) => {
     await ready(page);await english(page);
-    await page.locator('form[data-action-id="fixture-file-correction"] button').click();
+    await page.locator('form[data-action-id="fixture-file-correction"] button[type="submit"]').click();
     api.state.revision += 1;
     const next = api.state.actions[0].receiptPreview;
     next.capture.revision = api.state.revision;
@@ -694,7 +696,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     await page.locator('#state-refresh').click();
     await page.waitForFunction(() => document.body.getAttribute('aria-busy') === 'false');
     assert.equal(await page.locator('#review-panel').isVisible(), false);
-    await page.locator('form[data-action-id="fixture-file-correction"] button').click();
+    await page.locator('form[data-action-id="fixture-file-correction"] button[type="submit"]').click();
     await textIncludes(page, '.receipt-capture', next.capture.values.text);
     assert.doesNotMatch(await page.locator('.receipt-capture').innerText(), /exact earlier captured text/);
     await page.locator('#state-refresh').click();
@@ -718,7 +720,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
 
   await t.test('a receipt confirmed before a lost response retries the same operation without a second receipt', () => check({ receiptPreview: true, failures: ['network'] }, async (page, api) => {
     await ready(page);await english(page);
-    await page.locator('form[data-action-id="fixture-file-correction"] button').click();
+    await page.locator('form[data-action-id="fixture-file-correction"] button[type="submit"]').click();
     await page.locator('#review-confirm').click();
     await page.locator('#operation-retry').waitFor({ state: 'visible' });
     const original = clone(actionRequests(api)[0].body);
@@ -747,7 +749,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     assert.deepEqual(await form.locator('.bundle-required a').evaluateAll(links => links.map(link => link.getAttribute('href'))), ['#material-fixture-letter','#material-fixture-map']);
     assert.equal(await page.locator('form[data-action-id="fixture-advance"]').count(), 1, 'navigation remains independent');
     assert.equal(await page.locator('#notebook-actions form[data-action-id="case.note"]').count(), 1);
-    await form.locator('button').click();
+    await form.locator('button.primary').click();
     assert.equal(await page.locator('#review-panel').isVisible(), true, 'the baseline still requires explicit review and confirmation');
     assert.equal(await page.locator('.receipt-attachments>li').count(),2);
     assert.equal(actionRequests(api).length, 0);
@@ -778,7 +780,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
       await form.locator('button[type="submit"]').focus();await page.keyboard.press('Enter');
       await page.locator('#review-panel').waitFor({ state:'visible' });
       assert.equal(await page.evaluate(() => document.activeElement.id), 'review-title');
-      assert.deepEqual(await page.locator('.receipt-attachments>li>a').evaluateAll(links => links.map(link => link.getAttribute('href'))), preview.materials.map(material => '#material-' + material.id));
+      assert.deepEqual(await page.locator('.receipt-attachments > li a[href^="#material-"]').evaluateAll(links => links.map(link => link.getAttribute('href'))), preview.materials.map(material => '#material-' + material.id));
       await textIncludes(page,'.receipt-capture',preview.capture.values.text);
       assert.equal(actionRequests(api).length, before.receipts.length - 1, 'review itself sends no action');
       await page.locator('#review-confirm').focus();await page.keyboard.press('Enter');
@@ -803,7 +805,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     const draft=page.locator('form[data-action-id="fixture-report"]').getByLabel('Report summary',{exact:true});
     await draft.fill('Keep this unsubmitted draft while choosing attachments.');
     const before=clone(api.state);
-    await chooseBundle(form,actions[7]);await form.locator('button').click();
+    await chooseBundle(form,actions[7]);await form.locator('button.primary').click();
     await page.locator('#language-ar').click();
     assert.equal(await form.getAttribute('data-action-id'),'fixture-package-h');
     assert.equal(await page.locator('#review-panel').isVisible(),true);
@@ -812,10 +814,10 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     assert.equal(await form.getAttribute('data-action-id'),'fixture-package-h');
     await english(page);
     assert.equal(await draft.inputValue(),'Keep this unsubmitted draft while choosing attachments.');
-    await form.locator('button').click();
+    await form.locator('button.primary').click();
     await chooseBundle(form,actions[1]);
     assert.equal(await page.locator('#review-panel').isVisible(),false,'a changed bundle invalidates its review');
-    await form.locator('button').click();
+    await form.locator('button.primary').click();
     assert.equal(await page.locator('.receipt-attachments>li').count(),3,'new review reflects the changed bundle');
     await page.locator('#review-edit').click();
     assert.equal(await page.evaluate(key=>sessionStorage.getItem(key),PENDING_KEY),null);
@@ -830,9 +832,9 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     assert.equal(await form.locator('.bundle-additional a').count(),6,'the authorized range group stays together with its co-required attachment');
     assert.equal(await form.locator('input[type="checkbox"]').count(),0,'the UI cannot assemble a partial unauthorized bundle');
     await select.evaluate(node=>{node.append(new Option('Injected unavailable selection','fixture-package-c'));node.value='fixture-package-c';node.dispatchEvent(new Event('change',{bubbles:true}));});
-    await form.locator('button').click();
+    await form.locator('button.primary').click();
     assert.equal(await page.locator('#review-panel').isVisible(),false);assert.equal(actionRequests(api).length,0,'an unknown DOM option cannot become action authority');
-    await select.selectOption('fixture-package-h');await form.locator('button').click();await page.locator('#review-confirm').click();
+    await select.selectOption('fixture-package-h');await form.locator('button.primary').click();await page.locator('#review-confirm').click();
     await eventually(()=>api.mutations===1,'authorized restricted bundle did not file');
     assert.equal(actionRequests(api)[0].body.actionId,'fixture-package-h');
   }));
@@ -843,7 +845,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     assert.equal(await form.getAttribute('data-attachment-selector'),'select','without a required-only choice, checkbox toggles could trap the player');
     assert.deepEqual(await select.locator('option').evaluateAll(options=>options.map(option=>option.value)),['','fixture-package-b','fixture-package-c']);
     for(const action of api.state.actions.filter(action=>action.receiptPreview)) {
-      await chooseBundle(form,action);await form.locator('button').click();
+      await chooseBundle(form,action);await form.locator('button.primary').click();
       assert.equal(await page.locator('.receipt-attachments>li').count(),action.receiptPreview.materials.length);
       await page.locator('#review-edit').click();
     }
@@ -853,7 +855,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     await page.locator('#state-refresh').click();await page.waitForFunction(()=>document.body.getAttribute('aria-busy')==='false');
     assert.equal(await form.getAttribute('data-attachment-selector'),'select','identical materials cannot choose between distinct actions');
     assert.deepEqual(await select.locator('option').evaluateAll(options=>options.map(option=>option.value)),['','fixture-package-a','fixture-package-b',duplicate.id]);
-    await chooseBundle(form,duplicate);await form.locator('button').click();await page.locator('#review-confirm').click();
+    await chooseBundle(form,duplicate);await form.locator('button.primary').click();await page.locator('#review-confirm').click();
     await eventually(()=>api.mutations===1,'the duplicate-set action disappeared');
     assert.equal(actionRequests(api)[0].body.actionId,duplicate.id);
   }));
@@ -865,7 +867,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     await page.locator('#state-refresh').click();await page.waitForFunction(()=>document.body.getAttribute('aria-busy')==='false');
     assert.equal(await page.locator('.receipt-bundle').count(),0,'same global recipients do not erase a changed per-material scope');
     for(const id of ['fixture-package-a','fixture-package-b']) assert.equal(await page.locator(`form[data-action-id="${id}"]`).count(),1);
-    await page.locator('form[data-action-id="fixture-package-b"] button').click();
+    await page.locator('form[data-action-id="fixture-package-b"] button[type="submit"]').click();
     await textIncludes(page,'.receipt-attachments>li:first-child','الجهة المتابعة');
     assert.equal(actionRequests(api).length,0);
   }));
@@ -882,7 +884,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     assert.equal(await forms.nth(1).locator('input[data-attachment-group]').count(),1);
     const ids=await page.locator('[id]').evaluateAll(nodes=>nodes.map(node=>node.id));
     assert.equal(ids.length,new Set(ids).size,'independent groups never duplicate DOM ids');
-    await chooseBundle(forms.nth(1),second[1]);await forms.nth(1).locator('button').click();
+    await chooseBundle(forms.nth(1),second[1]);await forms.nth(1).locator('button.primary').click();
     await textIncludes(page,'.receipt-capture','A separately captured report.');assert.equal(actionRequests(api).length,0);
     assert.equal(await forms.nth(0).getAttribute('data-action-id'),original[0].id);
   }));
@@ -900,10 +902,10 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     const ids=await page.locator('[id]').evaluateAll(nodes=>nodes.map(node=>node.id));
     assert.equal(ids.length,new Set(ids).size,'encoded action ids and control suffixes have separate namespaces');
     const check=page.locator('#bundle-a'),select=page.locator('#bundle-s');
-    await check.locator('input[data-attachment-group]').check();await check.locator('button').click();await page.locator('#review-edit').click();
+    await check.locator('input[data-attachment-group]').check();await check.locator('button.primary').click();await page.locator('#review-edit').click();
     assert.equal(await page.evaluate(()=>document.activeElement.id),'bundle-a:optional:0');
     assert.equal(await check.getAttribute('data-action-id'),'a-with-extra');
-    await select.locator('select').selectOption('s-with-all');await select.locator('button').click();await page.locator('#review-edit').click();
+    await select.locator('select').selectOption('s-with-all');await select.locator('button.primary').click();await page.locator('#review-edit').click();
     assert.equal(await page.evaluate(()=>document.activeElement.id),'bundle-s:select');
     assert.equal(actionRequests(api).length,0);
   }));
@@ -915,7 +917,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     assert.equal(await single.locator('select,input[data-attachment-group]').count(),0);
     assert.equal(await single.locator('input[data-attachment-required]:disabled:checked').count(),9);
     assert.equal(await single.locator('.bundle-required a').count(),9);
-    await single.locator('button').click();assert.equal(await page.locator('.receipt-attachments>li').count(),9);
+    await single.locator('button.primary').click();assert.equal(await page.locator('.receipt-attachments>li').count(),9);
     await page.locator('#review-edit').click();
     const actions=projection({receiptBundles:[0,1]}).actions;
     delete actions[1].receiptPreview.capture;
@@ -926,7 +928,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     for(const action of api.state.actions)delete action.receiptPreview;
     await page.locator('#state-refresh').click();await page.waitForFunction(()=>document.body.getAttribute('aria-busy')==='false');
     assert.equal(await page.locator('.receipt-bundle').count(),0);
-    await page.locator('form[data-action-id="fixture-package-b"] button').click();
+    await page.locator('form[data-action-id="fixture-package-b"] button[type="submit"]').click();
     await eventually(()=>api.mutations===1,'legacy no-input action no longer works');assert.equal(actionRequests(api)[0].body.actionId,'fixture-package-b');
   }));
 
@@ -936,7 +938,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     await page.locator('#state-refresh').click();await page.waitForFunction(()=>document.body.getAttribute('aria-busy')==='false');
     const form=page.locator('.receipt-bundle[data-attachment-selector="fixed"]');
     await textIncludes(page,'.receipt-bundle','No materials are attached.');assert.equal(await form.locator('input,select').count(),0);
-    await form.locator('button').click();await textIncludes(page,'.receipt-preview','This choice includes no material sharing.');
+    await form.locator('button.primary').click();await textIncludes(page,'.receipt-preview','This choice includes no material sharing.');
     await page.locator('#review-edit').click();assert.equal(await page.evaluate(()=>document.activeElement.id),'bundle-fixture-file-correction:review');
     assert.equal(actionRequests(api).length,0);
   }));
@@ -944,7 +946,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
   await t.test('stale bundle reviews are rejected and refreshed attachment data requires a fresh choice',()=>check({receiptBundles:true},async(page,api)=>{
     await ready(page);await english(page);
     const form=page.locator('.receipt-bundle');
-    await chooseBundle(form,api.state.actions.find(action=>action.id==='fixture-package-h'));await form.locator('button').click();
+    await chooseBundle(form,api.state.actions.find(action=>action.id==='fixture-package-h'));await form.locator('button.primary').click();
     api.state.revision++;
     api.state.actions=api.state.actions.filter(action=>!action.receiptPreview || action.id==='fixture-package-a' || action.id==='fixture-package-b');
     await page.locator('#review-confirm').click();await textIncludes(page,'#connection-message','case state changed');
@@ -952,18 +954,18 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     await page.locator('#state-refresh').click();await page.waitForFunction(()=>document.body.getAttribute('aria-busy')==='false');
     assert.equal(await page.locator('#review-panel').isVisible(),false);assert.equal(await form.getAttribute('data-action-id'),'fixture-package-a');
     assert.deepEqual(await form.locator('input[data-attachment-group]').evaluateAll(inputs=>inputs.map(input=>input.checked)),[false]);
-    await chooseBundle(form,api.state.actions.find(action=>action.id==='fixture-package-b'));await form.locator('button').click();await page.locator('#review-confirm').click();
+    await chooseBundle(form,api.state.actions.find(action=>action.id==='fixture-package-b'));await form.locator('button.primary').click();await page.locator('#review-confirm').click();
     await eventually(()=>api.mutations===1,'newly reviewed bundle was not filed');assert.equal(actionRequests(api).at(-1).body.revision,5);
   }));
 
   await t.test('repeated bundle confirmation and lost response keep one operation and one receipt',()=>check({receiptBundles:true,failures:['network']},async(page,api)=>{
     await ready(page);await english(page);
-    const form=page.locator('.receipt-bundle');await chooseBundle(form,api.state.actions.find(action=>action.id==='fixture-package-d'));await form.locator('button').click();
+    const form=page.locator('.receipt-bundle');await chooseBundle(form,api.state.actions.find(action=>action.id==='fixture-package-d'));await form.locator('button.primary').click();
     await page.locator('#review-confirm').evaluate(node=>{node.click();node.click();});
     await page.locator('#operation-retry').waitFor({state:'visible'});
-    assert.equal(actionRequests(api).length,1);assert.equal(await form.locator('input:enabled,button:enabled').count(),0);
+    assert.equal(actionRequests(api).length,1);assert.equal(await form.locator('input:enabled,button:not([data-compare-material]):enabled').count(),0);
     const original=clone(actionRequests(api)[0].body);await page.locator('#language-ar').click();
-    assert.equal(await form.getAttribute('data-action-id'),'fixture-package-d');assert.equal(await form.locator('input:enabled,button:enabled').count(),0);
+    assert.equal(await form.getAttribute('data-action-id'),'fixture-package-d');assert.equal(await form.locator('input:enabled,button:not([data-compare-material]):enabled').count(),0);
     await page.locator('#operation-retry').click();await eventually(async()=>await page.evaluate(key=>sessionStorage.getItem(key),PENDING_KEY)===null,'bundle retry remained pending');
     assert.deepEqual(actionRequests(api)[1].body,original);assert.equal(api.mutations,1);assert.equal(api.state.receipts.length,2);
   }));
@@ -971,7 +973,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
   await t.test('an unresolved filing reload shows its exact locked attachments without choosing or resending a different bundle',()=>check({receiptBundles:true,failures:['503']},async(page,api)=>{
     await ready(page);await english(page);
     const form=page.locator('.receipt-bundle');
-    await chooseBundle(form,api.state.actions.find(action=>action.id==='fixture-package-h'));await form.locator('button').click();await page.locator('#review-confirm').click();
+    await chooseBundle(form,api.state.actions.find(action=>action.id==='fixture-package-h'));await form.locator('button.primary').click();await page.locator('#review-confirm').click();
     await page.locator('#operation-retry').waitFor({state:'visible'});
     const original=clone(actionRequests(api)[0].body);
     assert.equal(api.state.revision,4);assert.equal(api.mutations,0);
@@ -1103,7 +1105,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
   await t.test('material disclosures retain their state and source links reveal the requested document', () => check({}, async (page, api) => {
     await ready(page);
     assert.equal(await page.locator('#materials-list details[open]').count(), 0);
-    await page.locator('#material-fixture-letter summary').click();
+    await page.locator('#material-fixture-letter > summary').click();
     await page.evaluate(() => document.getElementById('language-en').click());
     assert.equal(await page.locator('#material-fixture-letter').evaluate(node => node.open), true);
     await page.locator('#state-refresh').click();
@@ -1111,7 +1113,7 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     assert.equal(await page.locator('#material-fixture-letter').evaluate(node => node.open), true);
     api.state.notes.push({ id: 'fixture-existing-note', text: 'Fixture note referring to an earned map.', sourceId: 'fixture-map' });
     await page.locator('#state-refresh').click();
-    await page.locator('#notebook summary').click();
+    await page.locator('#notebook > summary').click();
     await page.locator('#notes-list a[href="#material-fixture-map"]').click();
     assert.equal(await page.locator('#material-fixture-map').evaluate(node => node.open), true);
     assert.equal(await page.evaluate(() => document.activeElement.id), 'material-fixture-map');
@@ -1234,9 +1236,9 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     api.state.captures = { report: clone(latest), 'report.revision.4': clone(latest), 'report.revision.2': { ...clone(latest), revision: 2, values: { text: 'Earlier fictional report' } } };
     api.state.receipts = [{ id: 'fixture-immutable-receipt', kind: 'fixture', title: localized('Fixture delivery', 'تسليم اختبار'), scope: 'story-only', fromCapture: 'report.revision.4', revision: 4 }];
     await page.locator('#state-refresh').click();
-    assert.equal(await page.locator('#material-fixture-clock summary').textContent(), 'فحص 00:00–00:23');
-    assert.equal(await page.locator('#material-fixture-clock summary bdi').getAttribute('dir'), 'ltr');
-    assert.equal(await page.locator('#material-fixture-clock summary bdi').innerText(), '00:00–00:23');
+    assert.equal(await page.locator('#material-fixture-clock > summary').textContent(), 'فحص 00:00–00:23');
+    assert.equal(await page.locator('#material-fixture-clock > summary bdi').getAttribute('dir'), 'ltr');
+    assert.equal(await page.locator('#material-fixture-clock > summary bdi').innerText(), '00:00–00:23');
     assert.equal(await page.locator('#permissions-body>details').count(), 2);
     assert.equal(await page.locator('#permissions-body>details[open]').count(), 0);
     assert.doesNotMatch(await page.locator('#permissions-body').innerText(), /assessment_review|incident_followup/);

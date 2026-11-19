@@ -415,11 +415,6 @@
     "sha256": "700df2aa92256ce912bad2b604cc9b2c9b0fc277bbf1a7225a10c8bc911ea830"
   },
   {
-    "path": "raven/terminal-preview/assets/zarqa-poster.jpg",
-    "bytes": 118914,
-    "sha256": "16cad556330d2668937d60d8e58c13cd58034b669063a8b9d2f3758998b6d620"
-  },
-  {
     "path": "raven/terminal-preview/assets/episode-1.jpg",
     "bytes": 46986,
     "sha256": "2cba18dca7f8191e33b942ee48b1efcc9dfee6961a4fb01b878f5ac2aae25fed"

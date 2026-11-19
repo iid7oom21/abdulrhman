@@ -74,6 +74,11 @@ h2{margin:0 0 16px;font-weight:600;font-size:clamp(20px,3.4vw,24px);color:var(--
 .cast-portrait--single img{position:static;width:100%;height:100%;object-fit:cover;object-position:center;max-width:100%}
 @media(max-width:560px){.cast{grid-template-columns:repeat(2,minmax(0,1fr))}.cast-name{padding-inline:12px}.cast dd{padding-inline:12px}}
 .rules{margin:0;padding-inline-start:22px;display:grid;gap:8px;color:var(--soft)}
+.opening-navigation{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
+.opening-navigation a{display:flex;align-items:center;justify-content:center;min-height:48px;padding:10px 14px;border:1px solid var(--line);background:var(--panel);color:var(--soft);font:inherit;text-align:center;text-decoration:none;overflow-wrap:anywhere}
+.opening-navigation .opening-navigation-primary{grid-column:1/-1;border-color:var(--gold);background:var(--gold);color:var(--ink);font-weight:600}
+@media(hover:hover){.opening-navigation a:hover{border-color:var(--gold-hi);color:var(--gold-hi)}.opening-navigation .opening-navigation-primary:hover{background:var(--gold-hi);color:var(--ink)}}
+#t-hook,#t-cast,#t-rules{scroll-margin-block-start:20px}
 .btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;padding:10px 20px;border:1px solid var(--gold);color:var(--ink);background:var(--gold);font-weight:600;text-decoration:none}
 @media(hover:hover){.btn:hover{background:var(--gold-hi);border-color:var(--gold-hi)}}
 .note{margin:12px 0 0;font-size:14px;color:var(--muted)}
@@ -140,7 +145,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
 #reading-tools :focus-visible{outline:2px solid var(--gold-hi);outline-offset:3px}
 #reading-tools h4{margin-block:16px 8px}
 </style>
-<link rel="stylesheet" href="opening-visual.css?v=visual-review-2">
+<link rel="stylesheet" href="opening-visual.css?v=continuation-20261119-1">
 </head>
 <body class="opening-visual">
 <a class="skip" href="#main" data-k="skip">تخطَّ إلى المحتوى</a>
@@ -183,10 +188,13 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       <a class="opening-main-action" href="#t-assign"><span data-visual-lang="ar">أقرأ الرسالة</span><span data-visual-lang="en">Read the message</span><span aria-hidden="true"> ↙</span></a>
       <p class="opening-chip"><span data-visual-lang="ar">افتتاح محلي. المتابعة المتصلة خطوة منفصلة؛ تُراجع طريقة نقل الاختيار عندها.</span><span data-visual-lang="en">A local opening. The connected case is a separate step; its choice-transfer rules are shown there.</span></p>
     </div>
-    <nav class="opening-journey-nav" aria-label="مسار الافتتاح">
-      <a href="#t-assign"><span aria-hidden="true">01</span> <span data-visual-lang="ar">الرسالة</span><span data-visual-lang="en">The message</span></a>
-      <a href="#t-arrive"><span aria-hidden="true">02</span> <span data-visual-lang="ar">البوابة</span><span data-visual-lang="en">The gate</span></a>
-      <a href="#t-hook"><span aria-hidden="true">03</span> <span data-visual-lang="ar">الورقة</span><span data-visual-lang="en">The paper</span></a>
+    <nav class="opening-navigation opening-journey-nav" aria-labelledby="opening-nav-title">
+      <span id="opening-nav-title" class="hook-sr" data-k="navigationTitle">روابط الافتتاح</span>
+      <a href="#t-assign" data-opening-jump><span aria-hidden="true">01</span> <span data-visual-lang="ar">الرسالة</span><span data-visual-lang="en">The message</span></a>
+      <a href="#t-arrive" data-opening-jump><span aria-hidden="true">02</span> <span data-visual-lang="ar">البوابة</span><span data-visual-lang="en">The gate</span></a>
+      <a class="opening-navigation-primary" href="#t-hook" data-opening-jump data-k="jumpPaper">انتقل إلى الورقة</a>
+      <a href="#t-cast" data-opening-jump data-k="castTitle">في البيت الليلة</a>
+      <a href="#t-rules" data-opening-jump data-k="rulesTitle">قواعد القضية</a>
     </nav>
   </section>
 
@@ -225,7 +233,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
   </div></section>
 
   <section class="block" aria-labelledby="t-cast"><div class="wrap"><details class="opening-optional" id="optional-cast"><summary><span lang="ar" data-visual-lang="ar">بطاقات الشخصيات · مرجع اختياري</span><span lang="en" data-visual-lang="en">Character cards · optional reference</span></summary>
-    <h2 id="t-cast"><span data-visual-lang="ar">تعرف إلى الأسماء التي ظهرت</span><span data-visual-lang="en">Names you have encountered</span></h2>
+    <h2 id="t-cast" tabindex="-1"><span data-visual-lang="ar">تعرف إلى الأسماء التي ظهرت</span><span data-visual-lang="en">Names you have encountered</span></h2>
     <dl class="cast">
       <div data-character="victor"><dt><span class="cast-portrait" aria-hidden="true" style="--portrait-left:0%;--portrait-top:0%"><img src="./assets/characters/cast-portraits-v1.webp" width="1254" height="1254" alt="" loading="lazy" decoding="async"></span><span class="cast-name" data-k="victor">فيكتور</span></dt><dd data-k="cVictor">صاحب التكليف. ما رجع للقهوة.</dd></div>
       <div data-character="claire"><dt><span class="cast-portrait cast-portrait--single" aria-hidden="true"><img src="../assets/images/deleted-name/claire.jpg" width="896" height="1200" alt="" loading="lazy" decoding="async"></span><span class="cast-name" data-k="claire">كلير</span></dt><dd data-k="cClaire">رتّبت الدعوات والمقاعد.</dd></div>
@@ -236,7 +244,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     </dl>
   </details></div></section>
   <section class="block" aria-labelledby="t-rules"><div class="wrap"><details class="opening-optional" id="optional-rules"><summary><span lang="ar" data-visual-lang="ar">قبل أن تختار · قواعد القراءة</span><span lang="en" data-visual-lang="en">Before you choose · reading rules</span></summary>
-    <h2 id="t-rules" data-k="rulesTitle">قواعد القضية</h2>
+    <h2 id="t-rules" data-k="rulesTitle" tabindex="-1">قواعد القضية</h2>
     <ul class="rules">
       <li data-k="r1">ما تكتب اسمًا ما يثبته الأصل.</li>
       <li data-k="r2">الكذب اختيار صريح، مو فخ في الكلام.</li>
@@ -250,7 +258,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     <h2 id="t-now" data-k="nowTitle">المتاح الآن</h2>
     <p class="lead" data-k="nowText">ابدأ بالورقة وقارن رسالتك بالمسودة. عند توفر خدمة القضية، يظهر خيار المتابعة بعد نهاية الافتتاح.</p>
     <a class="btn" href="../dialogue/" target="_blank" rel="noopener" data-k="nowBtn">معاينة الحوار التقنية — مستقلة عن هذا المشهد ↗</a>
-    <p class="note" data-k="nowNote">معاينة أدوات الحوار أدناه مستقلة؛ اختيارات الافتتاح لا تنتقل إليها.</p>
+    <p class="note" data-k="nowNote">معاينة الحوار تجربة منفصلة؛ اختيارات الافتتاح لا تنتقل إليها.</p>
   </div></section>
   <section class="block"><div class="wrap"><details class="case-studies" id="case-studies">
     <summary data-k="studiesTitle">من أجواء القضية — ست لوحات جديدة</summary>
@@ -273,6 +281,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     ar: {
       skip: 'تخطَّ إلى المحتوى', back: 'RAVEN', langSwitch: 'English', eyebrow: 'RAVEN · قضية تفاعلية',
       title: 'الاسم المحذوف', tagline: 'خانة ممسوحة، ودعوة بعد العشاء، ومكتبة ما رجع منها صاحبها.', status: 'قيد التطوير',
+      navigationTitle: 'روابط الافتتاح', jumpPaper: 'انتقل إلى الورقة',
       assignTitle: 'التكليف', assignLead: 'أنت مرمّم سجلات. بينك وبين فيكتور شغل قديم على سجل ناقص. الليلة يرسل لك جزءًا منه.',
       victor: 'فيكتور', you: 'أنت', claire: 'كلير', jonas: 'يوناس', mateo: 'ماتيو', elena: 'إيلينا', noah: 'نوح',
       m1: 'أرسلت لك جزء من السجل. خانة المُحيل. أبي فيها اسم الليلة.',
@@ -287,7 +296,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       hookTitle: 'الورقة', hookLead: 'رسالتك ومسودة على الطاولة. افحصهما قبل أن تختار ردك.',
       hookNote: 'هذا المشهد مستقل عن معاينة الحوار — حالة محلية أثناء الجلسة الحالية فقط. تحديث الصفحة يبدأه من جديد.',
       nowTitle: 'المتاح الآن', nowText: 'ابدأ بالورقة وقارن رسالتك بالمسودة. عند توفر خدمة القضية، يظهر خيار المتابعة بعد نهاية الافتتاح.',
-      nowBtn: 'معاينة الحوار التقنية — مستقلة عن هذا المشهد ↗', nowNote: 'معاينة أدوات الحوار أدناه مستقلة؛ اختيارات الافتتاح لا تنتقل إليها.',
+      nowBtn: 'معاينة الحوار التقنية — مستقلة عن هذا المشهد ↗', nowNote: 'معاينة الحوار تجربة منفصلة؛ اختيارات الافتتاح لا تنتقل إليها.',
       footer: 'RAVEN · عبدالرحمن العتيبي', docTitle: 'RAVEN — الاسم المحذوف',
       studiesTitle:'من أجواء القضية — ست لوحات جديدة', studiesNote:'تصورات فنية للأماكن والأدوات، وليست أدلة أو إعادة بناء للواقعة. تفاصيل التحقيق تأتي من المواد المكتوبة.',
       studyLibrary:'المكتبة',studyRoom:'جلسة هادئة',studyTable:'طاولة المقارنة',studyTools:'أدوات المرمّم',studyFolder:'حافظة الأوراق',studyNotebook:'دفتر الملاحظات',
@@ -296,6 +305,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     en: {
       skip: 'Skip to content', back: 'RAVEN', langSwitch: 'العربية', eyebrow: 'RAVEN · INTERACTIVE CASE',
       title: 'The Deleted Name', tagline: 'An erased field, an invitation after dinner, and a library its owner never came back from.', status: 'In development',
+      navigationTitle: 'Opening navigation', jumpPaper: 'Go to the paper',
       assignTitle: 'The assignment', assignLead: 'You restore records. You and Victor share old work on an incomplete record. Tonight he sends you part of it.',
       victor: 'Victor', you: 'You', claire: 'Claire', jonas: 'Jonas', mateo: 'Mateo', elena: 'Elena', noah: 'Noah',
       m1: "I've sent you part of the record. The referrer field. I want a name in it tonight.",
@@ -310,7 +320,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
       hookTitle: 'The paper', hookLead: 'Your message and a draft on the table. Examine them before choosing your response.',
       hookNote: 'This scene is separate from the dialogue preview. Choices last only while this page is open; reloading starts it again.',
       nowTitle: 'Available now', nowText: 'Start with the paper and compare your message with the draft. When the case service is available, a continuation option appears after the opening.',
-      nowBtn: 'Technical dialogue preview — separate from this scene ↗', nowNote: 'The dialogue tools preview below is separate; opening choices do not carry into it.',
+      nowBtn: 'Technical dialogue preview — separate from this scene ↗', nowNote: 'The dialogue preview is a separate experience; opening choices do not carry into it.',
       footer: 'RAVEN · Abdulrahman Alotaibi', docTitle: 'RAVEN — The Deleted Name',
       studiesTitle:'Case atmosphere — six new studies',studiesNote:'Artistic studies of rooms and tools, not evidence or a reconstruction of the incident. Written materials carry the investigation details.',
       studyLibrary:'The library',studyRoom:'A quiet sitting room',studyTable:'The comparison table',studyTools:'Conservator’s tools',studyFolder:'The document folder',studyNotebook:'The private notebook',
@@ -719,7 +729,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
 <script src="reading-tools.js?v=7"></script>
 <script src="case-entry.js?v=1"></script>
 <script src="opening-artwork.js?v=2" async></script>
-<script src="opening-visual.js?v=visual-review-2" defer></script>
+<script src="opening-visual.js?v=continuation-20261119-1" defer></script>
 <script src="reading-continuity.js?v=visual-review-2" defer></script>
 </body>
 </html>

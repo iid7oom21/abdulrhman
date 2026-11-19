@@ -14,6 +14,7 @@
     ar: {
       skip:'انتقل إلى القضية',title:'القضية',back:'العودة إلى صفحة القضية',language:'لغة العرض',workbench:'غرفة التحقيق — معاينة أدوات',
       actions:'ماذا تريد أن تفعل؟',review:'راجع اختيارك',materials:'المواد التي وصلت إليك',comparison:'مقارنة المواد',firstMaterial:'المادة الأولى',secondMaterial:'المادة الثانية',
+      compareSource:'للمقارنة',compareFirst:'ضع في الخانة الأولى',compareSecond:'ضع في الخانة الثانية',replaceFirst:'استبدل المادة الأولى',replaceSecond:'استبدل المادة الثانية',viewFirst:'اعرض في الخانة الأولى',viewSecond:'اعرض في الخانة الثانية',comparisonReturn:'العودة إلى موضع القراءة',comparisonScope:'اختيار المواد هنا للقراءة فقط؛ لا يشاركها مع أحد.',comparisonPlaced:'حُدّث عرض المقارنة.',
       notebook:'دفتر خاص',notebookScope:'ملاحظات خاصة بجلسة القضية على الخادم. لا تصل إلى الشخصيات تلقائيًا. النص الذي لم تؤكده يبقى في هذه الصفحة فقط.',notesDownload:'تنزيل ملاحظاتي',notesDownloadScope:'التنزيل يشمل الملاحظات المؤكدة فقط، ولا يشمل نصًا ما زلت تكتبه.',
       permissions:'المواد التي شاركتها',timeline:'نطاقات التسجيل التي فحصتها',reports:'التقرير وما سجلته ومصادره',receipts:'إيصالات داخل القصة',receiptScope:'الإيصال القصصي يصف الاستلام داخل القصة؛ لا يعني إرسالًا إلى جهة حقيقية أو اعتماد صحة التقرير.',
       refresh:'تحديث حالة القضية',export:'تنزيل سجل القضية',loading:'جارٍ التحقق من توفر القضية',loadingBody:'تحتاج هذه التجربة إلى خادم القضية.',
@@ -54,6 +55,7 @@
     en: {
       skip:'Skip to the case',title:'The case',back:'Return to the case page',language:'Display language',workbench:'Investigation room — tools preview',
       actions:'What would you like to do?',review:'Review your choice',materials:'Materials you have received',comparison:'Compare materials',firstMaterial:'First material',secondMaterial:'Second material',
+      compareSource:'Compare',compareFirst:'Use as first material',compareSecond:'Use as second material',replaceFirst:'Replace first material',replaceSecond:'Replace second material',viewFirst:'View as first material',viewSecond:'View as second material',comparisonReturn:'Return to reading',comparisonScope:'These selections are for reading only; they do not share materials with anyone.',comparisonPlaced:'Comparison view updated.',
       notebook:'Private notebook',notebookScope:'Notes are private to your case session on the server. They do not reach characters automatically. Unconfirmed text stays on this page only.',notesDownload:'Download my notes',notesDownloadScope:'The download includes confirmed notes only, not text you are still writing.',
       permissions:'Materials you shared',timeline:'Recording ranges you examined',reports:'Your report, recorded choices, and sources',receipts:'Receipts within the story',receiptScope:'A fictional receipt records delivery within the story. It does not mean delivery to a real organization or approval of a report’s accuracy.',
       refresh:'Refresh case state',export:'Download case record',loading:'Checking case availability',loadingBody:'This experience needs the case server.',
@@ -104,6 +106,8 @@
   let usedArtwork = new Set(), artworkSequence = 0;
   const bundleSelections = new Map();
   const openMaterials = new Set();
+  const comparisonOrigins = new Map();
+  let lastComparisonSlot = null, comparisonControlSequence = 0;
   const openShares = new Set(),captureAnchors = new Map();
   let newlyEarned = new Set();
   const materialById = id => state?.materials.find(material => material.id === id);
@@ -220,7 +224,56 @@
   function sourceLink(id, title) {
     const material = materialById(id);if (!material) return element('span',String(id));
     const link = element('a',localized(title || material.title));link.href = '#' + domId('material',id);
-    link.addEventListener('click',event => {event.preventDefault();focus(domId('material',id));});return link;
+    link.addEventListener('click',event => {event.preventDefault();focus(domId('material',id));});
+    const reference = element('div',undefined,'source-reference');reference.append(link,comparisonTools(id));return reference;
+  }
+  function comparisonTools(id) {
+    const tools = element('details',undefined,'comparison-source-tools');
+    const summary = element('summary',tr('compareSource'));summary.setAttribute('aria-label',tr('compareSource') + ': ' + localized(materialById(id)?.title));
+    const choices = element('div',undefined,'buttons');
+    for (const slot of ['a','b']) {
+      const control = button('comparison-source-' + (++comparisonControlSequence),'',() => pinComparison(id,slot,control));
+      control.dataset.compareMaterial = id;control.dataset.compareSlot = slot;
+      labelComparisonControl(control);
+      choices.append(control);
+    }
+    tools.append(summary,choices);return tools;
+  }
+  function comparisonPeers(container, id, slot) {
+    return [...container.querySelectorAll('[data-compare-material][data-compare-slot]')].filter(node => node.dataset.compareMaterial === id && node.dataset.compareSlot === slot);
+  }
+  function pinComparison(id, slot, origin) {
+    if (!materialById(id) || !['a','b'].includes(slot)) return;
+    const container = origin.parentElement.closest('[id]');
+    comparisonOrigins.set(slot,{node:origin,materialId:id,slot,containerId:container?.id,
+      occurrence:container ? comparisonPeers(container,id,slot).indexOf(origin) : 0,offset:origin.getBoundingClientRect().top});
+    lastComparisonSlot = slot;
+    $('compare-' + slot).value = id;
+    $('comparison').open = true;renderComparison();focus('compare-' + slot);announce(tr('comparisonPlaced'));
+  }
+  function returnToComparisonSource(slot = lastComparisonSlot) {
+    const origin = comparisonOrigins.get(slot);
+    if (!origin || !materialById(origin.materialId)) return;
+    const {node,materialId,containerId,occurrence,offset} = origin;
+    const container = $(containerId);
+    const target = node.isConnected ? node : container && comparisonPeers(container,materialId,slot)[occurrence];
+    // A language or state render can replace nodes. Resolve the same source
+    // context again; otherwise return to the currently earned material itself.
+    if (target) {
+      focus(target.id);
+      window.scrollBy({top:target.getBoundingClientRect().top - offset,behavior:'instant'});
+    } else focus(domId('material',materialId));
+  }
+  function labelComparisonControl(control) {
+    const first = control.dataset.compareSlot === 'a',selected = materialById($('compare-' + control.dataset.compareSlot).value);
+    const key = selected?.id === control.dataset.compareMaterial ? (first ? 'viewFirst' : 'viewSecond') : selected ? (first ? 'replaceFirst' : 'replaceSecond') : (first ? 'compareFirst' : 'compareSecond');
+    control.textContent = tr(key) + (selected && selected.id !== control.dataset.compareMaterial ? ': ' + localized(selected.title) : '');
+  }
+  function updateComparisonTools() {
+    for (const control of document.querySelectorAll('[data-compare-material][data-compare-slot]')) labelComparisonControl(control);
+    for (const [slot,origin] of comparisonOrigins) if (!materialById(origin.materialId) || $('compare-' + slot).value !== origin.materialId) comparisonOrigins.delete(slot);
+    if (!comparisonOrigins.has(lastComparisonSlot)) lastComparisonSlot = [...comparisonOrigins.keys()].at(-1) || null;
+    if ($('comparison-return')) $('comparison-return').hidden = !lastComparisonSlot;
   }
   function download(value, name) {
     const blob = new Blob([typeof value === 'string' ? value : JSON.stringify(value,null,2) + '\n'],{type:'application/json'});
@@ -412,7 +465,10 @@
     busy = value;document.body.setAttribute('aria-busy',String(value));
     if (state && browserMode()) $('save-status').textContent = tr(checkpointSaved && !checkpointIssue ? 'browserSaved' : 'browserUnsaved');
     const locked = busy || browserLocked() || Boolean(pending) || corruptPending !== null || Boolean(state?.readOnly || state?.storageUnavailable || state?.saveStatus === 'unconfirmed');
-    for (const control of document.querySelectorAll('#actions input,#actions textarea,#actions select,#actions button,#notebook-actions input,#notebook-actions textarea,#notebook-actions select,#notebook-actions button,#review-actions button')) control.disabled = locked || control.hasAttribute('data-attachment-required');
+    for (const control of document.querySelectorAll('#actions input,#actions textarea,#actions select,#actions button,#notebook-actions input,#notebook-actions textarea,#notebook-actions select,#notebook-actions button,#review-actions button')) {
+      // Comparing already-earned sources is reading, even when case writes are paused.
+      if (!control.hasAttribute('data-compare-material')) control.disabled = locked || control.hasAttribute('data-attachment-required');
+    }
     $('state-refresh').disabled = busy;$('case-export').disabled = busy;renderBanner();
     publishReviewView();
   }
@@ -447,6 +503,9 @@
       checkpointSaved = !saveError;checkpointIssue = null;
       if (saveError) checkpointFailure(saveError);
       if (checkpointSaved) clearAcknowledgedPending(value);
+    }
+    if (state && (state.caseId !== value.caseId || state.contentVersion !== value.contentVersion || state.checkpointInfo?.sessionTag !== value.checkpointInfo?.sessionTag)) {
+      comparisonOrigins.clear();lastComparisonSlot = null;
     }
     newlyEarned = new Set(state ? value.materials.filter(material => !state.materials.some(previous => previous.id === material.id)).map(material => material.id) : []);
     state = {...value,notes:Array.isArray(value.notes) ? value.notes : [],shares:Array.isArray(value.shares) ? value.shares : [],receipts:Array.isArray(value.receipts) ? value.receipts : [],captures:value.captures && typeof value.captures === 'object' ? value.captures : {}};
@@ -862,7 +921,7 @@
       const summary = element('summary',localized(material.title));summary.id = domId('material-summary',material.id);row.append(summary);
       row.addEventListener('toggle',() => {if (row.isConnected) {if (row.open) openMaterials.add(material.id);else openMaterials.delete(material.id);}});
       const picture = artwork(material);if (picture) row.append(picture);
-      row.append(element('p',localized(material.body),'material-text'),element('p',tr('source') + ': ' + (localized(material.source) || tr('noSource')),'muted'));list.append(row);
+      row.append(element('p',localized(material.body),'material-text'),element('p',tr('source') + ': ' + (localized(material.source) || tr('noSource')),'muted'),comparisonTools(material.id));list.append(row);
     }
     newlyEarned.clear();
     for (const id of ['compare-a','compare-b']) {
@@ -876,8 +935,15 @@
     const body = $('comparison-body');body.replaceChildren();
     for (const id of ['compare-a','compare-b']) {
       const material = materialById($(id).value);if (!material) continue;
-      const column = element('section');column.append(element('h3',localized(material.title)),element('blockquote',localized(material.body)),element('p',localized(material.source),'muted'));body.append(column);
+      const column = element('section');column.append(element('h3',localized(material.title)),element('blockquote',localized(material.body)),element('p',localized(material.source),'muted'));
+      const slot = id === 'compare-a' ? 'a' : 'b';
+      if (comparisonOrigins.get(slot)?.materialId === material.id) {
+        const back = button('comparison-return-' + slot,tr('comparisonReturn'),() => returnToComparisonSource(slot));
+        back.setAttribute('aria-label',tr('comparisonReturn') + ': ' + localized(material.title));column.append(back);
+      }
+      body.append(column);
     }
+    updateComparisonTools();
   }
   function renderNotes() {
     const list = $('notes-list');list.replaceChildren();
@@ -1006,7 +1072,7 @@
     }
     if (!state.actions.some(action => action.id !== 'case.note')) $('actions').append(element('p',tr('noActions'),'muted'));
     if (!state.actions.some(action => action.id === 'case.note')) $('notebook-actions').append(element('p',tr('noteUnavailable'),'muted'));
-    renderMaterials();renderNotes();renderShares();renderTimeline();renderCaptures();renderReceipts();renderReview();setBusy(busy);
+    renderMaterials();renderNotes();renderShares();renderTimeline();renderCaptures();renderReceipts();renderReview();updateComparisonTools();setBusy(busy);
     pruneArtwork();
     if (focusedArtwork && $(focusedArtwork) && !$(focusedArtwork).hidden) $(focusedArtwork).focus({preventScroll:true});
     publishLabView();
@@ -1038,6 +1104,7 @@
   }
   for (const language of ['ar','en']) $('language-' + language).addEventListener('click',() => changeLanguage(language));
   for (const id of ['compare-a','compare-b']) $(id).addEventListener('change',renderComparison);
+  $('comparison-return')?.addEventListener('click',() => returnToComparisonSource());
   $('state-refresh').addEventListener('click',refresh);$('case-export').addEventListener('click',exportCase);
   $('notes-download').addEventListener('click',() => {if (state) download({caseId:state.caseId,contentVersion:state.contentVersion,scope:'private-case-notes',notes:state.notes},'raven-private-case-notes.json');});
   window.addEventListener('storage',event => {

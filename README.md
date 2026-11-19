@@ -1,8 +1,10 @@
 # RAVEN — continuous soundtrack
 
+> **قرار المالك — 2026-11-19:** أُلغي «زرقاء اليمامة» من نطاق RAVEN. لا يُعاد ترويجه أو تطويره أو استيراده من فروع قديمة. الأولوية لقضية «الاسم المحذوف»، ولا بديل جديد معتمد. [قرار النطاق للمساهمين](docs/PROJECT-DECISIONS.md). هذا إعلان قرار في المصدر، وليس إثبات نشر حي.
+
 > Handoff v2 (2026-11-01): the story «التوقيع الرابع» (The Fourth Signature) and its Case 017 expansion were removed from this copy. No story replaces them. Old `/fourth-signature/` and `/raven/terminal-preview/case-017/` links redirect to the homepage. Everything below describes the remaining interface.
 >
-> 2026-11-05: the old interface under `/raven/terminal-preview/` was retired. Its pages are now redirects to the homepage (`raven-17/` to `#films`, `zarqa/` to `#next-premiere`). Only `raven/terminal-preview/assets/` stays, because the homepage and `raven/dialogue/` still use its posters, opening film and fonts.
+> 2026-11-05: the old interface under `/raven/terminal-preview/` was retired. Its pages are now redirects to the homepage (`raven-17/` to `#films`; the retired title route now returns to the homepage). Shared files in `raven/terminal-preview/assets/` stay because the homepage and `raven/dialogue/` still use the RAVEN posters, opening film and fonts. The retired title’s poster is removed from the current export.
 
 Serve this directory as the web root. `/raven/` is the homepage. The root redirects to the homepage. `raven/index.html` keeps one audio element alive through `site-player.js` while `site-bridge.js` routes the content frame (`raven/content.html`).
 
@@ -42,7 +44,11 @@ On 2026-11-05 the owner had a former 14th track and its files deleted from the s
 
 `site-entry.js` shows the RAVEN intro film (`assets/intro/raven-intro.mp4`, poster `raven-intro.jpg`) full screen and muted on the first visit in a session, with skip and sound buttons. If the film cannot play, or the visitor prefers reduced motion, the welcome text and the enter button are shown instead. Episode and anchor links open directly.
 
-## RAVEN 17
+## Silent atmosphere clips
+
+The homepage's `#raven-atmosphere` section contains three owner-selected artistic clips, separate from case evidence and the original RAVEN 17 films/poster. They are 10-second H.264 renditions with no audio track, under `raven/assets/atmosphere-v1/`, and have matching WebP posters. Playback starts only on request; starting another clip pauses the previous one. Native controls remain usable without the enhancement script. Failed playback offers manual reload, and page hiding or navigation pauses playback. The existing bilingual homepage helper owns labels and status messages without writing game state or storage. Keep the 16:9 composition on narrow screens.
+
+## RAVEN 17 episodes
 
 RAVEN 17 shows all three original episodes. Display numbers and saved media IDs remain 1, 2 and 3; `?episode=1`, `?episode=2` and `?episode=3` open their corresponding films. Saved playback and personal notes remain isolated by the original media ID.
 
