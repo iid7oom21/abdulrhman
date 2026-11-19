@@ -99,6 +99,52 @@ const protocols = [
 ];
 
 for (const protocol of protocols) {
+  test(protocol.name + ': hidden original IDs do not associate unrelated received corrections', async () => {
+    const s = sources();
+    s.createMaterial({id:'second-private-root',type:'statement',text:'SECOND_PRIVATE_ROOT'});
+    s.createMaterial({id:'other-correction',type:'correction',originalId:'second-private-root',text:'UNRELATED_RECEIVED_CORRECTION'});
+    s.createMaterial({id:'separate-statement',type:'statement',text:'SEPARATE_STATEMENT'});
+    s.share({eventId:'other-correction-share',materialId:'other-correction',recipients:['jonas']});
+    s.share({eventId:'separate-statement-share',materialId:'separate-statement',recipients:['jonas']});
+    const received = s.contextFor('jonas');
+    for (const material of received.materials.filter(item => item.type === 'correction')) {
+      assert.equal(Object.hasOwn(material,'originalId'),false,'unknown original IDs remain private');
+    }
+    const before = JSON.stringify(received);
+    for (const action of ['quote_materials','clarify']) {
+      for (const selected of ['separate-statement','c1']) {
+        let request;
+        const gen = protocol.create(settings(async (_url,options) => {
+          request = options.body;
+          return protocol.respond({action,materialIds:[selected]});
+        }));
+        const result = await gen('jonas','Which received material?',received);
+        assert.match(result.text,selected === 'c1' ? /RECEIVED_CORRECTION/ : /SEPARATE_STATEMENT/);
+        assert.doesNotMatch(result.text,/UNRELATED_RECEIVED_CORRECTION/,'missing relationship IDs cannot join independent corrections');
+        if (selected === 'separate-statement') assert.doesNotMatch(result.text,/RECEIVED_CORRECTION/);
+        else assert.doesNotMatch(result.text,/SEPARATE_STATEMENT/);
+        assert.doesNotMatch(request,/ORIGINAL_PRIVATE|SECOND_PRIVATE_ROOT|second-private-root/);
+      }
+    }
+    assert.equal(JSON.stringify(s.contextFor('jonas')),before,'reply selection does not mutate received materials');
+  });
+
+  test(protocol.name + ': known source relationships keep the latest received correction without joining hidden originals', async () => {
+    const s = sources();
+    s.share({eventId:'old-share',materialId:'old',recipients:['jonas']});
+    s.createMaterial({id:'c2',type:'correction',originalId:'old',text:'LATEST_RECEIVED_CORRECTION'});
+    s.share({eventId:'latest-share',materialId:'c2',recipients:['jonas']});
+    s.createMaterial({id:'different-root',type:'statement',text:'UNDISCLOSED_ORIGINAL'});
+    s.createMaterial({id:'unrelated',type:'correction',originalId:'different-root',text:'UNRELATED_RECEIVED_TEXT'});
+    s.share({eventId:'unrelated-share',materialId:'unrelated',recipients:['jonas']});
+    for (const selected of ['old','c1']) {
+      const gen = protocol.create(settings(async () => protocol.respond({action:'quote_materials',materialIds:[selected]})));
+      const result = await gen('jonas','Which version?',s.contextFor('jonas'));
+      assert.match(result.text,/LATEST_RECEIVED_CORRECTION/,'a known correction relationship is preserved');
+      assert.doesNotMatch(result.text,/UNRELATED_RECEIVED_TEXT|UNDISCLOSED_ORIGINAL/);
+    }
+  });
+
   test(protocol.name + ': an interrupted success body is unknown, never a completed invalid output', async () => {
     const s = sources();
     let calls = 0;

@@ -206,7 +206,9 @@ You cannot share, create, correct, deposit, or change game state. Return JSON on
         const selected = new Set(selection.materialIds);
         // An older selected statement never conceals a newer correction known to this recipient.
         for (const m of materials) {
-          if (m.type === 'correction' && m.isLatestKnownCorrection &&
+          // An undisclosed original has no relationship ID in this projection.
+          // Two omitted IDs are not evidence that independent materials share an original.
+          if (m.type === 'correction' && m.isLatestKnownCorrection && typeof m.originalId === 'string' &&
               materials.some(old => selected.has(old.id) && (old.id === m.originalId || old.originalId === m.originalId))) {
             selected.add(m.id);
           }
