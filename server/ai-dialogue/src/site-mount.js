@@ -6,6 +6,7 @@ import {createHash} from 'node:crypto';
 const files = [
   'site-player.js', 'site-audio.js', 'site-entry.js', 'site-bridge.js', 'site-player.css',
   'raven/index.html', 'raven/content.html',
+  'raven/dialogue/preview-room.css',
   'raven/deleted-name/index.html', 'raven/deleted-name/content.html', 'raven/deleted-name/reading-tools.js',
   'raven/deleted-name/case-entry.js', 'raven/deleted-name/opening-artwork.js', 'raven/release.json',
   'raven/deleted-name/play/index.html', 'raven/deleted-name/play/content.html',

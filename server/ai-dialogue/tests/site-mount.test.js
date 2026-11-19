@@ -52,6 +52,50 @@ test('site mount is opt-in and preserves standalone UI, config and API headers',
   assert.equal((await config.json()).sourceKnowledgeAvailable, false);
 });
 
+test('dialogue room uses only available reviewed presentation assets and limits its style policy to hosted HTML', async t => {
+  const f = fixture(t);
+  f.write('raven/dialogue/preview-room.css', '.rvnInterviewRoom { --room-test: 1; }');
+  f.write('raven/dialogue/private-room.css', 'PRIVATE_STYLE');
+  f.write('raven/assets/images/deleted-name/jonas.jpg', 'REVIEWED_PORTRAIT');
+  const s = await start(t, {siteRoot:f.root});
+  const response = await fetch(s.root + '/raven/dialogue/?lang=en');
+  const html = await response.text();
+  assert.match(html, /<link rel="stylesheet" href="\/raven\/dialogue\/preview-room.css">/);
+  assert.match(html, /<body class="rvnInterviewRoom">/);
+  assert.doesNotMatch(html, /<style id="room-standalone-styles">/);
+  assert.match(html, /value="jonas" data-portrait="\/raven\/assets\/images\/deleted-name\/jonas.jpg"/);
+  assert.doesNotMatch(html, /value="claire" data-portrait=/, 'missing portraits have no request URL');
+  assert.match(html, /currently available in Arabic/);
+  assert.match(response.headers.get('content-security-policy'), /style-src 'self' 'unsafe-inline';/);
+  assert.doesNotMatch(response.headers.get('content-security-policy'), /script-src[^;]*'unsafe-inline'/);
+  for (const method of ['GET','HEAD']) {
+    const asset = await fetch(s.root + '/raven/dialogue/preview-room.css', {method});
+    assert.equal(asset.status,200);
+    assert.match(asset.headers.get('content-type'), /text\/css/);
+    assert.equal(asset.headers.get('set-cookie'),null);
+  }
+  assert.equal((await fetch(s.root + '/raven/dialogue/private-room.css')).status,404);
+  const standalone = await fetch(s.root + '/');
+  const standaloneHtml = await standalone.text();
+  assert.doesNotMatch(standaloneHtml, /<link[^>]*preview-room\.css|data-portrait=/);
+  assert.match(standaloneHtml, /<style id="room-standalone-styles">/);
+  assert.match(standalone.headers.get('content-security-policy'), /style-src 'unsafe-inline';/);
+  const config = await fetch(s.root + '/api/config');
+  assert.match(config.headers.get('content-security-policy'), /style-src 'unsafe-inline';/);
+});
+
+test('partial or symlinked exports keep the dialogue room baseline without referencing an unavailable stylesheet', async t => {
+  const f = fixture(t);
+  const outside = path.join(f.dir, 'outside.css');
+  fs.writeFileSync(outside, 'PRIVATE_OUTSIDE_STYLE');
+  fs.symlinkSync(outside, path.join(f.root, 'raven/dialogue/preview-room.css'));
+  const s = await start(t, {siteRoot:f.root});
+  const response = await fetch(s.root + '/raven/dialogue/');
+  assert.doesNotMatch(await response.text(), /<link[^>]*preview-room\.css/);
+  assert.match(response.headers.get('content-security-policy'), /style-src 'unsafe-inline';/);
+  assert.equal((await fetch(s.root + '/raven/dialogue/preview-room.css')).status,404);
+});
+
 test('hosting can land on RAVEN without creating a preview session or accepting an external redirect', async t => {
   const f = fixture(t), s = await start(t, {siteRoot:f.root,hostedRootRedirect:'/raven/'});
   for (const method of ['GET','HEAD']) for (const target of ['/?lang=en','/index.html?lang=ar']) {

@@ -108,14 +108,33 @@ export function createPreviewServer({
   const persistence = disk ? 'disk-file' : 'process-memory';
   const storageInfo = () => ({storage:'server-memory',persistence,saveStatus});
   const html = fs.readFileSync(new URL('../public/index.html', import.meta.url));
+  // Optional presentation assets come only from the reviewed, exact public allowlist.
+  // Probe once at startup; standalone and partial fixture exports retain the inline baseline.
+  const hasRoomAsset = pathname => {
+    const asset = site?.open(pathname);
+    if (!asset) return false;
+    fs.closeSync(asset.fd);
+    return true;
+  };
+  const roomStyles = '/raven/dialogue/preview-room.css';
+  const hasRoomStyles = hasRoomAsset(roomStyles);
+  let roomHtml = html.toString();
+  for (const character of ['jonas','claire']) {
+    const portrait = '/raven/assets/images/deleted-name/' + character + '.jpg';
+    if (hasRoomAsset(portrait)) roomHtml = roomHtml.replace('<option value="' + character + '">',
+      '<option value="' + character + '" data-portrait="' + portrait + '">');
+  }
+  if (hasRoomStyles) roomHtml = roomHtml
+    .replace(/<style id="room-standalone-styles">[\s\S]*?<\/style>/, '')
+    .replace('</head>', '<link rel="stylesheet" href="' + roomStyles + '">\n</head>');
   // Use the server UI, which understands disk saveStatus and provider configuration.
   // Never transplant the static browser simulator or its local operation history.
-  const hostedHtml = english => Buffer.from(html.toString()
+  const hostedHtml = english => Buffer.from(roomHtml
     .replace("'raven_deleted_name_preview_v2'", "'raven_deleted_name_hosted_server_preview_v2'")
     .replace("'raven_deleted_name_material_actions_v1'", "'raven_deleted_name_hosted_server_material_actions_v1'")
     .replace('</head>', '<meta name="raven-dialogue-transport" content="same-origin-server">\n</head>')
     .replace('</header>', '<a href="/raven/deleted-name/' + (english ? '?lang=en' : '') + '">الرجوع إلى القضية · Return to case</a></header>')
-    .replace('<main>', '<main>' + (english ? '<p role="note" lang="en" dir="ltr">This technical server preview is currently available in Arabic. Your opening choices are not transferred here.</p>' : '')));
+    .replace('<main class="rvnRoomMain">', '<main class="rvnRoomMain">' + (english ? '<p role="note" lang="en" dir="ltr">This technical server preview is currently available in Arabic. Your opening choices are not transferred here.</p>' : '')));
   const scriptHashesFor = page => [...page.toString().matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m => `'sha256-${createHash('sha256').update(m[1]).digest('base64')}'`).join(' ');
   const scriptHashes = scriptHashesFor(html), hostedScriptHashes = scriptHashesFor(hostedHtml(false));
   const server = http.createServer(async (req, res) => {
@@ -175,7 +194,8 @@ export function createPreviewServer({
         if (hostedDialogue) {
           res.setHeader('X-Frame-Options', 'SAMEORIGIN');
           res.setHeader('Content-Security-Policy', res.getHeader('Content-Security-Policy')
-            .replace(scriptHashes, hostedScriptHashes).replace("frame-ancestors 'none'", "frame-ancestors 'self'"));
+            .replace(scriptHashes, hostedScriptHashes).replace("frame-ancestors 'none'", "frame-ancestors 'self'")
+            .replace("style-src 'unsafe-inline'", hasRoomStyles ? "style-src 'self' 'unsafe-inline'" : "style-src 'unsafe-inline'"));
         }
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-store' });
         return res.end(hostedDialogue ? hostedHtml(url.searchParams.get('lang') === 'en') : html);

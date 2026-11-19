@@ -52,28 +52,86 @@
     #player-help .hint { margin:0; color:var(--gold); }
     footer { text-align:center; font-size:0.8125rem; color:var(--muted); padding:16px; }
     @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; } }
+
+  </style>
+  <style id="room-standalone-styles">
+    /* Standalone baseline; replaced by the shared room stylesheet in the full site. */
+    body.rvnInterviewRoom { --bg:#081315; --card:#122023; --gold:#d8bc84; --text:#eee7dc; --muted:#b4c2bf; }
+    .rvnRoomMain { max-width:1180px; }
+    .rvnRoomHeader { max-width:1440px; margin-inline:auto; }
+    .rvnRoomEyebrow { display:block; font-size:.75rem; letter-spacing:.08em; margin-bottom:6px; color:var(--muted); }
+    .rvnRoomLayout { display:grid; grid-template-columns:minmax(210px, .8fr) minmax(0, 1.6fr); gap:24px; }
+    .rvnRoomStage, .rvnRoomDesk { min-width:0; }
+    .rvnRoomStage { padding:20px; background:var(--card); border:1px solid #364647; border-radius:12px; }
+    .rvnRoomPortrait { position:relative; height:240px; overflow:hidden; background:#17292c; border-radius:8px; display:grid; place-items:center; }
+    .rvnRoomPortrait img { width:100%; height:100%; object-fit:cover; position:absolute; inset:0; }
+    .rvnRoomMonogram { font:5rem Georgia,serif; color:var(--gold); }
+    .rvnRoomIdentity h2 { margin:8px 0 16px; }
+    .rvnRoomSelector select { width:100%; }
+    .rvnRoomContext { font-size:.875rem; }
+    #runtime-description { line-height:1.6; font-size:.875rem; color:var(--muted); }
+    .rvnRoomTranscriptHeader { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+    .rvnRoomTranscriptHeader h2 { font-size:1.2rem; }
+    .rvnRoomTranscript { background:#e9e3d5; color:#172729; border-radius:12px; }
+    #log { background:transparent; }
+    #log:empty { display:none; }
+    #log .msg { background:#d3ddda; color:#13292c; }
+    #log .me { background:#ece8de; border:1px solid #9da9a4; }
+    #log .name { color:#465b5a; }
+    #log .service-error { border-color:#9d2843; background:#f5dde1; }
+    #log .knowledge-refusal { border-color:#86672b; background:#eee4cc; }
+    #log .operation { font-size:.8rem; border-radius:0; border-top:1px solid #aeb7b1; background:transparent; }
+    .rvnRoomEmpty { min-height:210px; display:grid; align-content:center; padding:24px; line-height:1.7; }
+    .rvnRoomEmpty h3, .rvnRoomEmpty p { margin:4px 0; }
+    .rvnRoomComposer { padding-top:12px; }
+    .rvnRoomComposer .row { align-items:stretch; }
+    .rvnRoomComposer #input { flex-basis:180px; }
+    .rvnRoomHelp summary h2 { display:inline; }
+    @media (max-width:650px) { .rvnRoomLayout { grid-template-columns:1fr; gap:16px; } .rvnRoomStage { display:grid; grid-template-columns:80px minmax(0,1fr); gap:8px 14px; padding:14px; } .rvnRoomPortrait { height:104px; grid-row:span 2; } .rvnRoomMonogram { font-size:3rem; } .rvnRoomIdentity h2 { margin:4px 0; } .rvnRoomSelector label { margin:0 0 4px; } .rvnRoomContext, #runtime-description { grid-column:1 / -1; margin-block:4px; } .rvnRoomEmpty { min-height:130px; padding:18px; } .rvnRoomOperations button { padding-inline:10px; font-size:.8rem; } }
   </style>
 </head>
-<body>
-  <header>
-    <h1>RAVEN — الاسم المحذوف</h1>
+<body class="rvnInterviewRoom">
+  <header class="rvnRoomHeader">
+    <div class="rvnRoomBrand"><span class="rvnRoomEyebrow">غرفة الحوار</span><h1>RAVEN — الاسم المحذوف</h1></div>
     <span class="badge" id="runtime-mode">جارٍ التحقق من وضع الحوار…</span>
   </header>
-  <main>
-    <div class="row">
-      <select id="character" aria-label="الشخصية">
-        <option value="jonas">يوناس</option>
-        <option value="claire">كلير</option>
-      </select>
-      <button id="clear" class="secondary">مسح العرض</button>
-    </div>
-    <p>معاينة تقنية محدودة: اللاعب مرمّم سجلات وصل بعد واقعة المكتبة والاستجابة الأولى. الإفادات الأصلية الكاملة غير متاحة؛ الحوار لا ينشئ أدلة. هذه المعاينة مستقلة عن افتتاح القضية المنشور.</p>
-    <p id="runtime-description" role="status">جارٍ قراءة إعدادات الخادم…</p>
-    <div id="dialogue-scope" class="scope-box" aria-live="polite">نطاق عرض المواد للشخصية المختارة: جارٍ التحقق…</div>
-    <div id="log" role="log" aria-label="سجل الشخصية" aria-busy="false"></div>
+  <main class="rvnRoomMain">
+    <section class="rvnRoomLayout" aria-label="معاينة حوار الشخصية">
+      <aside class="rvnRoomStage">
+        <div class="rvnRoomPortrait" aria-hidden="true">
+          <span id="portrait-fallback" class="rvnRoomMonogram">R</span>
+          <img id="character-portrait" alt="" hidden />
+        </div>
+        <div class="rvnRoomIdentity"><h2 id="character-name">يوناس</h2></div>
+        <div class="rvnRoomSelector">
+          <label for="character">تحدث مع</label>
+          <select id="character" aria-label="الشخصية"><option value="jonas">يوناس</option><option value="claire">كلير</option></select>
+        </div>
+        <details class="rvnRoomContext"><summary>عن هذه المعاينة</summary>
+          <p id="dialogue-description">معاينة تقنية محدودة: اللاعب مرمّم سجلات وصل بعد واقعة المكتبة والاستجابة الأولى. الإفادات الأصلية الكاملة غير متاحة؛ الحوار لا ينشئ أدلة. هذه المعاينة مستقلة عن افتتاح القضية المنشور.</p>
+        </details>
+        <p id="runtime-description" role="status">جارٍ قراءة إعدادات الخادم…</p>
+      </aside>
+      <section class="rvnRoomDesk" aria-labelledby="record-title">
+        <div class="rvnRoomTranscriptHeader"><h2 id="record-title">سجل الحوار</h2><button id="clear" class="secondary">مسح العرض</button></div>
+        <div id="dialogue-scope" class="scope-box" aria-live="polite">نطاق عرض المواد للشخصية المختارة: جارٍ التحقق…</div>
+        <div class="rvnRoomTranscript">
+          <div id="dialogue-empty" class="rvnRoomEmpty"><h3 id="empty-title">ابدأ بسؤال محدد</h3><p id="empty-description">لا توجد رسائل في العرض الحالي. اسأل عن مادة وصلت إلى الشخصية.</p></div>
+          <div id="log" role="log" aria-label="سجل الشخصية" aria-busy="false"></div>
+        </div>
+        <div class="rvnRoomComposer">
+          <label id="question-label" for="input">سؤالك للشخصية</label>
+          <div class="row"><textarea aria-label="سؤالك للشخصية" maxlength="8000" id="input" rows="2" style="flex:1; min-width:180px;" placeholder="اكتب سؤالك..."></textarea><button id="send">إرسال</button></div>
+        </div>
+        <div class="rvnRoomOperations">
+          <div class="row"><button id="check" class="secondary">متابعة العملية الأصلية</button><button id="stop" class="secondary">إيقاف الانتظار فقط</button><button id="history" class="secondary">تحميل السجل</button><button id="retry-safe" class="secondary" type="button" hidden>إعادة المحاولة الآمنة</button></div>
+          <div id="status" class="status" role="status" aria-live="polite"></div>
+        </div>
+      </section>
+    </section>
     <!-- Mati help texts, verbatim from src/player_help_texts_bilingual_v1.0.0.json (tests/player-help.test.js). -->
-    <section id="player-help" aria-labelledby="player-help-title">
-      <h2 id="player-help-title">كيف تسأل في RAVEN</h2>
+    <details id="player-help" class="rvnRoomHelp">
+      <summary><h2 id="player-help-title">كيف تسأل في RAVEN</h2></summary>
       <p>اسأل الشخصية عما تعرفه، وتابع إجابتها بهدوء، واربط سؤالك بما ظهر لك في المشهد.</p>
       <ol>
         <li>اسأل عن شيء محدد ظهر لك في المشهد.</li>
@@ -81,14 +139,8 @@
         <li>اربط سؤالك الجديد بما عرفته من الإجابات السابقة.</li>
       </ol>
       <p class="hint">بدل السؤال العام، اذكر ما رأيته واسأل: ماذا تعرف عن هذا؟</p>
-    </section>
-    <div class="row" style="margin-top:12px;">
-      <textarea aria-label="سؤالك للشخصية" maxlength="8000" id="input" rows="2" style="flex:1; min-width:180px;" placeholder="اكتب سؤالك..."></textarea>
-      <button id="send">إرسال</button>
-    </div>
-    <div class="row"><button id="check" class="secondary">متابعة العملية الأصلية</button><button id="stop" class="secondary">إيقاف الانتظار فقط</button><button id="history" class="secondary">تحميل السجل</button><button id="retry-safe" class="secondary" type="button" hidden>إعادة المحاولة الآمنة</button></div>
-    <div id="status" class="status" role="status" aria-live="polite"></div>
-    <details id="materials-panel">
+    </details>
+    <details id="materials-panel" class="rvnRoomMaterials">
       <summary>الأقوال والتصحيحات ومواد المشاركة</summary>
       <p>تسجل هنا كلامك ومسوداتك. التصحيح يبقى إلى جانب القول الأصلي، ولا يجعل مضمونه حقيقة مثبتة. نزّل نسخة من المواد للاحتفاظ بها.</p>
       <div class="material-form">
@@ -254,6 +306,12 @@
     }
     function render() {
       const id = characterEl.value, s = states[id], op = unresolved(s);
+      document.getElementById('character-name').textContent = names[id];
+      const portrait = document.getElementById('character-portrait');
+      const source = characterEl.selectedOptions[0]?.dataset.portrait;
+      if (source && portrait.getAttribute('src') !== source) { portrait.hidden = false; portrait.src = source; }
+      else if (!source) { portrait.hidden = true; portrait.removeAttribute('src'); }
+      document.getElementById('portrait-fallback').hidden = !!source && !portrait.hidden;
       const lastRecord = [...s.records.values()].at(-1);
       log.setAttribute('aria-busy', s.active ? 'true' : 'false');
       log.replaceChildren();
@@ -271,8 +329,13 @@
           : r.status === 'unavailable' ? (r.response?.text ? 'وصل هذا الرد، لكن ' : '') + 'العملية غير معروفة للخادم في جلستك الحالية. ربما أُعيد تشغيله أو انتهت جلسة المتصفح. '
             + (r.response?.text ? 'حفظ الرد على الخادم غير مؤكد، ولم نُعد إرسال السؤال.' : 'لم يثبت نجاح العملية أو فشلها، ولم نُعد إرسالها.') + ' المعرف: ' + iso(r.id)
           : (r.response?.text ? 'وصل الرد؛ حفظه غير مؤكد. ' : '') + 'حالة العملية غير محسومة. معرف المتابعة: ' + iso(r.id);
-        addMsg('حالة العملية', label, false, r.status === 'error' ? 'service-error' : '');
+        addMsg('حالة العملية', label, false, r.status === 'error' ? 'operation service-error' : 'operation');
       }
+      document.getElementById('dialogue-empty').hidden = log.childElementCount > 0;
+      document.getElementById('empty-title').textContent = s.hidden && s.records.size ? 'السجل مخفي عن العرض' : 'ابدأ بسؤال محدد';
+      document.getElementById('empty-description').textContent = s.hidden && s.records.size
+        ? 'المحادثة باقية. استخدم «تحميل السجل» لعرضها مجددًا.'
+        : 'لا توجد رسائل في العرض الحالي. اسأل عن مادة وصلت إلى الشخصية.';
       input.value = s.draft;
       sendBtn.disabled = !!op || !!s.active;
       checkBtn.disabled = !!s.active || !s.records.size;
@@ -420,6 +483,10 @@
     };
     document.getElementById('history').onclick = loadHistory;
     document.getElementById('clear').onclick = () => { states[characterEl.value].hidden = true; render(); };
+    document.getElementById('character-portrait').addEventListener('error', event => {
+      event.currentTarget.hidden = true;
+      document.getElementById('portrait-fallback').hidden = false;
+    });
     render(); loadHistory(); refreshScope();
   </script>
   <script>
