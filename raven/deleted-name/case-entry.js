@@ -61,12 +61,13 @@
     });
     box.append(title, note, link);
     ending.append(box);
-    if (focusedId === 'case-continue-link') link.focus({preventScroll:true});
+    if (focusedId === 'case-continue-link' || focusedId === 'case-retry-availability') link.focus({preventScroll:true});
   }
   function renderUnavailable(focusedId) {
     const box = document.createElement('section');
     box.id = 'case-continuation';
     box.className = 'hook-review';
+    box.setAttribute('aria-busy', String(Boolean(pending)));
     const title = document.createElement('h3');
     const note = document.createElement('p');
     // No server answered here at all: this is the static site. Point to the case
@@ -92,13 +93,26 @@
         : 'ينتهي الافتتاح هنا. خادم القضية لا يقدّم القضية المكتوبة في الوقت الحالي. حاول مرة أخرى لاحقًا.';
       box.append(title, note);
     }
+    const retry = document.createElement('button');
+    retry.type = 'button';
+    retry.id = 'case-retry-availability';
+    retry.className = 'hook-secondary';
+    retry.setAttribute('aria-disabled', String(Boolean(pending)));
+    retry.textContent = pending
+      ? (english() ? 'Checking availability…' : 'جارٍ التحقق…')
+      : (english() ? 'Try again' : 'أعد المحاولة');
+    retry.addEventListener('click', () => { if (!pending) inspect(true); });
+    const controls = document.createElement('p');
+    controls.append(retry);
+    box.append(controls);
     ending.append(box);
     if (focusedId === 'case-server-link') box.querySelector('#case-server-link')?.focus({preventScroll:true});
+    if (focusedId === 'case-retry-availability') retry.focus({preventScroll:true});
   }
-  function inspect() {
+  function inspect(force = false) {
     if (hook.dataset.phase !== 'done') return;
-    if (availability !== null) { render(); return; }
-    if (pending) return;
+    if (pending) { render(); return; }
+    if (availability !== null && force !== true) { render(); return; }
     pending = (async () => {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), 5000);
@@ -116,6 +130,7 @@
       } catch { availability = {enabled:false, noServer:true}; }
       finally { clearTimeout(timer); pending = null; render(); }
     })();
+    render();
   }
   hook.addEventListener('raven:opening-render', inspect);
   document.addEventListener('raven:language', render);

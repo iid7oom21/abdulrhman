@@ -30,6 +30,10 @@ function fixture(mode = 'enabled') {
     if (url.pathname.startsWith('/api/')) {
       requests.push({ method: req.method, pathname: url.pathname });
       if (url.pathname === '/api/case/config') {
+        if (mode === 'unavailable') {
+          res.writeHead(503, { 'Content-Type': 'application/json' });
+          return res.end(JSON.stringify({error:'temporarily_unavailable'}));
+        }
         if (mode === 'missing' || mode === 'html') {
           res.writeHead(mode === 'missing' ? 404 : 200, { 'Content-Type': 'text/html' });
           return res.end('<!doctype html><title>Static site fixture</title>');
@@ -56,7 +60,7 @@ function fixture(mode = 'enabled') {
     if (req.method === 'HEAD') return res.end();
     fs.createReadStream(file).pipe(res);
   });
-  return { server, requests };
+  return { server, requests, setMode(value) { mode = value; } };
 }
 
 test('opening continuation: explicit import, persistent shell and unavailable-server boundaries', async t => {
@@ -67,7 +71,7 @@ test('opening continuation: explicit import, persistent shell and unavailable-se
     const api = fixture(options.mode);
     await new Promise(resolve => api.server.listen(0, '127.0.0.1', resolve));
     const base = 'http://127.0.0.1:' + api.server.address().port;
-    const context = await browser.newContext({ viewport: { width: 390, height: 844 }, reducedMotion: 'reduce' });
+    const context = await browser.newContext({ viewport: { width: options.width || 390, height: 844 }, reducedMotion: 'reduce' });
     await context.addInitScript(({ key, privateNote, blockSession, previousOpening }) => {
       const originalSet = Storage.prototype.setItem;
       try {
@@ -223,6 +227,72 @@ test('opening continuation: explicit import, persistent shell and unavailable-se
       assert.deepEqual(api.requests, [{ method: 'GET', pathname: '/api/case/config' }]);
     }));
   }
+
+  for (const options of [
+    {mode:'disabled', language:'ar', width:320},
+    {mode:'missing', language:'en', blockSession:true},
+    {mode:'broken-json', language:'ar'},
+    {mode:'string-disabled', language:'en'},
+    {mode:'unavailable', language:'en'},
+  ]) {
+    await t.test(options.language + ': manual retry recovers from ' + options.mode + ' without replaying or transferring the opening', async () => check(options, async ({api, page, frame}) => {
+      await finish({api, frame}, 'precise', 'both');
+      await frame.locator('#case-continuation h3').waitFor();
+      const before = await frame.locator('#hook').evaluate(el => ({phase:el.dataset.phase,choice:el.dataset.choice,share:el.dataset.share,layers:el.dataset.layers}));
+      const retry = frame.locator('#case-retry-availability');
+      assert.equal(await retry.count(), 1, 'failed availability offers an explicit retry without restarting the opening');
+      assert.equal(await retry.innerText(), options.language === 'en' ? 'Try again' : 'أعد المحاولة');
+      assert.ok((await retry.boundingBox()).height >= 44, 'the retry retains the opening controls’ mobile target size');
+      assert.equal(await frame.locator('html').evaluate(el => el.scrollWidth <= innerWidth + 1), true, 'the retry does not overflow the viewport');
+      api.setMode('enabled');
+      await retry.click();
+      await frame.locator('#case-continue-link').waitFor();
+      assert.equal(await frame.locator('#case-continue-link').evaluate(el => document.activeElement === el), true, 'retry focus moves to the recovered continuation');
+      assert.deepEqual(await frame.locator('#hook').evaluate(el => ({phase:el.dataset.phase,choice:el.dataset.choice,share:el.dataset.share,layers:el.dataset.layers})), before);
+      assert.equal(await frame.locator('html').getAttribute('lang'), options.language);
+      assert.equal(await page.evaluate(key => sessionStorage.getItem(key), KEY), null, 'availability retry does not import a choice');
+      assert.deepEqual(api.requests, [{method:'GET',pathname:'/api/case/config'},{method:'GET',pathname:'/api/case/config'}]);
+      assert.equal(await frame.locator('#case-retry-availability').count(), 0);
+    }));
+  }
+
+  await t.test('retry is single-flight, preserves language focus and remains available after repeated failure', async () => check({mode:'unavailable'}, async ({api, page, frame}) => {
+    await finish({api, frame}, 'wait', null);
+    await frame.locator('#case-continuation h3').waitFor();
+    assert.equal(await frame.locator('#case-retry-availability').count(), 1);
+    const before = await frame.locator('#hook').evaluate(el => JSON.stringify({...el.dataset}));
+    let intercepted = 0, release;
+    const hold = new Promise(resolve => { release = resolve; });
+    await page.route('**/api/case/config', async route => {intercepted++;await hold;await route.continue();});
+    try {
+      await frame.locator('#case-retry-availability').evaluate(button => {button.focus();button.click();button.click();});
+      await frame.locator('#case-retry-availability[aria-disabled="true"]').waitFor();
+      assert.equal(await frame.locator('#case-continuation').getAttribute('aria-busy'), 'true');
+      assert.equal(await frame.locator('#case-retry-availability').innerText(), 'جارٍ التحقق…');
+      await frame.locator('#case-retry-availability').evaluate(button => button.click());
+      await frame.locator('#lang-switch').evaluate(button => button.click());
+      assert.equal(await frame.locator('#case-retry-availability').innerText(), 'Checking availability…');
+      assert.equal(await frame.locator('#case-retry-availability').evaluate(el => document.activeElement === el), true, 'a language render during the pending read preserves retry focus');
+      await frame.locator('#lang-switch').evaluate(button => button.click());
+      assert.equal(await frame.locator('#case-retry-availability').innerText(), 'جارٍ التحقق…');
+      await frame.locator('#lang-switch').click();
+      assert.equal(await frame.locator('#case-retry-availability').innerText(), 'Checking availability…');
+      assert.equal(await frame.locator('#lang-switch').evaluate(el => document.activeElement === el), true);
+    } finally { release(); }
+    await frame.locator('#case-retry-availability[aria-disabled="false"]').waitFor();
+    assert.equal(intercepted, 1, 'double activation and an in-flight click share one read');
+    assert.equal(await frame.locator('#case-continuation').getAttribute('aria-busy'), 'false');
+    assert.equal(await frame.locator('#lang-switch').evaluate(el => document.activeElement === el), true, 'completion does not steal focus after the user moved it');
+    assert.equal(await frame.locator('#case-retry-availability').innerText(), 'Try again');
+    assert.equal(await frame.locator('#case-continue-link').count(), 0);
+    assert.equal(await frame.locator('#hook').evaluate(el => JSON.stringify({...el.dataset})), before);
+    assert.equal(await page.evaluate(key => sessionStorage.getItem(key), KEY), null);
+    await page.unroute('**/api/case/config');
+    api.setMode('enabled');
+    await frame.locator('#case-retry-availability').click();
+    await frame.locator('#case-continue-link').waitFor();
+    assert.equal(api.requests.length, 3, 'only explicit attempts read availability');
+  }));
 
   await t.test('the external gateway keeps keyboard focus and language without transferring the opening', async () => check({ mode:'missing' }, async ({ api, page, frame }) => {
     await finish({ api, frame }, 'wait', null);

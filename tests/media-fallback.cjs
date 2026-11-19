@@ -27,10 +27,12 @@ test('artwork failures stay local to previews and recover only after an explicit
   const browser = await chromium.launch({headless:true, executablePath:process.env.CHROMIUM_PATH || '/usr/bin/chromium', args:['--no-sandbox']});
   t.after(async () => { await browser.close(); await new Promise(resolve => server.close(resolve)); });
 
-  async function session({width = 390, failed = [], delayScript = false, framed = false} = {}) {
+  async function session({width = 390, failed = [], delayScript = false, framed = false, controlledClock = false} = {}) {
     const context = await browser.newContext({viewport:{width,height:844}, reducedMotion:'reduce'});
-    const page = await context.newPage(), requests = [], writes = [], errors = [];
+    const page = await context.newPage(), requests = [], writes = [], errors = [], heldRequests = [];
     const failures = new Set(failed);
+    const holds = new Set();
+    if (controlledClock) await page.clock.install();
     page.setDefaultTimeout(12000);
     page.on('pageerror', error => errors.push(error.message));
     await context.route('**/*', async route => {
@@ -42,6 +44,7 @@ test('artwork failures stay local to previews and recover only after an explicit
       }
       if (request.url().startsWith(cdn)) {
         requests.push(request.url());
+        if (holds.has(request.url())) { heldRequests.push(route); return; }
         const original = url.origin + url.pathname;
         if (failures.has(original)) return route.fulfill({status:404, contentType:'text/plain', body:'test fixture: missing image'});
         return route.fulfill({status:200, contentType:'image/jpeg', body:fixture});
@@ -57,7 +60,7 @@ test('artwork failures stay local to previews and recover only after an explicit
     await view.locator('#vault > details > summary').click();
     await view.locator('.rvnVaultGrid').scrollIntoViewIfNeeded();
     await view.waitForFunction(() => [...document.querySelectorAll('.rvnVaultGrid img')].every(img => img.complete));
-    return {context,page,view,requests,writes,errors,failures};
+    return {context,page,view,requests,writes,errors,failures,holds,heldRequests};
   }
   const count = (requests, original) => requests.filter(value => value.split('?')[0] === original).length;
   const cards = page => page.locator('.rvnVaultGrid > a');
@@ -181,6 +184,80 @@ test('artwork failures stay local to previews and recover only after an explicit
     assert.equal(await card.getAttribute('href'), poster);
     assert.ok(requests.some(url => url.startsWith(thumbnails[2] + '?raven-media-retry=1')));
     assert.equal(new URL(page.url()).searchParams.get('lang'), 'en');
+    assert.deepEqual(writes, []); assert.deepEqual(errors, []);
+    await context.close();
+  });
+
+  for (const recoverLate of [false,true]) await t.test('stalled preview retry becomes available again; ' + (recoverLate ? 'the delayed image can recover' : 'a second explicit attempt can recover'), async () => {
+    const {context,page,requests,writes,errors,failures,holds,heldRequests} = await session({width:320, failed:[thumbnails[0]], controlledClock:true});
+    const first = cards(page).nth(0), retry = galleryRetry(page).nth(0).locator('button');
+    await first.locator('.rvnMediaNotice').waitFor({state:'visible'});
+    const href = await first.getAttribute('href');
+    const originalCount = count(requests, thumbnails[0]);
+    holds.add(thumbnails[0] + '?raven-media-retry=1');
+    await retry.click();
+    await page.waitForFunction(() => document.querySelector('.rvnMediaRetries button').getAttribute('aria-disabled') === 'true');
+    assert.match(await galleryRetry(page).nth(0).locator('[role="status"]').innerText(), /جارٍ تحميل/, 'the first retry announces that it is loading');
+    assert.equal(heldRequests.length, 1);
+    await page.keyboard.press('Enter');
+    assert.equal(count(requests, thumbnails[0]), originalCount + 1, 'activating while waiting must not start another request');
+    await page.clock.fastForward(20001);
+    assert.equal(await retry.getAttribute('aria-disabled'), 'false', 'a hanging image must not disable manual retry indefinitely');
+    for (const language of ['en','ar']) {
+      await page.evaluate(language => window.RavenI18n.setLanguage(language), language);
+      assert.match(await first.locator('.rvnMediaNotice').innerText(), language === 'en' ? /taking longer/ : /وقتًا أطول/);
+      assert.match(await galleryRetry(page).nth(0).locator('[role="status"]').innerText(), language === 'en' ? /taking longer/ : /وقتًا أطول/);
+    }
+    assert.equal(await retry.evaluate(node => node === document.activeElement), true);
+    await page.clock.fastForward(60000);
+    assert.equal(count(requests, thumbnails[0]), originalCount + 1, 'a timeout must not schedule another network request');
+    failures.delete(thumbnails[0]);
+    if (recoverLate) {
+      await cards(page).nth(1).focus();
+      await heldRequests[0].fulfill({status:200, contentType:'image/jpeg', body:fixture});
+    } else {
+      await page.keyboard.press('Enter');
+    }
+    await page.waitForFunction(() => !document.querySelector('.rvnVaultGrid > a').classList.contains('rvnMediaUnavailable'));
+    assert.equal(await (recoverLate ? cards(page).nth(1) : first).evaluate(node => node === document.activeElement), true, 'recovery must not steal focus after the visitor moves elsewhere');
+    assert.equal(await first.getAttribute('href'), href);
+    await page.clock.fastForward(25000);
+    assert.equal(await first.locator('.rvnMediaNotice').isVisible(), false, 'an expired timer must not hide recovered artwork');
+    assert.equal(count(requests, thumbnails[0]), originalCount + (recoverLate ? 1 : 2));
+    await noOverflow(page);
+    assert.deepEqual(writes, []); assert.deepEqual(errors, []);
+    await context.close();
+  });
+
+  await t.test('a stalled poster retry releases both controls without touching video playback', async () => {
+    const {context,page,requests,writes,errors,holds} = await session({failed:[poster], controlledClock:true});
+    await page.locator('.film.raven.rvnMediaFilmUnavailable').waitFor();
+    const retry = page.locator('.rvnMediaRetries button').last();
+    const posterControls = page.locator('.rvnMediaPosterStatus button');
+    const src = await page.locator('#ravenEpisodePlayer').getAttribute('src');
+    await page.evaluate(() => {
+      window.posterVideoCalls = [];
+      for (const method of ['load','play','pause']) document.querySelector('#ravenEpisodePlayer')[method] = () => { window.posterVideoCalls.push(method); return Promise.resolve(); };
+    });
+    const requestCount = count(requests, poster);
+    holds.add(poster + '?raven-media-retry=1');
+    await retry.click();
+    assert.equal(await posterControls.getAttribute('aria-disabled'), 'true');
+    await page.clock.fastForward(20001);
+    assert.equal(await retry.getAttribute('aria-disabled'), 'false');
+    assert.equal(await posterControls.getAttribute('aria-disabled'), 'false');
+    assert.equal(await retry.evaluate(node => node === document.activeElement), true);
+    assert.match(await page.locator('.rvnMediaPosterStatus [role="status"]').innerText(), /وقتًا أطول/);
+    await page.clock.fastForward(60000);
+    assert.equal(count(requests, poster), requestCount + 1, 'a stalled poster never retries itself');
+    // An actual failure on the next attempt must replace timeout copy and clear its timer.
+    await page.keyboard.press('Enter');
+    await page.waitForFunction(() => document.querySelector('.rvnMediaPosterStatus button').getAttribute('aria-disabled') === 'false');
+    assert.match(await page.locator('.rvnMediaPosterStatus [role="status"]').innerText(), /تعذر تحميل صورة الغلاف/);
+    await page.clock.fastForward(25000);
+    assert.match(await page.locator('.rvnMediaPosterStatus [role="status"]').innerText(), /تعذر تحميل صورة الغلاف/);
+    assert.equal(await page.locator('#ravenEpisodePlayer').getAttribute('src'), src);
+    assert.deepEqual(await page.evaluate(() => window.posterVideoCalls), []);
     assert.deepEqual(writes, []); assert.deepEqual(errors, []);
     await context.close();
   });

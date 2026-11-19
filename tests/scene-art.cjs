@@ -87,7 +87,9 @@ test('scene illustrations load, crop correctly and remain separate from player e
 
       await page.goto(base+'/raven/?lang='+language,{waitUntil:'domcontentloaded'});
       const home=page.frameLocator('#site-content');
-      await checkArt(home,'case-cover');
+      // The current homepage uses its original poster; the case atlas begins
+      // on the opening page. Keep checking every actual case placement below.
+      await home.locator('[data-dn-k="enter"]').waitFor();
       assert.equal(await page.locator('#music-track-picker option').count(),13);
       assert.equal(await home.locator('[data-rvn-episode]').count(),3);
       await home.locator('[data-dn-k="enter"]').click();
@@ -129,7 +131,10 @@ test('scene illustrations load, crop correctly and remain separate from player e
       await action('continue').click();
       assert.equal(await opening.locator('#hook-actions [data-hook-action]').count(),4);
       assert.equal(await art(opening,'quiet-ending').isVisible(),false);
-      await action('wait').click();await action('confirm').click();await action('record').click();
+      await action('wait').click();
+      assert.equal(await opening.locator('#hook').getAttribute('data-phase'),'after');
+      assert.equal(await action('confirm').count(),0,'deferring writes no draft that needs a sharing confirmation');
+      await action('record').click();
       await checkArt(opening,'quiet-ending');
       assert.equal(await opening.locator('#hook-log [data-line-id="L20"] > p').innerText(),language==='ar'
         ? 'طيب ليش المسودة تقول إن اختلاف النسخ ما يغير نتيجة الملف؟'

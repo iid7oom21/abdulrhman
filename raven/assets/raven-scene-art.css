@@ -20,3 +20,17 @@
   left:0;
   top:var(--raven-scene-top,0%);
 }
+/* Opening recovery controls sit outside decorative/aria-hidden image frames. */
+.dn-artwork{min-width:0;max-width:100%}
+.dn-artwork[data-art-state="failed"]>.raven-scene-art,
+.dn-artwork[data-art-state="retrying"]>.raven-scene-art,
+.dn-artwork[data-art-state="failed"]>.dnVisual,
+.dn-artwork[data-art-state="retrying"]>.dnVisual,
+.dn-artwork[data-art-state="failed"]>.cast-portrait,
+.dn-artwork[data-art-state="retrying"]>.cast-portrait{display:none}
+.dn-art-notice{margin-block:12px;padding:12px;border:1px solid var(--line,#685239);background:var(--panel,#15120f);color:var(--text,#eee9df);line-height:1.65}
+.dn-art-notice[hidden]{display:none}
+.dn-art-status{margin:0 0 8px;font-size:14px;overflow-wrap:anywhere}
+.dn-art-retry{max-width:100%;min-height:44px;padding:8px 12px;border:1px solid var(--gold,#c59a61);background:transparent;color:inherit;font:inherit;font-size:14px;cursor:pointer;white-space:normal}
+.dn-art-retry[aria-disabled="true"]{cursor:wait}
+.dn-art-retry:focus-visible,.dn-artwork:focus-visible{outline:2px solid var(--gold-hi,#d6b98d);outline-offset:3px}

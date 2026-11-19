@@ -39,6 +39,11 @@ h3{font-size:19px;color:var(--gold);margin-bottom:10px}
 .case-art{margin:0 0 18px;max-width:640px;overflow:hidden}
 .case-art-image{overflow:hidden}
 .case-art figcaption{font-size:.85rem;line-height:1.6;margin-top:8px}
+.case-art figcaption:focus-visible{outline-offset:-2px}
+.case-art-status{margin-block:12px 8px;color:var(--soft);font-size:14px;line-height:1.8;overflow-wrap:anywhere}
+.case-art-retry{margin-block:0 6px}
+.case-art-retry:focus-visible{outline-offset:-3px}
+.case-art-retry[aria-disabled="true"]{cursor:wait;opacity:.7}
 .case-art img{display:block;width:100%;height:auto}
 .case-art-atlas{position:relative;aspect-ratio:2/1}
 .case-art-atlas img{position:absolute;width:100%;height:300%;max-width:none;left:0;top:var(--image-top,0%)}

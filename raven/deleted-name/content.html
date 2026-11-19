@@ -28,7 +28,7 @@
 <link href="https://fonts.googleapis.com" rel="preconnect">
 <link crossorigin href="https://fonts.gstatic.com" rel="preconnect">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600&amp;family=IBM+Plex+Sans+Arabic:wght@400;500;600&amp;display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../assets/raven-scene-art.css?v=scene-art-1">
+<link rel="stylesheet" href="../assets/raven-scene-art.css?v=scene-art-2">
 <style>
 /* Same warm palette as the homepage (raven-redesign-v1.css, Palette v3). */
 :root{
@@ -487,6 +487,8 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     return node;
   };
   function sceneArt(id, atlas, row) {
+    const managed = window.RavenOpeningArtwork?.scene(id, atlas, row);
+    if (managed) return managed;
     const figure = element('figure',undefined,'raven-scene-art');
     figure.dataset.sceneArt = id;figure.setAttribute('aria-hidden','true');
     figure.style.setProperty('--raven-scene-top',String(-100 * row) + '%');
@@ -683,7 +685,8 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
 })();
 
 </script>
-<script src="reading-tools.js?v=6"></script>
+<script src="reading-tools.js?v=7"></script>
 <script src="case-entry.js?v=1"></script>
+<script src="opening-artwork.js?v=2" async></script>
 </body>
 </html>

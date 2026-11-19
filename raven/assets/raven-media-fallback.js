@@ -5,12 +5,14 @@
   const player = document.getElementById('ravenEpisodePlayer');
   const film = document.querySelector('.film.raven');
   const records = [];
+  const RETRY_TIMEOUT_MS = 20000;
   const words = {
     heading: ['معاينات الصور', 'Image previews'],
     preview: ['تعذر تحميل معاينة هذه الصورة.', 'This image preview could not load.'],
     poster: ['تعذر تحميل صورة الغلاف.', 'The cover image could not load.'],
     retry: ['أعد تحميل الصورة', 'Retry image'],
     loading: ['جارٍ تحميل الصورة…', 'Loading image…'],
+    timeout: ['استغرق تحميل الصورة وقتًا أطول من المتوقع. يمكنك إعادة المحاولة.', 'The image is taking longer than expected. You can retry.'],
     film: ['RAVEN 17 · صورة الغلاف', 'RAVEN 17 · cover image']
   };
   const text = key => words[key][document.documentElement.lang === 'en' ? 1 : 0];
@@ -37,9 +39,10 @@
     panel.hidden = !records.some(record => record.state === 'failed' || record.state === 'retrying');
     records.forEach(record => {
       const unavailable = record.state === 'failed' || record.state === 'retrying';
+      const message = record.state === 'retrying' ? 'loading' : record.timedOut ? 'timeout' : record.kind;
       record.notices.forEach(note => {
         note.hidden = !unavailable;
-        note.textContent = unavailable ? text(record.state === 'retrying' ? 'loading' : record.kind) : '';
+        note.textContent = unavailable ? text(message) : '';
       });
       record.controls.forEach(({row, label, button, result}) => {
         row.hidden = !unavailable;
@@ -47,7 +50,7 @@
         button.textContent = text(record.state === 'retrying' ? 'loading' : 'retry');
         button.setAttribute('aria-label', text('retry') + ': ' + title(record));
         button.setAttribute('aria-disabled', String(record.state === 'retrying'));
-        result.textContent = record.attempt && unavailable ? text(record.state === 'retrying' ? 'loading' : record.kind) : '';
+        result.textContent = record.attempt && unavailable ? text(message) : '';
       });
     });
   }
@@ -62,10 +65,21 @@
     button.type = 'button';
     button.addEventListener('click', () => {
       if (record.state !== 'failed') return;
+      clearTimeout(record.timer);
+      const attempt = ++record.attempt;
+      record.timedOut = false;
       record.state = 'retrying';
       render();
       const retry = new URL(record.original);
-      retry.searchParams.set('raven-media-retry', String(++record.attempt));
+      retry.searchParams.set('raven-media-retry', String(attempt));
+      // Bound explicit retries only: untouched lazy artwork may not have
+      // requested its image yet. A timeout never starts another request.
+      record.timer = setTimeout(() => {
+        if (record.attempt !== attempt || record.state !== 'retrying') return;
+        record.state = 'failed';
+        record.timedOut = true;
+        render();
+      }, RETRY_TIMEOUT_MS);
       record.image.src = retry.href;
     });
     row.append(label, button, result);
@@ -81,16 +95,22 @@
   function track(record) {
     record.state = 'pending';
     record.attempt = 0;
+    record.timer = null;
+    record.timedOut = false;
     record.controls = [];
     records.push(record);
     controls(record, panel);
     record.image.addEventListener('error', () => {
+      clearTimeout(record.timer);
+      record.timedOut = false;
       record.state = 'failed';
       record.failed();
       render();
     });
     record.image.addEventListener('load', () => {
       if (!record.image.naturalWidth) return;
+      clearTimeout(record.timer);
+      record.timedOut = false;
       const focusedRetry = record.controls.some(({button}) => button === document.activeElement);
       record.state = 'loaded';
       record.loaded();
