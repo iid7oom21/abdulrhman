@@ -4,6 +4,22 @@ import {createHash} from 'node:crypto';
 
 // Reviewed public runtime files only. Never enumerate a repository or serve by extension.
 const files = [
+  // Local visual-review assets. No private content or new API surface.
+  'raven/assets/raven-visual-home.css',
+  'raven/assets/raven-visual-home.js',
+  'raven/deleted-name/opening-visual.css',
+  'raven/deleted-name/opening-visual.js',
+  'raven/deleted-name/play/play-visual.css',
+  'raven/assets/visual-20261119/case-entry.webp',
+  'raven/assets/visual-20261119/cinema-atmosphere.webp',
+  'raven/assets/visual-20261119/comparison-surface-mobile.webp',
+  'raven/assets/visual-20261119/notebook-surface.webp',
+  'raven/assets/visual-20261119/paper-grain.webp',
+  'raven/assets/visual-20261119/notebook-surface-mobile.webp',
+  'raven/assets/visual-20261119/comparison-surface.webp',
+  'raven/assets/visual-20261119/section-divider.webp',
+  'raven/assets/visual-20261119/case-entry-mobile.webp',
+  'raven/assets/visual-20261119/cinema-atmosphere-mobile.webp',
   'site-player.js', 'site-audio.js', 'site-entry.js', 'site-bridge.js', 'site-player.css',
   'raven/index.html', 'raven/content.html',
   'raven/deleted-name/index.html', 'raven/deleted-name/content.html', 'raven/deleted-name/reading-tools.js',
