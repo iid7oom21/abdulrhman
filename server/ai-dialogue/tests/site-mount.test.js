@@ -67,6 +67,68 @@ test('hosting can land on RAVEN without creating a preview session or accepting 
   assert.throws(() => createPreviewServer({siteRoot:f.root,hostedRootRedirect:'https://example.com/'}),/invalid_hosted_root_redirect/);
 });
 
+test('retired poster stays inaccessible in stale exports while legacy landing and shared media remain available', async t => {
+  const f = fixture(t);
+  const retiredPoster = 'raven/terminal-preview/assets/zarqa-poster.jpg';
+  f.write(retiredPoster, 'RETIRED_POSTER_FROM_OLD_EXPORT');
+  const landing = '<!doctype html><meta http-equiv="refresh" content="0; url=../../"><a href="../../">RAVEN</a>';
+  f.write('raven/terminal-preview/zarqa/index.html', landing);
+  const shared = [
+    ['raven/terminal-preview/assets/hero-poster.jpg','image/jpeg','RAVEN_POSTER'],
+    ['raven/terminal-preview/assets/hero-loop.mp4','video/mp4','RAVEN_LOOP'],
+    ['raven/terminal-preview/assets/episode-1.jpg','image/jpeg','EPISODE_COVER'],
+    ['raven/terminal-preview/assets/ibm-plex-arabic.woff2','font/woff2','ARABIC_FONT'],
+  ];
+  for (const [name,,body] of shared) f.write(name,body);
+  const s = await start(t,{siteRoot:f.root});
+  for (const method of ['GET','HEAD']) {
+    const poster = await fetch(s.root + '/' + retiredPoster + '?v=old',{method});
+    assert.equal(poster.status,404,'retirement is enforced by the allowlist, even if stale bytes remain on disk');
+    assert.equal(poster.headers.get('set-cookie'),null);
+    assert.doesNotMatch(await poster.text(),/RETIRED_POSTER_FROM_OLD_EXPORT/);
+    for (const pathname of ['/raven/terminal-preview/zarqa/','/raven/terminal-preview/zarqa/index.html']) {
+      const response = await fetch(s.root + pathname + '?lang=en',{method});
+      assert.equal(response.status,200,'the neutral legacy landing remains hostable');
+      assert.equal(response.headers.get('set-cookie'),null);
+      assert.equal(await response.text(),method === 'HEAD' ? '' : landing);
+    }
+    for (const [name,type,body] of shared) {
+      const response = await fetch(s.root + '/' + name,{method});
+      assert.equal(response.status,200);assert.equal(response.headers.get('content-type'),type);
+      assert.equal(await response.text(),method === 'HEAD' ? '' : body);
+    }
+  }
+  const canonical = await fetch(s.root + '/raven/terminal-preview/zarqa?lang=en',{redirect:'manual'});
+  assert.equal(canonical.status,308);
+  assert.equal(canonical.headers.get('location'),'/raven/terminal-preview/zarqa/?lang=en');
+  assert.equal(canonical.headers.get('set-cookie'),null);
+});
+
+test('only reviewed atmosphere clips and posters are public and support media ranges without sessions', async t => {
+  const f = fixture(t);
+  const assets = ['archive-opening','paper-detail','over-shoulder'].flatMap(name =>
+    ['mp4','webp'].map(extension => `raven/assets/atmosphere-v1/${name}.${extension}`));
+  for (const asset of assets) f.write(asset,'0123456789');
+  const privateFiles = ['author-notes.json','archive-opening-original.mp4','private-reference.webp'];
+  for (const name of privateFiles) f.write('raven/assets/atmosphere-v1/' + name,'PRIVATE_SIBLING');
+  const s = await start(t,{siteRoot:f.root});
+  for (const asset of assets) {
+    const response = await fetch(s.root + '/' + asset,{headers:{range:'bytes=2-5'}});
+    assert.equal(response.status,206);
+    assert.equal(response.headers.get('content-type'),asset.endsWith('.mp4') ? 'video/mp4' : 'image/webp');
+    assert.equal(response.headers.get('content-range'),'bytes 2-5/10');
+    assert.equal(response.headers.get('set-cookie'),null);
+    assert.equal(await response.text(),'2345');
+    const head = await fetch(s.root + '/' + asset,{method:'HEAD'});
+    assert.equal(head.status,200);assert.equal(head.headers.get('set-cookie'),null);
+    assert.equal(await head.text(),'');
+  }
+  for (const name of privateFiles) {
+    const response = await fetch(s.root + '/raven/assets/atmosphere-v1/' + name);
+    assert.equal(response.status,404);assert.doesNotMatch(await response.text(),/PRIVATE_SIBLING/);
+  }
+});
+
 test('mounted public files are read-only, media ranges work, and only dialogue GET issues a session', async t => {
   const f = fixture(t), s = await start(t, {siteRoot:f.root, secureCookie:true});
   const redirect = await fetch(s.root + '/raven?lang=en', {redirect:'manual'});

@@ -4,7 +4,7 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 
-export const SITE_COMMIT = '33908a2b36ec1b207ddde48fc955d18ac1e2d209';
+export const SITE_COMMIT = '9a9bd1c09ad1f53c7c38e03def5929ad0381a35b';
 export const PUBLIC_RELEASE = '2026-11-15-investigation-tools-1';
 export const EXPORT_MARKER = '.raven-render-export.json';
 // Render builds from a shallow, single-branch checkout and removes its Git
@@ -29,6 +29,8 @@ export const CORE_FILES = [
   'raven/investigation-lab/index.html','raven/investigation-lab/style.css',
   'raven/investigation-lab/workbench.js',
   'raven/assets/raven-homepage-v6.css','raven/assets/raven-polish-v2.css',
+  ...['archive-opening','paper-detail','over-shoulder'].flatMap(name =>
+    ['mp4','webp'].map(extension => `raven/assets/atmosphere-v1/${name}.${extension}`)),
   'studio/index.html','studio/assets/index-DdtjoBKO.js','studio/assets/index-DO0lVgqN.css',
   'raven/terminal-preview/raven-17/index.html',
   'raven/terminal-preview/assets/hero-poster.jpg',

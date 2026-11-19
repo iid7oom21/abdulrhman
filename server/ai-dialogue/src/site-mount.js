@@ -60,6 +60,9 @@ const files = [
   'raven/assets/raven-homepage-v6.css', 'raven/assets/raven-redesign-v1.css',
   'raven/assets/raven-polish-v2.css', 'raven/assets/raven-i18n.js',
   'raven/assets/raven-visual-scenes.js', 'raven/assets/raven-visual-scenes.css',
+  // Reviewed silent atmosphere clips and their posters, never a directory wildcard.
+  ...['archive-opening', 'paper-detail', 'over-shoulder'].flatMap(name =>
+    ['mp4', 'webp'].map(extension => `raven/assets/atmosphere-v1/${name}.${extension}`)),
   // Runtime files used by the pinned homepage and its linked studio, not the source/download bundle.
   'studio/index.html', 'studio/assets/index-DdtjoBKO.js', 'studio/assets/index-DO0lVgqN.css',
   'studio/visual-lab/assets/ibm-plex-arabic.woff2',
@@ -72,7 +75,7 @@ const files = [
   'raven/terminal-preview/case-017/index.html', 'raven/terminal-preview/zarqa/index.html',
   'raven/terminal-preview/raven-17/index.html',
   ...[1, 2, 3].map(n => `raven/terminal-preview/raven-17/part-${n}/index.html`),
-  ...['zarqa-poster.jpg', 'episode-1.jpg', 'episode-2.jpg', 'episode-3.jpg', 'cinzel.woff2',
+  ...['episode-1.jpg', 'episode-2.jpg', 'episode-3.jpg', 'cinzel.woff2',
     'ibm-plex-arabic.woff2', 'raven-intro-poster.jpg', 'hero-poster.jpg', 'hero-loop.mp4',
     'raven-intro.mp4'].map(name => 'raven/terminal-preview/assets/' + name),
   'fourth-signature/index.html', 'fourth-signature/favicon.svg',
