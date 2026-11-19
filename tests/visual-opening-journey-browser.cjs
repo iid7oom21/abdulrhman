@@ -24,7 +24,7 @@ const settle = frame => frame.evaluate(() => new Promise(resolve => requestAnima
 
 test('message, gate, comparison and response remain usable with no images or audio', async t => {
   const inline = [...fs.readFileSync(path.join(root, files[0]), 'utf8').matchAll(/<script>([\s\S]*?)<\/script>/g)].map(match => crypto.createHash('sha256').update(match[1]).digest('hex'));
-  assert.deepEqual(inline, ['dff24955e544e1bce81ae6d247afabe1e838875d54720bf5bfafbcc259454205', '4706a6c7a49e6f8432f2b7078addb1c0fd85453c977d2a68d06a8b5b78f4ed49'], 'approved inline copy and engine remain unchanged');
+  assert.deepEqual(inline, ['a5ff6904b872ea28a463d72e73d9ccc9a5dd3c646c8092f587f22bdff168f2cd', '4706a6c7a49e6f8432f2b7078addb1c0fd85453c977d2a68d06a8b5b78f4ed49'], 'approved merged navigation copy and unchanged scene engine match the inspected source');
   const before = fingerprint(), results = [];
   const server = http.createServer((req, res) => {
     if (!['GET', 'HEAD'].includes(req.method)) { res.writeHead(405); return res.end(); }

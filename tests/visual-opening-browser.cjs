@@ -9,7 +9,7 @@ const crypto=require('node:crypto');
 const {chromium}=require('playwright');
 const ROOT=path.resolve(__dirname,'..');
 const RESULTS=process.env.RAVEN_VISUAL_QA_DIR;
-const frozenScripts=['dff24955e544e1bce81ae6d247afabe1e838875d54720bf5bfafbcc259454205','4706a6c7a49e6f8432f2b7078addb1c0fd85453c977d2a68d06a8b5b78f4ed49'];
+const frozenScripts=['a5ff6904b872ea28a463d72e73d9ccc9a5dd3c646c8092f587f22bdff168f2cd','4706a6c7a49e6f8432f2b7078addb1c0fd85453c977d2a68d06a8b5b78f4ed49'];
 const activeFiles=['raven/deleted-name/content.html','raven/deleted-name/opening-visual.js','raven/deleted-name/opening-visual.css','raven/deleted-name/opening-artwork.js','raven/deleted-name/reading-tools.js','raven/deleted-name/case-entry.js'];
 const fingerprint=()=>Object.fromEntries(activeFiles.map(file=>[file,crypto.createHash('sha256').update(fs.readFileSync(path.join(ROOT,file))).digest('hex')]));
 const readState=page=>page.locator('#hook').evaluate(hook=>({phase:hook.dataset.phase,choice:hook.dataset.choice,recipient:hook.dataset.recipient,share:hook.dataset.share,layers:JSON.parse(hook.dataset.layers),comparison:document.querySelector('#hook-comparison')?.hidden??null,notes:JSON.parse(document.querySelector('#reading-tools').dataset.notes).entries.map(({id,sourceId,kind,text})=>({id,sourceId,kind,text})),noteDraft:document.querySelector('#reading-note').value}));
@@ -18,7 +18,7 @@ const overflows=page=>page.evaluate(()=>({viewport:innerWidth,document:document.
 test('visual opening keeps the approved script, readable cards and local choice boundaries',async t=>{
  const html=fs.readFileSync(path.join(ROOT,activeFiles[0]),'utf8');
  const scripts=[...html.matchAll(/<script>([\s\S]*?)<\/script>/g)].map(m=>crypto.createHash('sha256').update(m[1]).digest('hex'));
- assert.deepEqual(scripts,frozenScripts,'the approved inline translations and scene engine must remain byte-identical to the inspected 07ba37b baseline');
+ assert.deepEqual(scripts,frozenScripts,'merged navigation translations match the inspected incoming source; the scene engine remains unchanged');
  const before=fingerprint(),results=[];
  const server=http.createServer((req,res)=>{
   if(!['GET','HEAD'].includes(req.method)){res.writeHead(405);return res.end();}

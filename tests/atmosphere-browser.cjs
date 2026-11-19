@@ -77,7 +77,7 @@ test('atmosphere gallery remains optional, silent and independent of case state'
       await page.goto(base+'/abdulrhman/raven/?lang='+(options.language||'ar'),{waitUntil:'load'});
       const scope=page.frameLocator('#site-content');await scope.locator('#raven-atmosphere').waitFor();
       await run({page,scope,fixture,requests});
-      assert.deepEqual(requests.filter(request=>/\/api\//.test(new URL(request.url).pathname)||!['GET','HEAD'].includes(request.method)),[],'gallery never calls an API or starts a case session');
+      assert.deepEqual(requests.filter(request=>{const pathname=new URL(request.url).pathname;return !['GET','HEAD'].includes(request.method)||(/\/api\//.test(pathname)&&!(pathname==='/api/case/resume-summary'&&request.method==='GET'));}),[],'homepage may read its minimal resume summary; gallery starts no session and performs no other API call or mutation');
       assert.equal(await page.evaluate(()=>localStorage.getItem('other_app_preferences')),'atmosphere-keep');
       assert.equal(await page.evaluate(()=>localStorage.getItem('raven_deleted_name_preview_v2')),'{"synthetic":"keep byte-for-byte"}');
       assert.deepEqual(errors,[],'no runtime page errors');

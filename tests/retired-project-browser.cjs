@@ -75,7 +75,7 @@ test('retirement preserves the film and case journeys and redirects saved links'
     try {
       await run({page, requests});
       assert.deepEqual(errors, [], 'no runtime page errors');
-      assert.deepEqual(requests.filter(r => !['GET','HEAD'].includes(r.method) || new URL(r.url).pathname.startsWith('/api/')), [], 'no service or story mutations');
+      assert.deepEqual(requests.filter(r => {const pathname=new URL(r.url).pathname;return !['GET','HEAD'].includes(r.method)||(pathname.startsWith('/api/')&&!(pathname==='/api/case/resume-summary'&&r.method==='GET'));}), [], 'no service or story mutations; only the minimal read-only homepage summary is permitted');
     } finally { await context.close(); }
   }
 
