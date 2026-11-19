@@ -22,6 +22,8 @@ Local/private operation is documented on `main` in `docs/CASE-LOCAL.md`. A playe
 
 This basic preview server is suitable for pages and assets. To verify seeking in the local studio videos, use a server that honors HTTP `Range` requests with `206 Partial Content`; the basic Python server used in this review returned `200` and could not complete those seek checks. `tests/visual-scenes.mjs` also expects the site to be served under `/abdulrhman/`, matching its published path.
 
+The static opening can retry a failed illustration without reloading the page or resetting its choices and temporary reading notebook. Recovery is optional: the opening still runs if `raven/deleted-name/opening-artwork.js` is unavailable. A visible stalled image offers retry after 20 seconds; retries are manual and never submit game actions or notebook text. The original images remain decorative. `tests/opening-artwork-browser.cjs` checks recovery, language changes, delayed helpers, and preservation of notes in Chromium.
+
 Public page identities and sharing:
 
 - Home: `https://iid7oom21.github.io/abdulrhman/raven/`
