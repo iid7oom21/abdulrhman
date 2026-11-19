@@ -48,7 +48,7 @@ test('homepage offers the case directly without starting the dialogue preview', 
       context.on('page', page => page.on('pageerror', error => errors.push(error.message)));
       await context.route('**/*', route => {
         const request = route.request();
-        requests.push(request.url());
+        requests.push({url:request.url(), method:request.method()});
         if (!['GET','HEAD'].includes(request.method())) writes.push(request.method() + ' ' + request.url());
         // Offline external resources: no real API, contact, or payment service is contacted.
         return request.url().startsWith(base + '/') ? route.continue() : route.abort();
@@ -70,8 +70,11 @@ test('homepage offers the case directly without starting the dialogue preview', 
           'visiting the homepage and opening scene must preserve every saved preview byte');
       };
       const assertNoPreview = () => {
-        assert.deepEqual(requests.filter(url => /\/raven\/dialogue(?:\/|$)|\/local-api\.js(?:\?|$)|\/api(?:\/|$)/.test(new URL(url).pathname)), [],
-          'the homepage and case entry must not request the dialogue page, local API adapter, or any API');
+        assert.deepEqual(requests.filter(request => {
+          const url = new URL(request.url);
+          const resumeSummary = request.method === 'GET' && url.origin === base && url.pathname === '/api/case/resume-summary';
+          return !resumeSummary && /\/raven\/dialogue(?:\/|$)|\/local-api\.js(?:\?|$)|\/api(?:\/|$)/.test(url.pathname);
+        }), [], 'only the same-origin read-only resume summary is allowed; no dialogue page, local API adapter, or other API');
         assert.deepEqual(writes, [], 'navigation must never send an automatic network action');
       };
       const assertCase = async () => {
@@ -123,6 +126,10 @@ test('homepage offers the case directly without starting the dialogue preview', 
       const card = frame.locator('#dialogue-preview');
       assert.equal(await card.isVisible(), true);
       assert.match(await card.locator('[data-dn-k="eyebrow"]').innerText(), language === 'en' ? /In development/i : /قيد التطوير/);
+      const castReference = card.locator('.rvnVisualCastReference');
+      assert.equal(await castReference.evaluate(details => details.open), false, 'the visual reference stays optional at entry');
+      await castReference.locator('summary').click();
+      assert.equal(await castReference.evaluate(details => details.open), true, 'the reader opens the reference using its native summary');
       const portraits = card.locator('[data-dn-entry]');
       assert.equal(await portraits.count(), 6);
       for (const link of await portraits.all()) assert.equal(await link.getAttribute('href'), caseHref);
@@ -131,8 +138,9 @@ test('homepage offers the case directly without starting the dialogue preview', 
         : ['يوناس', 'كلير', 'إيلينا', 'ماتيو', 'نوح', 'طاولة الصالة']);
       if (language === 'en') assert.doesNotMatch(await card.innerText(), /[\u0600-\u06ff]/, 'the English card has no untranslated Arabic roles or disclaimer');
       assert.match(await card.locator('[data-dn-k="illustrationNote"]').innerText(), language === 'en' ? /written materials/ : /المواد المكتوبة/);
-      const images = card.locator('img');
+      const images = portraits.locator('img');
       assert.equal(await images.count(), 6, 'the case card retains all five portraits and the evidence-table illustration');
+      assert.equal(await card.locator('.rvnVisualCaseArt img').count(), 1, 'the new case-entry art is separate from the six original reference cards');
       assert.deepEqual(await images.evaluateAll(nodes => nodes.map(img => img.alt)), language === 'en'
         ? ['Jonas', 'Claire', 'Elena', 'Mateo', 'Noah', 'Artist’s impression of the table of papers']
         : ['يوناس', 'كلير', 'إيلينا', 'ماتيو', 'نوح', 'تصور فني لطاولة الأوراق']);
@@ -186,7 +194,9 @@ test('homepage offers the case directly without starting the dialogue preview', 
     await context.route('**/*', route => {
       const request = route.request();
       if (!['GET','HEAD'].includes(request.method())) writes.push(request.method() + ' ' + request.url());
-      if (/\/api(?:\/|$)|\/raven\/dialogue(?:\/|$)/.test(new URL(request.url()).pathname)) api.push(request.url());
+      const url = new URL(request.url());
+      const resumeSummary = request.method() === 'GET' && url.origin === base && url.pathname === '/api/case/resume-summary';
+      if (!resumeSummary && /\/api(?:\/|$)|\/raven\/dialogue(?:\/|$)|\/local-api\.js(?:\?|$)/.test(url.pathname)) api.push(request.url());
       return request.url().startsWith(base + '/') ? route.continue() : route.abort();
     });
     await context.addInitScript(() => {
@@ -211,6 +221,10 @@ test('homepage offers the case directly without starting the dialogue preview', 
         }
       }
       await page.evaluate(() => { window.__entryAudio = document.querySelector('#site-soundtrack'); });
+      const castReference = frame.locator('#dialogue-preview .rvnVisualCastReference');
+      assert.equal(await castReference.evaluate(details => details.open), false);
+      await castReference.locator('summary').click();
+      assert.equal(await castReference.evaluate(details => details.open), true);
       await frame.locator('#dialogue-preview [data-dn-entry]').nth(index).click();
       await page.waitForURL(url => url.pathname === '/raven/deleted-name/' && url.searchParams.get('lang') === 'en');
       await frame.locator('#hook').waitFor();
@@ -221,7 +235,7 @@ test('homepage offers the case directly without starting the dialogue preview', 
       assert.equal(await page.locator('#music-track-picker option').count(), 13);
     }
     assert.deepEqual(writes, [], 'entering a case never submits an action');
-    assert.deepEqual(api, [], 'entry does not open the technical preview or read availability before the opening ends');
+    assert.deepEqual(api, [], 'entry permits only the same-origin read-only resume summary, never the technical preview, local adapter, or other API');
     assert.deepEqual(errors, []);
   });
 });

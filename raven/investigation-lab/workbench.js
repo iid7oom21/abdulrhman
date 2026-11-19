@@ -124,6 +124,16 @@
   });
   $('lab-inspector-close').addEventListener('click',()=>$('lab-inspector').close());
   $('lab-inspector').addEventListener('close',()=>{opener?.focus({preventScroll:true});});
+  $('lab-inspector').addEventListener('keydown',event=>{
+    // A native modal inside an iframe can otherwise tab into the host's music
+    // controls. Keep the reading dialog's keyboard loop inside this document.
+    const dialog=$('lab-inspector');if(event.key!=='Tab'||!dialog.open)return;
+    const controls=[...dialog.querySelectorAll('button,a[href],input,select,textarea,[tabindex]')].filter(el=>!el.disabled&&el.tabIndex>=0&&el.getClientRects().length);
+    const first=controls[0],last=controls.at(-1);
+    if(!first){event.preventDefault();dialog.focus();return;}
+    if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}
+    else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}
+  });
   $('lab-zoom').addEventListener('input',()=>{const value=Number($('lab-zoom').value);$('lab-inspector-body').style.setProperty('--lab-zoom',String(value/100));$('lab-zoom-value').textContent=value+'%';});
   $('lab-scan').addEventListener('click',()=>{
     const dialog=$('lab-inspector'),enabled=dialog.classList.toggle('lab-contrast');$('lab-scan').setAttribute('aria-pressed',String(enabled));

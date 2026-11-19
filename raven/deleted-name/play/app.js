@@ -504,7 +504,7 @@
       if (saveError) checkpointFailure(saveError);
       if (checkpointSaved) clearAcknowledgedPending(value);
     }
-    if (state && (state.caseId !== value.caseId || state.contentVersion !== value.contentVersion || state.checkpointInfo?.sessionTag !== value.checkpointInfo?.sessionTag)) {
+    if (state && (state.caseId !== value.caseId || state.contentVersion !== value.contentVersion || readingSessionTag(state) !== readingSessionTag(value))) {
       comparisonOrigins.clear();lastComparisonSlot = null;
     }
     newlyEarned = new Set(state ? value.materials.filter(material => !state.materials.some(previous => previous.id === material.id)).map(material => material.id) : []);
@@ -1036,6 +1036,12 @@
     renderReview();focus('review-title');return {ok:true};
   }
   window.RavenBeliefReview = Object.freeze({getView:beliefView,prepareNote:prepareBeliefNote});
+  function readingSessionTag(value) {
+    // Scope private reading tools without exposing the session cookie or
+    // requiring browser-checkpoint storage. Older servers keep their fallback.
+    if (value?.clientSessionTag !== undefined) return typeof value.clientSessionTag === 'string' && /^[a-f0-9]{64}$/.test(value.clientSessionTag) ? value.clientSessionTag : null;
+    return value?.checkpointInfo?.sessionTag || null;
+  }
   function publishLabView() {
     if (!investigationLab) return;
     // An optional reading surface receives only the already-earned player view.
@@ -1043,7 +1049,7 @@
     // this controller. The opaque session tag is not an authentication token.
     document.dispatchEvent(new CustomEvent('raven:case-view', {detail:state ? {
       caseId:state.caseId,contentVersion:state.contentVersion,revision:state.revision,
-      sessionId:state.checkpointInfo?.sessionTag || null,locale:lang,
+      sessionId:readingSessionTag(state),locale:lang,
       materials:structuredClone(state.materials),
       actions:state.actions.map(action => ({id:action.id,label:structuredClone(action.label)})),
     } : {caseId:null,locale:lang}}));
@@ -1086,7 +1092,7 @@
     if (!browserMode()) {++epoch;busy = false;}
     const url = new URL(location.href);if (lang === 'en') url.searchParams.set('lang','en');else url.searchParams.delete('lang');history.replaceState(history.state,'',url);
     render();if (previous && $(previous)) {$(previous).focus({preventScroll:true});if (selection && $(previous) instanceof HTMLTextAreaElement) $(previous).setSelectionRange(...selection);}
-    announce(tr('languageChanged'));if (!state && !busy) void connect();
+    announce(tr('languageChanged'));document.dispatchEvent(new CustomEvent('raven:language',{detail:{language:lang}}));if (!state && !busy) void connect();
   }
   async function refresh() {
     if (busy) return;const token = ++epoch;setBusy(true);

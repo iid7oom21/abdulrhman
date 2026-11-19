@@ -21,12 +21,12 @@ function fixture(){
 test('review workbench: earned sources, private board, scope, storage and accessible reading',async t=>{
  const browser=await chromium.launch({headless:true,executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox']});
  async function check(options,run){
-  const api=fixture();if(options.noTag)delete api.state.checkpointInfo;
+  const api=fixture();if(options.noTag)delete api.state.checkpointInfo;if(options.configure)options.configure(api.state);
   await new Promise(r=>api.server.listen(0,'127.0.0.1',r));
   const base='http://127.0.0.1:'+api.server.address().port,context=await browser.newContext({viewport:{width:options.width||390,height:900},reducedMotion:'reduce'});
   if(options.init)await context.addInitScript(options.init,{key:boardKey()});
   const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
-  try{await page.goto(base+'/raven/investigation-lab/'+(options.lang==='en'?'?lang=en':''));await page.locator('#lab-workbench:not([hidden])').waitFor();await run({api,base,context,page});assert.deepEqual(errors,[]);assert.equal(api.requests.some(r=>r.method!=='GET'),false,'workbench cannot mutate case state or call a provider');}
+  try{await page.goto(base+'/raven/investigation-lab/content.html'+(options.lang==='en'?'?lang=en':''));await page.locator('#lab-workbench:not([hidden])').waitFor();await run({api,base,context,page});assert.deepEqual(errors,[]);assert.equal(api.requests.some(r=>r.method!=='GET'),false,'workbench cannot mutate case state or call a provider');}
   finally{await context.close();await new Promise(r=>api.server.close(r));}
  }
  async function add(page,note='A private hypothesis, not an established fact.'){await page.selectOption('#lab-link-a','letter');await page.selectOption('#lab-link-b','map');await page.fill('#lab-link-note',note);await page.click('#lab-link-add');}
@@ -85,10 +85,31 @@ test('review workbench: earned sources, private board, scope, storage and access
    await page.evaluate(()=>{document.getElementById('lab-link-note').value='PRIVATE_BEFORE_DISCONNECT';document.dispatchEvent(new CustomEvent('raven:case-view',{detail:{locale:'ar',caseId:null}}));});
    assert.equal(await page.locator('#lab-link-note').inputValue(),'');assert.equal(await page.locator('#lab-workbench').isHidden(),true);
   }));
+  for(const mode of ['disk-file','process-memory']) await t.test(mode+' reading identity scopes private links without checkpoint credentials',()=>check({noTag:true,configure:state=>{state.clientSessionTag='a'.repeat(64);state.persistence=mode;state.saveStatus=mode==='disk-file'?'confirmed':'memory';}},async({page,api})=>{
+   assert.equal(await page.locator('#lab-link-add').isDisabled(),false);
+   await add(page,'PRIVATE_FIRST_SESSION_LINK');
+   const firstKey=boardKey('a'.repeat(64));
+   const first=await page.evaluate(key=>localStorage.getItem(key),firstKey);
+   assert.match(first,/PRIVATE_FIRST_SESSION_LINK/);
+   await page.reload();await page.locator('#lab-workbench:not([hidden])').waitFor();
+   assert.equal(await page.locator('.lab-link').count(),1);
+   api.state.clientSessionTag='b'.repeat(64);await page.click('#state-refresh');
+   await page.waitForFunction(()=>document.querySelectorAll('.lab-link').length===0);
+   assert.equal(await page.locator('#lab-link-add').isDisabled(),false);
+   await add(page,'PRIVATE_SECOND_SESSION_LINK');
+   assert.equal(await page.evaluate(key=>localStorage.getItem(key),firstKey),first,'the old scoped copy remains unchanged');
+   assert.doesNotMatch(await page.locator('#lab-workbench').innerText(),/PRIVATE_FIRST_SESSION_LINK/);
+   // A malformed newer identity cannot silently fall back to an old scope.
+   api.state.clientSessionTag='invalid-new-identity';api.state.checkpointInfo={sessionTag:'fixture-session'};
+   await page.click('#state-refresh');await page.locator('#lab-link-add:disabled').waitFor();
+   assert.equal(await page.locator('.lab-link').count(),0);
+   assert.doesNotMatch(await page.locator('#lab-workbench').innerText(),/PRIVATE_FIRST_SESSION_LINK|PRIVATE_SECOND_SESSION_LINK/);
+   assert.equal(await page.evaluate(key=>localStorage.getItem(key),firstKey),first);
+  }));
   await t.test('new session and content version isolate boards without deleting old copies',()=>check({},async({page,api})=>{await add(page);const saved=await page.evaluate(key=>localStorage.getItem(key),boardKey());api.state.checkpointInfo.sessionTag='second-session';await page.click('#state-refresh');await page.waitForFunction(()=>document.querySelectorAll('.lab-link').length===0);assert.equal(await page.locator('.lab-link').count(),0);await add(page,'Second session');api.state.contentVersion='lab-fixture-v2';await page.reload();await page.locator('#lab-workbench:not([hidden])').waitFor();assert.equal(await page.locator('.lab-link').count(),0);assert.equal(await page.evaluate(key=>localStorage.getItem(key),boardKey()),saved);}));
   await t.test('another tab preserves the board and moves only a lost remove-button focus to recovery',()=>check({},async({page,context,base,api})=>{
    await add(page,'FIRST_PRIVATE_CONNECTION');
-   const second=await context.newPage();await second.goto(base+'/raven/investigation-lab/');await second.locator('#lab-workbench:not([hidden])').waitFor();
+   const second=await context.newPage();await second.goto(base+'/raven/investigation-lab/content.html');await second.locator('#lab-workbench:not([hidden])').waitFor();
    await second.locator('.lab-link button').focus();
    await add(page,'SECOND_PRIVATE_CONNECTION');await second.locator('#lab-link-add:disabled').waitFor();
    assert.match(await second.locator('#lab-board-status').innerText(),/تبويب آخر/);
@@ -136,7 +157,7 @@ test('independent review bridges preserve workbench and belief drafts during bus
   let release=null;const errors=[];page.on('pageerror',e=>errors.push(e.message));
   await page.addInitScript(()=>{window.reviewBridgeEvents=[];for(const type of ['raven:case-view','raven:belief-view'])document.addEventListener(type,event=>window.reviewBridgeEvents.push({type,hasCase:Boolean(event.detail?.caseId),hasActions:Array.isArray(event.detail?.actions),hasNotes:Array.isArray(event.detail?.notes)}));});
   try{
-   await page.goto(base+'/raven/investigation-lab/?lang='+lang);await page.locator('#case-app').waitFor({state:'visible'});await page.waitForFunction(()=>document.body.getAttribute('aria-busy')==='false');
+   await page.goto(base+'/raven/investigation-lab/content.html?lang='+lang);await page.locator('#case-app').waitFor({state:'visible'});await page.waitForFunction(()=>document.body.getAttribute('aria-busy')==='false');
    assert.equal(await page.locator('#lab-workbench').isVisible(),true,'a valid case must keep the investigation workbench visible after the controller becomes idle');
    // Exercise both actual components together; this only injects the public
    // belief component into the test page, without changing production markup.
