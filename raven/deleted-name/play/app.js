@@ -22,6 +22,7 @@
       startTitle:'ابدأ جلسة القضية',startBody:'يتابع الخادم هذه الجلسة. إذا لم تنقل اختيارًا من الافتتاح، ستختار نقطة الدخول داخل المشهد.',start:'ابدأ أو تابع جلستي',
       openingTitle:'اختيار الافتتاح الذي ستنقله',openingScope:'هذا اختيار محلي من الافتتاح، وليس إثباتًا لإرسال سابق إلى الخادم. لا يتضمن ملاحظاتك الخاصة.',startWithOpening:'ابدأ بهذا الاختيار',startWithoutOpening:'ابدأ دون استيراد الاختيار',openingInvalid:'اختيار الافتتاح المحفوظ غير صالح لهذه النسخة؛ لن يُستورد. يمكنك البدء دونه.',openingChoice:'الرد المختار',openingRecipient:'المستلم المختار داخل الافتتاح',precise:'توضيح دقيق',wait:'تأجيل الرد',refuse:'رفض التسجيل الآن',lie:'إنكار الرسالة',both:'يوناس وكلير',draft:'مسودة فقط — لا مستلم',none:'لا مستلم',
       confirmed:'حُفظت هذه الخطوة على خادم التجربة.',memory:'هذه الجلسة في ذاكرة الخادم فقط؛ قد تفقدها إعادة تشغيله. يمكنك تنزيل سجل للقراءة.',
+      browserStartBody:'لم نجد تقدمًا محفوظًا لهذه القضية في هذا المتصفح، ولا توجد جلسة نشطة على الخادم يمكن متابعتها. يمكنك بدء جلسة جديدة أو العودة إلى صفحة القضية.',browserStart:'ابدأ جلسة جديدة',
       browserSaved:'حُفظ تقدمك في هذا المتصفح. حذف بيانات المتصفح يمسحه؛ ليس حفظًا سحابيًا أو حسابًا بين الأجهزة.',browserUnsaved:'لم يُحفظ آخر تقدم في هذا المتصفح. أبقِ الصفحة مفتوحة واحتفظ بسجل للقراءة.',
       browserSaveTitle:'تعذّر حفظ تقدمك في هذا المتصفح',browserSaveBody:'تظل الحالة المعروضة متاحة للقراءة والتنزيل. أبقِ الصفحة مفتوحة، وتحقق من توفر مساحة للتخزين أو استخدم متصفحًا حديثًا قبل المتابعة.',browserSaveRetry:'حاول حفظ هذه الخطوة',
       browserNewerTitle:'يوجد تقدم أحدث في تبويب آخر',browserNewerBody:'حُفظت نسخة أحدث في هذا المتصفح. حدّث حالة القضية قبل إجراء اختيار جديد؛ لن نستبدل النسخة الأحدث.',
@@ -63,6 +64,7 @@
       startTitle:'Begin a case session',startBody:'The server follows this session. Without an imported opening choice, you will choose your entry point in the scene.',start:'Start or resume my session',
       openingTitle:'Opening choice to import',openingScope:'This is a local opening choice, not proof of earlier delivery to the server. Your private notes are not included.',startWithOpening:'Start with this choice',startWithoutOpening:'Start without importing',openingInvalid:'The saved opening choice is not valid for this version and will not be imported. You can start without it.',openingChoice:'Selected response',openingRecipient:'Recipient selected in the opening',precise:'Precise clarification',wait:'Defer the response',refuse:'Decline to record for now',lie:'Deny the message',both:'Jonas and Claire',draft:'Draft only — no recipient',none:'No recipient',
       confirmed:'This step was saved on the experience server.',memory:'This session is held in server memory only; a restart may lose it. You can download a reading copy.',
+      browserStartBody:'No saved progress for this case was found in this browser. The server has no active session to resume. You can start a new session or return to the case page.',browserStart:'Start a new session',
       browserSaved:'Progress is saved in this browser. Clearing browser data removes it; this is not cloud saving or an account shared between devices.',browserUnsaved:'The latest progress was not saved in this browser. Keep this page open and retain a reading copy.',
       browserSaveTitle:'Progress could not be saved in this browser',browserSaveBody:'The displayed state remains available for reading and downloading. Keep this page open, check available storage, or use a current browser before continuing.',browserSaveRetry:'Try saving this step',
       browserNewerTitle:'Another tab has newer progress',browserNewerBody:'A newer version was saved in this browser. Refresh the case before making another choice; the newer record will not be replaced.',
@@ -455,7 +457,7 @@
         actions.append(button('case-start',tr('startWithOpening'),() => startSession(true),true),button('case-start-without-opening',tr('startWithoutOpening'),() => startSession(false)));
       } else {
         if (openingInvalid) {const note = element('p',tr('openingInvalid'),'muted');note.id = 'opening-warning';actions.append(note);}
-        actions.append(button('case-start',tr('start'),() => startSession(false),true));
+        actions.append(button('case-start',tr(browserMode() ? 'browserStart' : 'start'),() => startSession(false),true));
       }
     }
     if (['unavailable','error'].includes(display.kind)) actions.append(button('connection-retry',tr('retryConnection'),connect));
@@ -526,7 +528,7 @@
         if (token !== epoch) return;
         if (error.status === 401 && !pending && !corruptPending) {
           if (browserMode()) await checkpointGuard(() => {if (savedCheckpoint()) throw new CheckpointError('restore');});
-          checkpointIssue = null;state = null;banner = {title:'startTitle',message:'startBody',kind:'start'};$('case-app').hidden = true;
+          checkpointIssue = null;state = null;banner = {title:'startTitle',message:browserMode() ? 'browserStartBody' : 'startBody',kind:'start'};$('case-app').hidden = true;
         } else throw error;
       }
     } catch (error) {

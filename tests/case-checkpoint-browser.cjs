@@ -314,6 +314,26 @@ test('browser-held progress with the real case HTTP service', {timeout:120000,sk
     await other.close();
   }));
 
+  await t.test('a missing browser checkpoint and expired server session offer an explicit return without starting over', () => check(async (page,api) => {
+    await read(page);await ready(page);
+    await page.evaluate(key => localStorage.removeItem(key),KEY);
+    await api.restart();await page.reload();
+    await page.locator('#case-start').waitFor();
+    for (const [lang, expected] of [['en','No saved progress'],['ar','لم نجد تقدمًا محفوظًا']]) {
+      await page.locator('#language-' + lang).click();
+      await textIncludes(page,'#connection-message',expected);
+      assert.equal(await page.locator('#case-start').innerText(),lang === 'ar' ? 'ابدأ جلسة جديدة' : 'Start a new session');
+      assert.equal(await page.locator('#case-link').isVisible(),true);
+      assert.equal(new URL(await page.locator('#case-link').getAttribute('href'),page.url()).pathname,'/raven/deleted-name/');
+    }
+    assert.equal(await rawSave(page),null);
+    assert.equal(api.restores().length,0);
+    assert.equal(api.starts().length,1,'the original start is the only session creation');
+    assert.equal(api.actions().length,1);
+    await page.locator('#case-link').click();
+    await page.waitForURL(url => url.pathname === '/raven/deleted-name/');
+  }));
+
   await t.test('corrupt local data is preserved and cannot cause a new session', () => check(async (page,api) => {
     await page.evaluate(key => localStorage.setItem(key,'{damaged'),KEY);
     await api.restart();await page.reload();await textIncludes(page,'#connection-title','could not be read');

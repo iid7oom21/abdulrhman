@@ -26,9 +26,9 @@ const materialOptions = [
   { value: 'fixture-map', label: localized('Fixture map', 'خريطة الاختبار') },
 ];
 
-function projection({ notes = true, revision = 4, receiptPreview = false, receiptBundles = false, artwork = false } = {}) {
+function projection({ caseId = 'fictional-browser-fixture', notes = true, revision = 4, receiptPreview = false, receiptBundles = false, artwork = false } = {}) {
   const state = {
-    caseId: 'fictional-browser-fixture', contentVersion: VERSION, revision,
+    caseId, contentVersion: VERSION, revision,
     saveStatus: 'confirmed', persistence: 'disk-file',
     scene: {
       id: 'fixture-desk', title: localized('Fixture reading desk', 'مكتب قراءة الاختبار'),
@@ -173,7 +173,12 @@ function fixture(options = {}) {
       api.requests.push({ method: req.method, pathname, body });
       if (pathname === '/api/case/config') {
         if (options.unavailable === '404') { res.writeHead(404, { 'Content-Type': 'text/html' }); res.end('<!doctype html><title>Static Pages</title>'); return; }
-        return json(res, 200, { enabled: options.unavailable !== 'disabled', caseId: 'fictional-browser-fixture', contentVersion: VERSION, locales: ['ar', 'en'], defaultLocale: 'ar', scope: 'written-story', persistence: 'disk-file' });
+        return json(res, 200, { enabled: options.unavailable !== 'disabled', caseId: api.state.caseId, contentVersion: VERSION, locales: ['ar', 'en'], defaultLocale: 'ar', scope: 'written-story', persistence: 'disk-file' });
+      }
+      if (pathname === '/api/case/resume-summary' && req.method === 'GET') {
+        if (!api.started) return json(res,401,{error:'session_unavailable'});
+        const {caseId,contentVersion,persistence,saveStatus} = api.state;
+        return json(res,200,{schemaVersion:1,caseId,contentVersion,resumable:saveStatus === 'confirmed',persistence,saveStatus});
       }
       if (pathname === '/api/case/state') {
         if (!api.started) return json(res, 401, { error: 'no_session' });
@@ -319,7 +324,8 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
       await run(page, api);
       assert.deepEqual(pageErrors, [], 'the production UI raises no uncaught browser errors');
       assert.deepEqual(await page.evaluate(() => [localStorage.getItem('fixture_unrelated_preference'), sessionStorage.getItem('fixture_unrelated_session'), localStorage.getItem('raven_music_cinematic_v1')]), ['keep-local', 'keep-session', 'off']);
-      assert.equal(await page.locator('audio').count(), 0, 'play does not add another audio player');
+      const playerContent = await page.locator('#site-content').count() ? page.frameLocator('#site-content') : page;
+      assert.equal(await playerContent.locator('audio').count(), 0, 'play does not add another audio player');
       assert.doesNotMatch(await page.locator('body').innerText(), new RegExp(FORBIDDEN));
     } finally {
       await context.close();
@@ -558,6 +564,57 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     assert.equal(startRequests(api).length, 0);
     assert.equal(actionRequests(api).length, 0);
     assert.deepEqual(JSON.parse(await page.evaluate(key => sessionStorage.getItem(key), OPENING_KEY)), { ...OPENING, materials: [FORBIDDEN] });
+  }));
+
+  await t.test('returning from the lab reads the existing server session without importing an opening or private lab state', () => check({ requireStart:true, opening:OPENING }, async (page, api) => {
+    await page.locator('#opening-summary').waitFor();
+    await page.goto(new URL('/raven/investigation-lab/',page.url()).href);
+    const player = page.frameLocator('#site-content');
+    await player.locator('#case-start').waitFor();
+    assert.equal(await player.locator('#opening-summary,#case-start-without-opening').count(),0);
+    await player.locator('#case-start').click();
+    await player.locator('#lab-workbench:not([hidden])').waitFor();
+    assert.deepEqual(startRequests(api).map(request => request.body),[{contentVersion:VERSION}]);
+    await page.evaluate(() => sessionStorage.setItem('raven_lab_pending_operation_v1','unrelated lab record'));
+    api.state.scene.title = localized('Current fixture session','جلسة الاختبار الحالية');
+    const readsBeforeReturn = api.requests.filter(r => r.pathname === '/api/case/state').length;
+    await player.locator('#case-link').click();
+    await player.locator('#scene-title').getByText('جلسة الاختبار الحالية',{exact:true}).waitFor();
+    assert.equal(await player.locator('#opening-summary,#pending-download,#operation-retry').count(),0);
+    assert.equal(api.requests.filter(r => r.pathname === '/api/case/state').length,readsBeforeReturn + 1);
+    assert.equal(startRequests(api).length,1);assert.equal(actionRequests(api).length,0);
+    assert.equal(await page.evaluate(() => sessionStorage.getItem('raven_lab_pending_operation_v1')),'unrelated lab record');
+    assert.equal(await page.evaluate(key => sessionStorage.getItem(key),OPENING_KEY),JSON.stringify(OPENING));
+  }));
+
+  await t.test('home reads only resume availability and keeps private content off both case entry links', () => check({caseId:'deleted-name'}, async (page, api) => {
+    await ready(page);
+    const sentinel = 'PRIVATE_FIXTURE_FOR_HOME';
+    api.state.notes = [{text:sentinel + '_NOTE'}];
+    api.state.materials[0].title = localized(sentinel + '_SOURCE',sentinel + '_SOURCE');
+    const pending = {id:'fixture-home-pending',revision:api.state.revision,contentVersion:VERSION,actionId:'fixture-report',values:{subject:sentinel + '_UNCONFIRMED'}};
+    await page.evaluate(({key,pending}) => {
+      sessionStorage.setItem(key,JSON.stringify(pending));
+      sessionStorage.setItem('raven_studio_ident_v1','1');
+    },{key:PENDING_KEY,pending});
+    const before = api.requests.length;
+    const origin = new URL(page.url()).origin;
+    await page.route('**/*',route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
+    await page.locator('#home-link').click();
+    const home = page.frameLocator('#site-content');
+    const enter = home.locator('#rvnHeroEnterDeletedName');
+    await enter.waitFor();
+    await home.locator('#rvnCaseResume').waitFor();
+    assert.equal(await home.locator('#rvnCaseResumeStatus').innerText(),'الجلسة متاحة للمتابعة.');
+    assert.equal(new URL(await home.locator('#rvnCaseResumeLink').getAttribute('href'),page.url()).pathname,'/raven/deleted-name/play/');
+    assert.ok(!(await home.locator('body').innerText()).includes(sentinel));
+    assert.ok(!(await page.locator('body').innerText()).includes(sentinel));
+    assert.deepEqual(api.requests.slice(before),[{method:'GET',pathname:'/api/case/resume-summary',body:null}]);
+    assert.equal(await page.evaluate(key=>sessionStorage.getItem(key),PENDING_KEY),JSON.stringify(pending));
+    await enter.click();await home.locator('#hook').waitFor({state:'attached'});
+    assert.equal(new URL(page.url()).pathname,'/raven/deleted-name/');
+    assert.ok(!(await home.locator('body').innerText()).includes(sentinel));
+    assert.equal(startRequests(api).length,0);assert.equal(actionRequests(api).length,0);
   }));
 
   await t.test('320px Arabic and English render earned reading, comparison, safe text, focus and live status', () => check({}, async (page, api) => {
@@ -1250,6 +1307,16 @@ test('case play browser: fictional API, bilingual mobile reading, explicit actio
     await page.locator('#receipts-body a').click();
     assert.equal(await page.evaluate(() => document.activeElement.id), 'capture-report');
     assert.match(await page.locator('#capture-report').innerText(), /Current fictional report/);
+    const filed = clone(api.state.captures['report.revision.4']);
+    api.state.revision += 1;
+    api.state.captures.report = { ...clone(filed), revision:api.state.revision, values:{ text:'Revised private draft' } };
+    await page.locator('#state-refresh').click();
+    await textIncludes(page,'#capture-report','Revised private draft');
+    await page.locator('#receipts-body a').click();
+    const focused = page.locator('#reports-body article:focus');
+    assert.match(await focused.innerText(),/Current fictional report/);
+    assert.doesNotMatch(await focused.innerText(),/Revised private draft/);
+    assert.deepEqual(api.state.captures['report.revision.4'],filed);
     assert.equal(Object.keys(api.state.captures).length, 3, 'presentation does not rewrite the stored snapshots');
     assert.equal(actionRequests(api).length, 0);
     await noOverflow(page);

@@ -6,7 +6,7 @@ const http=require('node:http');
 const {chromium}=require('playwright');
 const ROOT=path.resolve(__dirname,'..');
 const L=(ar,en)=>({ar,en});
-const boardKey=(tag='fixture-session',version='lab-fixture-v1')=>'raven.investigation.board.v1.'+encodeURIComponent(JSON.stringify(['lab-fixture',version,tag]));
+const boardKey=(tag='fixture-session',version='lab-fixture-v1',caseId='lab-fixture')=>'raven.investigation.board.v1.'+encodeURIComponent(JSON.stringify([caseId,version,tag]));
 function fixture(){
   const api={requests:[],state:{caseId:'lab-fixture',contentVersion:'lab-fixture-v1',revision:0,persistence:'process-memory',saveStatus:'memory',checkpointInfo:{sessionTag:'fixture-session'},scene:{id:'desk',title:L('مكتب اختبار خيالي','Fictional test desk'),body:L('نص اختبار فقط.','Test text only.'),lines:[]},materials:[{id:'letter',title:L('خطاب الاختبار','Test letter'),body:L('نص المصدر <img src=x onerror="window.injected=true">','Source text <img src=x onerror="window.injected=true">'),source:L('مكتب خيالي','Fictional desk'),type:'document'},{id:'map',title:L('خريطة الاختبار','Test map'),body:L('غرفتان خياليتان.','Two fictional rooms.'),source:L('ملف الاختبار','Test folder'),type:'map'}],actions:[{id:'follow-up',label:L('راجع المصدر المتاح','Review the available source')}],notes:[],shares:[],receipts:[],captures:{},opening:null}};
   const json=(res,data)=>{res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(data));};
@@ -40,9 +40,17 @@ test('review workbench: earned sources, private board, scope, storage and access
    assert.equal(await page.locator('#lab-inspector').evaluate(x=>x.open),true);
    assert.match(await page.locator('#lab-inspector-body').innerText(),/<img/);
    assert.equal(await page.locator('#lab-inspector-body img').count(),0);assert.equal(await page.evaluate(()=>Boolean(window.injected)),false);
+   const body=page.locator('#lab-inspector-body');
+   const initial=await body.evaluate(el=>({size:parseFloat(getComputedStyle(el).fontSize),color:getComputedStyle(el).color,text:el.textContent}));
    await page.locator('#lab-zoom').fill('180');assert.equal(await page.locator('#lab-zoom-value').innerText(),'180%');
    await page.click('#lab-scan');assert.equal(await page.locator('#lab-scan').getAttribute('aria-pressed'),'true');
    assert.equal(await page.locator('#lab-inspector').evaluate(x=>x.classList.contains('lab-pulse')),false,'reduced motion disables pulse');
+   const enlarged=await body.evaluate(el=>({size:parseFloat(getComputedStyle(el).fontSize),color:getComputedStyle(el).color,text:el.textContent}));
+   assert.ok(enlarged.size>=initial.size*1.79);
+   assert.equal(enlarged.text,initial.text);
+   assert.notEqual(enlarged.color,initial.color);
+   assert.equal(await body.evaluate(el=>el.getAnimations({subtree:true}).length),0);
+   assert.equal(await page.locator('#lab-inspector').evaluate(el=>el.scrollWidth<=el.clientWidth+1),true);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);
    if(process.env.RAVEN_WORKBENCH_ARTIFACTS && width===390 && lang==='ar')await page.screenshot({path:path.join(process.env.RAVEN_WORKBENCH_ARTIFACTS,'workbench-inspector-390.png')});
    await page.keyboard.press('Escape');assert.equal(await page.locator('#lab-inspect-open').evaluate(x=>document.activeElement===x),true);
@@ -106,7 +114,76 @@ test('review workbench: earned sources, private board, scope, storage and access
    assert.doesNotMatch(await page.locator('#lab-workbench').innerText(),/PRIVATE_FIRST_SESSION_LINK|PRIVATE_SECOND_SESSION_LINK/);
    assert.equal(await page.evaluate(key=>localStorage.getItem(key),firstKey),first);
   }));
-  await t.test('new session and content version isolate boards without deleting old copies',()=>check({},async({page,api})=>{await add(page);const saved=await page.evaluate(key=>localStorage.getItem(key),boardKey());api.state.checkpointInfo.sessionTag='second-session';await page.click('#state-refresh');await page.waitForFunction(()=>document.querySelectorAll('.lab-link').length===0);assert.equal(await page.locator('.lab-link').count(),0);await add(page,'Second session');api.state.contentVersion='lab-fixture-v2';await page.reload();await page.locator('#lab-workbench:not([hidden])').waitFor();assert.equal(await page.locator('.lab-link').count(),0);assert.equal(await page.evaluate(key=>localStorage.getItem(key),boardKey()),saved);}));
+  await t.test('case ID, content version and session tag each isolate links and unsaved text',()=>check({},async({page,api})=>{
+   const tag=api.state.checkpointInfo.sessionTag,version=api.state.contentVersion,caseId=api.state.caseId;
+   await add(page,'ORIGINAL_BOARD_ONLY');
+   const original=await page.evaluate(key=>localStorage.getItem(key),boardKey());
+   for(const [nextCase,nextVersion,nextTag] of [[caseId+'-other',version,tag],[caseId,version+'-other',tag],[caseId,version,tag+'-other']]){
+    await page.fill('#lab-link-note','ORIGINAL_UNSAVED');
+    api.state.caseId=nextCase;api.state.contentVersion=nextVersion;api.state.checkpointInfo.sessionTag=nextTag;
+    await page.click('#state-refresh');await page.waitForFunction(()=>!document.querySelector('.lab-link'));
+    assert.equal(await page.locator('#lab-link-note').inputValue(),'');
+    await add(page,'OTHER_BOARD_ONLY');
+    assert.match(await page.evaluate(key=>localStorage.getItem(key),boardKey(nextTag,nextVersion,nextCase)),/OTHER_BOARD_ONLY/);
+    api.state.caseId=caseId;api.state.contentVersion=version;api.state.checkpointInfo.sessionTag=tag;
+    await page.click('#state-refresh');await page.getByText('ORIGINAL_BOARD_ONLY',{exact:true}).waitFor();
+    assert.doesNotMatch(await page.locator('#lab-links').innerText(),/OTHER_BOARD_ONLY/);
+    assert.equal(await page.evaluate(key=>localStorage.getItem(key),boardKey()),original);
+   }
+  }));
+  await t.test('unreadable browser storage is reported honestly and still permits reading',()=>check({lang:'en',init:()=>{
+   const get=Storage.prototype.getItem;
+   Storage.prototype.getItem=function(key){if(key.startsWith('raven.investigation.board.'))throw new DOMException('fixture unavailable','SecurityError');return get.call(this,key);};
+  }},async({page})=>{
+   assert.match(await page.locator('#lab-board-status').innerText(),/cannot access browser storage/i);
+   assert.equal(await page.locator('#lab-link-add').isDisabled(),true);
+   await page.selectOption('#lab-inspect-select','map');await page.click('#lab-inspect-open');
+   assert.equal(await page.locator('#lab-inspector-body').innerText(),'Two fictional rooms.');await page.keyboard.press('Escape');
+   await page.click('#lab-hint-button');assert.match(await page.locator('#lab-hint-output').innerText(),/Review the available source/);
+  }));
+  await t.test('only actionable displayed choices can appear in written hints',()=>check({lang:'en'},async({page,api})=>{
+   const label=value=>L(value,value);
+   api.state.actions.push({id:'unsupported',label:label('Unavailable fixture'),fields:[{id:'x',type:'unknown'}]},
+    {id:'case.note',label:label('Private notebook action')},{id:'ask',label:label('Ask a fixture question'),reason:'HIDDEN_REASON'});
+   await page.click('#state-refresh');await page.getByRole('button',{name:'Ask a fixture question'}).waitFor();
+   for(const expected of ['Review the available source','Ask a fixture question','Review the available source']){
+    await page.click('#lab-hint-button');const output=await page.locator('#lab-hint-output').innerText();
+    assert.ok(output.includes(expected),output);assert.doesNotMatch(output,/Unavailable fixture|Private notebook action|HIDDEN_REASON/);
+   }
+   api.state.readOnly=true;await page.click('#state-refresh');
+   await page.waitForFunction(()=>document.querySelector('#actions button').disabled);
+   await page.click('#lab-hint-button');assert.match(await page.locator('#lab-hint-output').innerText(),/No follow-up/);
+  }));
+  await t.test('explicit private board download stays separate from case submission and case export',()=>check({lang:'en'},async({page,api})=>{
+   const downloads=[],requests=[],marker='PRIVATE_BOARD_EXPORT_ONLY',reported='PUBLIC_FIXTURE_RESPONSE';
+   page.on('download',d=>downloads.push(d.suggestedFilename()));
+   page.on('request',r=>requests.push([r.method(),r.url(),r.postData()]));
+   const reportAction={id:'submit-fixture',label:L('تقرير تجريبي','Fixture report'),fields:[{id:'text',type:'text',label:L('النص','Text'),required:true}]};
+   api.state.actions=[reportAction];
+   await page.click('#state-refresh');await page.locator('#actions input').waitFor();
+   let payload;
+   await page.route('**/api/case/actions',async route=>{
+    payload=route.request().postDataJSON();api.state.revision++;
+    api.state.captures.report={actionId:reportAction.id,label:reportAction.label,revision:api.state.revision,fields:reportAction.fields,values:payload.values};
+    await route.fulfill({json:api.state});
+   });
+   await page.route('**/api/case/export',route=>route.fulfill({json:{caseId:api.state.caseId,captures:api.state.captures}}));
+   await add(page,marker);assert.deepEqual(downloads,[]);
+   assert.match(await page.locator('#lab-board-export').innerText(),/private/i);
+   async function readDownload(selector){
+    const started=page.waitForEvent('download');await page.click(selector);
+    return JSON.parse(await fs.promises.readFile(await (await started).path(),'utf8'));
+   }
+   const board=await readDownload('#lab-board-export');assert.equal(board.links[0].note,marker);
+   await page.fill('#actions input',reported);await page.click('#actions button[type=submit]');await page.click('#review-confirm');
+   await page.locator('#reports-body').getByText(reported,{exact:true}).waitFor();
+   assert.deepEqual(payload.values,{text:reported});
+   assert.doesNotMatch(await page.locator('#reports-body').innerText(),new RegExp(marker));
+   const record=await readDownload('#case-export');assert.equal(record.captures.report.values.text,reported);
+   assert.doesNotMatch(JSON.stringify(record),new RegExp(marker));
+   assert.doesNotMatch(JSON.stringify(requests),new RegExp(marker));
+   assert.deepEqual(downloads,['raven-private-board.json','raven-case-record.json']);
+  }));
   await t.test('another tab preserves the board and moves only a lost remove-button focus to recovery',()=>check({},async({page,context,base,api})=>{
    await add(page,'FIRST_PRIVATE_CONNECTION');
    const second=await context.newPage();await second.goto(base+'/raven/investigation-lab/content.html');await second.locator('#lab-workbench:not([hidden])').waitFor();
@@ -134,13 +211,18 @@ test('review workbench: earned sources, private board, scope, storage and access
    assert.deepEqual(await page.evaluate(key=>JSON.parse(localStorage.getItem(key)).links.map(x=>x.note),boardKey()),['FIRST_PRIVATE_CONNECTION','SECOND_PRIVATE_CONNECTION','THIRD_PRIVATE_CONNECTION','FOURTH_PRIVATE_CONNECTION'],'focus recovery does not remove links or overwrite the newer saved board');
    assert.equal(api.state.revision,0);assert.deepEqual(api.state.receipts,[]);
    await second.keyboard.press('Escape');
+   await second.waitForFunction(()=>document.activeElement.id==='lab-inspect-open');
    const savedFour=await page.evaluate(key=>localStorage.getItem(key),boardKey());
    await page.evaluate(key=>localStorage.setItem(key,'{corrupt-recovery-fixture'),boardKey());
    await second.locator('#lab-board-reload').focus();await second.keyboard.press('Enter');
    assert.equal(await second.locator('#lab-board-reload').evaluate(el=>document.activeElement===el&&!el.hidden),true,'a reload that stays locked retains its recovery focus');
    assert.match(await second.locator('#lab-board-status').innerText(),/أبقيناها دون تغيير/);
+   assert.match(await second.locator('#lab-links').innerText(),/FIRST_PRIVATE_CONNECTION/,'a failed reload keeps the current reading available for export');
+   assert.equal(await page.evaluate(key=>localStorage.getItem(key),boardKey()),'{corrupt-recovery-fixture');
    await page.evaluate(({key,raw})=>localStorage.setItem(key,JSON.stringify({...JSON.parse(raw),links:[]})),{key:boardKey(),raw:savedFour});
+   await second.waitForFunction(()=>document.querySelector('#lab-board-status').textContent.includes('تبويب آخر'));
    await second.keyboard.press('Enter');
+   await second.locator('#lab-board-reload').waitFor({state:'hidden'});
    assert.equal(await second.locator('.lab-link').count(),0);
    assert.equal(await second.locator('#lab-link-note').evaluate(el=>document.activeElement===el&&!el.disabled),true,'an empty recovered board focuses the editable note field');
    await second.close();

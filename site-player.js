@@ -3,6 +3,9 @@ import { createSoundtrack } from './site-audio.js?v=mati-1.0.1';
 import { createEntryGate } from './site-entry.js?v=intro-2';
 
 const root = new URL('./', import.meta.url);
+// History navigation changes the document base even though the shell stays mounted.
+const icon = document.querySelector('link[rel="icon"]');
+if (icon) icon.href = new URL(icon.getAttribute('href'), document.baseURI).href;
 const contentVersion = new URL(import.meta.url).searchParams.get('v');
 const frame = document.querySelector('#site-content');
 const recovery = document.querySelector('#site-recovery');

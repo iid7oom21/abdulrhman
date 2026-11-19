@@ -26,6 +26,8 @@ This basic preview server is suitable for pages and assets. To verify seeking in
 
 The static opening can retry a failed illustration without reloading the page or resetting its choices and temporary reading notebook. Recovery is optional: the opening still runs if `raven/deleted-name/opening-artwork.js` is unavailable. A visible stalled image offers retry after 20 seconds; retries are manual and never submit game actions or notebook text. The original images remain decorative. `tests/opening-artwork-browser.cjs` checks recovery, language changes, delayed helpers, and preservation of notes in Chromium.
 
+The draft appears inline. Its comparison opens and closes with the same button, which keeps keyboard focus. You can scroll back to Victor’s messages and use “Go to the paper” to return to the paper heading. The selected notebook passage and the comparison’s open or closed state stay in memory during this visit. Reloading starts a new opening and notebook.
+
 Public page identities and sharing:
 
 - Home: `https://iid7oom21.github.io/abdulrhman/raven/`

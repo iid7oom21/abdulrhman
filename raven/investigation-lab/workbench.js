@@ -4,8 +4,8 @@
   'use strict';
   const $ = id => document.getElementById(id);
   const WORDS = {
-    ar:{eyebrow:'مساحة مراجعة خاصة',title:'غرفة التحقيق',lead:'اقرأ المصدر. اختبر العلاقة. واترك مكانًا لما لم يُحسم.',draft:'واجهة أدوات محلية للمراجعة. النصوص من خادم القضية، والحوار المعروض مكتوب.',back:'العودة إلى القضية',toolsEyebrow:'أدوات القراءة',boardTitle:'مساحة ربط الأدلة',boardScope:'الروابط أسئلتك وفرضياتك الخاصة. لا تثبت تناقضًا، ولا تمنح دليلًا أو إذنًا، ولا تصل إلى الشخصيات.',inspectTitle:'افحص مادة',inspectSelect:'مادة وصلت إليك',inspectOpen:'افتح عدسة القراءة',inspectChoose:'اختر مادة للفحص أولًا.',inspectScope:'تكبير النص والتباين فقط؛ لا تكشف العدسة معلومات مخفية.',hintTitle:'تحليل RAVEN',hintScope:'إرشاد مكتوب من الخيارات المتاحة الآن، بلا توليد حي أو كشف للحل.',hintButton:'أرني نقطة متابعة',first:'المصدر الأول',second:'المصدر الثاني',kind:'نوع الرابط الذي تكتبه',question:'سؤال مفتوح',hypothesis:'فرضية',observation:'ملاحظة',note:'ما العلاقة التي تريد اختبارها؟',add:'أضف رابطًا خاصًا',export:'نزّل لوحتي',reload:'أعد قراءة اللوحة المحفوظة',close:'إغلاق',zoom:'تكبير القراءة',scan:'زيادة التباين',source:'المصدر',choose:'اختر مادة',count:'مادة مكتسبة',empty:'ابدأ بسؤال بين مصدرين فحصتهما. لا توجد روابط خاصة بعد.',same:'اختر مصدرين مختلفين واكتب العلاقة التي تريد اختبارها.',limit:'بلغت اللوحة حدها: 24 رابطًا. نزّل نسختك أو احذف رابطًا قبل الإضافة.',saved:'حُفظت لوحتك في هذا المتصفح فقط؛ لا تُرسل إلى الخادم أو الشخصيات.',unidentified:'تعذّر تحديد هوية الجلسة؛ كتابة اللوحة وتنزيلها متوقفان لحماية ملاحظاتك. يمكنك فحص المواد وقراءة الإرشاد.',memory:'اللوحة في ذاكرة هذه الصفحة فقط. نزّلها قبل إغلاق الصفحة؛ لم نؤكد حفظًا دائمًا.',unsaved:'تعذر تأكيد الحفظ. تبقى الروابط في هذه الصفحة؛ نزّلها قبل المغادرة.',protected:'النسخة المحفوظة غير قابلة للقراءة أو لا تطابق النطاق. أبقيناها دون تغيير؛ الإضافة متوقفة.',conflict:'تغيّرت اللوحة في تبويب آخر. نزّل نسختك الحالية ثم أعد قراءة اللوحة المحفوظة قبل التحرير.',remove:'حذف الرابط',missing:'رابط لمادة غير معروضة في هذه الجلسة؛ لا نستعيد مضمونها من التخزين.',hint:'نقطة متابعة متاحة الآن: ',hintEnd:'لا توجد خطوة متابعة معروضة الآن. يمكنك مراجعة مصادرك وملاحظاتك دون استنتاج جديد.',hintLimit:'اختيار المتابعة لا يثبت نتيجة التحقيق.',noSources:'لم تصل مواد قابلة للفحص بعد.',sessionChanged:'تغيّر نطاق الجلسة. اللوحة المعروضة تخص النطاق الحالي فقط.'},
-    en:{eyebrow:'Private review workspace',title:'The investigation room',lead:'Read the source. Test the connection. Leave room for what remains unresolved.',draft:'Local tools for review. Text comes from the case server; the displayed dialogue is written.',back:'Return to the case',toolsEyebrow:'Reading tools',boardTitle:'Evidence connections',boardScope:'Connections are your private questions and hypotheses. They prove no contradiction, grant no evidence or permission, and do not reach characters.',inspectTitle:'Inspect a material',inspectSelect:'A material you received',inspectOpen:'Open reading lens',inspectChoose:'Choose a material to inspect first.',inspectScope:'Text magnification and contrast only; the lens reveals no hidden information.',hintTitle:'RAVEN analysis',hintScope:'Written guidance from actions available now, without live generation or solution spoilers.',hintButton:'Show a follow-up',first:'First source',second:'Second source',kind:'Your connection type',question:'Open question',hypothesis:'Hypothesis',observation:'Observation',note:'Which connection do you want to test?',add:'Add a private connection',export:'Download my board',reload:'Reload the saved board',close:'Close',zoom:'Reading magnification',scan:'Increase contrast',source:'Source',choose:'Choose a material',count:'earned materials',empty:'Start with a question between two examined sources. No private connections yet.',same:'Choose two different sources and write the connection you want to test.',limit:'The board holds 24 connections. Download your copy or remove a connection before adding another.',saved:'Your board was saved in this browser only; it is not sent to the server or characters.',unidentified:'The session identity is unavailable. Board editing and download are paused to protect your notes; inspection and written guidance remain available.',memory:'The board exists only in this page’s memory. Download it before closing; durable saving is not confirmed.',unsaved:'Saving could not be confirmed. Connections remain in this page; download them before leaving.',protected:'The saved copy is unreadable or does not match this scope. It was preserved unchanged; adding is paused.',conflict:'The board changed in another tab. Download your current copy, then reload the saved board before editing.',remove:'Remove connection',missing:'A connection refers to material not displayed in this session; its contents are not restored from storage.',hint:'A follow-up currently available: ',hintEnd:'No follow-up action is displayed now. You can review sources and notes without adding a conclusion.',hintLimit:'Choosing a follow-up does not establish an investigation result.',noSources:'No inspectable materials have arrived yet.',sessionChanged:'The session scope changed. This board belongs only to the current scope.'},
+    ar:{eyebrow:'مساحة مراجعة خاصة',title:'غرفة التحقيق',lead:'اقرأ المصدر. اختبر العلاقة. واترك مكانًا لما لم يُحسم.',draft:'واجهة أدوات محلية للمراجعة. النصوص من خادم القضية، والحوار المعروض مكتوب.',back:'العودة إلى القضية',toolsEyebrow:'أدوات القراءة',boardTitle:'مساحة ربط الأدلة',boardScope:'الروابط أسئلتك وفرضياتك الخاصة. لا تثبت تناقضًا، ولا تمنح دليلًا أو إذنًا، ولا تصل إلى الشخصيات.',inspectTitle:'افحص مادة',inspectSelect:'مادة وصلت إليك',inspectOpen:'افتح عدسة القراءة',inspectChoose:'اختر مادة للفحص أولًا.',inspectScope:'تكبير النص والتباين فقط؛ لا تكشف العدسة معلومات مخفية.',hintTitle:'تحليل RAVEN',hintScope:'إرشاد مكتوب من الخيارات المتاحة الآن، بلا توليد حي أو كشف للحل.',hintButton:'أرني نقطة متابعة',first:'المصدر الأول',second:'المصدر الثاني',kind:'نوع الرابط الذي تكتبه',question:'سؤال مفتوح',hypothesis:'فرضية',observation:'ملاحظة',note:'ما العلاقة التي تريد اختبارها؟',add:'أضف رابطًا خاصًا',export:'نزّل نسخة من لوحتي الخاصة',reload:'أعد قراءة اللوحة المحفوظة',close:'إغلاق',zoom:'تكبير القراءة',scan:'زيادة التباين',source:'المصدر',choose:'اختر مادة',count:'مادة مكتسبة',empty:'ابدأ بسؤال بين مصدرين فحصتهما. لا توجد روابط خاصة بعد.',same:'اختر مصدرين مختلفين واكتب العلاقة التي تريد اختبارها.',limit:'بلغت اللوحة حدها: 24 رابطًا. نزّل نسختك أو احذف رابطًا قبل الإضافة.',saved:'حُفظت لوحتك في هذا المتصفح فقط؛ لا تُرسل إلى الخادم أو الشخصيات.',unidentified:'تعذّر تحديد هوية الجلسة؛ كتابة اللوحة وتنزيلها متوقفان لحماية ملاحظاتك. يمكنك فحص المواد وقراءة الإرشاد.',memory:'اللوحة في ذاكرة هذه الصفحة فقط. نزّلها قبل إغلاق الصفحة؛ لم نؤكد حفظًا دائمًا.',unsaved:'تعذر تأكيد الحفظ. تبقى الروابط في هذه الصفحة؛ نزّلها قبل المغادرة.',inaccessible:'تعذّرت قراءة تخزين المتصفح. توقّف تحرير اللوحة حتى تعيد قراءتها. يمكنك مواصلة فحص المواد.',protected:'النسخة المحفوظة غير قابلة للقراءة أو لا تطابق النطاق. أبقيناها دون تغيير؛ الإضافة متوقفة.',conflict:'تغيّرت اللوحة في تبويب آخر. نزّل نسختك الحالية ثم أعد قراءة اللوحة المحفوظة قبل التحرير.',remove:'حذف الرابط',missing:'رابط لمادة غير معروضة في هذه الجلسة؛ لا نستعيد مضمونها من التخزين.',hint:'نقطة متابعة متاحة الآن: ',hintEnd:'لا توجد خطوة متابعة معروضة الآن. يمكنك مراجعة مصادرك وملاحظاتك دون استنتاج جديد.',hintLimit:'اختيار المتابعة لا يثبت نتيجة التحقيق.',noSources:'لم تصل مواد قابلة للفحص بعد.',sessionChanged:'تغيّر نطاق الجلسة. اللوحة المعروضة تخص النطاق الحالي فقط.'},
+    en:{eyebrow:'Private review workspace',title:'The investigation room',lead:'Read the source. Test the connection. Leave room for what remains unresolved.',draft:'Local tools for review. Text comes from the case server; the displayed dialogue is written.',back:'Return to the case',toolsEyebrow:'Reading tools',boardTitle:'Evidence connections',boardScope:'Connections are your private questions and hypotheses. They prove no contradiction, grant no evidence or permission, and do not reach characters.',inspectTitle:'Inspect a material',inspectSelect:'A material you received',inspectOpen:'Open reading lens',inspectChoose:'Choose a material to inspect first.',inspectScope:'Text magnification and contrast only; the lens reveals no hidden information.',hintTitle:'RAVEN analysis',hintScope:'Written guidance from actions available now, without live generation or solution spoilers.',hintButton:'Show a follow-up',first:'First source',second:'Second source',kind:'Your connection type',question:'Open question',hypothesis:'Hypothesis',observation:'Observation',note:'Which connection do you want to test?',add:'Add a private connection',export:'Download my private board',reload:'Reload the saved board',close:'Close',zoom:'Reading magnification',scan:'Increase contrast',source:'Source',choose:'Choose a material',count:'earned materials',empty:'Start with a question between two examined sources. No private connections yet.',same:'Choose two different sources and write the connection you want to test.',limit:'The board holds 24 connections. Download your copy or remove a connection before adding another.',saved:'Your board was saved in this browser only; it is not sent to the server or characters.',unidentified:'The session identity is unavailable. Board editing and download are paused to protect your notes; inspection and written guidance remain available.',memory:'The board exists only in this page’s memory. Download it before closing; durable saving is not confirmed.',unsaved:'Saving could not be confirmed. Connections remain in this page; download them before leaving.',inaccessible:'This page cannot access browser storage. Reload the saved board to resume editing. You can still inspect materials.',protected:'The saved copy is unreadable or does not match this scope. It was preserved unchanged; adding is paused.',conflict:'The board changed in another tab. Download your current copy, then reload the saved board before editing.',remove:'Remove connection',missing:'A connection refers to material not displayed in this session; its contents are not restored from storage.',hint:'A follow-up currently available: ',hintEnd:'No follow-up action is displayed now. You can review sources and notes without adding a conclusion.',hintLimit:'Choosing a follow-up does not establish an investigation result.',noSources:'No inspectable materials have arrived yet.',sessionChanged:'The session scope changed. This board belongs only to the current scope.'},
   };
   let view = null, locale = document.documentElement.lang === 'en' ? 'en' : 'ar', scope = '', key = null;
   let links = [], observedRaw = null, saveStatus = 'memory', locked = false, hintIndex = 0, activeMaterial = null;
@@ -20,16 +20,31 @@
     return data && Object.getPrototypeOf(data) === Object.prototype && data.schemaVersion === 1 && data.caseId === view.caseId && data.sessionTag === view.sessionId && data.contentVersion === view.contentVersion && Array.isArray(data.links) && data.links.length <= 24 && new Set(data.links.map(x=>x.id)).size === data.links.length && data.links.every(x=>x && safeId(x.id) && safeId(x.a) && safeId(x.b) && x.a !== x.b && ['question','hypothesis','observation'].includes(x.kind) && typeof x.note === 'string' && x.note.trim().length > 0 && x.note.length <= 800);
   }
   function readBoard() {
-    links=[];observedRaw=null;locked=false;saveStatus='memory';
-    if (!key) {locked=true;saveStatus='unidentified';return;}
+    locked = true;
+    if (!key) {saveStatus='unidentified';return;}
+    let raw;
     try {
-      observedRaw=localStorage.getItem(key);
-      if (observedRaw !== null) {
-        if (observedRaw.length > 60000) throw new Error('large');
-        const data=JSON.parse(observedRaw);if (!validBoard(data)) throw new Error('scope');
-        links=data.links;saveStatus='saved';
+      raw = localStorage.getItem(key);
+    } catch {
+      saveStatus = 'inaccessible';
+      return;
+    }
+    try {
+      let savedLinks = [];
+      if (raw !== null) {
+        if (raw.length > 60000) throw new Error('large');
+        const data = JSON.parse(raw);
+        if (!validBoard(data)) throw new Error('scope');
+        savedLinks = data.links;
       }
-    } catch {locked=true;saveStatus='protected';}
+      links = savedLinks;
+      observedRaw = raw;
+      locked = false;
+      saveStatus = raw === null ? 'memory' : 'saved';
+    } catch {
+      // Keep the current reading available for export if this reload failed.
+      saveStatus = 'protected';
+    }
   }
   function saveBoard() {
     if (!key) {locked=true;saveStatus='unidentified';return;}
@@ -96,7 +111,18 @@
     const tag=typeof next.sessionId==='string' && /^[A-Za-z0-9_-]{1,200}$/.test(next.sessionId)?next.sessionId:null;
     const nextScope=JSON.stringify([next.caseId,next.contentVersion,tag]);
     view={caseId:next.caseId,contentVersion:next.contentVersion,sessionId:tag,revision:next.revision,materials:next.materials,actions:next.actions};
-    if(!tag || nextScope!==scope){scope=nextScope;key=tag?'raven.investigation.board.v1.'+encodeURIComponent(scope):null;readBoard();for(const id of ['lab-link-a','lab-link-b','lab-link-note'])$(id).value='';$('lab-link-kind').value='question';hintIndex=0;activeMaterial=null;if($('lab-inspector').open)$('lab-inspector').close();}
+    if (!tag || nextScope !== scope) {
+      scope = nextScope;
+      links = [];
+      observedRaw = null;
+      key = tag ? 'raven.investigation.board.v1.' + encodeURIComponent(scope) : null;
+      readBoard();
+      for (const id of ['lab-link-a','lab-link-b','lab-link-note']) $(id).value = '';
+      $('lab-link-kind').value = 'question';
+      hintIndex = 0;
+      activeMaterial = null;
+      if ($('lab-inspector').open) $('lab-inspector').close();
+    }
     $('lab-workbench').hidden=false;renderText();
   }
   $('lab-link-form').addEventListener('submit',event=>{
@@ -141,7 +167,13 @@
     if(enabled&&!matchMedia('(prefers-reduced-motion: reduce)').matches){void dialog.offsetWidth;dialog.classList.add('lab-pulse');pulseTimer=setTimeout(()=>dialog.classList.remove('lab-pulse'),600);}
   });
   $('lab-hint-button').addEventListener('click',()=>{
-    const actions=(view?.actions || []).filter(a=>a.id!=='case.note' && typeof a.id==='string' && localized(a.label));
+    // A projected choice can still be paused, unsupported, or a nonselected
+    // attachment bundle. Offer the actions the player can currently review.
+    const available = new Set();
+    for (const form of $('actions').querySelectorAll('form[data-action-id]')) {
+      if (form.querySelector('button[type="submit"]:enabled')) available.add(form.dataset.actionId);
+    }
+    const actions = (view?.actions || []).filter(action => available.has(action.id) && localized(action.label));
     $('lab-hint-output').textContent=actions.length?t('hint')+localized(actions[hintIndex++%actions.length].label)+'\n'+t('hintLimit'):t('hintEnd');
   });
   window.addEventListener('storage',event=>{if(key && (event.key===key || event.key===null)){locked=true;saveStatus='conflict';renderLinks();}});

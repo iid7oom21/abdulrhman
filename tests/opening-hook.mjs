@@ -241,6 +241,72 @@ test('written opening: choices, display boundaries, language and access',async t
     return style;
   });
 
+  await run('mobile readers can revisit a sample assignment, compare by keyboard, then defer or preview',async()=>{
+    for (const lang of ['ar','en']) for (const width of [320,390]) {
+      await page.setViewportSize({width,height:844});
+      await fresh(lang);
+      const message = page.locator('[data-k="m2"]');
+      const original = lang === 'ar' ? 'ملاحظة اختبار. أحتاج إلى مقارنة النسخة بالأصل.' : 'Sample note. I need to compare this copy with the original.';
+      await message.evaluate((node, text) => { node.textContent = text; },original);
+      await message.scrollIntoViewIfNeeded();
+      const paperLink = page.locator('.opening-navigation-primary');
+      await paperLink.focus();
+      await page.keyboard.press('Enter');
+      const tabTo = async id => {
+        await page.keyboard.press('Tab');
+        assert.equal(await action(id).evaluate(node => node === document.activeElement),true,id);
+      };
+      await tabTo('open'); await page.keyboard.press('Enter');
+      await tabTo('enter'); await page.keyboard.press('Enter');
+      assert.equal(await phase(),'compare');
+      assert.equal(await page.locator('#reading-source').inputValue(),'','the player has not selected a passage');
+      await tabTo('source-original'); await page.keyboard.press('Enter');
+      assert.equal(await page.locator('#reading-source').inputValue(),'document-original');
+      await tabTo('source-conclusion'); await tabTo('source-signature'); await tabTo('compare-toggle');
+      const toggle = action('compare-toggle');
+      await page.keyboard.press('Enter');
+      const columns = page.locator('#hook-comparison section');
+      const labels = await columns.locator('h4').allInnerTexts();
+      assert.equal(labels.length,2);
+      assert.match(labels[0],lang === 'ar' ? /رسالتك/ : /original message/i);
+      assert.match(labels[1],lang === 'ar' ? /مسودة/ : /draft/i);
+      for (const column of await columns.all()) {
+        assert.equal(await column.locator('p').first().innerText(),original);
+        assert.equal(await column.evaluate(section => {
+          const box = section.getBoundingClientRect();
+          return [...section.children].every(element => {
+            const range = document.createRange();
+            range.selectNodeContents(element);
+            return [...range.getClientRects()].every(r =>
+              r.left >= Math.max(0,box.left)-1 && r.right <= Math.min(innerWidth,box.right)+1 &&
+              r.top >= box.top-1 && r.bottom <= box.bottom+1);
+          });
+        }),true,`${lang} ${width}px: every line and source heading fits its panel`);
+      }
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+      await page.keyboard.press('Enter');
+      assert.equal(await toggle.getAttribute('aria-expanded'),'false');
+      assert.equal(await toggle.evaluate(node => node.matches(':focus-visible') && getComputedStyle(node).outlineStyle !== 'none'),true);
+      await message.scrollIntoViewIfNeeded();
+      await paperLink.focus(); await page.keyboard.press('Enter');
+      assert.equal(await page.evaluate(() => document.activeElement.id),'t-hook');
+      assert.equal(await page.locator('#reading-source').inputValue(),'document-original');
+      assert.equal(await phase(),'compare');
+      assert.equal((await state()).choice,'');
+      assert.equal(await page.locator('#reading-notes li').count(),0);
+      await click('continue','respond');
+      if (width === 320) {
+        await click('wait','after');
+        assert.equal(await page.locator('#hook-draft').count(),0);
+        assert.equal((await state()).recipient,'');
+      } else {
+        await click('precise','share'); await click('recipient-jonas','review');
+        assert.equal(await page.locator('#hook-share-review').isVisible(),true);
+        assert.equal((await state()).share,'');
+      }
+    }
+  });
+
   await run('new dialogue stays at the reading start in portrait and landscape',async()=>{
     const evidence=[];
     for(const [width,height] of [[390,844],[844,390]]){
