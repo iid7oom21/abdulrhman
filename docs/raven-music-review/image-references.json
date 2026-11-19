@@ -6,11 +6,6 @@
   },
   {
     "source": "raven/content.html",
-    "use": "video poster",
-    "url": "https://res.cloudinary.com/du88n6b83/video/upload/so_0,f_jpg,q_auto/v1790012325/raven17/raven-zarqa-teaser-01.jpg"
-  },
-  {
-    "source": "raven/content.html",
     "use": "artwork link",
     "url": "https://cdn.websitepublisher.ai/custom/wid25762/images/raven-mobile-approved.png"
   },

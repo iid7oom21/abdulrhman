@@ -25,7 +25,7 @@
 }
 
 /* ── 1. Type floor: nothing on the page renders below 13px ─────────────── */
-html:root .eyebrow,html:root .status,html:root .premiereEyebrow,html:root .premiereMeta,
+html:root .eyebrow,html:root .status,
 html:root .metaItem span:first-child,html:root .rvnStudioCard small,html:root .rvnPressCopy small,
 html:root .rvnPressAssets strong,html:root .rvnPressAssets small,
 html:root .rvnVaultGrid strong,html:root .rvnVaultGrid small,
@@ -44,8 +44,7 @@ html:root .rvnCaseEntry .rvnCaseMeta{
 /* Latin micro-labels were tracked out for 8–10px type; at 13px they need less. */
 html:root .socialIcon strong,html:root .rvnVaultGrid strong,html:root .rvnEpisodeTabs small,
 html:root .rvnNowPlaying small,html:root .rvnStudioRail small{letter-spacing:.06em}
-html[lang="en"]:root .eyebrow,html[lang="en"]:root .status,html[lang="en"]:root .premiereEyebrow,
-html[lang="en"]:root .premiereMeta{letter-spacing:.1em}
+html[lang="en"]:root .eyebrow,html[lang="en"]:root .status{letter-spacing:.1em}
 
 /* ── 2. Secondary copy ──────────────────────────────────────────────────── */
 html:root .ravenNavLinks a,html:root .rvnFileTools>summary,html:root .rvnSearchStatus,

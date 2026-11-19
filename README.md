@@ -1,8 +1,10 @@
 # RAVEN — continuous soundtrack
 
+> **قرار المالك — 2026-11-19:** أُلغي «زرقاء اليمامة» من نطاق RAVEN. لا يُعاد ترويجه أو تطويره أو استيراده من فروع قديمة. الأولوية لقضية «الاسم المحذوف»، ولا بديل جديد معتمد. [قرار النطاق للمساهمين](docs/PROJECT-DECISIONS.md). هذا إعلان قرار في المصدر، وليس إثبات نشر حي.
+
 > Handoff v2 (2026-11-01): the story «التوقيع الرابع» (The Fourth Signature) and its Case 017 expansion were removed from this copy. No story replaces them. Old `/fourth-signature/` and `/raven/terminal-preview/case-017/` links redirect to the homepage. Everything below describes the remaining interface.
 >
-> 2026-11-05: the old interface under `/raven/terminal-preview/` was retired. Its pages are now redirects to the homepage (`raven-17/` to `#films`, `zarqa/` to `#next-premiere`). Only `raven/terminal-preview/assets/` stays, because the homepage and `raven/dialogue/` still use its posters, opening film and fonts.
+> 2026-11-05: the old interface under `/raven/terminal-preview/` was retired. Its pages are now redirects to the homepage (`raven-17/` to `#films`; the retired title route now returns to the homepage). Shared files in `raven/terminal-preview/assets/` stay because the homepage and `raven/dialogue/` still use the RAVEN posters, opening film and fonts. The retired title’s poster is removed from the current export.
 
 Serve this directory as the web root. `/raven/` is the homepage. The root redirects to the homepage. `raven/index.html` keeps one audio element alive through `site-player.js` while `site-bridge.js` routes the content frame (`raven/content.html`).
 
