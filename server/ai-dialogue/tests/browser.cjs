@@ -34,8 +34,16 @@ test('real preview page browser acceptance', async t => {
     assert.deepEqual(await page.evaluate(()=>[localStorage.getItem('other_app_preferences'),localStorage.getItem('raven_music_volume_v1')]),['keep','0.37']);
     await page.locator('#history').click(); await wait(page);
     assert.equal(await page.locator('#log .me').count(),1);
+    await page.locator('#clear').click();
+    assert.equal(await page.locator('#log .me').count(),0);
+    assert.match(await page.locator('#dialogue-empty').innerText(),/السجل مخفي عن العرض/);
+    assert.match(await page.locator('#dialogue-empty').innerText(),/المحادثة باقية/);
+    await page.locator('#history').click(); await wait(page);
+    assert.equal(await page.locator('#log .me').count(),1);
+    assert.equal(await page.locator('#dialogue-empty').isVisible(),false);
     await page.locator('#character').selectOption('claire'); await wait(page);
     assert.equal(await page.locator('#log .me').count(),0);
+    assert.match(await page.locator('#dialogue-empty').innerText(),/ابدأ بسؤال محدد/);
   }));
   await t.test('unreadable owned journal is preserved verbatim',()=>pageFor(async page=>{
     await page.addInitScript(()=>localStorage.setItem('raven_deleted_name_preview_v2','{unreadable'));

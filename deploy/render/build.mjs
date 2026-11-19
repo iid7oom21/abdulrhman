@@ -4,7 +4,7 @@ import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 
-export const SITE_COMMIT = '9a9bd1c09ad1f53c7c38e03def5929ad0381a35b';
+export const SITE_COMMIT = '8ba08674be61fada3f4bfef90251e98c9d2acb3e';
 export const PUBLIC_RELEASE = '2026-11-15-investigation-tools-1';
 export const EXPORT_MARKER = '.raven-render-export.json';
 // Render builds from a shallow, single-branch checkout and removes its Git
@@ -22,6 +22,7 @@ const PUBLIC_ROOTS = ['assets','fourth-signature','raven','studio','404.html','i
 export const CORE_FILES = [
   'site-player.js','site-audio.js','site-entry.js','site-bridge.js','site-player.css',
   'assets/texts/raven-texts.js','raven/index.html','raven/content.html',
+  'raven/dialogue/preview-room.css',
   'raven/deleted-name/index.html','raven/deleted-name/content.html',
   'raven/deleted-name/reading-tools.js','raven/deleted-name/case-entry.js',
   'raven/deleted-name/play/index.html','raven/deleted-name/play/content.html',
