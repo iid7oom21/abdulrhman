@@ -14,3 +14,9 @@
 .rvnFilmSaveStatus{margin:16px 0;padding:14px 18px;background:#33291c;border:1px solid #b8955d;color:#f4e0bd;font-size:14px;line-height:1.9}
 .rvnCaseResume a:focus-visible,.rvnEpisodeResumeControls button:focus-visible,#rvnAfterBackstage:focus-visible,#rvnAfterBack:focus-visible{outline:2px solid #fff2d6;outline-offset:4px}
 @media(max-width:650px){.rvnCaseResume{display:block;padding:20px}.rvnCaseResume>a{display:flex;margin-top:18px;width:100%}.rvnEpisodeResumeControls{padding:0 14px 14px}}
+.rvnEpisodeResumeControls [data-film-later]{background:transparent;color:#eadac1}
+.rvnEpisodeResumeControls [data-film-later][aria-pressed="true"],#rvnAfterLater[aria-pressed="true"]{color:#17130e;background:#e0c499}
+[data-film-later][aria-pressed="true"]::before,#rvnAfterLater[aria-pressed="true"]::before{content:"✓";margin-inline-end:.35em}
+.rvnWatchLaterFeedback{flex-basis:100%;color:#f4e0bd;font-size:.95rem;line-height:1.7}
+#rvnAfterLater[hidden],.rvnWatchLaterFeedback[hidden]{display:none!important}
+#rvnAfterLater:focus-visible{outline:2px solid #fff2d6;outline-offset:4px}

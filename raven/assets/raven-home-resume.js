@@ -1,4 +1,4 @@
-/* Read-only case availability + existing film progress. No story data or new sessions. */
+/* Read-only case availability and device-local viewing choices. */
 (() => {
   'use strict';
   const english=()=>document.documentElement.lang==='en';
@@ -10,6 +10,8 @@
     resume:['أكمل من ','Continue from '],start:['ابدأ من أول','Start from the beginning'],
     stored:['آخر موضع محفوظ على هذا الجهاز: ','Last position stored on this device: '],
     unavailable:['تعذر تأكيد حفظ موضع المشاهدة على هذا الجهاز.','The viewing position could not be confirmed as saved on this device.'],
+    later:['للمشاهدة لاحقًا','Watch later'],
+    laterFailed:['تعذّر تأكيد تغيير قائمة المشاهدة على هذا الجهاز.','Could not confirm the watch-later change on this device.'],
     backstage:['خلف الكادر','Behind the Frame'],back:['العودة للحلقات','Back to episodes']
   };
   const text=key=>words[key][english()?1:0];
@@ -17,6 +19,49 @@
   const caseCard=document.getElementById('rvnCaseResume');
   const saveStatus=document.getElementById('rvnFilmSaveStatus');
   const controls=[];let summary=null,currentEpisode=1;
+  const afterLater=document.getElementById('rvnAfterLater');
+  const afterFeedback=document.getElementById('rvnAfterLaterFeedback');
+  const laterKey=id=>'raven17_watch_later_'+id;
+  const laterFailed=new Set();
+  function readLater(id){
+    try { return localStorage.getItem(laterKey(id))==='1'; }
+    catch { return null; }
+  }
+  function toggleLater(id){
+    const saved=readLater(id);
+    let confirmed=false;
+    if(saved!==null){
+      const wanted=!saved;
+      try {
+        if(wanted)localStorage.setItem(laterKey(id),'1');
+        else localStorage.removeItem(laterKey(id));
+        confirmed=readLater(id)===wanted;
+      } catch { /* Keep the last confirmed marker visible on failure. */ }
+    }
+    if(confirmed)laterFailed.delete(id);
+    else laterFailed.add(id);
+    renderLater();
+  }
+  function paintLater(button,feedback,id,inCredits){
+    const episode=english()?'Episode '+id:'الحلقة '+id;
+    const label=inCredits ? (english()?'Watch episode '+id+' later':'الحلقة '+id+' للمشاهدة لاحقًا') : text('later');
+    const saved=readLater(id);
+    button.textContent=label;
+    button.setAttribute('aria-label',inCredits ? label : episode+' — '+label);
+    if(saved===null)button.removeAttribute('aria-pressed');
+    else button.setAttribute('aria-pressed',String(saved));
+    feedback.hidden=!laterFailed.has(id);
+    feedback.textContent=feedback.hidden?'':text('laterFailed');
+  }
+  function renderLater(){
+    for(const {id,later,feedback} of controls)paintLater(later,feedback,id,false);
+    if(!afterLater||!afterFeedback)return;
+    const next=currentEpisode+1;
+    afterLater.hidden=!controls.some(control=>control.id===next);
+    afterFeedback.hidden=true;
+    if(!afterLater.hidden)paintLater(afterLater,afterFeedback,next,true);
+  }
+  afterLater?.addEventListener('click',()=>{if(!afterLater.hidden)toggleLater(currentEpisode+1);});
   function read(id){return window.RavenEpisodeProgress?.read(id)||{available:false,seconds:0,status:'unavailable'};}
   document.querySelectorAll('[data-visual-episode]').forEach(link=>{
     const id=Number(link.dataset.visualEpisode),card=link.closest('.rvnVisualEpisode');
@@ -27,7 +72,13 @@
     resume.type=start.type='button';resume.dataset.filmResume=String(id);start.dataset.filmStart=String(id);
     resume.addEventListener('click',event=>{window.ravenResumeEpisode(event,id);render();});
     start.addEventListener('click',event=>{window.ravenStartEpisode(event,id);render();});
-    group.append(status,resume,start);card.append(group);controls.push({id,status,resume,start});
+    const later=document.createElement('button');
+    later.type='button';later.dataset.filmLater=String(id);
+    later.addEventListener('click',()=>toggleLater(id));
+    const feedback=document.createElement('p');
+    feedback.className='rvnWatchLaterFeedback';feedback.hidden=true;feedback.setAttribute('role','status');
+    group.append(status,resume,start,later,feedback);card.append(group);
+    controls.push({id,status,resume,start,later,feedback});
   });
   function render(){
     document.querySelectorAll('[data-home-resume]').forEach(node=>{if(words[node.dataset.homeResume])node.textContent=text(node.dataset.homeResume);});
@@ -49,6 +100,7 @@
     if(saveStatus){const progress=read(currentEpisode);saveStatus.hidden=progress.status!=='unavailable';saveStatus.textContent=progress.status==='unavailable'?text('unavailable'):'';}
   }
   async function checkSession(){
+    if(!caseCard)return;
     summary=null;render();const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),5000);
     try{
       const response=await fetch('/api/case/resume-summary',{method:'GET',credentials:'same-origin',cache:'no-store',signal:controller.signal});
@@ -60,11 +112,17 @@
     }catch(_){/* No API or no confirmed session means no resume claim. */}
     finally{clearTimeout(timeout);render();}
   }
-  document.addEventListener('raven:episode',event=>{currentEpisode=Number(event.detail.id)||1;render();});
+  document.addEventListener('raven:episode',event=>{currentEpisode=Number(event.detail.id)||1;render();renderLater();});
   document.addEventListener('raven:progress',render);
-  document.addEventListener('raven:ended',render);
-  window.addEventListener('storage',event=>{if(event.key===null||event.key?.startsWith('raven17_episode_'))render();});
-  window.addEventListener('pageshow',event=>{if(event.persisted)checkSession();});
+  document.addEventListener('raven:ended',event=>{currentEpisode=Number(event.detail.id)||currentEpisode;render();renderLater();});
+  window.addEventListener('storage',event=>{
+    if(event.key===null||event.key?.startsWith('raven17_episode_'))render();
+    if(event.key===null||controls.some(({id})=>event.key===laterKey(id))){
+      for(const {id} of controls)if(event.key===null||event.key===laterKey(id))laterFailed.delete(id);
+      renderLater();
+    }
+  });
+  window.addEventListener('pageshow',event=>{if(event.persisted){checkSession();renderLater();}});
   const retryButton=document.getElementById('rvnRetryVideo'),filmPlayer=document.getElementById('ravenEpisodePlayer');
   retryButton?.addEventListener('click',()=>{
     if(document.activeElement!==retryButton)return;
@@ -81,5 +139,6 @@
     requestAnimationFrame(()=>{const section=document.getElementById('studio'),heading=section?.querySelector('h2');section?.scrollIntoView({behavior:'auto',block:'start'});if(heading){heading.tabIndex=-1;heading.focus({preventScroll:true});}});
   });
   window.RavenI18n?.subscribe?.(render);document.addEventListener('raven:language',render);
-  render();checkSession();
+  document.addEventListener('raven:language',renderLater);
+  renderLater();render();checkSession();
 })();

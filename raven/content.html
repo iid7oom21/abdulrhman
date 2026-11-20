@@ -36,7 +36,7 @@ window.ravenIntro={complete:true,finish:function(){}};
 <link href="./assets/raven-polish-v2.css?v=scope-20261119" rel="stylesheet"/>
 <link href="./assets/raven-media-fallback.css?v=1" rel="stylesheet"/>
 <link href="./assets/raven-visual-home.css?v=20261119" rel="stylesheet"/>
-<link href="./assets/raven-home-resume.css?v=20261119" rel="stylesheet"/>
+<link href="./assets/raven-home-resume.css?v=watch-later-1" rel="stylesheet"/>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="RAVEN">
 <meta property="og:locale" content="ar_SA">
@@ -407,7 +407,7 @@ window.ravenIntro={complete:true,finish:function(){}};
 <video controls="" id="ravenEpisodePlayer" playsinline="" poster="https://cdn.websitepublisher.ai/custom/wid25762/images/raven-film-card.jpg" preload="none" src="https://res.cloudinary.com/du88n6b83/video/upload/v1789985712/raven17/episode-1.mp4"></video>
 </div>
 <div class="rvnVideoMessage" hidden="" id="rvnVideoError" role="status"><span data-rvn-v2="videoError">تعذر تحميل الفيديو. جرّب مرة أخرى؛ ملاحظاتك وتقدمك لن يتغيرا.</span><button data-rvn-v2="retry" id="rvnRetryVideo" type="button">إعادة المحاولة</button></div>
-<div class="rvnAfterCredits" hidden="" id="rvnAfterCredits"><h3 data-rvn-v2="partComplete" id="rvnAfterTitle">اكتمل الجزء.</h3><div class="rvnAfterActions"><button data-rvn-v2="nextEpisode" id="rvnAfterNext" type="button">شاهد الجزء التالي</button><button data-rvn-v2="again" id="rvnAfterReplay" type="button">إعادة المشاهدة</button><button id="rvnAfterBackstage" data-home-resume="backstage" type="button">خلف الكادر</button><button id="rvnAfterBack" data-home-resume="back" type="button">العودة للحلقات</button><a data-raven-route="./deleted-name/" data-dn-link="afterEpisode" data-dn-entry href="./deleted-name/">افتح قضية الاسم المحذوف</a></div><details><summary data-rvn-v2="endQuestion">ما التفصيل الذي غيّر تفسيرك؟</summary><textarea aria-label="ملاحظتك بعد المشاهدة" dir="auto" id="rvnEndNote" maxlength="1500"></textarea><p data-rvn-v2="endPrivacy">ملاحظتك تُحفظ على جهازك فقط، ولا تُرسل تلقائيًا.</p><p id="rvnEndNoteStatus" role="status"></p></details></div>
+<div class="rvnAfterCredits" hidden="" id="rvnAfterCredits"><h3 data-rvn-v2="partComplete" id="rvnAfterTitle">اكتمل الجزء.</h3><div class="rvnAfterActions"><button data-rvn-v2="nextEpisode" id="rvnAfterNext" type="button">شاهد الجزء التالي</button><button id="rvnAfterLater" type="button" hidden></button><button data-rvn-v2="again" id="rvnAfterReplay" type="button">إعادة المشاهدة</button><button id="rvnAfterBackstage" data-home-resume="backstage" type="button">خلف الكادر</button><button id="rvnAfterBack" data-home-resume="back" type="button">العودة للحلقات</button><a data-raven-route="./deleted-name/" data-dn-link="afterEpisode" data-dn-entry href="./deleted-name/">افتح قضية الاسم المحذوف</a></div><p class="rvnWatchLaterFeedback" id="rvnAfterLaterFeedback" role="status" hidden></p><details><summary data-rvn-v2="endQuestion">ما التفصيل الذي غيّر تفسيرك؟</summary><textarea aria-label="ملاحظتك بعد المشاهدة" dir="auto" id="rvnEndNote" maxlength="1500"></textarea><p data-rvn-v2="endPrivacy">ملاحظتك تُحفظ على جهازك فقط، ولا تُرسل تلقائيًا.</p><p id="rvnEndNoteStatus" role="status"></p></details></div>
 <p class="rvnFilmSaveStatus" id="rvnFilmSaveStatus" role="status" aria-live="polite" hidden></p>
 <div class="rvnTheaterBar">
 <button aria-label="الحلقة السابقة" id="rvnPrevEpisode" type="button">← <span data-rvn-v2="previous">السابق</span></button>
@@ -430,7 +430,7 @@ window.ravenIntro={complete:true,finish:function(){}};
 <script defer src="./assets/raven-media-fallback.js?v=2"></script>
 <script defer src="./assets/raven-deleted-name-home.js?v=atmosphere-20261119"></script>
 <script defer src="./assets/raven-visual-home.js?v=20261119"></script>
-<script defer src="./assets/raven-home-resume.js?v=20261119"></script>
+<script defer src="./assets/raven-home-resume.js?v=watch-later-1"></script>
 <script>
     (()=>{
       const video=document.getElementById('ravenHeroMotion');

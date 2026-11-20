@@ -102,10 +102,23 @@ try {
     await assertStorage(frame);
     if (id < 3) {
       await expect(frame.locator('#rvnAfterNext')).toBeVisible();
+      const later = frame.locator('#rvnAfterLater');
+      const laterCard = frame.locator(`[data-film-later="${id+1}"]`);
+      await expect(later).toHaveAttribute('aria-pressed','false');
+      const requestsBefore = [...requestedFilms];
+      await later.focus(); await page.keyboard.press('Enter');
+      await expect(later).toBeFocused();
+      await expect(later).toHaveAttribute('aria-pressed','true');
+      await expect(laterCard).toHaveAttribute('aria-pressed','true');
+      assert.equal(await video.evaluate(v=>v.ended),true);
+      assert.equal(new URL(page.url()).searchParams.get('episode'),String(id));
+      assert.deepEqual(requestedFilms,requestsBefore);
+      await assertStorage(frame);
       await frame.locator('#rvnAfterNext').click();
     } else {
       await expect(frame.locator('#rvnNextEpisode')).toBeDisabled();
       await expect(frame.locator('#rvnAfterNext')).toBeHidden();
+      await expect(frame.locator('#rvnAfterLater')).toBeHidden();
     }
   }
   assert.equal(await page.locator('#site-soundtrack').evaluate(v => v.paused), true);
@@ -132,6 +145,49 @@ try {
     assert.equal(await linked.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
   }
   console.log('PASS: three original episode IDs, fixture playback/resume, isolated progress and notes, final next button, deep links 1/2/3, AR/EN switching, music-off and 320px layout.');
+  // Revisit the film cards with another tab, without opening a film or consuming its bookmark.
+  const shelf = await context.newPage();
+  await shelf.goto(new URL('?lang=en#films',base).href);
+  const shelfFrame = await (await shelf.locator('#site-content').elementHandle()).contentFrame();
+  const mark = shelfFrame.locator('[data-film-later="2"]');
+  await expect(mark).toHaveAccessibleName('Episode 2 — Watch later');
+  await expect(mark).toHaveAttribute('aria-pressed','true');
+  const beforeToggle = [...requestedFilms];
+  await mark.focus(); await shelf.keyboard.press('Enter');
+  await expect(mark).toHaveAttribute('aria-pressed','false');
+  const sourceTab=await (await page.locator('#site-content').elementHandle()).contentFrame();
+  await expect(sourceTab.locator('[data-film-later="2"]')).toHaveAttribute('aria-pressed','false');
+  await expect(shelfFrame.locator('[data-film-later="3"]')).toHaveAttribute('aria-pressed','true');
+  await expect(shelfFrame.locator('#episodeModal')).toBeHidden();
+  assert.deepEqual(requestedFilms,beforeToggle);
+  await assertStorage(shelfFrame);
+  // Readable, non-writable storage may fail silently. A failed add and remove must
+  // preserve the actual existing markers, leave both controls usable, and localize the error.
+  await shelfFrame.evaluate(()=>{
+    const proto=Storage.prototype, write=proto.setItem, remove=proto.removeItem;
+    proto.setItem=function(key,value){if(!key.startsWith('raven17_watch_later_'))return write.call(this,key,value);};
+    proto.removeItem=function(key){if(!key.startsWith('raven17_watch_later_'))return remove.call(this,key);};
+  });
+  await mark.click(); await expect(mark).toHaveAttribute('aria-pressed','false');
+  await expect(shelfFrame.locator('.rvnWatchLaterFeedback:visible').first()).toHaveText(/could not confirm/i);
+  const third=shelfFrame.locator('[data-film-later="3"]');
+  await third.click(); await expect(third).toHaveAttribute('aria-pressed','true');
+  await shelfFrame.locator('.rvnLanguage [data-rvn-lang="ar"]:visible').first().click();
+  await expect(shelfFrame.locator('.rvnWatchLaterFeedback:visible').first()).toHaveText(/تعذّر تأكيد/);
+  await shelfFrame.evaluate(()=>{
+    const get=Storage.prototype.getItem;
+    Storage.prototype.getItem=function(key){
+      if(key.startsWith('raven17_watch_later_'))throw new DOMException('Fixture storage is unavailable','SecurityError');
+      return get.call(this,key);
+    };
+  });
+  await mark.click();
+  assert.equal(await mark.getAttribute('aria-pressed'),null,'an unreadable marker must not be reported as saved or cleared');
+  await expect(mark).toBeEnabled();
+  await expect(shelfFrame.locator('.rvnWatchLaterFeedback:visible').first()).toHaveText(/تعذّر تأكيد/);
+  assert.equal(await shelfFrame.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),true);
+  await assertStorage(shelfFrame);
+  console.log('PASS: manual watch-later from credits, unchanged playback, independent bookmarks across reload and tabs, AR/EN, final episode and failed writes.');
   await context.close();
 
   // Fail the actual MP4 response before metadata arrives. At this point a native
