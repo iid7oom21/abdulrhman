@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 
+export const STUDIO_ENTRY_ASSETS = ['studio/assets/index-BlIwvRAl.js', 'studio/assets/index-Dh8PpCo9.css'];
+
 // Reviewed public runtime files only. Never enumerate a repository or serve by extension.
 const files = [
   // Local visual-review assets. No private content or new API surface.
@@ -65,7 +67,7 @@ const files = [
   ...['archive-opening', 'paper-detail', 'over-shoulder'].flatMap(name =>
     ['mp4', 'webp'].map(extension => `raven/assets/atmosphere-v1/${name}.${extension}`)),
   // Runtime files used by the pinned homepage and its linked studio, not the source/download bundle.
-  'studio/index.html', 'studio/assets/index-DdtjoBKO.js', 'studio/assets/index-DO0lVgqN.css',
+  'studio/index.html', ...STUDIO_ENTRY_ASSETS,
   'studio/visual-lab/assets/ibm-plex-arabic.woff2',
   ...['01-manor', '02-archive', '03-desk', '04-corridor'].flatMap(name =>
     ['webp', 'png'].map(extension => `studio/visual-lab/assets/${name}.${extension}`)),
@@ -95,7 +97,7 @@ const legacyCaseRoutes = new Map([
   ['/raven/deleted-name.html', '/raven/deleted-name/'],
 ]);
 for (const file of files) if (file.endsWith('/index.html')) routes.set('/' + file.slice(0, -10), file);
-// The pinned studio build retains its GitHub Pages base. Alias only reviewed studio routes.
+// Serve the same reviewed studio files at both supported mount paths.
 for (const [route, file] of [...routes]) if (route.startsWith('/studio/')) routes.set('/abdulrhman' + route, file);
 const mime = {'.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.json':'application/json; charset=utf-8',
   '.css':'text/css; charset=utf-8', '.svg':'image/svg+xml', '.jpg':'image/jpeg', '.webp':'image/webp', '.png':'image/png',

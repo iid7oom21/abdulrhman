@@ -3,8 +3,9 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
+import {STUDIO_ENTRY_ASSETS} from '../../server/ai-dialogue/src/site-mount.js';
 
-export const SITE_COMMIT = 'fc4cde331999a9adcfa98ac39020f041d045e3ff';
+export const SITE_COMMIT = '3a6c09002daaae177f777688f4faf504db46bade';
 export const PUBLIC_RELEASE = '2026-11-15-investigation-tools-1';
 export const EXPORT_MARKER = '.raven-render-export.json';
 // Render builds from a shallow, single-branch checkout and removes its Git
@@ -44,7 +45,7 @@ export const CORE_FILES = [
   'raven/assets/raven-homepage-v6.css','raven/assets/raven-polish-v2.css',
   ...['archive-opening','paper-detail','over-shoulder'].flatMap(name =>
     ['mp4','webp'].map(extension => `raven/assets/atmosphere-v1/${name}.${extension}`)),
-  'studio/index.html','studio/assets/index-DdtjoBKO.js','studio/assets/index-DO0lVgqN.css',
+  'studio/index.html', ...STUDIO_ENTRY_ASSETS,
   'raven/terminal-preview/raven-17/index.html',
   'raven/terminal-preview/assets/hero-poster.jpg',
   'raven/terminal-preview/assets/hero-loop.mp4',

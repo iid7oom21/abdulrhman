@@ -33,4 +33,4 @@
 
 ### نشر الاستوديو ضمن الموقع
 
-يبنى الاستوديو لمساره العام باستخدام `npm run build -- --base=/abdulrhman/studio/`. تُنسخ `dist/index.html` و`dist/assets/` و`dist/visual-lab/` فقط إلى `studio/` في فرع نشر مبني على أحدث `gh-pages`. لا تُنسخ `dist/raven/`؛ موقع القصة الموجود في فرع النشر هو المصدر المعتمد. مسارات الفيديو والصور وخط الواجهة تتبع مسار البناء، وزر الأرشيف يعيد الزائر إلى موقع RAVEN الأصلي.
+يُبنى الاستوديو باستخدام `npm run build -- --base=./` حتى تعمل نفس الملفات على `/studio/` و`/abdulrhman/studio/`. عند تغيير ملفات JavaScript أو CSS المجمّعة حدّث `STUDIO_ENTRY_ASSETS` في `server/ai-dialogue/src/site-mount.js` الذي يستخدمه بناء الخادم أيضًا. تُنسخ `dist/index.html` و`dist/assets/` و`dist/visual-lab/` فقط إلى `studio/` في فرع نشر مبني على أحدث `gh-pages`. لا تُنسخ `dist/raven/`؛ موقع القصة الموجود في فرع النشر هو المصدر المعتمد. مسارات الفيديو والصور وخط الواجهة تتبع مسار البناء، وزر الأرشيف يعيد الزائر إلى موقع RAVEN الأصلي.
