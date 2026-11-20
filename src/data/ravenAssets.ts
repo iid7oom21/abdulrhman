@@ -2,10 +2,11 @@ import type { VideoProject } from "../types";
 
 const ROOT = `${import.meta.env.BASE_URL}visual-lab`;
 
-// The published RAVEN site is its own deployment (the gh-pages branch). The studio
-// links to it rather than bundling a copy, so readers always get the current site
-// and no stale snapshot of it ships inside this app.
-export const RAVEN_HOME_URL = 'https://iid7oom21.github.io/abdulrhman/raven/';
+// The integrated archive is a sibling of the studio at either mount path.
+// Standalone studio previews keep their public archive link.
+export const RAVEN_HOME_URL = /\/studio\/(?:index\.html)?$/.test(window.location.pathname)
+  ? '../raven/index.html'
+  : 'https://iid7oom21.github.io/abdulrhman/raven/';
 
 export interface RavenScene {
   id: string;
