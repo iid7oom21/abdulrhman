@@ -111,6 +111,15 @@ test('atmosphere gallery remains optional, silent and independent of case state'
       await scope.locator('#raven-atmosphere').scrollIntoViewIfNeeded();
       const initial=await scope.locator('[data-atmosphere-video]').evaluateAll(nodes=>nodes.map(media=>({paused:media.paused,muted:media.muted,auto:media.autoplay,loop:media.loop,preload:media.preload,currentTime:media.currentTime})));
       assert.ok(initial.every(media=>media.paused&&media.muted&&!media.auto&&!media.loop&&media.preload==='none'&&media.currentTime===0));
+      const backstageLink = scope.locator('#studio').getByRole('link', {
+        name: language === 'ar' ? 'افتح مقطع «الورق والهاتف»' : 'Open the Paper and phone clip',
+        exact: true
+      });
+      await backstageLink.press('Enter');
+      const selectedCard = scope.locator('[data-atmosphere-card]').last();
+      const selectedTitle = selectedCard.getByRole('heading', {name: language === 'ar' ? 'الورق والهاتف' : 'Paper and phone', exact: true});
+      await eventually(() => selectedTitle.evaluate(el => el === document.activeElement && el.matches(':target')), 'backstage link focuses the selected clip in its original slot');
+      assert.equal(await selectedCard.locator('video').getAttribute('src'), './assets/atmosphere-v1/paper-detail.mp4');
       assert.equal(mediaRequests(fixture).length,0,'scrolling to the gallery does not fetch MP4s');
       const before=await snapshot(page);
       if(ARTIFACTS&&width!==320){

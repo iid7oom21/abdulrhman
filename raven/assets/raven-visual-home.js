@@ -7,6 +7,7 @@
     filmType:['للمشاهدة · ثلاث حلقات','Watch · Three episodes'],
     filmIntro:['خذ مقعدك. ابدأ من الحلقة الأولى، أو اختر حلقتك.','Take a seat. Start with episode one, or choose an episode.'],
     episodeList:['تصفح الحلقات الثلاث','Browse the three episodes'],
+    openPaperClip:['افتح مقطع «الورق والهاتف»','Open the Paper and phone clip'],
     caseType:['للّعب · قضية تفاعلية','Play · An interactive case'],
     caseTitle:['الاسم المحذوف','The Deleted Name'],
     caseDetails:['تعرّف إلى تجربة القضية','Explore the case experience'],

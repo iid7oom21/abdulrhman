@@ -86,8 +86,9 @@ body.rvnCursorOn{cursor:auto}
 .rvnAtmosphereGrid{display:grid;grid-template-columns:minmax(0,1fr);gap:22px}
 .rvnAtmosphereCard{min-width:0;padding:16px;border:1px solid var(--rvn-line);background:var(--rvn-panel)}
 .rvnAtmosphereCard h3{margin:0 0 14px;color:var(--rvn-warm);font-size:19px;font-weight:500}
+.rvnAtmosphereCard h3:target{scroll-margin-top:6rem}
 .rvnAtmosphereCard video{display:block;width:100%;height:auto;aspect-ratio:16/9;object-fit:contain;background:#000;border:1px solid rgba(255,255,255,.08)}
-.rvnAtmosphereCard video:focus-visible{outline:2px solid #d6b17b;outline-offset:4px}
+.rvnAtmosphereCard :is(video,h3):focus-visible{outline:2px solid #d6b17b;outline-offset:4px}
 .rvnAtmosphereActions{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px}
 .rvnAtmosphereActions button{min-width:44px;min-height:44px;max-width:100%;padding:10px 16px;border:1px solid var(--rvn-line);border-radius:2px;background:#171b1e;color:var(--rvn-gold);text-align:start;overflow-wrap:anywhere}
 .rvnAtmosphereStatus{margin:12px 0 0;color:var(--rvn-muted);font-size:14px;line-height:1.8}
