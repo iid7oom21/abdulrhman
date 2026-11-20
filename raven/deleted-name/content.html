@@ -144,8 +144,16 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
 #reading-tools .reading-source{display:block;color:var(--muted);font-size:.9em}
 #reading-tools :focus-visible{outline:2px solid var(--gold-hi);outline-offset:3px}
 #reading-tools h4{margin-block:16px 8px}
+#visited-places[hidden]{display:none}
+.place-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:16px}
+.place-link{display:grid;grid-template-columns:74px minmax(0,1fr);gap:12px;align-items:center;min-height:72px;padding:8px;border-block-start:1px solid var(--line);text-decoration:none}
+.place-link strong{text-decoration:underline;text-underline-offset:.22em}
+.place-link small{display:block;color:var(--soft);line-height:1.5}
+.place-thumbnail{position:relative;display:block;overflow:hidden;aspect-ratio:2/1;background:var(--panel)}
+.place-thumbnail img{height:100%;width:100%;object-fit:cover}
+.place-thumbnail[data-panel="table"] img{position:absolute;inset-inline-start:0;top:-200%;height:300%;object-fit:fill}
 </style>
-<link rel="stylesheet" href="opening-visual.css?v=paper-context-1">
+<link rel="stylesheet" href="opening-visual.css?v=return-tools-1">
 </head>
 <body class="opening-visual">
 <a class="skip" href="#main" data-k="skip">تخطَّ إلى المحتوى</a>
@@ -230,6 +238,13 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
     <div id="hook-actions" class="choices"></div>
     <section id="hook-ending" class="hook-ending" hidden></section>
     <p id="hook-announcement" class="hook-sr" role="status" aria-live="polite" aria-atomic="true"></p>
+  </div></section>
+
+  <section class="block" id="visited-places" hidden aria-labelledby="places-title"><div class="wrap">
+    <details class="opening-optional" id="places-drawer">
+      <summary id="places-title"><span data-visual-lang="ar">الأماكن اللي مرّيت بها</span><span data-visual-lang="en">Places you’ve visited</span></summary>
+      <div class="place-list" id="place-list"></div>
+    </details>
   </div></section>
 
   <section class="block" aria-labelledby="t-cast"><div class="wrap"><details class="opening-optional" id="optional-cast"><summary><span lang="ar" data-visual-lang="ar">بطاقات الشخصيات · مرجع اختياري</span><span lang="en" data-visual-lang="en">Character cards · optional reference</span></summary>
@@ -729,7 +744,7 @@ footer{padding-block:28px;border-top:1px solid var(--line);font-size:13px;color:
 <script src="reading-tools.js?v=7"></script>
 <script src="case-entry.js?v=1"></script>
 <script src="opening-artwork.js?v=2" async></script>
-<script src="opening-visual.js?v=paper-context-1" defer></script>
-<script src="reading-continuity.js?v=paper-context-1" defer></script>
+<script src="opening-visual.js?v=return-tools-1" defer></script>
+<script src="reading-continuity.js?v=return-tools-1" defer></script>
 </body>
 </html>

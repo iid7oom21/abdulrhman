@@ -119,6 +119,8 @@ test('message, gate, comparison and response remain usable with images, media an
       const taskQuote = await frame.locator('#task-message-quote').textContent();
       assert.equal(taskQuote, firstMessage.trim().split(/\.\s*/).filter(Boolean).at(-1) + '.', 'the opening quote is the final sentence of the existing first message');
       assert.ok((await frame.locator('#task-message-preview').boundingBox()).height >= 44);
+      const places = frame.locator('#places-drawer');
+      assert.equal(await frame.locator('#visited-places').isVisible(), false);
       const initial = await state(frame);
       const sourceMessages = await frame.locator('#assignment-stage .thread .msg').evaluateAll(rows => rows.map(row => ({ speaker: row.querySelector('.who').textContent, text: row.querySelector('p').textContent })));
       assert.equal(sourceMessages.length, 3, 'the preview uses the three existing messages only');
@@ -139,12 +141,24 @@ test('message, gate, comparison and response remain usable with images, media an
       }
       await closeCard(); assert.equal(await messageButton.evaluate(node => document.activeElement === node), true); assert.ok(Math.abs(await frame.evaluate(() => scrollY) - messageY) <= 2);
       await activate(frame.locator('#assignment-stage .journey-actions a[href="#t-arrive"]'));
+      await activate(places.locator('summary'));
+      assert.equal(await places.locator('[data-place="gate"]').count(), 1);
+      assert.equal(await places.locator('[data-place="table"]').count(), 0);
+      const gateState = await state(frame);
+      await activate(places.locator('[data-place="gate"]'));
+      assert.equal(await frame.locator('#t-arrive').evaluate(el => el === document.activeElement), true);
+      assert.deepEqual(await state(frame), gateState);
       assert.equal(await frame.locator('#old-message-quote').textContent(), language === 'ar' ? 'الأصل عندي.' : 'I have the original.');
       assert.equal(await frame.locator('[data-k="a3"]').textContent(), language === 'ar' ? 'ما فيه مقارنة الليلة.' : "There's no comparison tonight.");
       const gateText = await frame.locator('#arrival-stage').innerText(); assert.ok(gateText.indexOf(language === 'ar' ? 'الأصل عندي.' : 'I have the original.') < gateText.indexOf(language === 'ar' ? 'أشوف الورقة' : 'See the paper'));
       await activate(frame.locator('[data-journey-paper]')); assert.equal((await state(frame)).phase, 'invite');
       await activate(frame.locator('#arrival-stage a[href="#t-assign"]')); await activate(frame.locator('[data-journey-paper]')); assert.equal((await state(frame)).phase, 'invite', 'returning to the scene must not advance it twice');
       await activate(frame.locator('[data-hook-action="enter"]')); assert.equal((await state(frame)).phase, 'compare');
+      const placeState = await state(frame);
+      assert.equal(await places.locator('[data-place="table"] strong').innerText(), language === 'ar' ? 'طاولة الصالة' : 'The hall table');
+      await activate(places.locator('[data-place="table"]'));
+      assert.equal(await frame.locator('#hook-document').evaluate(el => el === document.activeElement), true);
+      assert.deepEqual(await state(frame), placeState);
       const goal = frame.locator('#paper-goal');
       assert.ok(await goal.locator('p').isVisible());
       await activate(goal.locator('summary'));
@@ -176,6 +190,7 @@ test('message, gate, comparison and response remain usable with images, media an
       await activate(frame.locator('#lang-switch')); await settle(frame);
       assert.deepEqual(await contextBox.locator('li p').allTextContents(), await frame.locator('#hook-document > dl dd button').allTextContents());
       assert.ok(await contextBox.locator('li').first().isVisible());
+      assert.equal(await places.locator('[data-place="gate"] strong').innerText(), language === 'ar' ? 'The gate' : 'البوابة');
       assert.deepEqual(await state(frame), beforeRead, 'language keeps chosen passage, private note, draft, source and game state');
       assert.equal(await frame.evaluate(() => window.__inspectCalls), inspectCalls, 'locale restoration must not replay inspection');
       const afterLanguageTop = (await comparison.boundingBox()).y; assert.ok(Math.abs(afterLanguageTop - comparisonTop) <= 2, `comparison anchor moved from ${comparisonTop} to ${afterLanguageTop}`);
@@ -228,6 +243,8 @@ test('message, gate, comparison and response remain usable with images, media an
       const geometry = await frame.evaluate(() => ({ width: innerWidth, document: document.documentElement.scrollWidth })); assert.ok(geometry.document <= geometry.width + 1);
       record.finalState = await state(frame); record.geometry = geometry; record.anchor = { before: comparisonTop, translated: afterLanguageTop }; record.inspections = inspectCalls;
       await activate(frame.locator('[data-hook-action="replay"]')); const replay = await state(frame); assert.equal(replay.selected, null); assert.deepEqual(replay.notes, []); assert.equal(replay.draft, '');
+      assert.equal(await places.locator('[data-place="table"]').count(), 0);
+      assert.equal(await places.evaluate(node => node.open), false);
       record.status = 'PASS';
     } catch (error) { record.status = 'FAIL'; record.failure = error.message; throw error; } finally { await context.close(); }
   });

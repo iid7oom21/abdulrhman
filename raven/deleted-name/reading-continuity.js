@@ -186,3 +186,78 @@
   }, { passive: true });
   showSelection();
 })();
+
+// A reading shortcut is available only after the player reaches the matching place.
+(() => {
+  const hook = document.getElementById('hook');
+  const panel = document.getElementById('visited-places');
+  const gate = document.getElementById('t-arrive');
+  if (!hook || !panel || !gate) return;
+  const drawer = document.getElementById('places-drawer');
+  const list = document.getElementById('place-list');
+  const places = {
+    gate: {target:'t-arrive', image:'./assets/case-arrival.webp', ar:['البوابة','ارجع إلى كلام كلير عند الوصول.'], en:['The gate','Revisit what Claire said when you arrived.']},
+    table: {target:'hook-document', image:'./assets/scenes/case-scenes-v1.webp', ar:['طاولة الصالة','ارجع إلى الورقة التي فتحتها هنا.'], en:['The hall table','Return to the paper you opened here.']}
+  };
+  const visited = new Set();
+  let run = hook.dataset.sceneRun;
+  function update() {
+    const lang = document.documentElement.lang === 'en' ? 'en' : 'ar';
+    panel.hidden = visited.size === 0;
+    if (!drawer.open) return;
+    for (const id of visited) {
+      const place = places[id];
+      let link = list.querySelector('[data-place="' + id + '"]');
+      if (!link) {
+        link = document.createElement('a');
+        link.className = 'place-link';
+        link.dataset.place = id;
+        link.href = '#' + place.target;
+        const photo = document.createElement('span');
+        photo.className = 'place-thumbnail';
+        photo.dataset.panel = id;
+        const img = document.createElement('img');
+        img.alt = ''; img.loading = 'lazy'; img.src = place.image;
+        img.addEventListener('error', () => { img.hidden = true; });
+        photo.append(img);
+        const caption = document.createElement('span');
+        caption.append(document.createElement('strong'), document.createElement('small'));
+        link.append(photo, caption);
+        list.append(link);
+      }
+      const [title, description] = place[lang];
+      link.querySelector('strong').textContent = title;
+      link.querySelector('small').textContent = description;
+    }
+  }
+  function visitGate() {
+    visited.add('gate');
+    update();
+  }
+  function sceneChanged() {
+    if (run !== hook.dataset.sceneRun) {
+      run = hook.dataset.sceneRun;
+      visited.clear(); drawer.open = false; list.replaceChildren();
+    }
+    if (hook.dataset.phase !== 'start') visited.add('gate');
+    const paper = document.getElementById('hook-document');
+    if (paper) {
+      paper.tabIndex = -1;
+      visited.add('table');
+    }
+    update();
+  }
+  if ('IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(entries => {
+      if (entries.some(entry => entry.isIntersecting)) visitGate();
+    });
+    observer.observe(gate);
+  }
+  document.addEventListener('click', event => {
+    if (event.target.closest?.('a[href="#t-arrive"]')) visitGate();
+  });
+  drawer.addEventListener('toggle', update);
+  hook.addEventListener('raven:opening-render', sceneChanged);
+  document.addEventListener('raven:language', update);
+  sceneChanged();
+})();

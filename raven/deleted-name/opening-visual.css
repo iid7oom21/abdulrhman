@@ -569,3 +569,29 @@ body.opening-visual[data-reading-night="true"] :is(
 .paper-disclosure li { padding-inline-start: .45rem; }
 .paper-disclosure li[aria-current="true"] { border-inline-start: 2px solid currentColor; }
 #hook-document .paper-disclosure :is(strong,p) { color: inherit; }
+.message-row .message-pin {
+  margin-block-start: .55rem;
+  min-height: 44px;
+  padding: .25rem .7rem;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+.message-pin[aria-pressed="true"] { font-weight: 700; border-width: 2px; }
+.message-pin[aria-pressed="true"]::before { content: "✓" / ""; margin-inline-end: .4em; }
+body.opening-visual .message-pin:focus-visible { outline-color: var(--paper-ink); }
+body.opening-visual #hook-document > #paper-pinned-message {
+  grid-column: 1 / -1;
+  grid-row: auto;
+  width: 100%;
+  max-width: none;
+  margin: .5rem 0;
+  border-inline-start: 2px solid var(--gold);
+  padding-inline-start: .9rem;
+  overflow-wrap: anywhere;
+}
+#paper-pinned-message figcaption { color: var(--gold-hi); }
+#paper-pinned-message blockquote { margin: .35rem 0 .65rem; font-size: var(--reading-text-size, inherit); }

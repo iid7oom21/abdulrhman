@@ -17,6 +17,7 @@
     return node;
   };
   let returnedTo = null, activeCard = null, savedPosition = null;
+  let pinSource = null, pinRun = hook.dataset.sceneRun;
   const dialog = make('dialog', undefined, 'opening-card-dialog');
   dialog.id = 'opening-card-dialog';
   dialog.setAttribute('aria-labelledby', 'opening-card-title');
@@ -86,19 +87,63 @@
     if (id === 'paper') return document.getElementById('hook-document');
     return document.querySelector('.cast > [data-character="'+id+'"]:not([hidden])');
   }
+  function syncPinControls() {
+    for (const control of body.querySelectorAll('[data-pin-message]')) {
+      control.setAttribute('aria-pressed', String(control.dataset.pinMessage === pinSource?.dataset.k));
+    }
+  }
+  function renderPinnedMessage() {
+    const paper = document.getElementById('hook-document');
+    if (!paper) return;
+    let figure = paper.querySelector('#paper-pinned-message');
+    if (!pinSource) { figure?.remove(); return; }
+    if (!figure) {
+      figure = make('figure');
+      figure.id = 'paper-pinned-message';
+      const reopen = make('button', undefined, 'opening-secondary');
+      reopen.type = 'button';
+      reopen.dataset.openPinned = '';
+      reopen.setAttribute('aria-haspopup', 'dialog');
+      reopen.addEventListener('click', () => {
+        openCard('message', reopen);
+        body.querySelector('[data-pin-message][aria-pressed="true"]')?.focus();
+      });
+      figure.append(make('figcaption'), make('blockquote'), reopen);
+      paper.querySelector('.opening-toolsbar').before(figure);
+    }
+    const speaker = pinSource.closest('.msg').querySelector('.who').textContent;
+    figure.querySelector('figcaption').textContent = (english() ? 'Pinned message' : 'الرسالة المثبّتة') + ' · ' + speaker;
+    figure.querySelector('blockquote').textContent = pinSource.textContent;
+    figure.querySelector('button').textContent = english() ? 'Open in conversation' : 'افتحها في المراسلة';
+  }
   function renderCard() {
     const original = sourceFor(activeCard);
     if (!original) { if (dialog.open) dialog.close();return false; }
+    const focusedPin = document.activeElement?.dataset.pinMessage;
     body.replaceChildren();close.textContent = words().close;scope.textContent = words().scope;renderReadingSettings();
     if (activeCard === 'message') {
       title.textContent = messageTitle();
       const transcript = make('ol',undefined,'message-transcript');
       original.querySelectorAll('.msg').forEach(message => {
         const row = make('li',undefined,'message-row');
-        row.append(make('strong',message.querySelector('.who')?.textContent || '', 'message-speaker'),make('p',message.querySelector('p')?.textContent || ''));
+        const source = message.querySelector('p[data-k]');
+        const passage = make('p',source.textContent);
+        passage.id = 'opening-pin-text-' + source.dataset.k;
+        const pin = make('button', english() ? 'Pin for comparison' : 'تثبيت للمقارنة', 'message-pin');
+        pin.type = 'button';
+        pin.dataset.pinMessage = source.dataset.k;
+        pin.setAttribute('aria-describedby', passage.id);
+        pin.addEventListener('click', () => {
+          pinSource = pinSource === source ? null : source;
+          syncPinControls();
+          renderPinnedMessage();
+        });
+        row.append(make('strong',message.querySelector('.who').textContent, 'message-speaker'),passage,pin);
         transcript.append(row);
       });
       body.append(transcript,make('p',english() ? 'An earlier conversation. Your reply in it has already happened.' : 'محادثة سابقة. ردّك المكتوب فيها حدث بالفعل.','opening-chip'));
+      syncPinControls();
+      if (focusedPin) body.querySelector('[data-pin-message="'+focusedPin+'"]')?.focus({preventScroll:true});
     } else if (activeCard === 'paper') {
       title.textContent = original.querySelector('h3')?.textContent || words().paper;
       const list = make('dl');
@@ -145,10 +190,12 @@
     if (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom) dialog.close();
   }});
   dialog.addEventListener('close', () => {
-    const target = returnedTo?.isConnected ? returnedTo : document.querySelector('[data-visual-open="'+activeCard+'"]');
+    const target = returnedTo?.isConnected ? returnedTo : returnedTo?.hasAttribute('data-open-pinned')
+      ? hook.querySelector('[data-open-pinned], [data-visual-source]')
+      : document.querySelector('[data-visual-open="'+activeCard+'"]');
     target?.focus({preventScroll:true});
     if (savedPosition) {
-      const top = target?.isConnected && savedPosition.readingRevision !== readingRevision
+      const top = target?.isConnected && (savedPosition.readingRevision !== readingRevision || !returnedTo?.isConnected)
         ? scrollY + target.getBoundingClientRect().top - savedPosition.anchorTop : savedPosition.y;
       window.scrollTo({left:savedPosition.x,top,behavior:'instant'});
     }
@@ -179,6 +226,7 @@
   exit.addEventListener('click',() => leaveFocus());
   document.addEventListener('keydown', event => {if(event.key === 'Escape' && !dialog.open && !exit.hidden) {event.preventDefault();leaveFocus();}});
   function enhance() {
+    if (pinRun !== hook.dataset.sceneRun) { pinRun = hook.dataset.sceneRun; pinSource = null; }
     const c = words();exit.textContent = c.exit;renderReadingSettings();
     const messageTools = document.querySelector('.journey-message-tools');
     if (messageTools) addOpenButton(messageTools,'message',english() ? 'Open the earlier conversation' : 'افتح المحادثة السابقة');
@@ -227,6 +275,7 @@
       bar.querySelector('[data-visual-open]').textContent = c.document;
       bar.querySelector('[data-visual-focus]').textContent = c.focus;
       bar.querySelector('[data-visual-source]').textContent = c.source;
+      renderPinnedMessage();
     } else if (!exit.hidden) {
       document.body.classList.remove('paper-focus');exit.hidden = true;beforeFocus = null;
     }
