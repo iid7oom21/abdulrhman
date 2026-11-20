@@ -241,7 +241,14 @@
   }
   hook.addEventListener('raven:opening-render',enhance);
   document.addEventListener('raven:language',enhance);
-  document.getElementById('task-message-preview')?.addEventListener('click',event => openCard('message',event.currentTarget));
+  const messagePreview = document.getElementById('task-message-preview');
+  if (messagePreview && typeof dialog.showModal === 'function') {
+    messagePreview.setAttribute('aria-haspopup', 'dialog');
+    messagePreview.addEventListener('click', event => {
+      event.preventDefault();
+      openCard('message', messagePreview);
+    });
+  }
   document.querySelector('[data-journey-paper]')?.addEventListener('click', () => {
     // This is the same explicit opening action. Returning never restarts a scene.
     if (hook.dataset.phase === 'start') hook.querySelector('[data-hook-action="open"]')?.click();

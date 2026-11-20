@@ -8,6 +8,7 @@ const http = require('node:http');
 const crypto = require('node:crypto');
 const { chromium } = require('playwright');
 const root = path.resolve(__dirname, '..');
+const projectPrefix = '/abdulrhman/';
 const output = process.env.RAVEN_JOURNEY_QA_DIR;
 const files = ['content.html', 'opening-visual.js', 'opening-visual.css', 'reading-continuity.js', 'reading-tools.js', 'opening-artwork.js'].map(file => 'raven/deleted-name/' + file);
 const fingerprint = () => Object.fromEntries(files.map(file => [file, crypto.createHash('sha256').update(fs.readFileSync(path.join(root, file))).digest('hex')]));
@@ -22,7 +23,28 @@ const state = frame => frame.evaluate(() => {
 });
 const settle = frame => frame.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
 
-test('message, gate, comparison and response remain usable with no images or audio', async t => {
+// Check actual line boxes, since hiding page overflow can conceal clipped text.
+async function assertReadableLines(textNodes, width) {
+  const measurements = await textNodes.evaluateAll(nodes => nodes.map(node => {
+    const range = document.createRange();
+    range.selectNodeContents(node);
+    const box = node.getBoundingClientRect();
+    return {
+      text: node.innerText, left: box.left, right: box.right,
+      lines: Array.from(range.getClientRects(), r => [r.left, r.right, r.width, r.height])
+    };
+  }));
+  assert.ok(measurements.length > 0, 'the expected source text is rendered');
+  for (const { text, left, right, lines } of measurements) {
+    assert.ok(text.trim().length && lines.length, 'each source has visible text');
+    for (const [start, end, w, h] of lines) {
+      assert.ok(w > 0 && h > 0 && start >= Math.max(0, left) - 1 && end <= Math.min(width, right) + 1,
+        `clipped line in "${text}": ${start}–${end} in ${left}–${right}`);
+    }
+  }
+}
+
+test('message, gate, comparison and response remain usable with images, media and fonts blocked', async t => {
   const inline = [...fs.readFileSync(path.join(root, files[0]), 'utf8').matchAll(/<script>([\s\S]*?)<\/script>/g)].map(match => crypto.createHash('sha256').update(match[1]).digest('hex'));
   assert.deepEqual(inline, ['a5ff6904b872ea28a463d72e73d9ccc9a5dd3c646c8092f587f22bdff168f2cd', '4706a6c7a49e6f8432f2b7078addb1c0fd85453c977d2a68d06a8b5b78f4ed49'], 'approved merged navigation copy and unchanged scene engine match the inspected source');
   const before = fingerprint(), results = [];
@@ -30,6 +52,8 @@ test('message, gate, comparison and response remain usable with no images or aud
     if (!['GET', 'HEAD'].includes(req.method)) { res.writeHead(405); return res.end(); }
     let pathname; try { pathname = decodeURIComponent(new URL(req.url, 'http://fixture').pathname); } catch { res.writeHead(400); return res.end(); }
     if (pathname.startsWith('/api/')) { res.writeHead(404, { 'Content-Type': 'application/json' }); return res.end('{"error":"local_static_preview"}'); }
+    if (!pathname.startsWith(projectPrefix)) { res.writeHead(404); return res.end(); }
+    pathname = '/' + pathname.slice(projectPrefix.length);
     if (pathname.endsWith('/')) pathname += 'index.html';
     const file = path.resolve(root, '.' + pathname);
     if (!file.startsWith(root + path.sep) || pathname.split('/').some(part => part.startsWith('.')) || !fs.existsSync(file) || !fs.statSync(file).isFile()) { res.writeHead(404); return res.end(); }
@@ -41,7 +65,27 @@ test('message, gate, comparison and response remain usable with no images or aud
   const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', args: ['--no-sandbox'] });
   t.after(async () => {
     await browser.close(); await new Promise(resolve => server.close(resolve));
-    if (output) { fs.mkdirSync(output, { recursive: true }); fs.writeFileSync(path.join(output, 'journey-results.json'), JSON.stringify({ mode: 'Actual local Chromium shell; images/media and external requests blocked', baseRevision: 'd557ac2145943c488cd71f2bb6470c439429f2d4', before, after: fingerprint(), filesStable: JSON.stringify(before) === JSON.stringify(fingerprint()), results }, null, 2) + '\n'); }
+    if (output) { fs.mkdirSync(output, { recursive: true }); fs.writeFileSync(path.join(output, 'journey-results.json'), JSON.stringify({ browser: browser.version(), projectPrefix, mode: 'Local Chromium shell, image/media/font and external requests blocked', before, after: fingerprint(), filesStable: JSON.stringify(before) === JSON.stringify(fingerprint()), results }, null, 2) + '\n'); }
+  });
+  await t.test('the first action opens the actual correspondence when the visual helper is missing', async () => {
+    const context = await browser.newContext({ viewport: { width: 320, height: 844 }, reducedMotion: 'reduce' });
+    try {
+      await context.route('**/*', route => {
+        const req = route.request();
+        const url = new URL(req.url());
+        if (url.origin !== base || url.pathname.endsWith('/opening-visual.js') || ['image','media','font'].includes(req.resourceType())) return route.abort();
+        return route.continue();
+      });
+      const page = await context.newPage();
+      await page.goto(base + projectPrefix + 'raven/deleted-name/content.html?lang=ar');
+      assert.equal((await page.locator('#task-message-quote').innerText()).trim(), 'أبي فيها اسم الليلة.');
+      await page.locator('#task-message-preview').press('Enter');
+      assert.equal(new URL(page.url()).hash, '#t-assign');
+      assert.ok(await page.locator('#assignment-stage [data-k="m2"]').isVisible());
+      assert.equal(await page.locator('#hook').getAttribute('data-phase'), 'start');
+    } finally {
+      await context.close();
+    }
   });
   for (const width of [320, 390]) for (const language of ['ar', 'en']) for (const input of ['touch', 'keyboard']) await t.test(`${width}px ${language} ${input}`, async () => {
     const context = await browser.newContext({ viewport: { width, height: 844 }, hasTouch: input === 'touch', isMobile: input === 'touch', reducedMotion: 'reduce' });
@@ -51,11 +95,11 @@ test('message, gate, comparison and response remain usable with no images or aud
     await context.route('**/*', route => {
       const request = route.request();
       if (!['GET', 'HEAD'].includes(request.method())) writes.push({ method: request.method(), url: request.url() });
-      if (new URL(request.url()).origin !== base || ['image', 'media'].includes(request.resourceType())) { blocked.push({ type: request.resourceType(), url: request.url() }); return route.abort(); }
+      if (new URL(request.url()).origin !== base || ['image', 'media', 'font'].includes(request.resourceType())) { blocked.push({ type: request.resourceType(), url: request.url() }); return route.abort(); }
       return route.continue();
     });
     try {
-      await page.goto(base + '/raven/deleted-name/?lang=' + language, { waitUntil: 'domcontentloaded' });
+      await page.goto(base + projectPrefix + 'raven/deleted-name/?lang=' + language, { waitUntil: 'domcontentloaded' });
       await page.frameLocator('#site-content').locator('#task-message-preview').waitFor();
       const frame = await (await page.locator('#site-content').elementHandle()).contentFrame();
       assert.ok(frame);
@@ -101,12 +145,26 @@ test('message, gate, comparison and response remain usable with no images or aud
       await activate(frame.locator('[data-journey-paper]')); assert.equal((await state(frame)).phase, 'invite');
       await activate(frame.locator('#arrival-stage a[href="#t-assign"]')); await activate(frame.locator('[data-journey-paper]')); assert.equal((await state(frame)).phase, 'invite', 'returning to the scene must not advance it twice');
       await activate(frame.locator('[data-hook-action="enter"]')); assert.equal((await state(frame)).phase, 'compare');
+      const goal = frame.locator('#paper-goal');
+      assert.ok(await goal.locator('p').isVisible());
+      await activate(goal.locator('summary'));
+      assert.equal(await goal.locator('p').isVisible(), false);
+      assert.equal(await frame.locator('#paper-context').count(), 0);
       await activate(frame.locator('[data-hook-action="compare-toggle"]'));
+      assert.equal(await goal.count(), 0);
+      await assertReadableLines(frame.locator('#hook-comparison section > :is(h4, p)'), width);
       await activate(frame.locator('[data-hook-action="source-original"]'));
+      const contextBox = frame.locator('#paper-context');
+      await activate(contextBox.locator('summary'));
+      assert.deepEqual(await contextBox.locator('li p').allTextContents(), sourceMessages.map(row => row.text));
+      assert.equal(await contextBox.locator('[aria-current] p').innerText(), sourceMessages[1].text);
       await frame.locator('#reading-kind').selectOption('hypothesis'); await frame.locator('#reading-note').fill('PRIVATE-ADDED-NOTE'); await activate(frame.locator('#reading-add'));
       await frame.locator('#reading-note').fill('PRIVATE-PENDING-DRAFT-KEEP-MY-CARET');
       await frame.locator('#reading-note').evaluate(node => { node.focus(); node.setSelectionRange(4, 13, 'forward'); }); await settle(frame);
       await activate(frame.locator('[data-hook-action="source-conclusion"]'));
+      assert.deepEqual(await contextBox.locator('li p').allTextContents(), await frame.locator('#hook-document > dl dd button').allTextContents());
+      assert.ok(await contextBox.locator('li').first().isVisible());
+      await assertReadableLines(contextBox.locator('li p'), width);
       const beforeRead = await state(frame); assert.equal(beforeRead.source, 'document-original'); assert.equal(beforeRead.selected, 'source-conclusion'); assert.equal(beforeRead.notes.length, 1);
       const inspectCalls = await frame.evaluate(() => window.__inspectCalls); assert.equal(inspectCalls, 2);
       const paperButton = frame.locator('[data-visual-open="paper"]'); await paperButton.scrollIntoViewIfNeeded(); const paperY = await frame.evaluate(() => scrollY);
@@ -116,6 +174,8 @@ test('message, gate, comparison and response remain usable with no images or aud
       await comparison.evaluate(node => { window.scrollTo({ top: scrollY + node.getBoundingClientRect().top - 130, behavior: 'instant' }); }); await settle(frame);
       const comparisonTop = (await comparison.boundingBox()).y;
       await activate(frame.locator('#lang-switch')); await settle(frame);
+      assert.deepEqual(await contextBox.locator('li p').allTextContents(), await frame.locator('#hook-document > dl dd button').allTextContents());
+      assert.ok(await contextBox.locator('li').first().isVisible());
       assert.deepEqual(await state(frame), beforeRead, 'language keeps chosen passage, private note, draft, source and game state');
       assert.equal(await frame.evaluate(() => window.__inspectCalls), inspectCalls, 'locale restoration must not replay inspection');
       const afterLanguageTop = (await comparison.boundingBox()).y; assert.ok(Math.abs(afterLanguageTop - comparisonTop) <= 2, `comparison anchor moved from ${comparisonTop} to ${afterLanguageTop}`);
@@ -158,6 +218,10 @@ test('message, gate, comparison and response remain usable with no images or aud
         record.branch = 'review both recipients, return, keep private';
       }
       await activate(frame.locator('[data-hook-action="record"]')); assert.equal((await state(frame)).phase, 'done');
+      const handoff = frame.locator('#case-server-link');
+      await handoff.waitFor();
+      assert.equal(await frame.locator('#case-continue-link').count(), 0, 'an unavailable local case backend offers only the explicit cross-origin handoff');
+      assert.equal(await handoff.innerText(), language === 'ar' ? 'افتح القضية على خادمها' : 'Open the case on its server');
       const sound = await page.locator('#site-soundtrack').evaluate(audio => ({ paused: audio.paused, time: audio.currentTime })); assert.deepEqual(sound, { paused: true, time: 0 });
       assert.equal(await page.locator('audio').count(), 1); assert.equal(await page.locator('#music-track-picker option').count(), 13);
       assert.ok(blocked.some(item => item.type === 'image')); assert.deepEqual(writes, []); assert.deepEqual(errors, []);

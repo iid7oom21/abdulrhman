@@ -260,6 +260,8 @@ test('written opening: choices, display boundaries, language and access',async t
       await tabTo('enter'); await page.keyboard.press('Enter');
       assert.equal(await phase(),'compare');
       assert.equal(await page.locator('#reading-source').inputValue(),'','the player has not selected a passage');
+      await page.keyboard.press('Tab');
+      assert.equal(await page.locator('#paper-goal-toggle').evaluate(node => node === document.activeElement),true);
       await tabTo('source-original'); await page.keyboard.press('Enter');
       assert.equal(await page.locator('#reading-source').inputValue(),'document-original');
       await tabTo('source-conclusion'); await tabTo('source-signature'); await tabTo('compare-toggle');

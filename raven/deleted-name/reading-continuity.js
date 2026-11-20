@@ -6,12 +6,14 @@
   const parts = new Set(['original', 'conclusion', 'signature']);
   let sceneRun = hook.dataset.sceneRun;
   let selectedPart = null, lastReadingView = null, noteCaret = null, pending = null;
+  let inspected = false, goalOpen = true, contextOpen = false;
   let generation = 0, restoring = false;
 
   function synchronizeRun() {
     if (sceneRun === hook.dataset.sceneRun) return;
     sceneRun = hook.dataset.sceneRun;
     selectedPart = null; lastReadingView = null; noteCaret = null; pending = null;
+    inspected = false; goalOpen = true; contextOpen = false;
     generation++;
   }
   function showSelection() {
@@ -26,6 +28,60 @@
         delete button.dataset.readingSelected;
         button.removeAttribute('aria-current');
       }
+    }
+    renderPaperTools();
+  }
+  function disclosure(id, label, open, remember) {
+    const box = document.createElement('details');
+    box.className = 'paper-disclosure';
+    box.id = id;
+    const title = document.createElement('summary');
+    title.id = id + '-toggle';
+    title.textContent = label;
+    box.append(title);
+    box.open = open;
+    box.addEventListener('toggle', () => { if (box.isConnected) remember(box.open); });
+    return box;
+  }
+  function renderPaperTools() {
+    const paper = document.getElementById('hook-document');
+    if (!paper) return;
+    const en = document.documentElement.lang === 'en';
+    const goal = document.getElementById('paper-goal');
+    if (inspected || hook.dataset.phase !== 'compare') goal?.remove();
+    else if (!goal) {
+      const hint = disclosure('paper-goal', en ? 'What am I checking?' : 'وش أراجع؟', goalOpen, open => { goalOpen = open; });
+      const text = document.createElement('p');
+      text.textContent = en ? 'Pick a line you want to ask Jonas about.' : 'اختر السطر اللي تبي تسأل يوناس عنه.';
+      hint.append(text);
+      paper.querySelector('dl').before(hint);
+    }
+    if (!selectedPart) return;
+    let box = document.getElementById('paper-context');
+    if (!box) {
+      box = disclosure('paper-context', '', contextOpen, open => { contextOpen = open; });
+      box.append(document.createElement('ol'));
+      document.getElementById('hook-source-note').after(box);
+    }
+    // Both lists are already available to this reader. Stay inside the selected source.
+    const message = selectedPart === 'original';
+    const rows = message ? [...document.querySelectorAll('#assignment-stage .thread > .msg')] : [...paper.querySelectorAll(':scope > dl > div')];
+    const index = rows.findIndex(row => message ? row.querySelector('[data-k="m2"]') : row.querySelector('[data-part="' + selectedPart + '"]'));
+    if (index < 0) { box.remove(); return; }
+    box.firstElementChild.textContent = message
+      ? (en ? 'Read this line in the earlier conversation' : 'اقرأ السطر في سياق المراسلة')
+      : (en ? 'Read this line in the draft' : 'اقرأ السطر في سياق المسودة');
+    const list = box.querySelector('ol');
+    list.replaceChildren();
+    for (const row of rows.slice(Math.max(0, index - 1), index + 2)) {
+      const item = document.createElement('li');
+      const label = document.createElement('strong');
+      const text = document.createElement('p');
+      label.textContent = row.querySelector(message ? '.who' : 'dt').textContent;
+      text.textContent = row.querySelector(message ? 'p' : 'dd button').textContent;
+      if (row === rows[index]) item.setAttribute('aria-current', 'true');
+      item.append(label, text);
+      list.append(item);
     }
   }
   function rememberCaret(target = document.activeElement) {
@@ -66,6 +122,8 @@
   }
   function captureLanguage() {
     synchronizeRun();
+    goalOpen = document.getElementById('paper-goal')?.open ?? goalOpen;
+    contextOpen = document.getElementById('paper-context')?.open ?? contextOpen;
     rememberCaret();
     if (pending?.run === sceneRun) return;
     const current = readingView();
@@ -101,10 +159,17 @@
     synchronizeRun();
     if (!parts.has(event.detail?.part)) return;
     selectedPart = event.detail.part;
+    inspected = true;
     showSelection();
     lastReadingView = readingView() || lastReadingView;
   });
   hook.addEventListener('raven:opening-render', showSelection);
+  hook.addEventListener('click', event => {
+    if (event.target.closest?.('[data-hook-action="compare-toggle"]')) {
+      inspected = true;
+      document.getElementById('paper-goal')?.remove();
+    }
+  });
   document.addEventListener('click', event => {
     if (event.target.closest?.('[data-raven-language]')) captureLanguage();
   }, true);
