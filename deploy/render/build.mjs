@@ -3,10 +3,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {STUDIO_ENTRY_ASSETS} from '../../server/ai-dialogue/src/site-mount.js';
+import {AFTER_SHOW_FILES, STUDIO_ENTRY_ASSETS} from '../../server/ai-dialogue/src/site-mount.js';
 
-export const SITE_COMMIT = '3a6c09002daaae177f777688f4faf504db46bade';
-export const PUBLIC_RELEASE = '2026-11-15-investigation-tools-1';
+export const SITE_COMMIT = 'f3b4647dc4fa483442f99547f338d3660abcb0a5';
+export const PUBLIC_RELEASE = '2026-11-22-after-show-1';
 export const EXPORT_MARKER = '.raven-render-export.json';
 // Render builds from a shallow, single-branch checkout and removes its Git
 // remote, so a missing pinned commit is fetched from here by its SHA.
@@ -21,6 +21,7 @@ const PUBLIC_ROOTS = ['assets','fourth-signature','raven','studio','404.html','i
   'player-core.js','robots.txt','site-audio.js','site-bridge.js','site-entry.js','site-player.css',
   'site-player.js','sitemap.xml'];
 export const CORE_FILES = [
+  ...AFTER_SHOW_FILES,
   'site-player.js','site-audio.js','site-entry.js','site-bridge.js','site-player.css',
   'assets/texts/raven-texts.js','raven/index.html','raven/content.html',
   'raven/dialogue/preview-room.css',

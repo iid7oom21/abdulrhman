@@ -2,10 +2,23 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 
-export const STUDIO_ENTRY_ASSETS = ['studio/assets/index-BlIwvRAl.js', 'studio/assets/index-Dh8PpCo9.css'];
+export const STUDIO_ENTRY_ASSETS = ['studio/assets/index-B9yDZDSb.js', 'studio/assets/index-DI-to4yn.css'];
+
+export const AFTER_SHOW_FILES = [
+  'index.html', 'content.html', 'app.js', 'state.js', 'style.css',
+  'edit.js', 'edit-rules.js', 'edit.css', 'sims.js', 'sim-rules.js', 'sims.css',
+  'events.js', 'event-rules.js', 'events.css', 'lens.js', 'lens.css',
+  'assets/exterior.webp', 'assets/hand.webp', 'assets/envelope.webp', 'assets/lamp.webp',
+  'assets/foley-paper.wav', 'assets/foley-chair.wav', 'assets/foley-key.wav',
+  'assets/light-bright.png', 'assets/light-soft.png', 'assets/light-raking.png', 'assets/credits.txt',
+  'assets/preview-projection.webp', 'assets/preview-light.webp', 'assets/preview-sound.webp',
+  'assets/preview-grade.webp', 'assets/preview-camera.webp',
+  'assets/preview-budget.webp', 'assets/preview-continuity.webp', 'assets/preview-archive.webp',
+].map(name => 'raven/after-show/' + name);
 
 // Reviewed public runtime files only. Never enumerate a repository or serve by extension.
 const files = [
+  ...AFTER_SHOW_FILES,
   // Local visual-review assets. No private content or new API surface.
   'raven/assets/raven-visual-home.css',
   'raven/assets/raven-visual-home.js',
@@ -90,6 +103,7 @@ const files = [
 ];
 const routes = new Map(files.map(file => ['/' + file, file]));
 const legacyCaseRoutes = new Map([
+  ['/abdulrhman/raven/after-show', '/raven/after-show/'],
   ['/deleted-name', '/raven/deleted-name/'],
   ['/deleted-name/', '/raven/deleted-name/'],
   ['/deleted-name/index.html', '/raven/deleted-name/'],
@@ -100,8 +114,8 @@ for (const file of files) if (file.endsWith('/index.html')) routes.set('/' + fil
 // Serve the same reviewed studio files at both supported mount paths.
 for (const [route, file] of [...routes]) if (route.startsWith('/studio/')) routes.set('/abdulrhman' + route, file);
 const mime = {'.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.json':'application/json; charset=utf-8',
-  '.css':'text/css; charset=utf-8', '.svg':'image/svg+xml', '.jpg':'image/jpeg', '.webp':'image/webp', '.png':'image/png',
-  '.woff2':'font/woff2', '.ttf':'font/ttf', '.mp3':'audio/mpeg', '.mp4':'video/mp4'};
+  '.css':'text/css; charset=utf-8', '.txt':'text/plain; charset=utf-8', '.svg':'image/svg+xml', '.jpg':'image/jpeg', '.webp':'image/webp', '.png':'image/png',
+  '.woff2':'font/woff2', '.ttf':'font/ttf', '.mp3':'audio/mpeg', '.wav':'audio/wav', '.mp4':'video/mp4'};
 export const HOSTED_DIALOGUE_PATHS = new Set(['/raven/dialogue/', '/raven/dialogue/index.html']);
 
 // Check the request target before URL() can normalize traversal. Public filenames are ASCII.
@@ -132,6 +146,10 @@ export function createSiteMount(directory) {
   return {
     redirect(pathname) {
       if (pathname === '/abdulrhman/raven/index.html') return '/raven/';
+      if (pathname.startsWith('/abdulrhman/raven/after-show/')) {
+        const canonical = pathname.slice('/abdulrhman'.length);
+        if (routes.has(canonical)) return canonical;
+      }
       if (legacyCaseRoutes.has(pathname)) return legacyCaseRoutes.get(pathname);
       return !pathname.endsWith('/') && (routes.has(pathname + '/') || pathname === '/raven/dialogue')
         ? pathname + '/' : null;

@@ -321,8 +321,8 @@ test('visual scenes and linked studio serve reviewed assets across root and lega
     ['raven/assets/raven-visual-scenes.css', 'text/css; charset=utf-8', '.scene { display:block; }'],
     ['raven/assets/raven-polish-v2.css', 'text/css; charset=utf-8', '.rvnCastGrid { display:grid; }'],
     ['studio/index.html', 'text/html; charset=utf-8', '<!doctype html><div id="root"></div>'],
-    ['studio/assets/index-BlIwvRAl.js', 'text/javascript; charset=utf-8', 'STUDIO_SCRIPT'],
-    ['studio/assets/index-Dh8PpCo9.css', 'text/css; charset=utf-8', '.studio { display:block; }'],
+    ['studio/assets/index-B9yDZDSb.js', 'text/javascript; charset=utf-8', 'STUDIO_SCRIPT'],
+    ['studio/assets/index-DI-to4yn.css', 'text/css; charset=utf-8', '.studio { display:block; }'],
     ['studio/visual-lab/assets/ibm-plex-arabic.woff2', 'font/woff2', 'FONT_FIXTURE'],
     ['studio/visual-lab/assets/01-manor.webp', 'image/webp', 'MANOR_PREVIEW'],
     ['studio/visual-lab/assets/02-archive.png', 'image/png', 'ARCHIVE_DOWNLOAD'],
@@ -471,4 +471,29 @@ test('allowlisted paths reject file and directory symlinks, including links with
   const rootLink = path.join(f.dir, 'public-link'); fs.symlinkSync(f.root, rootLink);
   assert.throws(() => createPreviewServer({siteRoot:rootLink}), /invalid_site_root/);
   assert.throws(() => createPreviewServer({siteRoot:'relative/path'}), /site_root_must_be_absolute/);
+});
+
+test('After Show opens from the studio and serves only approved game assets', async t => {
+  const f = fixture(t);
+  const base = '/raven/after-show';
+  f.write('raven/after-show/index.html', '<html lang="en">After Show</html>');
+  f.write('raven/after-show/assets/hand.webp', 'HAND');
+  f.write('raven/after-show/edit-rules.js', 'export const round = 1;');
+  f.write('raven/after-show/assets/foley-paper.wav', 'RIFF0000WAVEfixture');
+  f.write('raven/after-show/assets/staging.webp', 'UNREVIEWED');
+  const s = await start(t, {siteRoot: f.root});
+
+  const redirect = await fetch(s.root + '/abdulrhman' + base + '/?activity=duo&lang=en', {redirect:'manual'});
+  assert.equal(redirect.status, 308);
+  assert.equal(redirect.headers.get('location'), base + '/?activity=duo&lang=en');
+  for (const prefix of ['', '/abdulrhman']) {
+    assert.match(await (await fetch(s.root + prefix + base + '/')).text(), /After Show/);
+    for (const [file, mime] of [['/edit-rules.js','text/javascript; charset=utf-8'],
+      ['/assets/hand.webp','image/webp'], ['/assets/foley-paper.wav','audio/wav']]) {
+      const response = await fetch(s.root + prefix + base + file);
+      assert.equal(response.status,200);
+      assert.equal(response.headers.get('content-type'),mime);
+    }
+    assert.equal((await fetch(s.root + prefix + base + '/assets/staging.webp')).status,404);
+  }
 });
