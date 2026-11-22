@@ -1,0 +1,38 @@
+name: Play the published After the Show round
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - deploy/render/build.mjs
+      - deploy/render/pages-smoke.py
+      - .github/workflows/after-show-pages-smoke.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  published-round:
+    if: github.event.repository.private == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --disable-pip-version-check playwright==1.56.0
+      - name: Play a round on GitHub Pages in Chrome
+        run: python deploy/render/pages-smoke.py
+      - name: Keep the browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: published-round-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/after-show-pages/
+          if-no-files-found: warn
+          retention-days: 14
