@@ -11,3 +11,28 @@
 @media(max-width:650px){.as-hero{grid-template-columns:1fr;min-height:0}.as-hero img{grid-row:1;height:clamp(8rem,35vw,14rem)}.as-hero-copy{padding:1.2rem}.as-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}.as-tile figure,.as-tile.compact figure{height:5rem}.as-tile .caption{padding:.6rem .7rem}.as-tile p{font-size:.88rem}.as-tile h3{font-size:1.08rem}.as-choices{gap:.4rem}.as-choices h2{flex-basis:100%}.as-bar{gap:.6rem}#as-all{padding-inline-start:.6rem}}
 @media(max-width:355px){.as-grid{grid-template-columns:1fr}.as-tile{display:grid;grid-template-columns:4.8rem 1fr}.as-tile figure,.as-tile.compact figure{height:100%}.as-bar .wordmark{font-size:1.05rem}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+.as-room-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .45rem;
+  margin-block: .25rem 1.15rem;
+}
+.as-room-filters button {
+  border-radius: 1.5rem;
+  padding-inline: 1.1rem;
+}
+.as-room-filters button[aria-pressed=true] {
+  background: var(--green);
+  color: var(--sheet);
+  border-color: var(--green);
+}
+.as-workshops .as-tile figure {
+  height: auto;
+  aspect-ratio: 640 / 308;
+}
+#as-view[data-workshop] :where(fieldset, section, figure, label) {min-inline-size: 0;}
+#as-view[data-workshop] :where(canvas, svg, video) {max-inline-size: 100%;}
+@media (max-width: 355px) {
+  .as-workshops .as-tile figure {height: 100%; aspect-ratio: auto;}
+}

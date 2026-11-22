@@ -15,3 +15,6 @@ foley-paper.wav, foley-chair.wav, foley-key.wav — original mono PCM cues synth
 
 Activity previews / معاينات التجارب
 preview-projection.webp, preview-light.webp, preview-sound.webp, preview-budget.webp, preview-continuity.webp, preview-archive.webp, preview-grade.webp, preview-camera.webp — Actual local Chromium captures of the corresponding Arabic activity in progress, on 2026-11-22. Cropped to the activity workspace and exported at 640 × 308. These previews show the interface that opens from their activity cards.
+
+Cinema workshops / ورش السينما
+The twenty workshop thumbnails are WebP captures of the corresponding RAVEN workshop running in a browser. The sets, costumes, silhouettes, layered scenery and paper models are original drawings rendered by the workshop code. Musical tones are synthesized on the device. Screenshot and drawing sources are part of this RAVEN release.

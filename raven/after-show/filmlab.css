@@ -1,0 +1,14 @@
+.film-lab{max-width:58rem;margin-inline:auto;display:grid;gap:1rem;min-width:0}
+.film-head{max-width:48rem}.film-head h1{font-size:clamp(1.8rem,4.5vw,3.4rem);line-height:1.2;margin:0 0 .4rem}.film-head p{color:var(--muted)}
+.film-stage{background:#202a2b;color:#f1ecd9;border:1px solid #344341;border-radius:.28rem;overflow:hidden}
+.film-stage canvas{display:block;width:100%;height:auto;aspect-ratio:640/308;direction:ltr}.film-stage figcaption{font-size:.93rem;padding:.45rem .85rem;border-top:1px solid #56605a;font-variant-numeric:tabular-nums}
+.film-controls,.film-editor,.film-viewer{display:grid;gap:.9rem;min-width:0}
+.film-group{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr));align-items:start;gap:.75rem 1rem;margin:0;padding:.8rem 1rem 1rem;min-width:0;border:1px solid var(--line);background:var(--sheet)}
+.film-group legend{font-weight:700;padding-inline:.4rem}.film-group>p,.film-group>.film-row,.film-group>.film-grid,.film-group>.film-samples,.film-group>.film-doors{grid-column:1/-1}
+.film-field{display:grid;gap:.2rem;min-width:0;font-size:.95rem;font-weight:600}.film-field select,.film-field input{display:block;width:100%;min-height:42px}.film-field input[type=range]{margin:0}
+.film-row{display:flex;align-items:center;flex-wrap:wrap;gap:.4rem}.film-row>button{flex:0 1 auto}.film-value{font-variant-numeric:tabular-nums;color:var(--green)}
+.film-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:.2rem;max-width:27rem;width:100%}.film-grid button{padding:.25rem;min-height:44px}
+.film-lab button[aria-pressed=true]{background:#334b42;color:#fff9e9}.film-result,.film-reading{padding:.6rem .85rem;background:#e8e5d6;color:#273a31;border-inline-start:3px solid #687b64}.film-reading:empty{display:none}
+.film-samples{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.75rem}.film-sample{min-width:0}.film-sample canvas{width:100%;height:auto;display:block;direction:ltr}.film-sample-read{margin:.15rem 0;color:var(--muted);font-size:.9rem}
+.film-doors{display:grid;grid-template-columns:minmax(6rem,.8fr) repeat(2,minmax(0,1fr));align-items:center;gap:.7rem}.film-doors h3{font-size:1rem}
+@media(max-width:490px){.film-group{padding-inline:.6rem}.film-doors{grid-template-columns:repeat(2,minmax(0,1fr));gap:.3rem}.film-doors h3{grid-column:1/-1}.film-lab button{font-size:.92rem}.film-row{gap:.25rem}.film-samples{column-gap:.4rem}}

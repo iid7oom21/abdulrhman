@@ -1,0 +1,16 @@
+.pra-workshop{--ink:#26372f;--edge:#973f2d;max-width:58rem;margin:0 auto;padding:clamp(.85rem,3vw,2rem);background:#e9e4d5;color:var(--ink);border-radius:4px}
+.pra-workshop h1{font-size:clamp(1.75rem,4.2vw,3.2rem);line-height:1.26;margin:0 0 .4rem}
+.pra-workshop header p{max-width:61ch;line-height:1.6;margin:.3rem 0 1rem}
+.pra-frame{margin:0;border:6px solid #303630;background:#23352e;box-shadow:0 .3rem .7rem #39352829}
+.pra-frame canvas{display:block;width:100%;height:auto;aspect-ratio:640/310}
+.pra-controls,.pra-stack{display:grid;gap:.65rem}
+.pra-row{display:flex;align-items:end;flex-wrap:wrap;gap:.5rem}.pra-row>*{min-width:0}
+.pra-workshop button,.pra-workshop select{font:inherit;color:var(--ink);background:#fbf6e9;border:1px solid #948c79;min-height:44px;max-width:100%;padding:.36rem .6rem;cursor:pointer}
+.pra-workshop button[aria-pressed=true],.pra-workshop button.pra-main{background:#29443c;color:#fff7e8;border-color:#29443c}
+.pra-workshop :focus-visible{outline:3px solid #ae452f;outline-offset:2px}
+.pra-workshop .pra-select{display:grid;gap:.15rem;flex:1 1 8rem}.pra-workshop .pra-range{display:grid;grid-template-columns:minmax(6rem,auto) minmax(4rem,1fr) 3ch;align-items:center;gap:.7rem}
+.pra-range input{accent-color:#8e422d;min-width:0;width:100%;height:44px;direction:ltr}
+.pra-range output{font-variant-numeric:tabular-nums;direction:ltr}
+.pra-status,.pra-score{background:#faf3df;border-inline-start:.23rem solid var(--edge);padding:.65rem .8rem;margin:.9rem 0;line-height:1.6}
+.pra-workshop h2{font-size:1.15rem;margin:.5rem 0 .1rem}
+@media(max-width:400px){.pra-workshop{padding:.7rem}.pra-workshop .pra-range{gap:.35rem;grid-template-columns:minmax(4rem,auto) minmax(3rem,1fr) 3ch}}

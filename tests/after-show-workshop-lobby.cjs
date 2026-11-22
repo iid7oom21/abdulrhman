@@ -1,0 +1,51 @@
+// Run with Node, Playwright, and CHROMIUM_PATH set to the local Chrome binary.
+const {test} = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const http = require('node:http');
+const path = require('node:path');
+const {chromium, expect} = require('playwright/test');
+
+test('a workshop shelf can be shared, switched and reopened without loading game engines', async t => {
+  const root = path.resolve(__dirname, '..');
+  const prefix = '/abdulrhman/';
+  const types = {'.html':'text/html', '.js':'text/javascript', '.css':'text/css', '.webp':'image/webp', '.woff2':'font/woff2'};
+  const server = http.createServer((req,res) => {
+    const url = new URL(req.url, 'http://localhost');
+    if (!url.pathname.startsWith(prefix)) return res.writeHead(404).end();
+    const file = path.resolve(root, url.pathname.slice(prefix.length) + (url.pathname.endsWith('/') ? 'index.html' : ''));
+    if (!file.startsWith(root + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) return res.writeHead(404).end();
+    res.writeHead(200, {'Content-Type':types[path.extname(file)] || 'application/octet-stream'});
+    fs.createReadStream(file).on('error',() => res.destroy()).pipe(res);
+  });
+  await new Promise(resolve => server.listen(0,'127.0.0.1',resolve));
+  t.after(() => new Promise(resolve => server.close(resolve)));
+  const browser = await chromium.launch({executablePath:process.env.CHROMIUM_PATH || '/usr/bin/chromium'});
+  t.after(() => browser.close());
+  const page = await browser.newPage({viewport:{width:320,height:844}, reducedMotion:'reduce'});
+  const requests = [];
+  page.on('request', req => requests.push(new URL(req.url()).pathname));
+  const start = 'http://127.0.0.1:' + server.address().port + prefix + 'raven/after-show/';
+  await page.goto(start + '?room=practical&lang=ar');
+  const frame = page.frameLocator('#site-content');
+  const shelf = frame.locator('#as-room-activities');
+  await expect(frame.locator('[data-room="practical"]')).toHaveAttribute('aria-pressed','true');
+  await expect(shelf.locator('a')).toHaveCount(4);
+  await expect(shelf.locator('[data-as-route="leitmotif"]')).toBeVisible();
+  await frame.locator('[data-room="illusions"]').click();
+  await expect(page).toHaveURL(/room=illusions/);
+  await expect(shelf.locator('[data-as-route="forced-scale"]')).toBeVisible();
+  await frame.locator('#as-language').click();
+  await expect(frame.locator('html')).toHaveAttribute('lang','en');
+  await expect(frame.locator('[data-room="illusions"]')).toHaveAttribute('aria-pressed','true');
+  await page.reload();
+  await expect(shelf.locator('[data-as-route="matte"]')).toBeVisible();
+  assert.equal(await frame.locator('html').evaluate(el => el.scrollWidth <= innerWidth), true);
+  assert.deepEqual(requests.filter(url => /\/(?:screencraft|practical|illusions|stagecraft|filmlab)\.js$/.test(url)), []);
+  await shelf.locator('[data-as-route="matte"]').click();
+  await expect(frame.locator('#as-view[data-workshop] h1')).toBeVisible();
+  await expect(page).toHaveURL(/activity=matte/);
+  await page.goBack();
+  await expect(frame.locator('[data-room="illusions"]')).toHaveAttribute('aria-pressed','true');
+  await expect(shelf.locator('[data-as-route="matte"]')).toBeVisible();
+});

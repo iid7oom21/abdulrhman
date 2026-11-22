@@ -1,6 +1,8 @@
 import {activityStore} from './state.js';
+import {rooms, workshops} from './workshops.js';
 
 const catalog = {
+  ...workshops,
   edit: ['آخر إرسال','Last Transmission','عرّف بالمكان والفعل والأثر في مونتاج من ثلاث لقطات.','Introduce a place, an action and its trace in three shots.','ركّب اللقطات','Make the cut',3,'hand','edit'],
   projection: ['وردية غرفة العرض','Projection shift','وزّع الفنيين والشاشة قبل الافتتاح.','Schedule the crew and the screen before opening.','شغّل الوردية','Run the shift',4,'preview-projection','sims'],
   light: ['طاولة الضوء','The light table','حرّك الظل وصوّر ملمس الورق.','Move the shadow and photograph the paper.','اضبط الضوء','Set the light',3,'preview-light','sims'],
@@ -20,7 +22,12 @@ const catalog = {
 };
 const loaders = {
   edit: () => import('./edit.js'), sims: () => import('./sims.js'), events: () => import('./events.js'),
-  lens: () => import('./lens.js')
+  lens: () => import('./lens.js'),
+  screencraft: () => import('./screencraft.js'),
+  illusions: () => import('./illusions.js'),
+  stagecraft: () => import('./stagecraft.js'),
+  practical: () => import('./practical.js'),
+  filmlab: () => import('./filmlab.js')
 };
 const root = document.querySelector('#as-view');
 const notice = document.querySelector('#as-status');
@@ -42,6 +49,10 @@ function routeUrl(id, language=lang) {
   const target = new URL(location.href);
   target.hash = ''; target.search = '';
   if (id !== 'hub') target.searchParams.set('activity',id);
+  else {
+    const room = workshops[route]?.[8] || new URLSearchParams(location.search).get('room');
+    if (Object.hasOwn(rooms, room)) target.searchParams.set('room',room);
+  }
   target.searchParams.set('lang',language);
   return target;
 }
@@ -93,11 +104,48 @@ function updateShell() {
 function tile(id) {
   const [ar,en,da,de,aa,ae,minutes,image]=catalog[id];
   const name=t(ar,en),a=link(id,'','as-tile'),figure=node('figure'),img=node('img');
+  a.id='as-tile-'+id;
   img.src='./assets/'+image+'.webp';img.alt='';img.loading='lazy';img.decoding='async';figure.append(img);
   const copy=node('div',null,'caption');
   copy.append(node('small',new Intl.NumberFormat(lang).format(minutes)+t(' د',' min')),node('h3',name),node('p',t(da,de)),node('span',t(aa,ae),'action'));
   a.append(figure,copy);return a;
 }
+function workshopShelf() {
+  const section = node('section', null, 'as-section as-workshops');
+  section.id = 'workshops';
+  const heading = node('h2', t('ورش السينما', 'Cinema workshops'));
+  const shelf = node('div', null, 'as-grid');
+  const filters = node('div', null, 'as-room-filters');
+  filters.setAttribute('role', 'group');
+  filters.setAttribute('aria-label', t('اختر ورشة سينمائية', 'Choose a workshop collection'));
+  shelf.id = 'as-room-activities';
+  shelf.setAttribute('role', 'group');
+  function selectRoom(room, updateAddress) {
+    for (const filter of filters.children) {
+      filter.setAttribute('aria-pressed', String(filter.dataset.room === room));
+    }
+    shelf.setAttribute('aria-label', t(...rooms[room]));
+    shelf.replaceChildren(...Object.keys(workshops).filter(id => catalog[id][8] === room).map(tile));
+    if (updateAddress) {
+      const url = new URL(location.href);
+      url.searchParams.set('room', room);
+      history.replaceState(history.state, '', url);
+      signature = 'hub/'+lang+'/'+room;
+    }
+  }
+  for (const [id, labels] of Object.entries(rooms)) {
+    const filter = button(t(...labels), () => selectRoom(id, true));
+    filter.dataset.room = id;
+    filter.id = 'as-room-'+id;
+    filter.setAttribute('aria-controls', shelf.id);
+    filters.append(filter);
+  }
+  const requested = new URLSearchParams(location.search).get('room');
+  selectRoom(Object.hasOwn(rooms, requested) ? requested : 'screencraft', false);
+  section.append(heading, filters, shelf);
+  return section;
+}
+
 function hub() {
   const hero=node('div',null,'as-hero'),lead=node('div',null,'as-hero-copy'),img=node('img');
   img.src='./assets/hand.webp';img.alt='';img.width=832;img.height=468;
@@ -106,6 +154,7 @@ function hub() {
   const last=store.load('last-activity',null);
   if (typeof last==='string' && Object.hasOwn(catalog,last) && store.saved(last))
     root.append(link(last,t('أكمل · ','Continue · ')+t(...catalog[last].slice(0,2)),'as-continue'));
+  root.append(workshopShelf());
   const picks=node('section',null,'as-choices'),result=node('p',null,'as-pick');result.setAttribute('aria-live','polite');
   picks.append(node('h2',t('اختَر لي تجربة','Pick an activity for me')));
   const choices=[
@@ -152,7 +201,8 @@ async function draw(force=false) {
   let language=params.get('lang');
   if(!isArOrEn(language)) {try {language=localStorage.getItem('raven_language');}catch{}}
   if(!isArOrEn(language))language='ar';
-  const next=id+'/'+language;
+  const room = params.get('room');
+  const next=id+'/'+language+(id==='hub' && Object.hasOwn(rooms,room) ? '/'+room : '');
   if(next===signature&&!force)return;
   const sameRoute=id===route&&signature!=='',scroll=window.scrollY;
   const keepFocus=document.activeElement?.id;
@@ -160,6 +210,7 @@ async function draw(force=false) {
   for(const clean of cleanups.splice(0)) clean();
   lang=language;route=id;lastNotice=null;notice.hidden=true;root.replaceChildren();
   const related=document.getElementById('as-related'); related.replaceChildren(); related.hidden=true;
+  root.toggleAttribute('data-workshop', Object.hasOwn(workshops, id));
   updateShell();resetControls(id);
   if(id==='hub') hub();
   else{
@@ -178,7 +229,10 @@ async function draw(force=false) {
         },
         onCleanup(fn) {cleanups.push(fn);}
       });
-      const nextActivity={edit:'light',light:'sound',sound:'festival',projection:'budget',festival:'free'}[id] || 'edit';
+      const siblings = Object.keys(workshops).filter(key => catalog[key][8] === group);
+      const nextActivity=siblings.length
+        ? siblings[(siblings.indexOf(id) + 1) % siblings.length]
+        : {edit:'light',light:'sound',sound:'festival',projection:'budget',festival:'free'}[id] || 'edit';
       related.setAttribute('aria-label',t('تجارب أخرى','Other activities'));
       related.append(link('hub',t('كل التجارب','All activities')),node('span','·'),link(nextActivity,t(...catalog[nextActivity].slice(4,6))));related.hidden=false;
     }catch(error){
