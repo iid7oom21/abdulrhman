@@ -5,8 +5,8 @@ import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {AFTER_SHOW_FILES, STUDIO_ENTRY_ASSETS} from '../../server/ai-dialogue/src/site-mount.js';
 
-export const SITE_COMMIT = 'f3b4647dc4fa483442f99547f338d3660abcb0a5';
-export const PUBLIC_RELEASE = '2026-11-22-after-show-1';
+export const SITE_COMMIT = 'c709d31696aad6cd1b6dfe62ac5801ee41b1e4df';
+export const PUBLIC_RELEASE = '2026-11-22-after-show-workshops-1';
 export const EXPORT_MARKER = '.raven-render-export.json';
 // Render builds from a shallow, single-branch checkout and removes its Git
 // remote, so a missing pinned commit is fetched from here by its SHA.

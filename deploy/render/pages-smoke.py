@@ -1,4 +1,4 @@
-"""Play Last Transmission at the public Pages URL. Local check: --local http://127.0.0.1:PORT/abdulrhman/raven/."""
+"""Play Last Transmission and the title workshop at the public Pages URL. Local check: --local http://127.0.0.1:PORT/abdulrhman/raven/."""
 import argparse
 import hashlib
 import json
@@ -25,18 +25,25 @@ def setting(source, key, pattern):
 
 
 def check_deployment(request, home, sha, release, local):
-    # Compare the public browser module against the actual pinned Pages object as well as the release label.
-    asset = "after-show/edit.js"
-    expected = subprocess.check_output(["git", "show", f"{sha}:raven/{asset}"], cwd=ROOT)
+    assets = ["after-show/edit.js", "after-show/screencraft.js", "after-show/screencraft-glass.js"]
+    pinned = {
+        asset: subprocess.check_output(["git", "show", f"{sha}:raven/{asset}"], cwd=ROOT)
+        for asset in assets
+    }
     deadline = time.monotonic() + (15 if local else 240)
     while True:
         try:
             tag = f"?verify={sha}&attempt={int(time.time())}"
             index = request.get(home + "release.json" + tag, timeout=8000)
-            code = request.get(home + asset + tag, timeout=8000)
-            if index.ok and index.json().get("release") == release and code.ok and code.body() == expected:
-                return hashlib.sha256(expected).hexdigest()
-            reason = f"release or module differs from {sha} (HTTP {index.status}, {code.status})"
+            reason = f"release differs from {release} (HTTP {index.status})"
+            if index.ok and index.json().get("release") == release:
+                for asset, expected in pinned.items():
+                    response = request.get(home + asset + tag, timeout=8000)
+                    if not response.ok or response.body() != expected:
+                        reason = f"{asset} differs from {sha} (HTTP {response.status})"
+                        break
+                else:
+                    return {key: hashlib.sha256(data).hexdigest() for key, data in pinned.items()}
         except (Error, ValueError) as exc:
             reason = str(exc)
         if time.monotonic() >= deadline:
@@ -44,17 +51,78 @@ def check_deployment(request, home, sha, release, local):
         time.sleep(3 if local else 8)
 
 
+def play_title_workshop(page, frame, output, home):
+    frame.locator("#as-all").click()
+    frame.locator("[data-room=screencraft]").click()
+    frame.locator("#as-room-activities [data-as-route=titles]").click()
+    arabic_url = home + "after-show/?activity=titles&lang=ar"
+    english_url = home + "after-show/?activity=titles&lang=en"
+    expect(page).to_have_url(arabic_url)
+    expect(frame.locator("html")).to_have_attribute("dir", "rtl")
+    plane = frame.locator("[data-sc=plane]")
+    first = frame.locator("[data-sc=first]")
+    second = frame.locator("[data-sc=second]")
+    screen = frame.locator("[data-sc=frame]")
+    report = frame.locator("[data-sc=report]")
+    first.fill("ليل")
+    second.fill("القاهرة")
+    # Click halfway across the six-second shot to compare the two layer orders at the same instant.
+    scrub = frame.locator("[data-sc=scrub]")
+    track = scrub.bounding_box()
+    scrub.click(position={"x": track["width"] / 2, "y": track["height"] / 2})
+    playhead = float(scrub.input_value())
+    assert 2.8 <= playhead <= 3.2, f"Playhead landed at {playhead}s"
+    plane.select_option("back")
+    behind = report.inner_text()
+    background_frame = screen.evaluate("el => el.toDataURL()")
+    plane.select_option("front")
+    expect(report).not_to_have_text(behind)
+    foreground_frame = screen.evaluate("el => el.toDataURL()")
+    assert background_frame != foreground_frame, "Layer order did not change the visible composited frame"
+    screen.scroll_into_view_if_needed()
+    screenshot = page.screenshot(path=str(output / "title-workshop-ar-390.png"))
+    arabic_report = report.inner_text()
+    frame.locator("#as-language").click()
+    expect(page).to_have_url(english_url)
+    expect(frame.locator("html")).to_have_attribute("dir", "ltr")
+    expect(plane).to_have_value("front")
+    expect(report).to_contain_text("Completely visible")
+    english_report = report.inner_text()
+    page.reload(wait_until="domcontentloaded")
+    expect(page).to_have_url(english_url)
+    expect(first).to_have_value("ليل")
+    expect(second).to_have_value("القاهرة")
+    expect(plane).to_have_value("front")
+    expect(report).to_have_text(english_report)
+    expect(frame.locator("html")).to_have_attribute("lang", "en")
+    frame.locator("#as-all").click()
+    expect(frame.locator("[data-room=screencraft]")).to_have_attribute("aria-pressed", "true")
+    return {"id": "titles", "arabic_url": arabic_url, "english_url": english_url,
+            "playhead_seconds": playhead, "behind_report": behind, "front_report": arabic_report,
+            "english_report_after_reload": english_report, "plane_after_reload": "front",
+            "screenshot_sha256": hashlib.sha256(screenshot).hexdigest()}
+
+
 def write_summary(evidence, path):
     # The file may also contain translated page text. Only publish the verified URL and measurements.
     live_url = PUBLIC_HOME + "after-show/?activity=edit&lang=ar"
     if evidence["played_url"] != live_url:
         raise ValueError("The browser did not finish at the published round URL")
+    workshop = evidence["workshop"]
+    workshop_url = PUBLIC_HOME + "after-show/?activity=titles&lang=ar"
+    if workshop["arabic_url"] != workshop_url:
+        raise ValueError("The workshop was not played at the published URL")
     with Path(path).open("a", encoding="utf-8") as stream:
         print("### Published montage verified", file=stream)
         print(f"\n[Played the Arabic mobile round]({live_url})", file=stream)
         print(f"\n- Pages commit `{evidence['pages_commit']}`", file=stream)
         print(f"- Playback wall time {evidence['wall_seconds']:.2f} seconds", file=stream)
         print(f"- Result screenshot SHA-256 `{evidence['result_image_sha256']}`", file=stream)
+        print(f"\n### [Published title workshop]({workshop_url})", file=stream)
+        print(f"\n- Moved both title words in front at {workshop['playhead_seconds']:.2f} seconds. "
+              "Confirmed a different rendered frame and a different readability report.", file=stream)
+        print("- Switched to English and reloaded. Both Arabic words and the layer order were restored.", file=stream)
+        print(f"- Workshop screenshot SHA-256 `{workshop['screenshot_sha256']}`", file=stream)
 
 
 def main():
@@ -76,7 +144,7 @@ def main():
     with sync_playwright() as pw:
         browser = pw.chromium.launch(executable_path=shutil.which("google-chrome") or shutil.which("chromium"))
         ctx = browser.new_context(viewport={"width": 390, "height": 844}, has_touch=True, reduced_motion="reduce", locale="ar")
-        module_sha = check_deployment(ctx.request, home, sha, release, bool(args.local))
+        module_hashes = check_deployment(ctx.request, home, sha, release, bool(args.local))
         page = ctx.new_page()
         page.goto(home + "?lang=ar", wait_until="domcontentloaded")
         frame = page.frame_locator("#site-content")
@@ -108,10 +176,14 @@ def main():
         assert elapsed >= 11.5, f"12-second timeline finished in {elapsed:.2f}s"
         result.scroll_into_view_if_needed()
         screenshot = page.screenshot(path=str(output / "result-ar-390.png"))
-        evidence = {"home": home, "played_url": page.url, "release": release, "pages_commit": sha,
-                    "editor_sha256": module_sha, "shots": order, "cut_seconds": 12, "wall_seconds": round(elapsed, 2),
-                    "result": result.inner_text(), "result_image_sha256": hashlib.sha256(screenshot).hexdigest(),
-                    "github_run": os.environ.get("GITHUB_RUN_ID"), "chrome": browser.version}
+        evidence = {
+            "home": home, "played_url": page.url, "release": release, "pages_commit": sha,
+            "editor_sha256": module_hashes["after-show/edit.js"], "verified_modules": module_hashes,
+            "shots": order, "cut_seconds": 12, "wall_seconds": round(elapsed, 2), "result": result.inner_text(),
+            "result_image_sha256": hashlib.sha256(screenshot).hexdigest(),
+            "github_run": os.environ.get("GITHUB_RUN_ID"), "chrome": browser.version,
+        }
+        evidence["workshop"] = play_title_workshop(page, frame, output, home)
         (output / "result.json").write_text(json.dumps(evidence, ensure_ascii=False, indent=2) + "\n")
         if not args.local and os.environ.get("GITHUB_STEP_SUMMARY"):
             write_summary(evidence, os.environ["GITHUB_STEP_SUMMARY"])
