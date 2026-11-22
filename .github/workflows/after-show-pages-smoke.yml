@@ -18,10 +18,21 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 9
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          persist-credentials: false
+      - name: Read smoke sources and the pinned Pages object
+        shell: bash
+        run: |
+          git init --quiet
+          git remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git"
+          git fetch --no-tags --no-recurse-submodules --depth=1 origin "$GITHUB_SHA"
+          test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
+          mkdir -p deploy/render
+          for source in deploy/render/build.mjs deploy/render/pages-smoke.py; do
+            git show "$GITHUB_SHA:$source" > "$source"
+          done
+          pin=$(sed -nE "s/^export const SITE_COMMIT = '([0-9a-f]{40})';$/\1/p" deploy/render/build.mjs)
+          [[ "$pin" =~ ^[0-9a-f]{40}$ ]]
+          git fetch --no-tags --no-recurse-submodules --depth=1 origin "$pin"
+          test "$(git rev-parse FETCH_HEAD)" = "$pin"
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'

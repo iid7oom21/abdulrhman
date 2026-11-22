@@ -44,6 +44,19 @@ def check_deployment(request, home, sha, release, local):
         time.sleep(3 if local else 8)
 
 
+def write_summary(evidence, path):
+    # The file may also contain translated page text. Only publish the verified URL and measurements.
+    live_url = PUBLIC_HOME + "after-show/?activity=edit&lang=ar"
+    if evidence["played_url"] != live_url:
+        raise ValueError("The browser did not finish at the published round URL")
+    with Path(path).open("a", encoding="utf-8") as stream:
+        print("### Published montage verified", file=stream)
+        print(f"\n[Played the Arabic mobile round]({live_url})", file=stream)
+        print(f"\n- Pages commit `{evidence['pages_commit']}`", file=stream)
+        print(f"- Playback wall time {evidence['wall_seconds']:.2f} seconds", file=stream)
+        print(f"- Result screenshot SHA-256 `{evidence['result_image_sha256']}`", file=stream)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--local", help="run on a local project mount in a developer checkout")
@@ -100,6 +113,8 @@ def main():
                     "result": result.inner_text(), "result_image_sha256": hashlib.sha256(screenshot).hexdigest(),
                     "github_run": os.environ.get("GITHUB_RUN_ID"), "chrome": browser.version}
         (output / "result.json").write_text(json.dumps(evidence, ensure_ascii=False, indent=2) + "\n")
+        if not args.local and os.environ.get("GITHUB_STEP_SUMMARY"):
+            write_summary(evidence, os.environ["GITHUB_STEP_SUMMARY"])
         print(json.dumps(evidence, ensure_ascii=False))
         browser.close()
 
