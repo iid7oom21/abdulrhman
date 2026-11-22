@@ -1,7 +1,7 @@
 {
-  "release": "20261120-integrated-studio",
-  "sourceCommit": "eb6bef9c2eb51d2c065b05989aa6f3854bb9f64c",
+  "release": "20261122-after-show-studio",
+  "sourceCommit": "80d42e2628271326a619fb17389773dd3e8b89c2",
   "base": "./",
   "homepage": "../raven/index.html",
-  "storyBase": "fc4cde331999a9adcfa98ac39020f041d045e3ff"
+  "storyBase": "3a6c09002daaae177f777688f4faf504db46bade"
 }

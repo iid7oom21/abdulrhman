@@ -2,6 +2,10 @@
 (() => {
   'use strict';
   const words = {
+    afterShow:['بعد العرض','After the Show'],
+    afterShowPitch:['عندك ١٢ ثانية وثلاث لقطات. بأي لقطة تفتتح المشهد؟','You have twelve seconds and three shots. Which one opens your scene?'],
+    afterShowPlay:['العب آخر إرسال','Play Last Transmission'],
+    afterShowAll:['كل التجارب','All activities'],
     world:['من عالم RAVEN','From the world of RAVEN'],
     choose:['اختر كيف تدخل الحكاية.','Choose your way into the story.'],
     filmType:['للمشاهدة · ثلاث حلقات','Watch · Three episodes'],
@@ -28,6 +32,10 @@
   function translate() {
     document.querySelectorAll('[data-rvn-visual]').forEach(node => { if(words[node.dataset.rvnVisual]) node.textContent = text(node.dataset.rvnVisual); });
     document.querySelectorAll('[data-rvn-visual-label]').forEach(node => node.setAttribute('aria-label',text(node.dataset.rvnVisualLabel)));
+    for (const link of document.querySelectorAll('[data-after-show-play],[data-after-show-hub]')) {
+      const activity = link.hasAttribute('data-after-show-play') ? 'activity=edit&' : '';
+      link.setAttribute('href', './after-show/?' + activity + 'lang=' + (language() ? 'en' : 'ar'));
+    }
     document.querySelectorAll('[data-visual-episode]').forEach(node => { node.href = './?episode=' + node.dataset.visualEpisode + (language() ? '&lang=en' : ''); });
     document.querySelectorAll('.rvnVisualRetry').forEach(node => { node.textContent = text(node.dataset.retrying === 'true' ? 'loading' : 'retry'); });
   }

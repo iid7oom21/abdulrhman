@@ -1,0 +1,17 @@
+RAVEN · بعد العرض / After the Show
+
+لقطات تدريب أصلية للعبة «آخر إرسال»، أُنشئت بتوليد صور من وصف مكتوب لهذا المشروع. استُخدمت لوحة واحدة لتوحيد شكل الظرف والطاولة وضوء الغرفة، ثم قُصّت أربع لقطات بنسبة ١٦:٩. المكان والشخص الظاهر في لقطة اليد متخيّلان.
+
+Training montage stills generated for this RAVEN activity, 2026-11-22. Source: one original contact sheet generated with OpenAI ImageGen from a text-only brief, without third-party photographs or case materials. Four 832 × 468 crops exported to WebP with ImageMagick. The venue and hand are fictional. Reuse within RAVEN follows the project's terms for generated artwork.
+
+exterior.webp — واجهة السينما / Cinema exterior
+hand.webp — يد تضع الظرف / Hand setting down the envelope
+envelope.webp — الظرف على الطاولة / Envelope on the counter
+lamp.webp — مصباح غرفة العرض / Projection-room lamp
+
+محاكيات «بعد العرض» — توليد محلي من الصفر لهذه الأنشطة، 2026-11-22.
+light-soft.png, light-raking.png, light-bright.png — stills exported from the training paper surface in sim-rules.js, with measured crop statistics. The live canvas and these fallback frames share identical geometry.
+foley-paper.wav, foley-chair.wav, foley-key.wav — original mono PCM cues synthesized from seeded noise, waves and envelopes for After the Show. No sampled recordings or third-party sound libraries.
+
+Activity previews / معاينات التجارب
+preview-projection.webp, preview-light.webp, preview-sound.webp, preview-budget.webp, preview-continuity.webp, preview-archive.webp, preview-grade.webp, preview-camera.webp — Actual local Chromium captures of the corresponding Arabic activity in progress, on 2026-11-22. Cropped to the activity workspace and exported at 640 × 308. These previews show the interface that opens from their activity cards.

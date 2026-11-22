@@ -1,0 +1,91 @@
+.as-sim{--sim-paper:#efe9dc;--sim-ink:#202923;--sim-green:#263c35;--sim-line:#c6c3b6;--sim-accent:#d1a468;display:grid;gap:1.05rem;min-width:0;color:var(--sim-ink);background:#f2efe5;padding:clamp(1rem,3vw,2.4rem);border:1px solid #c4bdab;color-scheme:light}
+.as-sim *{box-sizing:border-box;min-width:0}
+.as-sim :is(h3,p,figure,dl,ul){margin:0}
+.as-sim h3{font:inherit;font-weight:650;font-size:clamp(1.2rem,2.8vw,1.7rem);line-height:1.4}
+.as-sim button,.as-sim select,.as-sim input{font:inherit;line-height:1.5}
+.as-sim select{display:block;min-height:44px;max-width:100%;border:1px solid #a09e91;background:#fffcf3;color:#202923;border-radius:3px;padding:.48rem .65rem}
+.as-sim :is(button,input,select):focus-visible,.as-sim h3:focus-visible{outline:3px solid #8b521e;outline-offset:3px}
+.as-sim .sim-lead{max-width:65ch;font-size:clamp(1.03rem,2.4vw,1.2rem);line-height:1.7}
+.as-sim .sim-note,.as-sim small{font-size:.84rem;line-height:1.55;color:#48574b}
+.as-sim .sim-note:empty,.as-sim .sim-result:empty,.as-sim .sim-verdict:empty{display:none}
+.sim-panel,.sim-archive{display:grid;gap:.75rem;padding:clamp(.75rem,2vw,1.2rem);border:1px solid var(--sim-line);background:#faf7ee}
+.sim-actions,.sim-nudge{display:flex;flex-wrap:wrap;gap:.52rem;align-items:center}
+.as-sim .sim-button{min-width:44px;min-height:44px;display:inline-flex;align-items:center;justify-content:center;border:1px solid #798475;border-radius:3px;padding:.45rem .95rem;background:#fffaf0;color:#25382c;cursor:pointer;letter-spacing:normal}
+.as-sim .sim-button:hover{background:#e5e9db}
+.as-sim .sim-primary{background:#254637;border-color:#254637;color:#fff8e8}
+.as-sim .sim-primary:hover{background:#17382a}
+.as-sim .sim-button:disabled{opacity:.55;cursor:default}
+.sim-field{display:grid;gap:.25rem;align-content:start}
+.sim-field>span,.as-sim .sim-meter small{font-size:.82rem;font-weight:600}
+.sim-field input[type=range]{width:100%;min-height:42px;margin:0;accent-color:#355b42;direction:ltr}
+.sim-result{border-inline-start:3px solid #a67b46;padding-inline-start:.8rem;line-height:1.65}
+.sim-shift-form,.sim-rows,.sim-lights,.sim-sound-tracks,.sim-verdict{display:grid;gap:.75rem}
+.sim-booking{display:grid;grid-template-columns:minmax(130px,1.25fr) repeat(2,minmax(100px,1fr));column-gap:.8rem;align-items:center;padding-block:.65rem;border-top:1px solid var(--sim-line)}
+.sim-booking>strong,.sim-booking>small{grid-column:1}
+.sim-booking>small{grid-row:2}
+.sim-booking>.sim-field{grid-row:1/3}
+.sim-booking>.sim-field:nth-last-child(2){grid-column:2}
+.sim-booking>.sim-field:last-child{grid-column:3}
+.sim-projection,.sim-foley-stage{border-radius:3px;background:#22342c;color:#f0e9d8;padding:clamp(.8rem,2.8vw,1.6rem)}
+.sim-projection{display:grid;grid-template-columns:minmax(7rem,.5fr) minmax(12rem,2fr);gap:1rem;align-items:start}
+.sim-dial{display:flex;flex-direction:column;gap:.2rem;align-items:flex-start}
+.sim-clock,.sim-foley-time{font:500 clamp(1.65rem,4vw,2.45rem)/1.25 ui-monospace,monospace;letter-spacing:-.04em;font-variant-numeric:tabular-nums;color:#f1c88e}
+.sim-row-caption,.sim-cue-title,.sim-verdict-row{display:flex;gap:.3rem .65rem;align-items:baseline;justify-content:space-between;flex-wrap:wrap}
+.as-sim .sim-projection small,.as-sim .sim-foley-stage small{color:#d3dccd}
+.sim-track,.sim-cue-rail{height:.65rem;position:relative;background:#566558;overflow:hidden;margin-top:.35rem}
+.sim-track i,.sim-cue-rail i{position:absolute;background:#d6b17d;inset-block:1px}
+.sim-track em,.sim-cue-rail em,.sim-cue-rail b{position:absolute;width:2px;inset-block:0;background:#fffef5;transform:translateX(-50%)}
+.sim-pairs{display:grid;gap:.8rem}
+.sim-pair-active{grid-template-columns:1fr 1fr}
+.sim-pairs figure[hidden]{display:none}
+.sim-picture{position:relative;overflow:hidden;background:#322c25;aspect-ratio:400 / 226}
+.sim-picture canvas,.sim-picture img{display:block;width:100%;height:100%;object-fit:contain}
+.sim-picture .sim-roi{position:absolute;top:39%;left:39%;width:22%;height:22%;border:1px dashed #fdfcf8;box-shadow:0 0 0 1px #3339;pointer-events:none}
+.sim-pairs figcaption{margin-block-start:.3rem;font-size:.8rem;line-height:1.5}
+.sim-meters{display:grid;grid-template-columns:repeat(3,1fr);border-block:1px solid var(--sim-line)}
+.sim-meter{display:grid;gap:.3rem;padding:.6rem .2rem}
+.sim-meter bdi{font:500 clamp(1.15rem,3.2vw,1.65rem)/1.3 ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.sim-lights{grid-template-columns:repeat(3,1fr)}
+.sim-lights .sim-field bdi{font-size:.82rem}
+.sim-foley-stage{position:relative;display:flex;min-height:7.8rem;align-items:center;gap:.8rem;overflow:hidden}
+.sim-foley-stage .sim-foley-time{margin-inline-start:auto;font-size:clamp(1.08rem,3.8vw,1.7rem);white-space:nowrap}
+.sim-foley-prop{display:block;width:25%;max-width:6.2rem;aspect-ratio:1.44;border-radius:2px;background:#d7c9a9;box-shadow:3px 4px 0 #8d866e,5px 10px 16px #13281e;transform:rotate(-8deg);border-bottom:2px solid #b39e76}
+.sim-foley-stage[data-action=paper] .sim-foley-prop{transform:rotate(-20deg) translateY(-7px);border-top:5px solid #faf0d2}
+.sim-foley-stage[data-action=chair] .sim-foley-prop{transform:translateX(10px);background:repeating-linear-gradient(90deg,#9f8762 0 10px,#c4ac83 10px 21px)}
+.sim-foley-stage[data-action=key] .sim-foley-prop{width:15%;height:1.3rem;box-shadow:7px -3px 0 #f2e1b8;transform:rotate(8deg)}
+.sim-action-readout{display:grid;gap:.25rem}
+.sim-cue-rail{height:.9rem;background:#d0d3c6}
+.sim-cue-rail i{background:#516b59}
+.sim-cue-rail em{width:3px;background:#825121}
+.sim-cue-rail b{left:var(--playhead,0%);background:#111;border-inline-start:1px solid #fff;width:3px}
+.sim-sounding .sim-cue-title strong{text-decoration:underline;text-decoration-thickness:2px}
+.sim-cue-fields{display:grid;gap:.65rem}
+.sim-cue-control{display:grid;grid-template-columns:minmax(8rem,1fr) auto;gap:1rem;align-items:center;border-bottom:1px solid var(--sim-line)}
+.sim-nudge{direction:ltr}
+.sim-nudge bdi{font:500 .94rem ui-monospace,monospace}
+.sim-verdict-row,.sim-verdict{line-height:1.6}
+.sim-verdict-row{border-top:1px solid var(--sim-line);padding-block:.44rem}
+.sim-manifest{width:100%;border-collapse:collapse;table-layout:fixed;text-align:start}
+.sim-manifest :is(th,td){text-align:start;border-block-end:1px solid var(--sim-line);padding:.55rem .35rem;overflow-wrap:anywhere}
+.sim-manifest thead th{background:#dce1d3}
+.sim-archive ul{padding-inline-start:1.2rem}
+@media(max-width:620px){
+  .sim-projection{grid-template-columns:1fr}
+  .sim-dial{flex-direction:row;justify-content:space-between;align-items:center}
+  .sim-booking{grid-template-columns:1fr 1fr}
+  .sim-booking>strong{grid-column:1;grid-row:1}
+  .sim-booking>small{grid-column:2;grid-row:1;text-align:end}
+  .sim-booking>.sim-field:nth-last-child(2){grid-column:1;grid-row:2}
+  .sim-booking>.sim-field:last-child{grid-column:2;grid-row:2}
+  .sim-lights{grid-template-columns:1fr}
+  .sim-lights .sim-field{grid-template-columns:1fr auto;align-items:center}
+  .sim-lights .sim-field input{grid-column:1/3;grid-row:2}
+  .sim-lights .sim-field bdi{grid-row:1;grid-column:2}
+}
+@media(max-width:410px){
+  .sim-cue-control{grid-template-columns:1fr;gap:0;padding-bottom:.55rem}
+  .sim-picture,.sim-foley-stage{border-radius:0}
+  .sim-pair-active{grid-template-columns:1fr}
+  .sim-foley-time{max-width:32%;white-space:normal!important}
+}
+.as-sim .sim-title{margin:0;font-family:inherit;font-weight:550;font-size:clamp(1.75rem,4.6vw,3rem);line-height:1.25;color:#26372b}
