@@ -387,7 +387,8 @@ function drawRoundedRect(
 
 export function renderStoryboardCanvasPages(
   scenes: readonly StoryboardScene[],
-  meta: StoryboardExportMeta
+  meta: StoryboardExportMeta,
+  thumbnails?: ReadonlyMap<string, HTMLImageElement>
 ): StoryboardPdfPageImage[] | null {
   if (typeof document === 'undefined' || typeof atob === 'undefined') {
     return null;
@@ -478,7 +479,9 @@ export function renderStoryboardCanvasPages(
       const ctx = current.ctx;
       ctx.font = `400 22px ${fontFamily}`;
       const promptLines = wrapCanvasText(ctx, scene.prompt, contentWidth - 64);
-      const cardHeight = 148 + promptLines.length * 32;
+      const thumbnail = thumbnails?.get(scene.id);
+      const imageHeight = thumbnail ? 180 : 0;
+      const cardHeight = 148 + promptLines.length * 32 + imageHeight;
 
       if (current.y + cardHeight > bottomLimit) {
         const next = startNewPage(false);
@@ -515,7 +518,12 @@ export function renderStoryboardCanvasPages(
       // Prompt lines
       pageCtx.fillStyle = '#1e293b';
       pageCtx.font = `400 22px ${fontFamily}`;
-      let textY = cardY + 66;
+      if (thumbnail) {
+        const width = 288;
+        const imageX = isAr ? innerAnchorX - width : innerAnchorX;
+        pageCtx.drawImage(thumbnail, imageX, cardY + 62, width, 162);
+      }
+      let textY = cardY + 66 + imageHeight;
       for (const line of promptLines) {
         pageCtx.fillText(line, innerAnchorX, textY);
         textY += 32;
@@ -582,9 +590,10 @@ export function renderStoryboardCanvasPages(
 
 export function buildStoryboardPdfBytes(
   scenes: readonly StoryboardScene[],
-  meta: StoryboardExportMeta
+  meta: StoryboardExportMeta,
+  thumbnails?: ReadonlyMap<string, HTMLImageElement>
 ): Uint8Array {
-  const renderedPages = renderStoryboardCanvasPages(scenes, meta);
+  const renderedPages = renderStoryboardCanvasPages(scenes, meta, thumbnails);
   if (renderedPages && renderedPages.length > 0) {
     return buildJpegPagesPdfBytes(renderedPages);
   }
@@ -618,9 +627,10 @@ export function downloadStoryboardJson(
 
 export function downloadStoryboardPdf(
   scenes: readonly StoryboardScene[],
-  meta: StoryboardExportMeta
+  meta: StoryboardExportMeta,
+  thumbnails?: ReadonlyMap<string, HTMLImageElement>
 ): { filename: string; byteLength: number } {
-  const bytes = buildStoryboardPdfBytes(scenes, meta);
+  const bytes = buildStoryboardPdfBytes(scenes, meta, thumbnails);
   const blob = new Blob([bytes as BlobPart], { type: 'application/pdf' });
   const filename = buildStoryboardFilename('pdf', meta.exportedAt);
   triggerBlobDownload(blob, filename);

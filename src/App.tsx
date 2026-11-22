@@ -94,6 +94,7 @@ export const App: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [copiedCode, setCopiedCode] = useState(false);
   const [exportedFormat, setExportedFormat] = useState<'json' | 'pdf' | null>(null);
+  const [omittedThumbnails, setOmittedThumbnails] = useState(false);
   const exportTimerRef = useRef<number | null>(null);
 
   const isAr = lang === 'ar';
@@ -241,8 +242,17 @@ export const App: React.FC = () => {
       aspectRatio,
       lang,
     };
+    setOmittedThumbnails(false);
     if (format === 'json') {
       downloadStoryboardJson(storyboard, meta);
+    } else if (montageAccepted) {
+      const thumbnails = new Map<string, HTMLImageElement>();
+      const stills = document.querySelectorAll<HTMLImageElement>('img[data-storyboard-shot]');
+      for (const image of stills) {
+        if (image.complete && image.naturalWidth > 0) thumbnails.set(image.dataset.storyboardShot!, image);
+      }
+      downloadStoryboardPdf(storyboard, meta, thumbnails);
+      setOmittedThumbnails(thumbnails.size < stills.length);
     } else {
       downloadStoryboardPdf(storyboard, meta);
     }
@@ -555,6 +565,9 @@ console.log(result);`;
             ) : (
               <p className="my-2">{isAr ? 'عدّل وصف اللقطات ثم نزّل نسخة من اللوحة للاحتفاظ بها.' : 'Edit the shot descriptions and download a copy to keep this board.'}</p>
             )}
+            {omittedThumbnails && <p role="status" className="my-2 text-sm">{isAr ?
+              'حُفظ النص والتوقيت. أعد التصدير بعد تحميل الصور لتظهر كلها في الملف.' :
+              'Text and timing were exported. Export again once the images load to include each still.'}</p>}
             <a className="inline-block py-2 underline text-amber-200" href={returnToEdit(montage, lang)}>
               {isAr ? 'ارجع إلى جولتي' : 'Return to my round'}
             </a>
@@ -653,6 +666,7 @@ console.log(result);`;
                   <div className="aspect-video relative bg-zinc-950">
                     <img
                       src={scene.thumbnail}
+                      data-storyboard-shot={montageAccepted ? scene.id : undefined}
                       alt={scene.title}
                       className="w-full h-full object-cover"
                     />
