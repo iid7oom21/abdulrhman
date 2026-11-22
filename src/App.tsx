@@ -18,6 +18,7 @@ import {
   FileJson,
 } from 'lucide-react';
 import { Header } from './components/Header';
+import {readMontageQuery, montageScenes, localizeMontageScenes, returnToEdit} from './data/afterShowMontage';
 import { StudioPreview, type PreviewCue } from './components/StudioPreview';
 import { RavenSceneLibrary } from './components/RavenSceneLibrary';
 import { RAVEN_HOME_URL, RAVEN_PROJECTS, RAVEN_SCENES, type RavenScene } from './data/ravenAssets';
@@ -68,7 +69,9 @@ const DEFAULT_STUDIO_DRAFT: StudioSettingsDraft = {
 
 export const App: React.FC = () => {
   const [initialDraftState] = useState(() => loadStudioDraft(DEFAULT_STUDIO_DRAFT));
-  const [currentTab, setCurrentTab] = useState<'studio' | 'storyboard' | 'pexafy' | 'code'>('studio');
+  const [montage] = useState(() => readMontageQuery(window.location.search));
+  const [montageAccepted, setMontageAccepted] = useState(false);
+  const [currentTab, setCurrentTab] = useState<'studio' | 'storyboard' | 'pexafy' | 'code'>(montage ? 'storyboard' : 'studio');
   const [activeModel, setActiveModel] = useState<ModelType>(initialDraftState.draft.activeModel);
   const [lang, setLang] = useState<'en' | 'ar'>(() => new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'ar');
 
@@ -190,6 +193,13 @@ export const App: React.FC = () => {
     setPreviewCue(previous => ({ time: scene.seek, requestId: (previous?.requestId || 0) + 1 }));
     setCurrentTab('studio');
   };
+
+  function applyStudioLanguage(next: 'ar' | 'en') {
+    if (montage && montage !== 'invalid' && montageAccepted && next !== lang) {
+      setStoryboard(current => localizeMontageScenes(current, montage, lang, next));
+    }
+    setLang(next);
+  }
 
   const handleAddScene = () => {
     if (!newSceneTitle.trim() || !newScenePrompt.trim()) return;
@@ -320,7 +330,7 @@ console.log(result);`;
         activeModel={activeModel}
         setActiveModel={setActiveModel}
         lang={lang}
-        setLang={setLang}
+        setLang={applyStudioLanguage}
         onOpenCode={() => setCurrentTab('code')}
       />
 
@@ -521,7 +531,36 @@ console.log(result);`;
           </div>
         )}
 
-        {currentTab === 'storyboard' && (
+        {currentTab === 'storyboard' && montage && (
+          <section className="mb-5 rounded-xl border border-amber-400/40 bg-zinc-900 p-4" aria-labelledby="after-show-transfer">
+            <h2 id="after-show-transfer" className="font-semibold text-amber-200">
+              {isAr ? 'مونتاج بعد العرض' : 'After Show cut'}
+            </h2>
+            {montage === 'invalid' ? (
+              <p className="my-2">{isAr ? 'تعذّر قراءة ترتيب اللقطات. افتح الجولة واختر لقطاتك من جديد.' : 'This shot order could not be read. Open your round to choose the shots again.'}</p>
+            ) : !montageAccepted ? (
+              <>
+                <ol className="my-3 flex flex-wrap gap-2" aria-label={isAr ? 'ترتيب اللقطات' : 'Shot order'}>
+                  {montageScenes(montage, lang).map(scene => (
+                    <li key={scene.id} className="rounded bg-zinc-800 px-3 py-2">
+                      {scene.sceneNumber}. {scene.title} · {scene.duration}{isAr ? ' ث' : 's'}
+                    </li>
+                  ))}
+                </ol>
+                <button className="me-3 mb-2 rounded bg-amber-400 px-3 py-2 text-zinc-950 font-semibold" type="button" onClick={() => {
+                  setStoryboard(montageScenes(montage, lang));
+                  setMontageAccepted(true);
+                }}>{isAr ? 'استخدم اللقطات في لوحة المشاهد' : 'Use shots in storyboard'}</button>
+              </>
+            ) : (
+              <p className="my-2">{isAr ? 'عدّل وصف اللقطات ثم نزّل نسخة من اللوحة للاحتفاظ بها.' : 'Edit the shot descriptions and download a copy to keep this board.'}</p>
+            )}
+            <a className="inline-block py-2 underline text-amber-200" href={returnToEdit(montage, lang)}>
+              {isAr ? 'ارجع إلى جولتي' : 'Return to my round'}
+            </a>
+          </section>
+        )}
+        {currentTab === 'storyboard' && (!montage || montage === 'invalid' || montageAccepted) && (
           <div className="space-y-6">
             <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 space-y-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -624,7 +663,15 @@ console.log(result);`;
                   <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                     <div>
                       <h3 className="font-bold text-sm text-white">{scene.title}</h3>
-                      <p className="text-xs text-zinc-400 mt-1">{scene.prompt}</p>
+                      {montageAccepted ? (
+                        <label className="block mt-2 text-sm text-zinc-300">
+                          {isAr ? 'وصف حركة اللقطة' : 'Shot direction'} {scene.sceneNumber}
+                          <textarea rows={3} maxLength={1000} value={scene.prompt} onChange={event => {
+                            const prompt = event.target.value;
+                            setStoryboard(current => current.map(item => item.id === scene.id ? {...item, prompt} : item));
+                          }} className="mt-1 block w-full rounded border border-zinc-700 bg-zinc-950 px-2 py-1.5" />
+                        </label>
+                      ) : <p className="text-xs text-zinc-400 mt-1">{scene.prompt}</p>}
                     </div>
                     <div className="flex items-center justify-between pt-3 border-t border-zinc-800 text-xs text-zinc-400 font-mono">
                       <span>
