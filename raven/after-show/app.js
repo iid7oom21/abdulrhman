@@ -151,6 +151,7 @@ function hub() {
   img.src='./assets/hand.webp';img.alt='';img.width=832;img.height=468;
   lead.append(node('h1',t('بعد العرض','After the Show')),node('p',t('ثلاث لقطات واثنتا عشرة ثانية. اختر البداية، ركّب مشهدك، ثم شاهد ما صنعته.','Three shots. Twelve seconds. Choose the opening, cut the scene and watch what you made.')),link('edit',t('العب آخر إرسال','Play Last Transmission'),'as-play'));
   {const all25=document.createElement('a');all25.href='../after-show-25/';all25.className='as-play as-all25';all25.style.marginInlineStart='8px';all25.textContent=t('كل التجارب · 25 لعبة','All tries · 25 games');lead.append(all25);}
+  {const ln=document.createElement('a');ln.href='../late-night/';ln.className='as-play as-late';ln.style.marginInlineStart='8px';ln.style.background='#8ab4ff';ln.textContent=t('آخر الليل · 30 فكرة','Late night · 30 ideas');lead.append(ln);}
   hero.append(lead,img);root.append(hero);
   const last=store.load('last-activity',null);
   if (typeof last==='string' && Object.hasOwn(catalog,last) && store.saved(last))
