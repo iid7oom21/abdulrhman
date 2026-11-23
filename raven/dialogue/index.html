@@ -107,6 +107,7 @@
         </div>
         <div class="rvnRoomIdentity">
           <h2 id="character-name">يوناس</h2>
+          <p data-room-ar="معاينة لأسئلة مرمّم السجلات." data-room-en="A record restorer’s interview preview.">معاينة لأسئلة مرمّم السجلات.</p>
         </div>
         <div class="rvnRoomSelector">
           <label for="character" data-room-ar="تحدّث مع" data-room-en="Speak with">تحدّث مع</label>
@@ -125,7 +126,7 @@
           <div>
             <h2 id="record-title" data-room-ar="سجل الحوار" data-room-en="The conversation">سجل الحوار</h2>
           </div>
-          <button id="clear" class="secondary">مسح العرض</button>
+          <div class="rvnTalkTools"><button type="button" id="new-question" data-room-ar="اكتب سؤالًا جديدًا" data-room-en="Write a new question">اكتب سؤالًا جديدًا</button><button id="clear" class="secondary">مسح العرض</button></div>
         </div>
         <div class="rvnRoomTranscript">
           <div id="dialogue-empty" class="rvnRoomEmpty">
@@ -143,6 +144,7 @@
           </div>
         </div>
         <div class="rvnRoomOperations">
+          <details id="operation-fold" hidden><summary id="operation-summary"></summary><ul id="operation-list"></ul></details>
           <div class="row"><button id="check" class="secondary">متابعة العملية الأصلية</button><button id="stop" class="secondary">إيقاف الانتظار فقط</button><button id="history" class="secondary">تحميل السجل</button></div>
           <div id="status" class="status" role="status" aria-live="polite"></div>
         </div>
@@ -273,6 +275,7 @@
     const log = document.getElementById('log');
     const input = document.getElementById('input');
     const sendBtn = document.getElementById('send');
+    document.getElementById('new-question').onclick = () => input.focus();
     const statusEl = document.getElementById('status');
     const characterEl = document.getElementById('character');
     const checkBtn = document.getElementById('check');
@@ -359,9 +362,9 @@
       canPersist = false; // Syntax errors AND incompatible schemas are preserved verbatim.
       for (const s of Object.values(states)) s.localSaved = false;
     }
-    function addMsg(who, text, isMe, kind = '') {
+    function addMsg(who, text, isMe) {
       const div = document.createElement('div');
-      div.className = 'msg ' + (isMe ? 'me' : 'them') + (kind === 'operation' ? ' operation' : '');
+      div.className = 'msg ' + (isMe ? 'me' : 'them');
       const name = document.createElement('div');
       name.className = 'name'; name.textContent = who;
       const content = document.createElement('div'); content.dir = 'auto'; content.textContent = text;
@@ -370,6 +373,7 @@
     function render() {
       const id = characterEl.value, s = states[id], op = unresolved(s);
       log.replaceChildren();
+      const operationLabels = new Map();
       if (!s.hidden) for (const r of s.records.values()) {
         addMsg(t('أنت', 'You'), r.message, true);
         if (r.response?.text) addMsg(names[id], r.response.text, false);
@@ -379,7 +383,23 @@
           : r.status === 'unavailable' ? (r.response?.text ? t('وصل هذا الرد، لكن ', 'This reply arrived, but ') : '') + t('العملية غير معروفة للخادم في جلستك الحالية. ربما أُعيد تشغيله أو انتهت جلسة المتصفح. ', 'the server does not know this operation in your current session. It may have restarted, or the browser session ended. ')
             + (r.response?.text ? t('حفظ الرد على الخادم غير مؤكد، ولم نُعد إرسال السؤال.', 'Saving the reply on the server is not confirmed, and the question was not sent again.') : t('لم يثبت نجاح العملية أو فشلها، ولم نُعد إرسالها.', 'Neither success nor failure was established, and it was not sent again.')) + t(' المعرف: ', ' Id: ') + iso(r.id)
           : (r.response?.text ? t('وصل الرد؛ حفظه غير مؤكد. ', 'The reply arrived; saving it is not confirmed. ') : '') + t('حالة العملية غير محسومة. معرف المتابعة: ', 'The operation is not settled. Follow-up id: ') + iso(r.id);
-        addMsg(t('حالة العملية', 'Operation status'), label, false, 'operation');
+        operationLabels.set(label, (operationLabels.get(label) || 0) + 1);
+      }
+      const fold = document.getElementById('operation-fold');
+      fold.hidden = operationLabels.size === 0;
+      const list = document.getElementById('operation-list');
+      list.replaceChildren();
+      let warningCount = 0;
+      for (const r of s.records.values()) {
+        if (r.status !== 'completed' || !r.confirmed) warningCount++;
+      }
+      document.getElementById('operation-summary').textContent = warningCount
+        ? t('عمليات تحتاج مراجعة', 'Operations to review') + ' · ' + warningCount
+        : t('سجل العمليات', 'Operation history') + ' · ' + s.records.size;
+      for (const [label, count] of operationLabels) {
+        const li = document.createElement('li');
+        li.textContent = label + (count > 1 ? ' × ' + count : '');
+        list.append(li);
       }
       // Presentation only: the selected character and empty state follow the existing journal.
       const portrait = document.getElementById('character-portrait');

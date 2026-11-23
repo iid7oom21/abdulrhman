@@ -362,3 +362,12 @@ html[lang="ar"] .eyebrow,html[lang="ar"] .status,html[lang="ar"] .rvnFootPrivacy
 html[lang="ar"] .metaItem span:first-child,html[lang="ar"] .rvnStudioCard small,html[lang="ar"] .rvnPressCopy small{font-family:"IBM Plex Sans Arabic",sans-serif;font-size:12px;letter-spacing:0}
 html[lang="ar"] .rvnPressAssets strong{font-family:"IBM Plex Sans Arabic",sans-serif;font-size:12px;letter-spacing:0}
 main[tabindex="-1"]:focus{outline:none}
+
+.rvnFramingExercise{margin-top:1rem;border-block-start:1px solid #716452;padding-top:.65rem;color:#ede4d3}
+.rvnFramingExercise summary{cursor:pointer;min-height:44px;color:#e9c48c}.rvnFramingExercise p{font-size:1rem}
+.rvnFrameChoices,.rvnFrameCrops{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.5rem;margin:.6rem 0}
+.rvnFrameCrops[hidden]{display:none}.rvnFrameChoices button{min-height:44px;color:inherit;background:#282725;border:1px solid #887457;border-radius:3px}
+.rvnFrameChoices button[aria-pressed=true]{background:#dbc098;color:#211d17}
+.rvnFrameCrops figure{margin:0;min-width:0}.rvnFrameCrop{aspect-ratio:4 / 3;position:relative;overflow:hidden}
+.rvnFrameCrop img{position:absolute;width:200%;max-width:none;height:auto;bottom:-12%}.rvnFrameCrop.paper img{left:0}.rvnFrameCrop.phone img{right:0}
+.rvnFrameCrops figcaption{font-size:.82rem;margin-block-start:.3rem}

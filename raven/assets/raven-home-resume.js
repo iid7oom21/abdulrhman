@@ -80,7 +80,44 @@
     group.append(status,resume,start,later,feedback);card.append(group);
     controls.push({id,status,resume,start,later,feedback});
   });
+  // The activity opens only on request after the current episode.
+  const workshop = document.createElement('a');
+  workshop.id = 'rvnAfterWorkshop'; workshop.target = '_top';
+  document.querySelector('#rvnAfterCredits .rvnAfterActions')?.append(workshop);
+  const concepts = {
+    1: ['camera','جرّب تأطير اللقطة','Try shot composition'],
+    2: ['sound','جرّب توقيت الصوت','Try sound timing'],
+    3: ['free','جرّب ترتيب اللقطات','Try sequencing a cut']
+  };
+  const paperCard = document.querySelector('[data-atmosphere-card="paper-detail"]');
+  const exercise = document.createElement('details');
+  exercise.className='rvnFramingExercise';
+  const exerciseTitle=document.createElement('summary'), question=document.createElement('p');
+  const choiceBox=document.createElement('div'), comparison=document.createElement('div');
+  choiceBox.className='rvnFrameChoices';comparison.className='rvnFrameCrops';comparison.hidden=true;
+  const images=['paper','phone'].map((name,i)=>{
+    const button=document.createElement('button');button.type='button';button.dataset.frameChoice=name;
+    const figure=document.createElement('figure'),crop=document.createElement('div'),image=document.createElement('img'),label=document.createElement('figcaption');
+    crop.className='rvnFrameCrop '+name;image.src='./assets/atmosphere-v1/paper-detail.webp';image.loading='lazy';image.alt='';
+    crop.append(image);figure.append(crop,label);comparison.append(figure);choiceBox.append(button);
+    button.setAttribute('aria-pressed','false');
+    button.onclick=()=>{comparison.hidden=false;images.forEach((x,j)=>x.button.setAttribute('aria-pressed',String(i===j)));};
+    return {button,label};
+  });
+  exercise.append(exerciseTitle,question,choiceBox,comparison);paperCard?.append(exercise);
+  function updateWorkshop(){
+    const language=english()?'en':'ar',concept=concepts[currentEpisode]||concepts[1];
+    workshop.href='./after-show/?'+new URLSearchParams({activity:concept[0],lang:language});
+    workshop.textContent=concept[english()?2:1];
+    exerciseTitle.textContent=english()?'Try two framings':'جرّب تأطيرين';
+    question.textContent=english()?'What caught your eye first, the phone or the paper?':'عينك راحت أولًا للهاتف أو للورقة؟';
+    images.forEach(({button,label},i)=>{
+      button.textContent=english()?['Paper','Phone'][i]:['الورقة','الهاتف'][i];
+      label.textContent=english()?['Paper fills the frame','Phone fills the frame'][i]:['الورقة تملأ الكادر','الهاتف يملأ الكادر'][i];
+    });
+  }
   function render(){
+    updateWorkshop();
     document.querySelectorAll('[data-home-resume]').forEach(node=>{if(words[node.dataset.homeResume])node.textContent=text(node.dataset.homeResume);});
     if(caseCard){
       caseCard.hidden=!summary;
@@ -133,7 +170,10 @@
       (retryButton.getClientRects().length?retryButton:filmPlayer)?.focus({preventScroll:true});
     });
   },true);
-  document.getElementById('rvnAfterBack')?.addEventListener('click',()=>window.closeEpisodes?.());
+  document.getElementById('rvnAfterBack')?.addEventListener('click',()=>{
+    window.closeEpisodes?.();
+    requestAnimationFrame(()=>{const target=document.querySelector('#films h2');if(target){target.tabIndex=-1;target.focus();}});
+  });
   document.getElementById('rvnAfterBackstage')?.addEventListener('click',()=>{
     window.closeEpisodes?.();
     requestAnimationFrame(()=>{const section=document.getElementById('studio'),heading=section?.querySelector('h2');section?.scrollIntoView({behavior:'auto',block:'start'});if(heading){heading.tabIndex=-1;heading.focus({preventScroll:true});}});

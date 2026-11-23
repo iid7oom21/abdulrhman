@@ -177,3 +177,9 @@
 @media (prefers-reduced-motion: reduce) {
   .rvnInterviewRoom *, .rvnInterviewRoom *::before, .rvnInterviewRoom *::after { scroll-behavior: auto; animation: none; transition: none; }
 }
+
+.rvnInterviewRoom .rvnRoomIdentity p {color:#ded2bd;margin:.2rem 0;font-size:.875rem}
+.rvnTalkTools{display:flex;gap:.45rem;flex-wrap:wrap;align-items:center}
+.rvnInterviewRoom #operation-fold{margin:0 0 .75rem;border-block-end:1px solid var(--room-line);padding:.55rem 0}
+#operation-fold summary{cursor:pointer;font-weight:600;min-height:42px}#operation-list{overflow-wrap:anywhere;padding-inline-start:1.4rem}
+@media(max-width:450px){.rvnInterviewRoom .rvnRoomTranscriptHeader{flex-wrap:wrap}.rvnTalkTools button{min-height:44px}}
