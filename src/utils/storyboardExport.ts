@@ -4,6 +4,7 @@ export interface StoryboardExportMeta {
   model: ModelType;
   aspectRatio: AspectRatio;
   lang: 'en' | 'ar';
+  name?: string;
   exportedAt?: Date;
 }
 
@@ -68,7 +69,7 @@ export function buildStoryboardJsonPayload(
     exportedAt,
     language: meta.lang,
     project: {
-      name: 'RAVEN Studio',
+      name: meta.name || 'RAVEN Studio',
       model: meta.model,
       aspectRatio: meta.aspectRatio,
       totalScenes: ordered.length,
@@ -241,7 +242,7 @@ export function buildTextFallbackPdfBytes(
 ): Uint8Array {
   const payload = buildStoryboardJsonPayload(scenes, meta);
   const allLines: { text: string; size: number; bold?: boolean }[] = [
-    { text: 'RAVEN Studio - Storyboard Sequence', size: 18, bold: true },
+    { text: meta.name || 'RAVEN Studio - Storyboard Sequence', size: 18, bold: true },
     {
       text: `Model: ${payload.project.model} | Aspect Ratio: ${payload.project.aspectRatio} | Scenes: ${payload.project.totalScenes} | Total: ${payload.project.totalDurationSec}s`,
       size: 10,
@@ -444,7 +445,7 @@ export function renderStoryboardCanvasPages(
       ctx.fillStyle = '#ffffff';
       ctx.font = `700 36px ${fontFamily}`;
       ctx.fillText(
-        isAr ? 'تسلسل المشاهد السينمائية' : 'Cinematic Film Sequence',
+        meta.name || (isAr ? 'تسلسل المشاهد السينمائية' : 'Cinematic Film Sequence'),
         anchorX,
         74
       );

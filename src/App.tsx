@@ -17,6 +17,7 @@ import {
   FileDown,
   FileJson,
 } from 'lucide-react';
+import {boardList,loadBoard,saveBoard,boardReturn} from './data/namedBoards';
 import { Header } from './components/Header';
 import {readMontageQuery, montageScenes, localizeMontageScenes, returnToEdit} from './data/afterShowMontage';
 import { StudioPreview, type PreviewCue } from './components/StudioPreview';
@@ -69,9 +70,13 @@ const DEFAULT_STUDIO_DRAFT: StudioSettingsDraft = {
 
 export const App: React.FC = () => {
   const [initialDraftState] = useState(() => loadStudioDraft(DEFAULT_STUDIO_DRAFT));
+  const [requestedBoard] = useState(()=>new URLSearchParams(location.search).get('nightBoard'));
+  const [namedBoard,setNamedBoard] = useState(()=>loadBoard(requestedBoard));
+  const [boardNames] = useState(boardList);
+  const [saveFailed,setSaveFailed] = useState(false);
   const [montage] = useState(() => readMontageQuery(window.location.search));
   const [montageAccepted, setMontageAccepted] = useState(false);
-  const [currentTab, setCurrentTab] = useState<'studio' | 'storyboard' | 'pexafy' | 'code'>(montage ? 'storyboard' : 'studio');
+  const [currentTab, setCurrentTab] = useState<'studio' | 'storyboard' | 'pexafy' | 'code'>((requestedBoard || montage || new URLSearchParams(location.search).get('tab')==='storyboard') ? 'storyboard' : 'studio');
   const [activeModel, setActiveModel] = useState<ModelType>(initialDraftState.draft.activeModel);
   const [lang, setLang] = useState<'en' | 'ar'>(() => new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'ar');
 
@@ -87,7 +92,7 @@ export const App: React.FC = () => {
 
   const lastPersistedDraftRef = useRef<StudioSettingsDraft>(initialDraftState.draft);
 
-  const [storyboard, setStoryboard] = useState<StoryboardScene[]>(INITIAL_STORYBOARD);
+  const [storyboard, setStoryboard] = useState<StoryboardScene[]>(namedBoard?.board.scenes ?? INITIAL_STORYBOARD);
   const [newSceneTitle, setNewSceneTitle] = useState('');
   const [newScenePrompt, setNewScenePrompt] = useState('');
 
@@ -241,11 +246,12 @@ export const App: React.FC = () => {
       model: activeModel,
       aspectRatio,
       lang,
+      name:namedBoard?.board.name,
     };
     setOmittedThumbnails(false);
     if (format === 'json') {
       downloadStoryboardJson(storyboard, meta);
-    } else if (montageAccepted) {
+    } else if (montageAccepted || namedBoard) {
       const thumbnails = new Map<string, HTMLImageElement>();
       const stills = document.querySelectorAll<HTMLImageElement>('img[data-storyboard-shot]');
       for (const image of stills) {
@@ -541,7 +547,30 @@ console.log(result);`;
           </div>
         )}
 
-        {currentTab === 'storyboard' && montage && (
+        {currentTab === 'storyboard' && (requestedBoard || boardNames.length>0) && (
+          <section aria-label={isAr?'مسودات لوحة اللقطات':'Named storyboard drafts'} className="mb-5 space-y-3 rounded-xl border border-zinc-700 bg-zinc-900 p-4">
+            <h2 className="font-semibold text-amber-200">{namedBoard?.board.name || (isAr?'مسودات لوحة اللقطات':'Named storyboard drafts')}</h2>
+            {requestedBoard && !namedBoard && <p role="status">{isAr?'تعذرت قراءة هذه المسودة على هذا الجهاز.':'This draft could not be read on this device.'}</p>}
+            {boardNames.length>0 && <label className="flex flex-wrap items-center gap-2">{isAr?'افتح مسودة باسمها':'Open a draft by name'}
+              <select aria-label={isAr?'المسودات المسماة':'Named drafts'} value={namedBoard?.board.id||''} className="max-w-full rounded bg-zinc-800 p-2"
+                onChange={e=>{const url=new URL('./',location.href);url.search=new URLSearchParams({nightBoard:e.target.value,lang}).toString();location.assign(url.href);}}>
+                {!namedBoard && <option value="">{isAr?'اختر مسودة':'Choose a draft'}</option>}
+                {boardNames.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}
+              </select></label>}
+            {namedBoard && <>
+              <div className="flex flex-wrap items-center gap-4">
+                <button type="button" className="rounded bg-amber-400 px-3 py-2 font-semibold text-zinc-950" disabled={JSON.stringify(storyboard)===JSON.stringify(namedBoard.board.scenes)} onClick={()=>{
+                  const next=saveBoard(namedBoard,storyboard);setSaveFailed(!next);if(next)setNamedBoard(next);
+                }}>{isAr?'احفظ تعديلات المسودة':'Save draft edits'}</button>
+                <a href={boardReturn(namedBoard.board.source,lang)} className="py-2 text-amber-200 underline">{isAr?'ارجع إلى مشهدي':'Return to my scene'}</a>
+              </div>
+              <p role="status">{saveFailed?(isAr?'لم يتأكد حفظ التعديلات. تقدر تنزّل هذه النسخة.':'Edits could not be confirmed as saved. You can export this version.'):
+                JSON.stringify(storyboard)===JSON.stringify(namedBoard.board.scenes)?(isAr?'المسودة محفوظة على هذا الجهاز.':'This draft is saved on this device.'):(isAr?'تعديلاتك ظاهرة هنا وتنتظر الحفظ.':'Your edits are on screen and waiting to be saved.')}</p>
+              {omittedThumbnails && <p role="status">{isAr?'أعد التصدير بعد تحميل الصور لتظهر كلها في الملف.':'Export again once the images load to include each still.'}</p>}
+            </>}
+          </section>
+        )}
+        {currentTab === 'storyboard' && !requestedBoard && montage && (
           <section className="mb-5 rounded-xl border border-amber-400/40 bg-zinc-900 p-4" aria-labelledby="after-show-transfer">
             <h2 id="after-show-transfer" className="font-semibold text-amber-200">
               {isAr ? 'مونتاج بعد العرض' : 'After Show cut'}
@@ -573,7 +602,7 @@ console.log(result);`;
             </a>
           </section>
         )}
-        {currentTab === 'storyboard' && (!montage || montage === 'invalid' || montageAccepted) && (
+        {currentTab === 'storyboard' && (!requestedBoard || namedBoard) && (!montage || montage === 'invalid' || montageAccepted || namedBoard) && (
           <div className="space-y-6">
             <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-5 space-y-4">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -666,7 +695,7 @@ console.log(result);`;
                   <div className="aspect-video relative bg-zinc-950">
                     <img
                       src={scene.thumbnail}
-                      data-storyboard-shot={montageAccepted ? scene.id : undefined}
+                      data-storyboard-shot={montageAccepted || namedBoard ? scene.id : undefined}
                       alt={scene.title}
                       className="w-full h-full object-cover"
                     />
@@ -677,7 +706,7 @@ console.log(result);`;
                   <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                     <div>
                       <h3 className="font-bold text-sm text-white">{scene.title}</h3>
-                      {montageAccepted ? (
+                      {montageAccepted || namedBoard ? (
                         <label className="block mt-2 text-sm text-zinc-300">
                           {isAr ? 'وصف حركة اللقطة' : 'Shot direction'} {scene.sceneNumber}
                           <textarea rows={3} maxLength={1000} value={scene.prompt} onChange={event => {
