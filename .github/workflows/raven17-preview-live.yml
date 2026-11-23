@@ -1,0 +1,37 @@
+name: Verify the published RAVEN 17 mobile preview
+on:
+  push:
+    branches: [qa/raven17-preview-live]
+permissions:
+  contents: read
+jobs:
+  browser:
+    if: github.event.repository.private == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Read the QA script and reference assets
+        env:
+          REPO_URL: ${{ github.server_url }}/${{ github.repository }}.git
+        run: |
+          git init -q
+          git fetch --no-tags --no-recurse-submodules --depth=1 "$REPO_URL" "$GITHUB_SHA"
+          test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
+          git show FETCH_HEAD:.github/qa/raven17-preview-live.py > live.py
+          mkdir reference
+          for asset in index.html home.css home.js; do
+            git show "FETCH_HEAD:raven/raven-17-preview/$asset" > "reference/$asset"
+          done
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --disable-pip-version-check playwright==1.56.0
+      - name: Play the real hosted media in mobile Chrome
+        run: python live.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: raven17-mobile-live-${{ github.run_id }}
+          path: evidence/
+          if-no-files-found: warn
+          retention-days: 7
