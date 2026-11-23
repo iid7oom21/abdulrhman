@@ -1,0 +1,12 @@
+.night-sim{--ivory:#f0e3ca;--brown:#553e2c;max-width:840px;margin:0 auto;color:inherit}
+.night-sim figure{margin:0;background:#202b2c;border:1px solid #5b645d;border-radius:6px;overflow:hidden}
+.night-sim canvas{display:block;width:100%;height:auto;aspect-ratio:2}
+.night-sim figcaption{padding:.45rem .8rem;font-size:.88rem;color:#e7dfcf;line-height:1.55}
+.night-sim .sim-read{border-inline-start:3px solid #d4a96d;background:#202825;color:#fff6df;padding:.6rem .8rem;min-height:2.5em;line-height:1.6}
+.sim-controls,.sim-actions{display:flex;flex-wrap:wrap;align-items:end;gap:.65rem;margin:.7rem 0}
+.sim-input{min-width:0;max-width:100%;flex:1 1 10rem;display:grid;gap:.25rem}
+.sim-input select,.night-sim button{font:inherit;min-height:44px;max-width:100%;padding:.35rem .65rem}
+.sim-range{display:grid;grid-template-columns:minmax(3rem,1fr) 3ch;gap:.4rem;align-items:center}
+.sim-range input{width:100%;min-width:0;direction:ltr;height:44px;accent-color:#e5b87e}.sim-range output{direction:ltr;font-variant-numeric:tabular-nums}
+.night-sim :focus-visible{outline:3px solid #f1c986;outline-offset:3px}
+.night-sim .sim-edit{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.5rem}

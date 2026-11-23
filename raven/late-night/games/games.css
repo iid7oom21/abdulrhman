@@ -1,0 +1,10 @@
+.game-art{display:block;width:100%;max-width:860px;height:auto;border-radius:8px;background:#152327;outline:1px solid #b4a47944}
+.game-controls{display:flex;align-items:center;flex-wrap:wrap;gap:.45rem;margin:.65rem 0}
+.game-controls button,.game-choice{min-height:44px;text-align:center}
+.game-controls button[aria-pressed=true],.game-board button[aria-pressed=true]{outline:2px solid #f3cc86;outline-offset:-3px}
+.game-readout{margin:.65rem 0;white-space:pre-line;line-height:1.7;font-variant-numeric:tabular-nums}
+.game-clock{display:flex;align-items:center;gap:.65rem;direction:ltr;margin-block:.65rem}
+.game-clock progress,.game-clock input{flex:1;max-width:480px;min-width:0;accent-color:#bc975a}
+.game-board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));width:min(100%,510px);gap:3px;direction:ltr}
+.game-board button{min-height:42px;min-width:0;border-radius:.25rem;padding:0;font-size:.95rem}
+.game-note{background:#bc984611;padding:.55rem .8rem;border-inline-start:2px solid #d2ac68}
