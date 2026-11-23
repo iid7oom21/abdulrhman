@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101111">
+  <meta name="robots" content="noindex">
+  <title>RAVEN 17 | معاينة الشاشة الرئيسية</title>
+  <link rel="stylesheet" href="./home.css">
+  <script defer src="./home.js"></script>
+</head>
+<body id="top">
+  <a class="skip" href="#main" data-en="Skip to content">انتقل للمحتوى</a>
+  <header class="mast">
+    <div class="mast-inner wrap">
+      <a class="wordmark" href="#top" lang="en" dir="ltr">RAVEN<span>17</span></a>
+      <nav class="wide-nav" aria-label="التنقل الرئيسي" data-en-label="Main navigation">
+        <a href="#episodes" data-en="Episodes">الحلقات</a>
+        <a href="#backstage" data-en="Behind the scenes">خلف الكادر</a>
+      </nav>
+      <div class="utilities">
+        <button class="language" type="button" data-language lang="en" aria-label="English">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><ellipse cx="12" cy="12" rx="3.7" ry="8.5"/><path d="M4 10h16M4 14h16"/></svg>
+          <span>EN</span>
+        </button>
+        <button class="menu-toggle" id="menu-toggle" type="button" aria-label="القائمة" data-en-label="Menu" aria-expanded="false" aria-controls="mobile-menu">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 7h18M3 12h18M3 17h18"/></svg>
+        </button>
+      </div>
+      <nav hidden class="mobile-menu" id="mobile-menu" aria-label="القائمة" data-en-label="Menu">
+        <a href="#episodes" data-en="Episodes">الحلقات</a>
+        <a href="#backstage" data-en="Behind the scenes">خلف الكادر</a>
+      </nav>
+    </div>
+  </header>
+  <main tabindex="-1" id="main" class="wrap">
+    <section class="hero" aria-labelledby="feature-title">
+      <div class="cover"><img src="../../assets/raven-home-share.jpg" alt="ملصق RAVEN 17" data-en-alt="RAVEN 17 poster" width="1536" height="864" fetchpriority="high"></div>
+      <div class="feature-copy">
+        <p class="genre" data-en="Psychological mystery">غموض نفسي</p>
+        <h1 id="feature-title" data-en="Take a seat.">خذ مقعدك.</h1>
+        <p class="intro" data-en="Start with episode one, or choose an episode.">ابدأ من الحلقة الأولى، أو اختر حلقتك.</p>
+        <div class="actions">
+          <a class="primary" href="../?episode=1&amp;lang=ar" data-episode><i class="triangle" aria-hidden="true"></i><span data-en="Watch episode one">شاهد الحلقة الأولى</span></a>
+          <a class="more" href="#episodes"><span data-en="Choose an episode">اختر حلقة</span><span aria-hidden="true">↓</span></a>
+        </div>
+      </div>
+    </section>
+    <section tabindex="-1" id="episodes" class="library" aria-labelledby="episodes-title">
+      <div class="section-heading"><h2 id="episodes-title" data-en="Episodes">الحلقات</h2><span class="rule"></span></div>
+      <div class="episode-list">
+        <a class="episode-card" href="../?episode=1&amp;lang=ar" data-episode>
+          <div class="still"><img src="../terminal-preview/assets/episode-1.jpg" width="600" height="1097" alt=""><span class="play" aria-hidden="true"><i class="triangle"></i></span></div>
+          <h3 data-en="Episode one">الحلقة الأولى</h3>
+        </a>
+        <a class="episode-card" href="../?episode=2&amp;lang=ar" data-episode>
+          <div class="still"><img src="../terminal-preview/assets/episode-2.jpg" width="450" height="994" alt=""><span class="play" aria-hidden="true"><i class="triangle"></i></span></div>
+          <h3 data-en="Episode two">الحلقة الثانية</h3>
+        </a>
+        <a class="episode-card" href="../?episode=3&amp;lang=ar" data-episode>
+          <div class="still"><img src="../terminal-preview/assets/episode-3.jpg" width="450" height="822" alt=""><span class="play" aria-hidden="true"><i class="triangle"></i></span></div>
+          <h3 data-en="Episode three">الحلقة الثالثة</h3>
+        </a>
+      </div>
+    </section>
+    <section tabindex="-1" id="backstage" aria-labelledby="backstage-title">
+      <div class="section-heading"><h2 id="backstage-title" data-en="Behind the scenes">خلف الكادر</h2><span class="rule"></span></div>
+      <a id="backstage-open" class="backstage-card" href="../assets/atmosphere-v1/paper-detail.mp4" aria-haspopup="dialog">
+        <img src="../assets/atmosphere-v1/paper-detail.webp" width="960" height="540" alt="" loading="lazy">
+        <div class="backstage-copy"><h3 data-en="Paper and phone">الورق والهاتف</h3><span class="clip-action"><i class="triangle" aria-hidden="true"></i><span data-en="Watch the clip">شاهد المقطع</span></span></div>
+      </a>
+    </section>
+  </main>
+  <footer class="wrap foot"><span class="preview-label" data-en="Home screen preview">معاينة الشاشة الرئيسية</span><a href="#top"><span data-en="Back to top">إلى الأعلى</span> ↑</a></footer>
+  <dialog id="clip-dialog" aria-labelledby="clip-title">
+    <div class="dialog-head"><h2 id="clip-title" data-en="Paper and phone">الورق والهاتف</h2>
+      <button id="clip-close" type="button" aria-label="إغلاق المقطع" data-en-label="Close clip" autofocus>×</button></div>
+    <video id="clip" controls muted playsinline preload="none" poster="../assets/atmosphere-v1/paper-detail.webp" data-clip-src="../assets/atmosphere-v1/paper-detail.mp4" aria-label="الورق والهاتف" data-en-label="Paper and phone"></video>
+    <p id="clip-note" data-en="This clip is silent.">يُعرض المقطع دون صوت.</p>
+    <button id="clip-retry" hidden type="button" data-en="Try loading the clip again">أعد تحميل المقطع</button>
+  </dialog>
+</body>
+</html>
