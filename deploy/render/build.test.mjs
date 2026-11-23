@@ -30,6 +30,7 @@ function fixture(t) {
   t.after(()=>fs.rmSync(repo,{recursive:true,force:true}));
   git(repo,['init','--object-format=sha1']);publicFiles(repo);
   write(repo,'docs/review.txt','HISTORICAL_REVIEW_NOT_RUNTIME');
+  write(repo,'raven/late-night/shelf-experiment.html','UNLISTED_WING_PAGE');
   return {repo,sha:commit(repo)};
 }
 function previousExport(repo) {
@@ -54,6 +55,7 @@ test('export comes from the exact Git tree, ignores dirty source/untracked secre
   assert.equal(fs.existsSync(path.join(old,'private-untracked.json')),false);
   assert.equal(fs.existsSync(path.join(old,'.git')),false);
   assert.equal(fs.existsSync(path.join(old,'docs')),false);
+  assert.equal(fs.existsSync(path.join(old,'raven/late-night/shelf-experiment.html')),false);
   assert.equal(fs.existsSync(path.join(old,'original.txt')),false);
   assert.equal(validatePublicExport(old).musicTracks,13);
   assert.deepEqual(JSON.parse(fs.readFileSync(path.join(old,EXPORT_MARKER))),{format:'raven-render-site-v1',commit:f.sha,release:PUBLIC_RELEASE});
@@ -129,6 +131,23 @@ test('an export missing any investigation-lab entrypoint preserves the previous 
     assert.equal(fs.existsSync(path.join(f.repo,'.render-site.build-lock')),false,name);
     assert.equal(fs.readdirSync(f.repo).some(entry=>entry.startsWith('.render-build-')),false,name);
   }
+});
+
+test('a partial Late Night export cannot pass with its lobby alone',t=>{
+  const publicRoot=fs.mkdtempSync(path.join(os.tmpdir(),'raven-night-export-'));
+  t.after(()=>fs.rmSync(publicRoot,{recursive:true,force:true}));
+  publicFiles(publicRoot);
+  for(const name of ['raven/late-night/games/station-model.js','raven/late-night/creative/scene.js',
+    'raven/late-night/scenes/screening.js','raven/late-night/assets/museum-ticket.wav',
+    'raven/late-night/thumbs/weightless-cam.webp','raven/raven-17-preview/home.js']){
+    assert.ok(CORE_FILES.includes(name),name);
+    const file=path.join(publicRoot,name);
+    const original=fs.readFileSync(file);
+    fs.unlinkSync(file);
+    assert.throws(()=>validatePublicExport(publicRoot),fails('invalid_public_export'));
+    fs.writeFileSync(file,original);
+  }
+  assert.equal(validatePublicExport(publicRoot).release,PUBLIC_RELEASE);
 });
 
 test('Git symlinks, submodules and private files never reach extraction or replace the previous site',t=>{

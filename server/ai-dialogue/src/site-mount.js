@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 
-export const STUDIO_ENTRY_ASSETS = ['studio/assets/index-B9yDZDSb.js', 'studio/assets/index-DI-to4yn.css'];
+export const STUDIO_ENTRY_ASSETS = ['studio/assets/index-C7tRTuJ0.js', 'studio/assets/index-DI-to4yn.css'];
 
 export const AFTER_SHOW_FILES = [
   'index.html', 'content.html', 'app.js', 'state.js', 'style.css',
@@ -24,9 +24,37 @@ export const AFTER_SHOW_FILES = [
   'assets/preview-budget.webp', 'assets/preview-continuity.webp', 'assets/preview-archive.webp',
 ].map(name => 'raven/after-show/' + name);
 
+const nightActivities = [
+  'station-shadow', 'reel-run', 'last-minute-auction', 'lost-and-found', 'dome-sky', 'echo-two',
+  'echo-last-seat', 'darkroom-minute', 'weightless-cam', 'tide-harbor', 'fabric-wind',
+  'director-sentence', 'reading-actor', 'city-radio', 'puzzle-owner', 'replay-caller',
+  'memory-lift', 'seven-windows', 'curtain-party', 'sound-museum',
+];
+
+export const LATE_NIGHT_FILES = [
+  'index.html', 'boot.js', 'catalog.js', 'hub.js', 'hub.css', 'night-store.js', 'night-shell.js', 'night-shell.css',
+  'evening.js', 'connect.js', 'connect.css', 'night-tests.html', 'coast-map.html',
+  ...nightActivities.flatMap(id => [id + '.html', 'thumbs/' + id + '.webp']),
+  ...['time-door', 'three-evening', 'my-notebook', 'festival-chair', 'idea-to-studio',
+    'dialogue-preview', 'episode-ends', 'behind-frame', 'weekend', 'screening-room'].map(id => id + '.html'),
+  ...['auction.js', 'dome.js', 'echo.js', 'games.css', 'lost.js', 'reel.js', 'reel-model.js',
+    'station.js', 'station-model.js', 'tools.js'].map(name => 'games/' + name),
+  ...['camera.js', 'camera-rules.js', 'darkroom.js', 'echo.js', 'fabric.js', 'kit.js', 'main.js',
+    'models.js', 'sims.css', 'tide.js'].map(name => 'sims/' + name),
+  ...['creative.css', 'director.js', 'kit.js', 'puzzle-rules.js', 'puzzle.js', 'radio.js',
+    'reading.js', 'replay.js', 'scene.js'].map(name => 'creative/' + name),
+  ...['art.js', 'memory-lift.js', 'seven-windows.js', 'curtain-party.js', 'sound-museum.js',
+    'scene-piece.js', 'scenes.css', 'screening.js', 'studio-screening.js', 'start.js', 'ui.js', 'weekend.js']
+    .map(name => 'scenes/' + name),
+  'assets/hero.png', 'assets/museum-bell.wav', 'assets/museum-mill.wav', 'assets/museum-ticket.wav',
+].map(name => 'raven/late-night/' + name);
+
+export const RAVEN17_PREVIEW_FILES = ['index.html', 'home.css', 'home.js']
+  .map(name => 'raven/raven-17-preview/' + name);
+
 // Reviewed public runtime files only. Never enumerate a repository or serve by extension.
 const files = [
-  ...AFTER_SHOW_FILES,
+  ...AFTER_SHOW_FILES, ...LATE_NIGHT_FILES, ...RAVEN17_PREVIEW_FILES,
   // Local visual-review assets. No private content or new API surface.
   'raven/assets/raven-visual-home.css',
   'raven/assets/raven-visual-home.js',
@@ -88,7 +116,7 @@ const files = [
   ...['archive-opening', 'paper-detail', 'over-shoulder'].flatMap(name =>
     ['mp4', 'webp'].map(extension => `raven/assets/atmosphere-v1/${name}.${extension}`)),
   // Runtime files used by the pinned homepage and its linked studio, not the source/download bundle.
-  'studio/index.html', ...STUDIO_ENTRY_ASSETS,
+  'studio/index.html', ...STUDIO_ENTRY_ASSETS, 'studio/assets/index-B9yDZDSb.js', // previous release, for cached clients
   'studio/visual-lab/assets/ibm-plex-arabic.woff2',
   ...['01-manor', '02-archive', '03-desk', '04-corridor'].flatMap(name =>
     ['webp', 'png'].map(extension => `studio/visual-lab/assets/${name}.${extension}`)),
@@ -111,7 +139,6 @@ const files = [
 ];
 const routes = new Map(files.map(file => ['/' + file, file]));
 const legacyCaseRoutes = new Map([
-  ['/abdulrhman/raven/after-show', '/raven/after-show/'],
   ['/deleted-name', '/raven/deleted-name/'],
   ['/deleted-name/', '/raven/deleted-name/'],
   ['/deleted-name/index.html', '/raven/deleted-name/'],
@@ -121,6 +148,9 @@ const legacyCaseRoutes = new Map([
 for (const file of files) if (file.endsWith('/index.html')) routes.set('/' + file.slice(0, -10), file);
 // Serve the same reviewed studio files at both supported mount paths.
 for (const [route, file] of [...routes]) if (route.startsWith('/studio/')) routes.set('/abdulrhman' + route, file);
+// Pages links may arrive under the repository prefix. Redirect once to the Render route
+// so native links and imports resolve against the same base as a direct visit.
+const pagesSections = ['/raven/after-show', '/raven/late-night', '/raven/raven-17-preview'];
 const mime = {'.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.json':'application/json; charset=utf-8',
   '.css':'text/css; charset=utf-8', '.txt':'text/plain; charset=utf-8', '.svg':'image/svg+xml', '.jpg':'image/jpeg', '.webp':'image/webp', '.png':'image/png',
   '.woff2':'font/woff2', '.ttf':'font/ttf', '.mp3':'audio/mpeg', '.wav':'audio/wav', '.mp4':'video/mp4'};
@@ -134,6 +164,11 @@ export function siteRequestPath(target) {
   return pathname;
 }
 
+// These two surfaces ship external scripts and local artwork only.
+const localPagePolicy = "default-src 'none'; script-src 'self'; script-src-attr 'none'; style-src 'self'; " +
+  "font-src 'self'; img-src 'self' data:; media-src 'self'; connect-src 'self'; " +
+  "frame-src 'self'; base-uri 'none'; frame-ancestors 'self'; form-action 'self'";
+const localPages = new Set([...LATE_NIGHT_FILES, ...RAVEN17_PREVIEW_FILES].filter(name => name.endsWith('.html')));
 const hash = text => `'sha256-${createHash('sha256').update(text).digest('base64')}'`;
 export function siteContentSecurityPolicy(html) {
   const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script\s*>/gi)].map(m => hash(m[1]));
@@ -154,9 +189,10 @@ export function createSiteMount(directory) {
   return {
     redirect(pathname) {
       if (pathname === '/abdulrhman/raven/index.html') return '/raven/';
-      if (pathname.startsWith('/abdulrhman/raven/after-show/')) {
+      if (pathname.startsWith('/abdulrhman/')) {
         const canonical = pathname.slice('/abdulrhman'.length);
-        if (routes.has(canonical)) return canonical;
+        if (pagesSections.includes(canonical)) return canonical + '/';
+        if (pagesSections.some(section => canonical.startsWith(section + '/')) && routes.has(canonical)) return canonical;
       }
       if (legacyCaseRoutes.has(pathname)) return legacyCaseRoutes.get(pathname);
       return !pathname.endsWith('/') && (routes.has(pathname + '/') || pathname === '/raven/dialogue')
@@ -182,7 +218,7 @@ export function createSiteMount(directory) {
         if (!stat.isFile() || !sameFile(expected, stat) || fs.realpathSync(current) !== current) {
           fs.closeSync(fd); return null;
         }
-        return {fd, stat, type:mime[path.extname(relative)], html:relative.endsWith('.html')};
+        return {fd, stat, type:mime[path.extname(relative)], html:relative.endsWith('.html'), localPage:localPages.has(relative)};
       } catch {
         if (fd !== undefined) fs.closeSync(fd);
         // Missing assets and unsafe paths have the same response; disk paths never cross HTTP.
@@ -202,7 +238,7 @@ export function serveSiteFile(req, res, asset) {
     if (stat.size > 2 * 1024 * 1024) { fs.closeSync(fd); res.writeHead(404); res.end(); return; }
     let body;
     try { body = fs.readFileSync(fd); } finally { fs.closeSync(fd); }
-    res.setHeader('Content-Security-Policy', siteContentSecurityPolicy(body.toString()));
+    res.setHeader('Content-Security-Policy', asset.localPage ? localPagePolicy : siteContentSecurityPolicy(body.toString()));
     res.setHeader('Content-Length', body.length);
     res.writeHead(200); res.end(req.method === 'HEAD' ? undefined : body); return;
   }

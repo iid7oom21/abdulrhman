@@ -3,15 +3,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {AFTER_SHOW_FILES, STUDIO_ENTRY_ASSETS} from '../../server/ai-dialogue/src/site-mount.js';
+import {AFTER_SHOW_FILES, LATE_NIGHT_FILES, RAVEN17_PREVIEW_FILES, STUDIO_ENTRY_ASSETS} from '../../server/ai-dialogue/src/site-mount.js';
 
-export const SITE_COMMIT = 'c709d31696aad6cd1b6dfe62ac5801ee41b1e4df';
-export const PUBLIC_RELEASE = '2026-11-22-after-show-workshops-1';
+export const SITE_COMMIT = 'a38c150096684ece03eca08d39ce648f9565a8ab';
+export const PUBLIC_RELEASE = '2026-11-23-late-night-1';
 export const EXPORT_MARKER = '.raven-render-export.json';
 // Render builds from a shallow, single-branch checkout and removes its Git
 // remote, so a missing pinned commit is fetched from here by its SHA.
 export const PUBLIC_REPOSITORY = 'https://github.com/iid7oom21/abdulrhman.git';
 const FORMAT = 'raven-render-site-v1';
+const reviewedWings = new Set([...LATE_NIGHT_FILES, ...RAVEN17_PREVIEW_FILES]);
+const withinReviewedWing = name => name.startsWith('raven/late-night/') || name.startsWith('raven/raven-17-preview/');
 const MODULE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const TRACKS = Array.from({length:13}, (_, index) => `${String(index + 1).padStart(2,'0')}.mp3`);
 const EPISODES = ['part-1','part-2','part-3'];
@@ -21,7 +23,7 @@ const PUBLIC_ROOTS = ['assets','fourth-signature','raven','studio','404.html','i
   'player-core.js','robots.txt','site-audio.js','site-bridge.js','site-entry.js','site-player.css',
   'site-player.js','sitemap.xml'];
 export const CORE_FILES = [
-  ...AFTER_SHOW_FILES,
+  ...AFTER_SHOW_FILES, ...LATE_NIGHT_FILES, ...RAVEN17_PREVIEW_FILES,
   'site-player.js','site-audio.js','site-entry.js','site-bridge.js','site-player.css',
   'assets/texts/raven-texts.js','raven/index.html','raven/content.html',
   'raven/dialogue/preview-room.css',
@@ -50,6 +52,9 @@ export const CORE_FILES = [
   'raven/terminal-preview/raven-17/index.html',
   'raven/terminal-preview/assets/hero-poster.jpg',
   'raven/terminal-preview/assets/hero-loop.mp4',
+  'assets/raven-home-share.jpg',
+  ...['episode-1.jpg','episode-2.jpg','episode-3.jpg','cinzel.woff2','ibm-plex-arabic.woff2']
+    .map(name => 'raven/terminal-preview/assets/'+name),
   'raven/assets/images/deleted-name/claire.jpg',
   'raven/assets/images/deleted-name/jonas.jpg',
   'raven/assets/images/deleted-name/mateo.jpg',
@@ -130,7 +135,11 @@ function validateTree(bytes) {
     seen.add(name);
   }
   check(seen.size>0 && seen.size<=20000,'unsafe_git_tree');
-  return [...new Set([...seen].map(name=>name.split('/')[0]))].sort();
+  const roots=[...new Set([...seen].map(name=>name.split('/')[0]))].sort();
+  // Old Pages prototypes and future work can coexist in these directories. Ship only the
+  // wing files reviewed by the same production mount that serves the export.
+  const excluded=[...seen].filter(name=>withinReviewedWing(name) && !reviewedWings.has(name));
+  return [...roots,...excluded.map(name=>':(exclude,literal)'+name)];
 }
 function ownedExport(files, directory) {
   const info=exists(files,directory);
@@ -173,12 +182,12 @@ export function buildSite({repo=MODULE_ROOT,files=fs,run=command,commit=SITE_COM
       git(['fetch','--no-tags','--depth=1',remote,commit]);
     }
     check(git(['rev-parse','--verify',`${commit}^{commit}`]).toString().trim()===commit,'public_commit_mismatch');
-    const roots=validateTree(git(['ls-tree','-r','-z','--full-tree',commit,'--',...PUBLIC_ROOTS]));
+    const archivePaths=validateTree(git(['ls-tree','-r','-z','--full-tree',commit,'--',...PUBLIC_ROOTS]));
     staging=files.mkdtempSync(path.join(repo,'.render-build-'));
     stagingInfo=files.lstatSync(staging);
     const next=path.join(staging,'site'),archive=path.join(staging,'public-site.tar');
     backup=path.join(staging,'previous');files.mkdirSync(next,{mode:0o755});
-    git(['archive','--format=tar',`--output=${archive}`,commit,'--',...roots]);
+    git(['archive','--format=tar',`--output=${archive}`,commit,'--',...archivePaths]);
     run('tar',['--extract','--file',archive,'--directory',next,'--no-same-owner','--no-same-permissions'],{cwd:repo});
     validatePublicExport(next,{files,release});
     files.writeFileSync(path.join(next,EXPORT_MARKER),JSON.stringify({format:FORMAT,commit,release})+'\n',{flag:'wx',mode:0o644});

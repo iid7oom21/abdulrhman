@@ -5,6 +5,7 @@ import path from 'node:path';
 import os from 'node:os';
 import http from 'node:http';
 import {createPreviewServer} from '../src/server.js';
+import {LATE_NIGHT_FILES, RAVEN17_PREVIEW_FILES} from '../src/site-mount.js';
 import {createOpenAIReply} from '../src/provider.js';
 import {_reset} from '../src/dialogue.js';
 
@@ -321,7 +322,8 @@ test('visual scenes and linked studio serve reviewed assets across root and lega
     ['raven/assets/raven-visual-scenes.css', 'text/css; charset=utf-8', '.scene { display:block; }'],
     ['raven/assets/raven-polish-v2.css', 'text/css; charset=utf-8', '.rvnCastGrid { display:grid; }'],
     ['studio/index.html', 'text/html; charset=utf-8', '<!doctype html><div id="root"></div>'],
-    ['studio/assets/index-B9yDZDSb.js', 'text/javascript; charset=utf-8', 'STUDIO_SCRIPT'],
+    ['studio/assets/index-C7tRTuJ0.js', 'text/javascript; charset=utf-8', 'STUDIO_SCRIPT'],
+    ['studio/assets/index-B9yDZDSb.js', 'text/javascript; charset=utf-8', 'PREVIOUS_STUDIO_SCRIPT'],
     ['studio/assets/index-DI-to4yn.css', 'text/css; charset=utf-8', '.studio { display:block; }'],
     ['studio/visual-lab/assets/ibm-plex-arabic.woff2', 'font/woff2', 'FONT_FIXTURE'],
     ['studio/visual-lab/assets/01-manor.webp', 'image/webp', 'MANOR_PREVIEW'],
@@ -495,5 +497,50 @@ test('After Show opens from the studio and serves only approved game assets', as
       assert.equal(response.headers.get('content-type'),mime);
     }
     assert.equal((await fetch(s.root + prefix + base + '/assets/staging.webp')).status,404);
+  }
+});
+
+test('Late Night and the film preview share explicit files across Render and Pages-style routes', async t => {
+  const f = fixture(t);
+  for (const file of [...LATE_NIGHT_FILES, ...RAVEN17_PREVIEW_FILES]) f.write(file, file);
+  f.write('raven/late-night/games/notes.js', 'UNRELEASED');
+  f.write('raven/late-night/thumbs/private.webp', 'UNRELEASED');
+  f.write('raven/raven-17-preview/notes.html', 'UNRELEASED');
+  const s = await start(t, {siteRoot:f.root});
+  for (const section of ['late-night', 'raven-17-preview']) {
+    for (const suffix of ['', '/']) {
+      const response = await fetch(s.root + '/abdulrhman/raven/' + section + suffix + '?lang=en', {redirect:'manual'});
+      assert.equal(response.status, 308);
+      assert.equal(response.headers.get('location'), '/raven/' + section + '/?lang=en');
+    }
+  }
+  const files = [
+    ['raven/late-night/station-shadow.html', 'text/html'], ['raven/late-night/three-evening.html', 'text/html'],
+    ['raven/late-night/coast-map.html', 'text/html'], ['raven/late-night/screening-room.html', 'text/html'],
+    ['raven/late-night/games/station.js', 'text/javascript'], ['raven/late-night/night-shell.js', 'text/javascript'],
+    ['raven/late-night/creative/reading.js', 'text/javascript'], ['raven/late-night/sims/echo.js', 'text/javascript'],
+    ['raven/late-night/scenes/art.js', 'text/javascript'], ['raven/late-night/hub.css', 'text/css'],
+    ['raven/late-night/thumbs/station-shadow.webp', 'image/webp'], ['raven/late-night/assets/museum-mill.wav', 'audio/wav'],
+    ['raven/raven-17-preview/index.html', 'text/html'], ['raven/raven-17-preview/home.js', 'text/javascript']
+  ];
+  for (const [name, type] of files) {
+    const response = await fetch(s.root + '/abdulrhman/' + name + '?lang=ar');
+    assert.equal(response.status,200,name);
+    assert.equal(response.url,s.root + '/' + name + '?lang=ar');
+    assert.equal(response.headers.get('content-type').split(';')[0],type);
+    assert.equal(response.headers.get('set-cookie'),null);
+    assert.equal(await response.text(),name);
+    if (type === 'text/html') {
+      const policy = response.headers.get('content-security-policy');
+      assert.match(policy,/script-src 'self'; script-src-attr 'none'/);
+      assert.doesNotMatch(policy,/'unsafe-inline'|'unsafe-eval'/);
+    }
+  }
+  for (const prefix of ['', '/abdulrhman']) {
+    for (const file of ['raven/late-night/games/notes.js', 'raven/late-night/thumbs/private.webp', 'raven/raven-17-preview/notes.html']) {
+      const unknown = await fetch(s.root + prefix + '/' + file,{redirect:'manual'});
+      assert.equal(unknown.status,404);
+      assert.doesNotMatch(await unknown.text(),/UNRELEASED/);
+    }
   }
 });
