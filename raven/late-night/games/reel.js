@@ -1,8 +1,51 @@
 import {start,keepButton,el,button,group,canvas,output,box,dot,line,gradient} from './tools.js';
 import {cols,rows,goal,spawn,obstacle,souvenir,turns,vector,roll} from './reel-model.js';
 const fresh=()=>[0,1,2].map(()=>({x:null,y:null,rot:0}));let pieces=fresh(),chosen=0,round=1,result=null,preview=null,started=0,loop=0;
-let drawActive=null,imported=false;
+let drawActive=null,imported=false,track=null;
 const xy=(x,y)=>[100+x*74,49+y*55];
+const port=([x,y],[dx,dy])=>[x+dx*29,y+dy*24];
+const lerp=([ax,ay],[bx,by],t)=>[ax+(bx-ax)*t,ay+(by-ay)*t];
+
+// Sample the same quadratic drawn on each bend, in the direction the reel enters it.
+// Distances are screen pixels, so a long straight and a short bend use proportional time.
+function makeTrack(route,parts){
+  const points=[];
+  function add(point){
+    const last=points.at(-1),length=last?Math.hypot(point[0]-last.point[0],point[1]-last.point[1]):0;
+    if(!last||length)points.push({point,distance:(last?.distance||0)+length});
+  }
+  add(xy(...route[0]));
+  for(let i=1;i<route.length;i++){
+    const [x,y]=route[i],center=xy(x,y),bend=parts.find(p=>p.x===x&&p.y===y);
+    if(!bend){add(center);continue;}
+    const incoming=[route[i-1][0]-x,route[i-1][1]-y],entry=port(center,incoming);
+    add(entry);
+    const sides=turns[bend.rot].map(dir=>vector[dir]);
+    const side=sides.findIndex(([dx,dy])=>dx===incoming[0]&&dy===incoming[1]);
+    if(side<0)break; // A mismatched bend stops the reel where it meets the tile.
+    const exit=port(center,sides[1-side]);
+    for(let step=1;step<=16;step++){
+      const t=step/16;
+      add(lerp(lerp(entry,center,t),lerp(center,exit,t),t));
+    }
+  }
+  return points;
+}
+
+function trailAt(points,fraction){
+  const target=points.at(-1).distance*Math.min(1,Math.max(0,fraction)),trail=[points[0].point];
+  for(let i=1;i<points.length;i++){
+    const {point,distance}=points[i];
+    if(distance>target){
+      const prior=points[i-1];
+      trail.push(lerp(prior.point,point,(target-prior.distance)/(distance-prior.distance)));
+      break;
+    }
+    trail.push(point);
+  }
+  return trail;
+}
+
 function scene(c,fraction,out){
   gradient(c,'#493c39','#202c31');for(let i=0;i<16;i++){line(c,'#64544a',1,[[0,12+i*19],[640,12+i*19]]);}
   for(let i=0;i<cols;i++)for(let j=0;j<rows;j++){const [x,y]=xy(i,j);box(c,(i+j)%2?'#4c4a43':'#555147',x-36,y-26,72,52);dot(c,'#6c6655',x,y,2);}
@@ -12,16 +55,15 @@ function scene(c,fraction,out){
   const [cx,cy]=xy(...souvenir);
   if(round===2){box(c,'#c5ad76',cx-16,cy-9,32,18);for(let i=0;i<5;i++)box(c,'#514b3b',cx-12+i*5,cy+3,2,2);}
   pieces.forEach((p,i)=>{if(p.x===null)return;
-    const [x,y]=xy(p.x,p.y),[a,b]=turns[p.rot].map(d=>vector[d]);
+    const center=xy(p.x,p.y),[a,b]=turns[p.rot].map(dir=>port(center,vector[dir]));
     for(const [wide,color] of [[10,'#242d2f'],[6,['#dba468','#a6bac4','#d5be7b'][i]]]){
-      c.beginPath();c.strokeStyle=color;c.lineWidth=wide;c.moveTo(x+a[0]*29,y+a[1]*24);c.quadraticCurveTo(x,y,x+b[0]*29,y+b[1]*24);c.stroke();
+      c.beginPath();c.strokeStyle=color;c.lineWidth=wide;c.moveTo(...a);c.quadraticCurveTo(...center,...b);c.stroke();
     }
   });
   let pos=xy(...spawn);
   if(out){
-    const pts=out.route.map(p=>xy(...p)),n=Math.min(pts.length-1,Math.max(0,fraction)*(pts.length-1));
-    const i=Math.floor(n),u=n-i,next=pts[Math.min(pts.length-1,i+1)];pos=[pts[i][0]*(1-u)+next[0]*u,pts[i][1]*(1-u)+next[1]*u];
-    line(c,'#c6bfa1',2,[...pts.slice(0,i+1),pos]);
+    const trail=trailAt(track,fraction);
+    line(c,'#c6bfa1',2,trail);pos=trail.at(-1);
   }
   dot(c,'#242a2b',pos[0],pos[1],18);dot(c,'#b9b0a0',pos[0],pos[1],15);
   for(let i=0;i<5;i++){const a=i*Math.PI*2/5+fraction*6;dot(c,'#454746',pos[0]+Math.cos(a)*8,pos[1]+Math.sin(a)*8,3.5);}
@@ -46,7 +88,7 @@ function render(ui){
       b.setAttribute('aria-label',name+(piece>=0?' · '+t('قطعة ','Bend ')+(piece+1):''));b.disabled=occupied;if(piece===chosen)b.setAttribute('aria-pressed','true');board.append(b);
     }
     actions.replaceChildren();const run=button('roll',t('أطلق البكرة','Release the reel'),()=>{
-      preview=roll(pieces);result=null;started=performance.now();layout();animate();
+      preview=roll(pieces);track=makeTrack(preview.route,pieces);result=null;started=performance.now();layout();animate();
     });run.disabled=pieces.some(p=>p.x===null);actions.append(run);
     if(result){
       const win=result.reason==='box'&&(round===1||result.souvenir);

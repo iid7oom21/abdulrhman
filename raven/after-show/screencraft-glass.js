@@ -64,15 +64,28 @@ function titleTake(s={},reflection=false){
   return {first:word(s?.first),second:word(s?.second),enter:clamp(s?.enter,0,4,.5),
     track:one(s?.track,['still','drift','reverse']),plane:one(s?.plane,['back','front']),reflect:typeof s?.reflect==='boolean'?s.reflect:reflection};
 }
+let titleEdit=null;
 export function titles(ui){
   const {t,lang}=ui,old=ui.load('titles',{})||{};
   const state={take:one(old.take,['A','B']),view:one(old.view,['wide','pocket']),A:titleTake(old.A),B:titleTake(old.B,true)};
+  const pieceID=ui.params.get('nightPiece');
+  const forEvening=ui.params.get('nightEvening')==='1';
+  let imported=false;
+  if(pieceID){
+    import('../late-night/night-store.js').then(({pieces})=>{
+      const piece=pieces().find(p=>p.id===pieceID && p.activity==='titles'&&p.type==='title');
+      if(piece && w.frame.isConnected){
+        state[state.take]=titleTake(titleEdit?.id===piece.id?titleEdit.take:piece.data.take);
+        imported=true;render();
+      }
+    });
+  }
   let cards=[];
   const current=()=>state[state.take];
   const w=table(ui,t('الاسم يعبر الشاشة','A title crosses the screen'),
     t('اكتب اسمًا من كلمتين على زجاج المحطة. جمّد مرور الشخص لتختبر أين تُقرأ كل كلمة.','Set two words on the station glass. Freeze the passerby to see where each word can be read.'),
     (c,p)=>{drawTitle(c,current(),p,lang,state.view==='pocket');cards.forEach(([ctx,k])=>drawTitle(ctx,state[k],p,lang,state.view==='pocket'));},()=>FRAME_SECONDS);
-  function save(){ui.save('titles',state);}
+  function save(){if(imported)titleEdit={id:pieceID,take:{...current()}};ui.save('titles',state);}
   function feedback(){
     const s=current(), phone=state.view==='pocket', counts=[0,0];
     for(let i=0;i<FRAME_SECONDS*24;i++){
@@ -104,7 +117,35 @@ export function titles(ui){
       const cap=node('figcaption',k==='A'?t('الشارة الأولى','Title A'):t('الشارة الثانية','Title B'));
       f.append(can,cap);compare.append(f);cards.push([can.getContext('2d'),k]);
     }
-    w.controls.append(compare);feedback();w.refresh();
+    w.controls.append(compare);
+    if(forEvening||imported){
+      const transfer=act('night-title',forEvening?t('راجع العنوان لأمسيتك','Review title for your evening'):t('احفظ نسخة معدّلة في الدفتر','Save an edited copy to the notebook'),()=>{
+        const take={...current()};
+        if(!take.first.trim()||!take.second.trim()){
+          w.result.textContent=t('اكتب كلمتي عنوانك قبل نقله.','Write both words of your title before transferring.');
+          w.controls.querySelector('[data-sc="'+(take.first?'second':'first')+'"]').focus();return;
+        }
+        const words=[take.first,take.second].join(' '),thumb=w.frame.toDataURL('image/webp',.65);
+        const sheet=node('div',null,'sc-inset');
+        const confirm=act('night-title-confirm',forEvening?t('انقل هذا العنوان','Transfer this title'):t('أضف هذه النسخة','Add this version'),async()=>{
+          confirm.disabled=true;
+          try{
+            const {writePiece}=await import('../late-night/night-store.js');
+            const piece=writePiece('titles',{title:words,type:'title',data:{take},thumbnail:thumb});
+            if(!piece)throw Error('save');
+            const u=new URL(forEvening?'../late-night/three-evening.html':'../late-night/my-notebook.html',location.href);
+            if(forEvening)u.searchParams.set('titlePiece',piece.id);u.searchParams.set('lang',lang);
+            const next=node('a',forEvening?t('تابع إلى فصل النوافذ','Continue to the windows chapter'):t('افتح الدفتر','Open notebook'));next.href=u.href;next.target='_top';
+            sheet.replaceChildren(node('p',words),next);next.focus();
+          }catch{confirm.disabled=false;sheet.append(node('p',t('تعذّر تأكيد الحفظ. يمكنك تنزيل نسخة من العنوان.','Saving could not be confirmed. You can download a copy of the title.')),
+              act('copy-title',t('تنزيل نسخة JSON','Download JSON'),async()=>{const {download}=await import('../late-night/night-store.js');download('raven-title.json',{type:'title',title:words,data:{take}}); }));}
+        });
+        sheet.append(node('p',t('العنوان الذي سينتقل','Title to carry over')+' · '+words),confirm,act('night-title-back',t('رجوع','Back'),render));
+        transfer.replaceWith(sheet);confirm.focus();
+      });
+      w.controls.append(transfer);
+    }
+    feedback();w.refresh();
   }
   render();w.seek(2.65);
 }

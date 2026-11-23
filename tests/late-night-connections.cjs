@@ -45,6 +45,32 @@ test('night connections at 320px',async t=>{
    const firstId=await menu.locator('option').filter({hasText:'First cut'}).getAttribute('value');await menu.selectOption(firstId);await edit.waitFor();assert.equal(await edit.inputValue(),'Stay on the sign');
   }finally{await context.close();}
  });
+ await t.test('explicitly import a real Studio board, project ordered frames, export its own duration',async()=>{
+  const {context,p,go}=await open('en');
+  try{
+   await go('raven/late-night/idea-to-studio.html?shots=exterior,hand,envelope&from=free');
+   await p.locator('#board-name').fill('Night projection');await p.locator('.connect-form button').click();
+   await p.getByRole('textbox',{name:'Shot direction 1'}).fill('Private director cue');
+   await p.getByRole('button',{name:'Save draft edits'}).click();
+   await go('raven/late-night/screening-room.html');const scene=id=>p.locator('[data-scene="'+id+'"]');
+   assert.equal(await p.getByText('Night projection',{exact:true}).count(),0);
+   await scene('studio-picker').click();await scene('studio-list').selectOption({label:'Night projection'});await scene('studio-add').click();
+   await scene('pick-sample-plane').click();await scene('pick-sample-stage').click();await scene('start').click();
+   assert.equal(await scene('runtime').inputValue(),'12');assert.equal(await scene('runtime').isDisabled(),true);
+   const image=p.locator('img.ns-still');await image.waitFor();
+   assert.match(await image.getAttribute('src'),/exterior\.webp$/);await scene('seek').fill('5.2');assert.match(await image.getAttribute('src'),/hand\.webp$/);
+   await scene('seek').fill('9.1');assert.match(await image.getAttribute('src'),/envelope\.webp$/);
+   for(let i=0;i<3;i++){
+    await scene('pass').click();assert.equal(await p.locator('img.ns-still').count(),0);
+    await scene('handoff').click();assert.equal(await p.getByText('Private director cue',{exact:false}).count(),0);
+    await scene('reading').selectOption('0');await scene('return').click();await scene('handoff').click();await scene('reveal').click();
+    if(i===0)assert.ok((await p.locator('pre').innerText()).includes('Private director cue'));
+    await scene('next').click();
+   }
+   const downloaded=p.waitForEvent('download');await scene('export').click();const d=await downloaded;
+   const txt=await fs.readFile(await d.path(),'utf8');assert.match(txt,/Night projection · 12 s/);assert.match(txt,/23 s/);assert.ok(!txt.includes('Private director cue'));await fit(p);
+  }finally{await context.close();}
+ });
  await t.test('real local interview, repeated operations and uncertain save',async()=>{
   for(const failure of [false,true]){
    const {context,p,go}=await open('ar',failure);

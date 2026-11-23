@@ -11,7 +11,11 @@ test('generated puzzles are unique and editing a constraint recounts possibiliti
   }
 });
 test('director validates set, shot order and duration',async()=>{
-  const {buildScene,validScene}=await import('../raven/late-night/creative/scene.js');
+  const {buildScene,validScene,matchCatalog}=await import('../raven/late-night/creative/scene.js');
+  for(const known of ['انتظار عند رصيف بعد انطفاء اللوحة','Waiting on a pier after the sign goes dark'])assert.deepEqual(matchCatalog(known),{setting:'pier',unknown:[],ready:true});
+  for(const [mixed,noun] of [['مصوّر عند رصيف مع زرافة','زرافة'],['Waiting on a pier with a giraffe','giraffe'],['A violin on the pier','violin'],['عازف كمان على الرصيف','كمان']]){
+    const match=matchCatalog(mixed);assert.equal(match.setting,'pier');assert.equal(match.ready,false);assert.ok(match.unknown.includes(noun));
+  }
   for(const place of ['pier','cinema','square']){
     const s=buildScene('The sign at dusk',place);assert.ok(validScene(s));assert.deepEqual(s.shots.map(x=>x.start),[0,s.blackout,s.blackout+s.shots[1].seconds]);
     for(const key of ['duration','blackout'])assert.equal(validScene({...s,[key]:99}),false);
@@ -38,8 +42,8 @@ test('five creative routes work on Arabic and English mobile with real event sou
       const fit=()=>p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1);
       await open('city-radio');assert.equal(await q('clip').count(),0);
       await open('replay-caller');assert.equal(await q('explain').count(),0);
-      await open('director-sentence');await q('prompt').fill('dragon in space');
-      await q('generate').click();await q('substitute').selectOption('cinema');await q('accept-set').click();
+      await open('director-sentence');await q('prompt').fill(lang==='ar'?'مصوّر عند رصيف مع زرافة':'Waiting on a pier with a giraffe');
+      await q('generate').click();assert.equal(await q('play').count(),0);assert.equal(await q('substitute').inputValue(),'pier');assert.ok((await p.locator('.night-bench').innerText()).includes(lang==='ar'?'زرافة':'giraffe'));await q('substitute').selectOption('cinema');await q('accept-set').click();
       await q('prompt').fill(lang==='ar'?'انتظار عند رصيف بعد انطفاء اللوحة':'Waiting on a pier after the sign goes dark');await q('generate').click();
       await q('duration').selectOption('8');await q('blackout').fill('3');
       await q('lighting1').selectOption('amber');await q('motion1').selectOption('pan');
@@ -54,7 +58,9 @@ test('five creative routes work on Arabic and English mobile with real event sou
       await open('reading-actor');await q('custom').fill('My bag under the last chair');await q('send-custom').click();
       for(const id of ['time','door','check']){await q('line').selectOption(id);await q('speak').click();}
       assert.ok((await p.locator('.cr-columns').innerText()).includes('My bag under the last chair'));
-      await q('alternate').selectOption('door');await q('turn3').click();assert.ok(await fit());
+      await q('alternate').selectOption('door');await q('turn3').click();
+      assert.match(await p.locator('.cr-columns .cr-read').first().innerText(),lang==='ar'?/مرافقتك في الدور 3/:/escort you on turn 3/);
+      assert.match(await p.locator('.cr-columns .cr-read').last().innerText(),lang==='ar'?/دون اتفاق/:/without an agreed escort/);assert.ok(await fit());
       await open('city-radio');assert.equal(await q('clip').count(),2);assert.equal(await q('seek').getAttribute('max'),'20');
       await q('source1').click();assert.equal(await p.locator('.cr-status').getAttribute('data-source'),'director-sentence');
       await q('clip').first().uncheck();assert.equal(await q('seek').getAttribute('max'),'10');assert.ok(await fit());

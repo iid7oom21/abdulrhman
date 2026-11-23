@@ -26,6 +26,11 @@ export function createEntryGate({ root, show = false, onEnter, onClose } = {}) {
       <button id="archive-enter" type="button">ادخل عالم رايفن</button>
       <p id="archive-entry-note">يمكنك التحكم بالأغنية من شريط الصوت.</p>
     </div>
+    <nav class="archive-night-shortcuts">
+      <a id="archive-night-hub">آخر الليل</a>
+      <a id="archive-night-short">عندي دقيقتين</a>
+      <a id="archive-night-evening">أبي أمسية كاملة</a>
+    </nav>
     <div class="archive-intro-controls">
       <button id="archive-sound" class="archive-sound" type="button">تشغيل الصوت</button>
       <button id="archive-skip" type="button">تخطَّ المقدمة</button>
@@ -39,6 +44,18 @@ export function createEntryGate({ root, show = false, onEnter, onClose } = {}) {
   const sync = (language = document.documentElement.lang) => {
     const en = language === 'en';
     dialog.lang = en ? 'en' : 'ar';
+    const shortcuts = [
+      ['hub','','آخر الليل','Late Night'],
+      ['short','station-shadow.html','عندي دقيقتين','I have two minutes'],
+      ['evening','festival-chair.html','أبي أمسية كاملة','Plan a full evening']
+    ];
+    for (const [id, path, ar, english] of shortcuts) {
+      const item = dialog.querySelector('#archive-night-' + id);
+      const target = new URL('raven/late-night/' + path, root);
+      target.searchParams.set('lang', en ? 'en' : 'ar');
+      item.href = target.href;
+      item.textContent = en ? english : ar;
+    }
     dialog.dir = en ? 'ltr' : 'rtl';
     dialog.querySelector('#archive-entry-title').textContent = en
       ? 'Some clues await a different light.' : 'بعض الأدلة تنتظر ضوءًا آخر.';
@@ -67,6 +84,7 @@ export function createEntryGate({ root, show = false, onEnter, onClose } = {}) {
     onEnter?.(event);
     dialog.close();
   });
+  dialog.querySelector('.archive-night-shortcuts').addEventListener('click', event => { if (event.target.closest('a')) dialog.close(); });
   skipButton.addEventListener('click', () => dialog.close());
   soundButton.addEventListener('click', () => {
     video.muted = !video.muted;

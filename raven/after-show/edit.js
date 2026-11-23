@@ -627,8 +627,17 @@ export default function mount(ui) {
       render();
       restoreFocus(transfer ? '[data-edit-studio-confirm]' : '[data-edit-action=studio]');
     }, 'studio'));
-    if (route === 'daily')
+    if (route === 'daily') {
       actions.append(action(t('مونتاج حر', 'Free edit'), () => ui.go('free'), 'practice'));
+      if (state.dailyDone) {
+        const weekend = node('a', 'cut-main', t('تحدّي نهاية الأسبوع', 'Weekend double feature'));
+        const url = new URL('../late-night/weekend.html', document.baseURI);
+        url.searchParams.set('date', state.date);
+        url.searchParams.set('lang', lang);
+        weekend.href = url.href;
+        actions.append(weekend);
+      }
+    }
     actions.append(action(t('جرّب ليلة العرض', 'Try screening night'), () => ui.go('festival'), 'festival'));
     result.append(actions);
     if (copyPlan) {
@@ -660,7 +669,11 @@ export default function mount(ui) {
       link.href = url.href;
       link.target = '_top';
       link.dataset.editStudioConfirm = '';
-      note.append(link);
+      const named = new URL('../late-night/idea-to-studio.html', document.baseURI);
+      named.search = new URLSearchParams({shots:ids.join(','),from:route,lang}).toString();
+      const saveNamed = node('a', 'cut-main', t('عاين واحفظ مسودة باسمك', 'Preview and save a named draft'));
+      saveNamed.href=named.href;saveNamed.target='_top';
+      note.append(link,saveNamed);
       result.append(note);
     }
     parent.append(result);

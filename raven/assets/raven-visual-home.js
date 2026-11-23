@@ -2,6 +2,8 @@
 (() => {
   'use strict';
   const words = {
+    lateNight:['آخر الليل','Late Night'],twoMinutes:['عندي دقيقتين','I have two minutes'],fullEvening:['أبي أمسية كاملة','Plan a full evening'],
+    nightPitch:['مدينة ساحلية وسينما قديمة. سجّل حركتك في المحطّة، أو اصنع مشهدًا عند الرصيف.','A coastal town and an old cinema. Record a route through the station or stage a scene on the pier.'],enterNight:['ادخل آخر الليل','Enter Late Night'],
     afterShow:['بعد العرض','After the Show'],
     afterShowPitch:['عندك ١٢ ثانية وثلاث لقطات. بأي لقطة تفتتح المشهد؟','You have twelve seconds and three shots. Which one opens your scene?'],
     afterShowPlay:['العب آخر إرسال','Play Last Transmission'],
@@ -36,6 +38,11 @@
       const activity = link.hasAttribute('data-after-show-play') ? 'activity=edit&' : '';
       link.setAttribute('href', './after-show/?' + activity + 'lang=' + (language() ? 'en' : 'ar'));
     }
+    document.querySelectorAll('[data-night-route]').forEach(link => {
+      const target=new URL(link.dataset.nightRoute,location.href);
+      target.searchParams.set('lang',language() ? 'en' : 'ar');
+      link.setAttribute('href',target.pathname+target.search+target.hash);
+    });
     document.querySelectorAll('[data-visual-episode]').forEach(node => { node.href = './?episode=' + node.dataset.visualEpisode + (language() ? '&lang=en' : ''); });
     document.querySelectorAll('.rvnVisualRetry').forEach(node => { node.textContent = text(node.dataset.retrying === 'true' ? 'loading' : 'retry'); });
   }

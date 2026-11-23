@@ -19,11 +19,36 @@ export function retime(s){
   const lengths=[s.blackout,middle,last-middle];let start=0;
   for(const [i,p] of s.shots.entries()){p.start=start;p.seconds=lengths[i];p.description=describe(s,i);start+=lengths[i];}
 }
-export function promptSetting(p){
-  if(/رصيف|قطار|محطة|مرفأ|pier|train|station|harbou?r|dock/iu.test(p))return 'pier';
-  if(/سينما|شباك|ستارة|سينم|cinema|screen|theat|ticket/iu.test(p))return 'cinema';
-  if(/ساعة|ساح|نافورة|square|tower|clock|fountain/iu.test(p))return 'square';
-  return null;
+// The local renderer knows a small authored vocabulary. An unfamiliar detail, even in a
+// familiar location, needs the director's explicit choice of a stand-in from that library.
+function normalWords(sentence){
+  return String(sentence).normalize('NFKC').toLowerCase().normalize('NFD')
+    .replace(/\p{M}/gu,'').replace(/ـ/g,'').replace(/ى/g,'ي').match(/[\p{L}\p{N}]+/gu)||[];
+}
+const wordSet=s=>new Set(normalWords(s));
+const settings={
+  pier:wordSet('رصيف محطة مرفأ ميناء قطار pier dock station harbour harbor train'),
+  cinema:wordSet('سينما شباك ستارة مسرح قاعة تذاكر cinema theatre theater box office ticket booth'),
+  square:wordSet('ساحة ميدان برج ساعة square plaza tower clock'),
+};
+const descriptions=wordSet(
+  'انتظار انتظر ينتظر تنتظر منتظر منتظرة يقف تقف واقف واقفة شخصية شخص رجل امرأة مصور زائر ظل خطوة خطوات مرور يمر تمر يمشي تمشي يسير تسير يعبر تعبر يغادر تغادر دخول خروج لقطة مشهد ثابت ثابتة هادئ هادئة ببطء علامة لوحة إشارة مصباح ضوء ضوءه يضيء تضيء انطفاء تنطفئ ينطفئ خافت خافتة عتمة غروب ليل ليلا ليلي ليلية ذهبي ذهبية كهرماني كهرمانية فانوس مضاءة زجاج عند بعد قبل من مع في على قرب بجانب أمام تحت ثم إلى و وسط بين حتى خلال حين بينما');
+const english=wordSet('waiting waits wait standing stands person figure visitor silhouette walking walks walk crosses crossing steps moves leaves leaving arrives passing still quiet slow slowly scene shot tracking pan light lights lighting glow glows lit lamp sign board goes dims dark faded dusk evening night sunset golden amber lantern shadow a an the this on at by near beside outside in with and after before under as to of from through toward until while over along');
+function forms(word){
+  if(!/[\u0600-\u06ff]/u.test(word))return [word];
+  // Check the whole Arabic word, then common attached conjunctions/prepositions and article.
+  const bare=word.replace(/^[وف](?=.)/u,'');
+  return [...new Set([word,bare,bare.replace(/^[بكل](?=ال)/u,''),bare.startsWith('لل')?'ال'+bare.slice(2):bare].flatMap(w=>[w,w.replace(/^ال(?=.)/u,'')]))];
+}
+export function matchCatalog(sentence){
+  const tokens=normalWords(sentence),found=new Set(),unknown=[];
+  for(const word of tokens){
+    const variants=forms(word),place=Object.keys(settings).find(id=>variants.some(v=>settings[id].has(v)));
+    if(place)found.add(place);
+    else if(!variants.some(v=>descriptions.has(v)||english.has(v)))unknown.push(word);
+  }
+  const setting=found.size===1?[...found][0]:null;
+  return {setting,unknown:[...new Set(unknown)],ready:Boolean(setting)&&unknown.length===0};
 }
 export function buildScene(input,setting){
   const p=String(input).trim().slice(0,160);if(!p||!Object.hasOwn(places,setting))return null;

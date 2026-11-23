@@ -1,10 +1,9 @@
 import {mount} from '../night-shell.js';
 import {el,button,field,select,range,words,row,output,surface,stage,clock,choose,link} from './kit.js';
-import {places,lights,motions,promptSetting,buildScene,retime,describe,validScene,paintScene,sceneThumbnails} from './scene.js';
+import {places,lights,motions,matchCatalog,buildScene,retime,describe,validScene,paintScene,sceneThumbnails} from './scene.js';
 
 const example=['انتظار عند رصيف بعد انطفاء اللوحة','Waiting on a pier after the sign goes dark'];
 let scene=null,prompt='',languageOfPrompt='',feeding=false,wantsPlace=false,lastPlace='pier',time=0,timer,saved;
-function unsupported(s){return /تنين|طائرة|فيل|قمر صناعي|صاروخ|نمر|حصان|سفينة فضاء|spaceship|satellite|dragon|elephant|plane|rocket|horse|tiger/iu.test(s);}
 mount({id:'director-sentence',title:['مخرج من جملة','One-sentence director'],intro:['اكتب فكرة قصيرة وصوّرها بلقطات من مكتبة الساحل.','Turn a short idea into shots from the coastal set library.'],render(ui){
   const {t,lang}=ui;timer?.stop();
   if(!feeding){feeding=true;if(validScene(ui.editData)){scene=structuredClone(ui.editData);prompt=scene.prompt;lastPlace=scene.setting;}else{languageOfPrompt=lang;prompt=t(...example);}}
@@ -12,19 +11,21 @@ mount({id:'director-sentence',title:['مخرج من جملة','One-sentence dire
     prompt=t(...example);languageOfPrompt=lang;
   }
   const desk=surface(ui),body=el('section',null,'cr-desk'),choice=el('div',null,'cr-paper'),status=output();
-  const idea=words('prompt',prompt,t(...example),160,v=>{prompt=v;languageOfPrompt='';wantsPlace=false;choice.hidden=true;status.textContent='';});
+  const idea=words('prompt',prompt,t(...example),160,v=>{prompt=v;languageOfPrompt='';wantsPlace=false;choice.hidden=true;status.textContent='';if(scene){timer?.stop();body.hidden=scene.prompt!==prompt;}});
   const generate=button('generate',t('حوّلها إلى مشهد','Build my scene'),()=>{
     if(!prompt.trim()){status.textContent=t('أضف جملة قصيرة أولًا.','Write a short sentence first.');idea.focus();return;}
-    const place=promptSetting(prompt);
-    if(!place||unsupported(prompt)){lastPlace=place||'pier';wantsPlace=true;renderChoice();status.textContent='';return;}
-    compose(place);
+    const match=matchCatalog(prompt);
+    if(!match.ready){lastPlace=match.setting||'pier';wantsPlace=true;renderChoice();status.textContent='';return;}
+    compose(match.setting);
   });
   desk.append(field(t('فكرة المشهد','Scene idea'),idea),row(generate),choice,body,status);
   if(!scene){const preview=stage(t('الرصيف من كتالوج مواقع التصوير','Pier from the set library'));paintScene(preview,buildScene(example[0],'pier'),1);body.append(preview,el('p',t('من مكتبة التصوير المحلية · الرصيف','Local set library · Pier'),'cr-caption'));}
   function renderChoice(){
-    choice.hidden=!wantsPlace;if(!wantsPlace)return;
+    choice.hidden=!wantsPlace;body.hidden=wantsPlace||Boolean(scene&&scene.prompt!==prompt);if(!wantsPlace)return;timer?.stop();
     const set=select('substitute',Object.entries(places).map(([id,n])=>[id,t(...n)]),lastPlace,v=>{lastPlace=v;});
-    choice.replaceChildren(el('p',t('هذه الفكرة تحتاج عنصرًا خارج المكتبة. اختر ديكورًا بديلًا؛ تظهر فيه شخصية ولوحة ومصباح.','This idea calls for something outside the library. Pick a replacement set with a figure, sign and lamp.')),field(t('الديكور البديل','Replacement set'),set),button('accept-set',t('ركّب البديل','Use this set'),()=>compose(lastPlace)));
+    const missing=matchCatalog(prompt).unknown;
+    const detail=missing.length?t('لم أجد في وصف المكتبة «','The set library does not recognise “')+missing.join('، ')+t('».','”.'):t('اختر مكانًا واحدًا لتصوير هذه اللقطة.','Choose one place to film this shot.');
+    choice.replaceChildren(el('p',detail+' '+t('اختر ديكورًا بديلًا؛ تظهر فيه شخصية ولوحة ومصباح.','Choose a stand-in set with a figure, sign and lamp.')),field(t('الديكور البديل','Replacement set'),set),button('accept-set',t('ركّب البديل','Use this set'),()=>compose(lastPlace)));
   }
   function compose(id){
     const next=buildScene(prompt,id);if(!validScene(next))return;
@@ -32,7 +33,7 @@ mount({id:'director-sentence',title:['مخرج من جملة','One-sentence dire
     status.textContent=t('المشهد جاهز للمراجعة.','The scene is ready to review.');
   }
   function renderScene(){
-    if(!validScene(scene))return;body.replaceChildren();
+    if(!validScene(scene))return;body.hidden=wantsPlace||scene.prompt!==prompt;body.replaceChildren();
     const s=scene,can=stage(t(...places[s.setting])),caption=el('p',null,'cr-caption'),read=el('output',null,'cr-meter');
     const scrub=range('seek',time,0,s.duration,.1,v=>timer.seek(v));
     const run=button('play',t('شغّل فكرتي','Play my idea'),()=>{if(validScene(scene))timer.play();});

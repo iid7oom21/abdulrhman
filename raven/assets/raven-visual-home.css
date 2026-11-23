@@ -124,3 +124,5 @@ main :where(h1,h2,h3,p,a,button,summary){overflow-wrap:anywhere}
 .afterShowLead a { color:#203635; min-height:44px; display:inline-flex; align-items:center; text-underline-offset:5px }
 .afterShowLead .afterShowPlay { text-decoration:none; color:#fff9ed; background:#22483e; padding:.55rem 1.3rem }
 @media(max-width:640px){.afterShowSpread{grid-template-columns:1fr}.afterShowStrip img{height:6rem}}
+
+.nightHomeChoices{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px 18px;margin-block:12px}.nightHomeChoices a{display:inline-flex;align-items:center;min-height:44px}
