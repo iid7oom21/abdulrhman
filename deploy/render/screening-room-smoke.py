@@ -70,7 +70,7 @@ with sync_playwright() as pw:
     page.goto(args.home + '?lang=ar', wait_until='domcontentloaded')
     arrival = page.locator('#archive-episodes')
     expect(arrival).to_be_in_viewport()
-    expect(arrival).to_have_text('شاهد الحلقات')
+    expect(arrival).to_have_text('حلقات RAVEN 17')
     page.screenshot(path=args.output/'arrival-ar-390.png')
     arrival.tap()
     expect(page.frame_locator('#site-content').locator('[data-screening-gallery]')).to_be_visible()
@@ -98,6 +98,9 @@ with sync_playwright() as pw:
         expect(video).to_have_attribute('src',VIDEOS[number])
         gallery_route(page,number)
         playback[number]=check_playback(page,video,frame,VIDEOS[number])
+    if os.environ.get('GITHUB_ACTIONS'):
+        statuses = [f"Episode {n}: {r['outcome']} ({r['seconds']:.2f} s)" for n, r in playback.items()]
+        print("::notice title=Original episode playback::" + " / ".join(statuses), flush=True)
     ctx.close()
 
     # A first-time visitor can also skip the arrival, read the new home, and reach the same gallery.
@@ -110,7 +113,11 @@ with sync_playwright() as pw:
     home_entry=frame.locator('a.rvnHeroWatch')
     expect(home_entry).to_be_visible()
     expect(frame.locator('.rvnVisualEpisode, [data-visual-episode], #episodeModal')).to_have_count(0)
-    frame.locator('.screenHeroArt img').evaluate('image => image.decode()')
+    frame.locator('.filmPoster img').evaluate('image => image.decode()')
+    for title in ('after-show-title','late-night-title','ink-title'):
+        expect(frame.locator('#'+title+' a')).to_be_in_viewport(ratio=1)
+    for destination in ('[data-home-studio]', '[data-home-backstage]'):
+        expect(frame.locator(destination)).to_be_visible()
     home_entry.scroll_into_view_if_needed()
     page.screenshot(path=args.output/'home-en-320.png')
     home_entry.tap()
