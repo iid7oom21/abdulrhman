@@ -1,0 +1,9 @@
+.ns-room :is(.manga-library,.manga-slots){display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;margin:.7rem 0}
+.ns-room :is(.manga-library,.manga-slots) h2{flex:1 0 100%;margin:.2rem 0;font-size:1.02rem;color:#e8c480}
+.ns-room :is(.manga-library,.manga-slots) button{flex:1 1 13rem;text-align:start}
+.ns-room .manga-result:not(:empty){margin:1rem 0;padding:1rem;border-inline-start:4px solid #e8c480;background:#22363a;color:#f2e9d7}
+.ns-room .manga-result[data-ok=false]:not(:empty){border-inline-start-color:#c98a6c}
+.ns-room .manga-result h2{margin:.1rem 0 .5rem;font-size:1.15rem}
+.ns-room .manga-result li[data-ok=false]{color:#f3c4ad}
+.ns-room output{min-width:3.5rem;direction:ltr;font-variant-numeric:tabular-nums}
+.ns-room .ink-back{display:inline-flex;align-items:center;min-height:44px;margin-top:.6rem}
