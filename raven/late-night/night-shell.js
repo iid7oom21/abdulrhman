@@ -54,7 +54,7 @@ export function mount({id,title,intro=['',''],render}) {
       ? t('تعذّرت قراءة الحفظ على هذا الجهاز.','Saved data could not be read on this device.')
       : t('لم يتأكد الحفظ على هذا الجهاز. احتفظ بنسخة قبل المغادرة.','Saving could not be confirmed on this device. Keep a copy before leaving.')));
     if(problem.reason==='quota') {
-      notice.firstChild.textContent=t('امتلأت مساحة الحفظ. نزّل القطعة أو اختر من دفترك ما تريد حذفه.','Device storage is full. Download your work or choose a piece to remove.');
+      notice.firstChild.textContent=t('تعذّر تأكيد الحفظ لأن مساحة الجهاز ممتلئة. نزّل القطعة أو اختر من دفترك ما تريد حذفه.','Saving could not be confirmed. Device storage is full. Download your work or choose a piece to remove.');
       const manage=link(t('افتح دفتري في تبويب آخر','Open my portfolio in another tab'),url('my-notebook.html'));
       manage.target='_blank';manage.rel='noopener';notice.append(document.createTextNode(' '),manage);
     }

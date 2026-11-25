@@ -7,11 +7,13 @@ export const activities=[
 ['lost-and-found','خزانة المفقودات','Lost and found',2,0,'افحص الأغراض','Inspect the items'],
 ['dome-sky','القبة ذات السماء الناقصة','The incomplete sky',3,0,'أدر القرصين','Turn the discs'],
 ['echo-two','تردّد لشخصين','A frequency for two',4,0,'أرسل إشارة','Send a signal'],
+['nightshift-post','بريد المصعد','Elevator Mail',4,0,'شغّل مصعد البريد','Run the mail lift'],
 ['echo-last-seat','الاختبار من آخر مقعد','The last-seat soundcheck',3,1,'اختر مقعدًا','Choose a seat'],
 ['darkroom-minute','دقيقة التحميض','A minute in the darkroom',4,1,'اطبع صورتك','Make a print'],
 ['weightless-cam','كاميرا بلا وزن','Weightless camera',3,1,'ادفع الكاميرا','Nudge the camera'],
 ['tide-harbor','مرفأ المدّ والجزر','Tidal harbour',3,1,'حدّد موعد الرحلة','Time the crossing'],
 ['fabric-wind','نسيج في مهبّ الهواء','Cloth in the wind',3,1,'ثبّت الراية','Rig the banner'],
+['nightshift-paper','ورق تحت المطر','Paper in the Rain',3,1,'بلّل الحبر','Wet the ink'],
 ['director-sentence','مخرج من جملة','Direct a sentence',4,2,'شغّل فكرتك','Stage your idea'],
 ['reading-actor','ممثل طاولة القراءة','The table read',4,2,'ابدأ البروفة','Start rehearsal'],
 ['city-radio','إذاعة المدينة التي صنعتها','Your city on air',2,2,'ركّب النشرة','Build a bulletin'],
@@ -20,6 +22,8 @@ export const activities=[
 ['memory-lift','المصعد الذي يتذكّر','The remembering lift',4,3,'اختر حقبة','Choose an era'],
 ['seven-windows','سبع نوافذ مضاءة','Seven lit windows',3,3,'اختر نوافذك','Choose your windows'],
 ['curtain-party','حفلة خلف الستارة','Behind the curtain',3,3,'أعطِ إشارة','Call a cue'],
+['nightshift-window','نافذة فوق البحر','Window above the sea',3,3,'أخرج المشهد','Direct the scene'],
+['nightshift-seat','مقعد حُجز لشخص لن يأتي','A Seat Kept for Someone Who Won’t Come',10,3,'ادخل شباك التذاكر','Open the ticket window'],
 ['sound-museum','متحف الأصوات المنسيّة','Museum of forgotten sounds',3,3,'ركّب بطاقة بريدية','Arrange a postcard']
 ];
 export const extras=[

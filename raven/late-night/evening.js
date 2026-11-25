@@ -63,6 +63,8 @@ function portfolio(ui) {
       const info=el('p',[kind?t(...kindNames[kind]):null,!Number.isNaN(date.valueOf())?date.toLocaleDateString(ui.lang):null,'JSON'].filter(Boolean).join(' · '));
       const row=el('div',null,'night-row'),target=workURL(ui,p);
       if(target)row.append(link(t('افتح للتعديل','Open to edit'),target));
+      if(['ink-page','ink-courier','director-sentence'].includes(p.activity) && target)
+        row.append(link(t('عاين لوحة اللقطات','Preview storyboard'),ui.url('idea-to-studio.html?piece='+encodeURIComponent(p.id))));
       row.append(action(t('تنزيل JSON','Download JSON'),()=>download(p.activity+'.json',portable||p)));
       if(img){const image=link(t('تنزيل الصورة','Download image'),p.thumbnail);image.download=p.activity+'.'+p.thumbnail.match(/^data:image\/(\w+)/)[1];row.append(image);}
       const remove=action(t('حذف القطعة','Delete piece'),()=>{

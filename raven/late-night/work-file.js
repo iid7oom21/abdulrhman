@@ -1,3 +1,5 @@
+import {validPiece as validSeatEnding} from './nightshift/seat-rules.js';
+import {checkedSelection} from './ink/print-panels.js';
 // A portable work carries editable settings. Each activity chooses its own bundled artwork.
 import {validateCourierManga, MANGA_FORMAT} from './ink/courier-rules.js';
 import {validScene,describe} from './creative/scene.js';
@@ -14,10 +16,7 @@ function manga(data){
   return {format:MANGA_FORMAT,path:[...data.path],order:[...data.order],weather:{rain:data.weather.rain,wind:data.weather.wind}};
 }
 function page(s){
-  const ids=['window','type','press','drying'];
-  if(!ownKeys(s,['panels','direction','caption']) || !Array.isArray(s.panels) || s.panels.length!==3 ||
-    new Set(s.panels).size!==3 || !s.panels.every(id=>ids.includes(id)) ||
-    !['rtl','ltr'].includes(s.direction) || typeof s.caption!=='boolean')return null;
+  if(!ownKeys(s,['panels','direction','caption']) || !checkedSelection(s))return null;
   return {panels:[...s.panels],direction:s.direction,caption:s.caption};
 }
 function frame(s){
@@ -39,7 +38,13 @@ function scene(s){
   return {version:1,prompt:s.prompt,setting:s.setting,duration:s.duration,blackout:s.blackout,
     shots:s.shots.map(({id,start,seconds,lighting,motion},i)=>({id,start,seconds,lighting,motion,description:describe(s,i)}))};
 }
+function seatEnding(s){
+  if(!ownKeys(s,['version','ending','events']) || !validSeatEnding(s) ||
+    !s.events.every(e=>ownKeys(e,['kind','id'])))return null;
+  return {version:1,ending:s.ending,events:s.events.map(({kind,id})=>({kind,id}))};
+}
 const types=new Map([
+  ['nightshift-seat',{kind:'scene',type:'seat-ending',check:seatEnding}],
   ['ink-courier',{kind:'manga',type:MANGA_FORMAT,check:manga}],
   ['ink-page',{kind:'manga',type:'ink-page',check:page}],
   ['ink-camera',{kind:'frame',type:'ink-camera',check:frame}],

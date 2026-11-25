@@ -1,0 +1,26 @@
+#night-app[data-room="nightshift-paper"] { width:min(1060px,calc(100% - 36px)); }
+.paper-bench { display:grid; grid-template-columns:minmax(0,2.1fr) minmax(200px,1fr); gap:clamp(1rem,3vw,2.5rem); }
+.paper-bench h2,.paper-compare h2 { margin:.4rem 0 .6rem; font-size:clamp(1.25rem,3vw,1.7rem); }
+.paper-suite,.paper-settings { min-width:0; }
+.paper-desk { position:relative; border:clamp(7px,1.2vw,14px) solid #443b31; outline:1px solid #625447; background:#e7dac0; box-shadow:0 6px 16px #0004; }
+.paper-surface,.paper-cursor,.paper-pair canvas { width:100%;height:auto;display:block; }
+.paper-surface { touch-action:none;cursor:crosshair; }
+.paper-surface:focus-visible { outline:3px solid #34718b;outline-offset:-3px; }
+.paper-cursor { position:absolute;inset:0;pointer-events:none; }
+.paper-controls { display:flex;gap:.4rem;flex-wrap:wrap;margin:.6rem 0; }
+.paper-controls button,.paper-seed input { border-radius:2px; }
+.paper-position,.paper-counts { margin:.35rem 0; font-size:.94rem;font-variant-numeric:tabular-nums; }
+#paper-input-help,.paper-settings p,.paper-compare figcaption { color:var(--muted); }
+.paper-settings { border-inline-start:1px solid var(--edge);padding-inline-start:clamp(.7rem,2vw,1.5rem); }
+.paper-still { display:block;width:100%;height:auto;aspect-ratio:2.8/1;object-fit:cover;object-position:center 47%; }
+.paper-field { display:grid;grid-template-columns:1fr auto;align-items:center;gap:.2rem .6rem;margin:.45rem 0; }
+.paper-field input { grid-column:1/-1;width:100%;min-height:44px;accent-color:#cfba92; }
+.paper-seed { display:flex;gap:.7rem;align-items:center;flex-wrap:wrap; }
+.paper-seed input { width:6rem; }
+.paper-compare { border-block-start:1px solid var(--edge);margin-top:1rem;padding-block-start:.8rem; }
+.paper-pair { display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(6px,1.4vw,16px); }
+.paper-pair figure { margin:0; }
+.paper-pair canvas { background:#e7dac0; }
+.paper-pair figcaption { margin-top:.25rem; }
+@media(max-width:650px) { #night-app[data-room="nightshift-paper"]{width:calc(100% - 26px)}.paper-bench{grid-template-columns:1fr}.paper-settings{border-inline-start:0;border-block-start:1px solid var(--edge);padding:.7rem 0 0}.paper-still{display:none} }
+.paper-controls[hidden] { display:none; }

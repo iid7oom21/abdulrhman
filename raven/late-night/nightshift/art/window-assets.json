@@ -1,0 +1,48 @@
+{
+  "origin": "Original art commissioned for the RAVEN coastal training world, generated with OpenAI ImageGen from original text prompts. Cropped, composited and encoded locally.",
+  "use": "Window above the sea interactive scene and its programme cover. No external image or private story artwork was supplied.",
+  "assets": [
+    {
+      "file": "window-boat.webp",
+      "width": 280,
+      "height": 150,
+      "bytes": 15380,
+      "sha256": "9ad68fe9001758c7cf1468600aaca305727ae22381dc445a445d032aea4bbdd3"
+    },
+    {
+      "file": "window-cover.webp",
+      "width": 768,
+      "height": 432,
+      "bytes": 33228,
+      "sha256": "1b1b17a96e727e3b24ced979ac0561ff3707b968c44bda56bb74f045e7844585"
+    },
+    {
+      "file": "window-curtain.webp",
+      "width": 274,
+      "height": 430,
+      "bytes": 31026,
+      "sha256": "fe4e0c2974cd311df2dab355a87a16f000077851758896a99eaa4fa1684c9c2f"
+    },
+    {
+      "file": "window-gaze.webp",
+      "width": 360,
+      "height": 444,
+      "bytes": 33126,
+      "sha256": "5985901fb685927c9d52bea31988cf91e3d5c2666a0098caa2114beac3b70046"
+    },
+    {
+      "file": "window-room.webp",
+      "width": 1152,
+      "height": 648,
+      "bytes": 47330,
+      "sha256": "6f5dc1a95881d6df0b84dfc8db3278446fa4c857be58275d415341033b679cdc"
+    },
+    {
+      "file": "window-wait.webp",
+      "width": 360,
+      "height": 444,
+      "bytes": 34512,
+      "sha256": "5b96beeef407319da294cb35af5ec79b38103102d65dc2aeb7ff578542e2e373"
+    }
+  ]
+}

@@ -1,0 +1,28 @@
+#night-app[data-room="nightshift-post"] { --brass:#e8c49a; --panel:#242d2d; }
+.post-room { display:grid; grid-template-columns:minmax(0,1.12fr) minmax(0,1fr); gap:clamp(1rem,3vw,2.3rem); align-items:start; }
+.post-room h2,.post-result h2 { margin:.6rem 0; line-height:1.25; }
+.post-console,.post-manifest { min-width:0; }
+.post-still { display:block; width:100%; height:auto; aspect-ratio:3.1/1; object-fit:cover; object-position:50% 57%; }
+.post-floor { color:var(--brass); font-weight:650; margin:.3rem 0; }
+.post-shaft { list-style:none; margin:.5rem 0; padding:0; display:grid; }
+.post-shaft li { min-height:2.1rem; display:grid; grid-template-columns:4.7rem 1fr; align-items:center; gap:.6rem; background:#202726; border-block-end:1px solid var(--edge); }
+.post-shaft li span { height:100%; display:grid; place-content:center; border-inline-end:1px solid #68716b; color:var(--brass); }
+.post-shaft li[aria-current="true"] { background:#38443f; color:#fff5d9; }
+.post-shaft li[aria-current="true"] span { border:1px solid #ceaf81; }
+.post-load,.post-time { margin:.6rem 0; font-weight:600; font-variant-numeric:tabular-nums; }
+.post-actions { display:flex; flex-wrap:wrap; gap:.45rem; margin-block:.7rem; }
+.post-room button,.post-actions button { border-radius:2px; }
+.post-cards { display:grid; gap:.65rem; }
+.post-slip { background:#e8dfc9; color:#272b27; border-inline-start:4px solid #aa8261; padding:.7rem .9rem; }
+.post-slip h3,.post-slip p { margin:.15rem 0; }
+.post-target,.post-rules { color:#465044; }
+.post-slip button { margin:.35rem .2rem 0 0; }
+.post-slip small { display:block; color:#4d4c41; }
+.post-rules,.post-history { color:var(--muted); margin-block:.5rem; }
+.post-rules summary,.post-history summary { min-height:44px; padding-block:.55rem; cursor:pointer; }
+.post-rules p { margin:.25rem 0 .75rem; }
+.post-history ol { padding-inline-start:1.5rem; }
+.post-result { margin-block:.9rem; border-inline-start:3px solid #a1baa3; padding:.4rem .9rem; background:#27332e; }
+.post-result p { margin:.45rem 0; }
+.post-result:focus { outline:2px solid var(--brass); }
+@media(max-width:640px) { .post-room { grid-template-columns:minmax(0,1fr); } }

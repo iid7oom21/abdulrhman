@@ -3,3 +3,5 @@
 .connect-form button,.connect-link{display:inline-flex;align-items:center;min-height:44px;padding:.5rem .85rem;border:1px solid #867762;color:inherit;border-radius:.25rem}.connect-link{margin-block:.25rem}
 .connect-shots{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,12rem),1fr));gap:.8rem;list-style:none;padding:0;margin:1rem 0}
 .connect-shots li{background:#202525;color:#e9e5d6;border:1px solid #545750;padding:.6rem;min-width:0}.connect-shots img,.connect-poster{width:100%;height:auto;display:block}.connect-shots img{aspect-ratio:2/1;object-fit:cover;margin-bottom:.5rem}.connect-poster{max-width:42rem}
+
+.connect-manga img{object-fit:contain;aspect-ratio:4/3;background:#141918}.connect-manga label{display:grid;gap:.3rem}.connect-manga input{max-width:6rem}

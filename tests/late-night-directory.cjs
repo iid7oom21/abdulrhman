@@ -13,8 +13,8 @@ const types = {'.html':'text/html', '.js':'text/javascript', '.css':'text/css', 
   '.png':'image/png', '.woff2':'font/woff2', '.svg':'image/svg+xml', '.json':'application/json'};
 const activities = [
   'station-shadow', 'reel-run', 'last-minute-auction', 'lost-and-found', 'dome-sky', 'echo-two',
-  'echo-last-seat', 'darkroom-minute', 'weightless-cam', 'tide-harbor', 'fabric-wind', 'director-sentence',
-  'reading-actor', 'city-radio', 'puzzle-owner', 'replay-caller', 'memory-lift', 'seven-windows', 'curtain-party', 'sound-museum',
+  'nightshift-post', 'echo-last-seat', 'darkroom-minute', 'weightless-cam', 'tide-harbor', 'fabric-wind', 'nightshift-paper', 'director-sentence',
+  'reading-actor', 'city-radio', 'puzzle-owner', 'replay-caller', 'memory-lift', 'seven-windows', 'curtain-party', 'nightshift-window', 'nightshift-seat', 'sound-museum',
 ];
 const extras = ['time-door', 'three-evening', 'my-notebook', 'festival-chair', 'idea-to-studio',
   'dialogue-preview', 'episode-ends', 'behind-frame', 'weekend', 'screening-room'];
@@ -84,7 +84,7 @@ test('Late Night public directory, both languages, real paths, recovery and navi
 
   const matrix = [];
   for (const width of [320, 390, 1280]) for (const lang of ['ar', 'en']) {
-    matrix.push(t.test(lang + ' ' + width + 'px | 30 entrances, imagery, return links', async st => {
+    matrix.push(t.test(lang + ' ' + width + 'px | published entrances, imagery, return links', async st => {
       const {page, errors} = await context(st, width, lang);
       const failed = [];
       page.on('response', r => {if(r.status() >= 400 && new URL(r.url()).origin === base.origin) failed.push(r.status() + ' ' + r.url());});
@@ -119,7 +119,7 @@ test('Late Night public directory, both languages, real paths, recovery and navi
       assert.deepEqual([...new Set(largeStills)], [mastPath],
         'only the masthead needs a full-size photograph in the directory');
       if (width === 320 && lang === 'en') {
-        const differences = await page.locator('.night-card img').evaluateAll(async images => {
+        const differences = await page.locator('.night-card:not([href*="nightshift-"]) img').evaluateAll(async images => {
           function sample(image) {
             const canvas = document.createElement('canvas');
             canvas.width = canvas.height = 16;

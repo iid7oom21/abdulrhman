@@ -1,0 +1,20 @@
+#night-app:has(.seat-reader){max-width:54rem}
+.seat-reader{--brass:#ceae82;margin-block:1.25rem 2rem}
+.seat-photo{position:relative;margin:0;background:#262423;border-block-end:2px solid var(--brass)}
+.seat-photo img{display:block;width:100%;height:auto;max-height:20rem;aspect-ratio:2.8;object-fit:cover;object-position:center 48%}
+.seat-photo figcaption{position:absolute;inset-inline-start:1rem;inset-block-end:.65rem;background:#141817dd;padding:.15rem .65rem;color:#f6e8d7;font-family:monospace;font-size:.92rem;letter-spacing:.08em}
+.seat-photo.is-missing{padding:1.2rem;display:flex;align-items:center;justify-content:space-between;gap:.7rem;flex-wrap:wrap}
+.seat-photo.is-missing figcaption{position:static}.seat-photo button{font-size:.9rem}
+.seat-text{width:min(100%,65ch);margin-inline:auto;line-height:1.92;font-size:clamp(1.02rem,1.6vw,1.2rem)}
+.seat-text h2{margin:1.3rem 0 .6rem;font-size:clamp(1.6rem,3.4vw,2.45rem);font-weight:600;line-height:1.32}
+.seat-text h2:focus{outline:none}.seat-text p{margin:.85em 0}
+.seat-text button,.seat-choices button{line-height:1.45}
+.seat-artifact,.seat-checkpoint{padding:1rem 1.15rem;border-inline-start:2px solid var(--brass);background:#252726;margin-block:1rem}
+.seat-artifact h3,.seat-artifact h4{font-size:1.06em;margin:0 0 .5rem}.seat-artifact button{margin-block-start:.3rem}
+.seat-row,.seat-choices{display:flex;gap:.6rem;flex-wrap:wrap;align-items:start;margin-block:1.15rem}
+.seat-choices{display:grid;grid-template-columns:1fr;align-items:stretch}
+.seat-choices button{text-align:start;padding:.7rem 1rem}
+.seat-cues{list-style:none;padding:0;margin:0}.seat-cues li{display:grid;grid-template-columns:4.4rem 1fr;gap:.5rem;border-block-start:1px solid #55554d;padding:.35rem 0}
+.seat-cues li[aria-current]{color:#ffe0ac}.seat-cues time{color:var(--brass);font:normal .9rem/1.9 monospace}
+.seat-status{font-size:.93rem;color:#f4d9b5}.seat-status:empty{display:none}
+@media(max-width:560px){.seat-photo img{aspect-ratio:16/8.5}.seat-artifact,.seat-checkpoint{padding:.8rem}.seat-text{line-height:1.85}.seat-reader{margin-top:.7rem}}

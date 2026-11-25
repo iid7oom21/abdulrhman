@@ -1,5 +1,6 @@
 import {element as el,action,link} from './night-shell.js';
 import {nowId,loadDraft,saveDraft,download,isThumbnail} from './night-store.js';
+import {activities} from './catalog.js';
 
 const key='coastal-evening';
 let proposed=null;
@@ -10,7 +11,8 @@ const choices={
   ],
   scene:[
     ['ink-page','صفحة قبل الفجر','A page before dawn',4],
-    ['director-sentence','مخرج من جملة','One-sentence director',4]
+    ['director-sentence','مخرج من جملة','One-sentence director',4],
+    ...activities.filter(a=>a[0]==='nightshift-seat').map(a=>a.slice(0,4))
   ],
   finish:[
     ['programme','برنامج مكتوب','Written programme',1],

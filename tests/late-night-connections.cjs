@@ -60,6 +60,99 @@ test('night connections at 320px',async t=>{
    const firstId=await menu.locator('option').filter({hasText:'First cut'}).getAttribute('value');await menu.selectOption(firstId);await edit.waitFor();assert.equal(await edit.inputValue(),'Stay on the sign');
   }finally{await context.close();}
  });
+
+ await t.test('a saved press page and a courier ending reach a separate Studio draft and return to the same edition',async()=>{
+  const {context,p,go}=await open('ar');
+  const output=process.env.RAVEN_MANGA_BOARD_PROOF || await fs.mkdtemp(path.join(os.tmpdir(),'raven-manga-board-'));
+  await fs.mkdir(output,{recursive:true});
+  try{
+   await go('raven/late-night/ink-page.html');
+   for(const id of ['drying','window','press'])await p.locator('[data-page="pick-'+id+'"]').click();
+   await p.locator('[data-page="preview"]').click();await p.locator('[data-page="save"]').click();
+   await go('raven/late-night/my-notebook.html');
+   let missingPanel=true;
+   await p.route('**/ink/art/panel-press.webp*',route=>missingPanel?route.abort():route.continue());
+   await p.getByRole('link',{name:'عاين لوحة اللقطات'}).first().click();
+   await p.getByRole('button',{name:'أعد تحميل اللوحات'}).waitFor();
+   assert.equal(await p.locator('.connect-form button[type="submit"]').isEnabled(),false);
+   await p.locator('[data-board-duration="1"]').fill('4');
+   await p.locator('#board-name').fill('بروفة المرفأ');
+   missingPanel=false;await p.getByRole('button',{name:'أعد تحميل اللوحات'}).click();
+   await p.locator('[data-night-language]').click();await p.getByRole('button',{name:'Create draft and open studio'}).waitFor();
+   assert.equal(await p.locator('#board-name').inputValue(),'بروفة المرفأ');assert.equal(await p.locator('[data-board-duration="1"]').inputValue(),'4');
+   await p.locator('[data-night-language]').click();
+   const preview=p.locator('.connect-shots img');
+   assert.deepEqual(await preview.evaluateAll(imgs=>imgs.map(i=>i.src.split('/').pop())),['panel-drying.webp','panel-window.webp','panel-press.webp']);
+   await fit(p);
+   await p.locator('#board-name').fill('بروفة المرفأ');await p.locator('.connect-form button').click();
+   const stills=p.locator('[data-storyboard-shot]');await stills.first().waitFor();
+   await stills.evaluateAll(imgs=>Promise.all(imgs.map(i=>i.decode())));
+   assert.equal(await p.getByRole('spinbutton').first().inputValue(),'4');
+   await p.getByRole('spinbutton').nth(1).fill('3');
+   await p.getByRole('textbox',{name:'وصف حركة اللقطة 2'}).fill('تتوقف الكاميرا عند زجاج النافذة.');
+   await p.getByRole('button',{name:'احفظ تعديلات المسودة'}).click();
+   await p.reload();await stills.first().waitFor();await stills.evaluateAll(imgs=>Promise.all(imgs.map(i=>i.decode())));
+   for(const ext of ['json','pdf']){
+    const pending=p.waitForEvent('download');await p.getByRole('button',{name:new RegExp('^تنزيل '+ext.toUpperCase()+'$')}).click();
+    await (await pending).saveAs(path.join(output,'manga-board.'+ext));
+   }
+   const json=JSON.parse(await fs.readFile(path.join(output,'manga-board.json'),'utf8'));
+   assert.equal(json.language,'ar');assert.equal(json.project.name,'بروفة المرفأ');
+   assert.deepEqual(json.scenes.map(s=>s.durationSec),[4,3,2]);
+   assert.deepEqual(json.scenes.map(s=>s.thumbnail.split('/').pop()),['panel-drying.webp','panel-window.webp','panel-press.webp']);
+   assert.equal(json.scenes[1].prompt,'تتوقف الكاميرا عند زجاج النافذة.');
+   execFileSync('pdftoppm',['-scale-to','1150','-f','1','-l','1','-png','-singlefile',path.join(output,'manga-board.pdf'),path.join(output,'manga-board-opened')]);
+   assert.ok((await fs.stat(path.join(output,'manga-board-opened.png'))).size>30000);
+   await p.getByRole('link',{name:'ارجع إلى مشهدي'}).click();
+   await p.locator('[data-page=sheet]').waitFor();assert.equal(await p.locator('[data-page=sheet]').getAttribute('data-panels'),'drying,window,press');
+
+   const edition=await p.evaluate(async()=>{
+    const s=await import('./night-store.js'),f='raven-rain-manga-2';
+    return s.writePiece('ink-courier',{title:'نهاية المرفأ',type:f,data:{format:f,
+      path:[15,10,5,0,1,2,3,4,9,14,19,24],order:['end','departure','middle'],weather:{rain:55,wind:14}}}).id;
+   });
+   await go('raven/late-night/idea-to-studio.html?piece='+edition);
+   await preview.first().waitFor();assert.deepEqual(await preview.evaluateAll(imgs=>imgs.map(i=>i.src.split('/').pop())),['print-arrival.webp','print-departure.webp','print-letter.webp']);
+   await p.locator('#board-name').fill('الرسالة');await p.locator('.connect-form button').click();
+   const drafts=p.getByRole('combobox',{name:'المسودات المسماة'});await drafts.waitFor();assert.equal(await drafts.locator('option').count(),2);
+   await p.getByRole('link',{name:'ارجع إلى مشهدي'}).click();await p.locator('#save-manga').waitFor();
+   assert.equal(new URL(p.url()).searchParams.get('piece'),edition);assert.equal(await p.locator('#panels [data-panel]').first().getAttribute('data-panel'),'end');
+  }finally{await context.close();if(!process.env.RAVEN_MANGA_BOARD_PROOF)await fs.rm(output,{recursive:true,force:true});}
+ });
+
+ await t.test('a real story ending transfers its actual title and thumbnail into the confirmed evening',async()=>{
+  const {context,p,go}=await open('en');
+  try{
+    await go('raven/late-night/three-evening.html?programme=coast');
+    await p.locator('[data-chapter-choice=scene]').selectOption('nightshift-seat');
+    await p.getByRole('button',{name:'Start the evening'}).click();
+    // The game-to-evening handoff is covered by rain-notebook. Enter chapter two with a confirmed game.
+    await p.evaluate(async()=>{
+      const store=await import('./night-store.js'),run=store.loadDraft('coastal-evening');
+      const first=store.writePiece('ink-courier',{title:'First chapter',type:'raven-rain-manga-2',
+        data:{format:'raven-rain-manga-2',path:[15,10,5,0,1,2,3,4,9,14,19,24],order:['departure','middle','end'],weather:{rain:60,wind:10}}});
+      store.saveDraft('coastal-evening',{...run,earned:[first.id]});
+    });
+    await p.reload();await p.getByRole('link',{name:'Open chapter'}).click();
+    for(const object of ['ticket','seat','tape','line']){
+      await p.locator('[data-inspect="'+object+'"]').click();await p.locator('[data-next]').click();
+    }
+    await p.locator('[data-choice=hold]').click();await p.locator('[data-perform=hold]').click();
+    await p.locator('.seat-photo img').evaluate(img=>img.decode());await p.locator('[data-keep]').click();
+    const work=await p.evaluate(async()=>{
+      const {pieces}=await import('./night-store.js'),{portableWork,readWork}=await import('./work-file.js');
+      const item=pieces().find(row=>row.activity==='nightshift-seat');
+      if(readWork(JSON.stringify(portableWork(item))).data.ending!=='hold')throw new Error('story round-trip');
+      return item;
+    });
+    await p.getByRole('link',{name:'Review this work for your evening'}).click();
+    assert.equal(await p.locator('.night-chapter figure').last().locator('figcaption').innerText(),work.title);
+    assert.equal(await p.locator('.night-chapter figure').last().locator('img').getAttribute('src'),work.thumbnail);
+    await p.getByRole('button',{name:'Use this work and continue'}).click();await p.reload();
+    await p.getByRole('heading',{name:/3 \/ 3/}).waitFor();
+    assert.equal(await p.locator('.night-chapter figure').last().locator('figcaption').innerText(),work.title);
+  }finally{await context.close();}
+ });
  await t.test('explicitly import a real Studio board, project ordered frames, export its own duration',async()=>{
   const {context,p,go}=await open('en');
   try{

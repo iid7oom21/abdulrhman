@@ -1,0 +1,31 @@
+{
+  "story": "A Seat Kept for Someone Who Won’t Come",
+  "source": "Original photorealistic fictional production stills generated with OpenAI ImageGen from an original text brief, cropped and encoded locally.",
+  "usage": "Made for the RAVEN coastal training story, its story card, and associated programme previews. The character and location are fictional. No external likeness, reference image, footage or private case material was used.",
+  "assets": [
+    {
+      "file": "salma-booth.webp",
+      "role": "ticket counter",
+      "alt": {
+        "ar": "سلمى عند الشباك الخشبي، وأمامها تذكرة مطوية ومسجّل صغير.",
+        "en": "Salma at the wooden ticket window with a folded ticket and a small recorder on the counter."
+      },
+      "width": 960,
+      "height": 540,
+      "bytes": 47814,
+      "sha256": "576023a4d365de46327bb9f75efd17de4d797d78e2c47c951733f55a2760bc0a"
+    },
+    {
+      "file": "seat-auditorium.webp",
+      "role": "auditorium",
+      "alt": {
+        "ar": "مقعد خالٍ بجانب الممر تحت ضوء دافئ، وتظهر نافذة الشباك والبحر في البعد.",
+        "en": "An empty seat beside a warmly lit aisle, with the booth window and the harbour in the distance."
+      },
+      "width": 960,
+      "height": 540,
+      "bytes": 30686,
+      "sha256": "681b15cb77401a193a5011cec5285cc94fe7127262af1d3aab39738e954f0d27"
+    }
+  ]
+}

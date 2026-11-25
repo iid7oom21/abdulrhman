@@ -17,7 +17,7 @@ const types=group('tool','card','game','story','simulation');
 const catalogs=group('after-show','after-show-25','late-night','ink');
 const states=group('listed','legacy-interactive','redirect');
 const ids=(space,keys)=>keys.split(' ').map(key=>space+':'+key);
-const optionalSound=group(...ids('after-show','leitmotif sound festival'),...ids('late-night','echo-last-seat city-radio sound-museum'));
+const optionalSound=group(...ids('after-show','leitmotif sound festival'),...ids('late-night','echo-last-seat city-radio sound-museum nightshift-seat'));
 const formats=new Map();
 function exportsFor(space,keys,formatsForRoute) {for(const key of ids(space,keys))formats.set(key,formatsForRoute);}
 exportsFor('after-show','free duo custom titles',['JSON']);
@@ -26,6 +26,7 @@ exportsFor('late-night','echo-last-seat darkroom-minute weightless-cam tide-harb
 exportsFor('late-night','memory-lift seven-windows curtain-party sound-museum',['JSON']);
 exportsFor('late-night','screening-room',['TXT']);
 exportsFor('late-night','my-notebook',['JSON','saved image']);
+exportsFor('late-night','nightshift-paper',['PNG']);
 exportsFor('ink','ink-camera ink-page',['PNG']);
 exportsFor('ink','ink-courier',['PNG','JSON']);
 

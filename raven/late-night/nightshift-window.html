@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#172123">
+  <title>نافذة فوق البحر · آخر الليل</title>
+  <script src="./boot.js"></script>
+  <link rel="stylesheet" href="./night-shell.css">
+  <link rel="stylesheet" href="./ink/ink.css">
+  <link rel="stylesheet" href="./nightshift/window.css">
+  <script type="module" src="./nightshift/window.js"></script>
+</head>
+<body>
+  <main id="night-app" data-room="nightshift-window">
+    <noscript><p>فعّل JavaScript لترتيب المشهد. Enable JavaScript to edit the scene. <a href="./">آخر الليل / Late Night</a></p></noscript>
+  </main>
+  <template id="window-view">
+    <section class="window-layout">
+      <figure class="window-screen">
+        <div id="window-frame" class="window-frame" dir="ltr" role="img" aria-describedby="window-description">
+          <img class="window-room" data-layer="room" alt="">
+          <div class="window-opening"><div class="window-crossing"><img data-layer="boat" alt=""><img class="window-reflection" data-layer="reflection" alt=""></div></div>
+          <img class="window-curtain" data-layer="curtain" alt="">
+          <img class="window-person" data-layer="wait" alt="">
+          <img class="window-person" data-layer="gaze" alt="" hidden>
+        </div>
+        <figcaption id="window-description"></figcaption>
+        <div id="window-failure" hidden><span></span> <button type="button" id="window-retry"></button></div>
+      </figure>
+      <div class="window-controls">
+        <div class="window-clock"><label for="window-time"></label><output id="window-clock" for="window-time"></output></div>
+        <input type="range" id="window-time" dir="ltr" min="0" max="12" step="0.1" value="0">
+        <div class="window-transport">
+          <button type="button" id="window-play" class="primary"></button>
+          <button type="button" id="window-replay"></button>
+        </div>
+        <p id="window-reading" role="status" hidden></p>
+        <fieldset id="window-cues"><legend></legend></fieldset>
+      </div>
+    </section>
+  </template>
+</body>
+</html>

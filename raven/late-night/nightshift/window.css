@@ -1,0 +1,23 @@
+.window-layout {display:grid; gap:clamp(1rem,3vw,2.25rem); align-items:start}
+.window-screen {margin:0; min-width:0}
+.window-frame {position:relative; isolation:isolate; overflow:hidden; width:100%; aspect-ratio:16/9; background:linear-gradient(160deg,#425b66,#192b31 59%,#30251e)}
+.window-frame img {display:block; pointer-events:none}
+.window-room {width:100%; height:100%; object-fit:cover}
+.window-opening {position:absolute; left:3.5%; width:65%; top:5.5%; height:65.5%; overflow:hidden}
+.window-crossing {position:absolute; width:23%; bottom:21%; left:0}
+.window-crossing img {width:100%; height:auto}
+.window-reflection {position:absolute; top:98%; left:0; transform-origin:top; transform:scaleY(-.32) translateY(-100%); opacity:.24; filter:blur(.7px)}
+.window-person {position:absolute; right:4%; bottom:-.5%; width:35.4%; height:auto}
+.window-curtain {position:absolute; left:2.5%; top:3%; width:22%; height:68%; object-fit:fill; transform-origin:top left}
+.window-screen figcaption {color:var(--muted); margin:.55rem 0 0; font-size:.94rem}
+.window-controls {min-width:0}
+.window-clock,.window-cue-line {display:flex; align-items:baseline; justify-content:space-between; column-gap:.75rem}
+.window-controls output {font-variant-numeric:tabular-nums; color:var(--gold); white-space:nowrap}
+.window-controls input[type=range] {width:100%; height:36px; accent-color:var(--gold); cursor:pointer; margin:0; display:block}
+.window-transport {display:flex; flex-wrap:wrap; gap:.45rem; margin:.3rem 0 1.1rem}
+.window-controls fieldset {padding:.65rem .9rem .25rem; border:1px solid var(--edge); margin:0}
+.window-controls legend {padding-inline:.3rem; font-weight:600}
+.window-cue-line {margin-top:.25rem}
+#window-reading {color:var(--paper); border-inline-start:2px solid var(--gold); padding-inline-start:.7rem; margin:.3rem 0 1rem}
+#window-failure {color:var(--muted); margin-top:.6rem}
+@media(min-width:800px){.window-layout{grid-template-columns:minmax(0,1.7fr) minmax(250px,1fr)}}
