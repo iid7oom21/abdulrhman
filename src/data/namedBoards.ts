@@ -5,22 +5,26 @@ const idOK=(x:unknown):x is string=>typeof x==='string' && /^[a-zA-Z0-9-]{1,90}$
 const text=(x:unknown,size:number)=>typeof x==='string' && x.length<=size;
 const shot=(x:unknown)=>typeof x==='string'&&['exterior','hand','envelope','lamp'].includes(x);
 const camera=['drone-aerial','dolly-zoom','fpv-orbit','pan-right','pan-left','tilt-up','tilt-down','static-tripod'];
-type Source={kind:'director',piece:string}|{kind:'cut',route:string,shots:string[]};
+type Source={kind:'director',piece:string}|{kind:'cut',route:string,shots:string[]}|{kind:'manga',activity:'ink-page'|'ink-courier',piece:string};
 export type NamedBoard={version:1,id:string,name:string,scenes:StoryboardScene[],source:Source};
 type StoredBoard={board:NamedBoard,raw:string};
 type Dict=Record<string,unknown>;
 const object=(x:unknown):x is Dict=>Boolean(x)&&typeof x==='object'&&!Array.isArray(x);
-function thumbnail(x:unknown):boolean {
+function thumbnail(x:unknown,source:Dict):boolean {
   return typeof x==='string'&&(
     /^\.\.\/raven\/after-show\/assets\/(exterior|hand|envelope|lamp)\.webp$/.test(x) ||
+    (source.kind==='manga' && (source.activity==='ink-page'
+      ? /^\.\.\/raven\/late-night\/ink\/art\/panel-(window|type|press|drying)\.webp$/.test(x)
+      : /^\.\.\/raven\/late-night\/ink\/art\/courier\/print-(departure|letter|crossing|arrival|shelter)\.webp$/.test(x))) ||
     /^(?:\.\/|\/)?visual-lab\/assets\/(01-manor|02-archive|03-desk|04-corridor)\.webp$/.test(x) ||
     (x.length<512000 && /^data:image\/(webp|png|jpeg);base64,[A-Za-z0-9+/]+=*$/.test(x))
   );
 }
 function valid(x:unknown,id:string):x is NamedBoard {
   if(!object(x)||x.version!==1||x.id!==id||!text(x.name,70)||!(x.name as string).trim()||!object(x.source)||!Array.isArray(x.scenes)||x.scenes.length>80)return false;
-  const s=x.source,sourceOK=(s.kind==='director'&&idOK(s.piece))||(s.kind==='cut'&&['edit','free','duo','daily','custom','brief'].includes(String(s.route))&&Array.isArray(s.shots)&&s.shots.length>0&&s.shots.length<=4&&s.shots.every(shot));
-  return sourceOK&&x.scenes.every((v,i)=>object(v)&&idOK(v.id)&&v.sceneNumber===i+1&&text(v.title,500)&&text(v.prompt,8000)&&Number.isInteger(v.duration)&&Number(v.duration)>0&&Number(v.duration)<=120&&camera.includes(String(v.camera))&&['cut','fade','dissolve','whip-pan'].includes(String(v.transition))&&thumbnail(v.thumbnail));
+  const s=x.source,sourceOK=(s.kind==='manga'&&(s.activity==='ink-page'||s.activity==='ink-courier')&&idOK(s.piece))||
+    (s.kind==='director'&&idOK(s.piece))||(s.kind==='cut'&&['edit','free','duo','daily','custom','brief'].includes(String(s.route))&&Array.isArray(s.shots)&&s.shots.length>0&&s.shots.length<=4&&s.shots.every(shot));
+  return sourceOK&&x.scenes.every((v,i)=>object(v)&&idOK(v.id)&&v.sceneNumber===i+1&&text(v.title,500)&&text(v.prompt,8000)&&Number.isInteger(v.duration)&&Number(v.duration)>0&&Number(v.duration)<=120&&camera.includes(String(v.camera))&&['cut','fade','dissolve','whip-pan'].includes(String(v.transition))&&thumbnail(v.thumbnail,s));
 }
 export function loadBoard(id:string|null):StoredBoard|null {
   if(!idOK(id))return null;
@@ -37,6 +41,7 @@ export function saveBoard(previous:StoredBoard,scenes:StoryboardScene[]):StoredB
   }catch{return null;}
 }
 export function boardReturn(source:Source,lang:string):string {
+  if(source.kind==='manga')return '../raven/late-night/'+source.activity+'.html?'+new URLSearchParams({piece:source.piece,lang});
   return source.kind==='director'?'../raven/late-night/director-sentence.html?'+new URLSearchParams({piece:source.piece,lang}):
     '../raven/after-show/?'+new URLSearchParams({activity:source.route,lang});
 }

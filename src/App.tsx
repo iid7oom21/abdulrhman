@@ -697,7 +697,7 @@ console.log(result);`;
                       src={scene.thumbnail}
                       data-storyboard-shot={montageAccepted || namedBoard ? scene.id : undefined}
                       alt={scene.title}
-                      className="w-full h-full object-cover"
+                      className={namedBoard?.board.source.kind==='manga'?'w-full h-full object-contain':'w-full h-full object-cover'}
                     />
                     <span className="absolute top-3 right-3 px-2.5 py-1 rounded-md bg-black/75 text-amber-400 font-mono text-xs font-bold">
                       #{scene.sceneNumber}
@@ -716,6 +716,15 @@ console.log(result);`;
                         </label>
                       ) : <p className="text-xs text-zinc-400 mt-1">{scene.prompt}</p>}
                     </div>
+                    {namedBoard?.board.source.kind==='manga' && <label className="mb-2 block text-sm text-zinc-300">
+                      {isAr ? 'مدة اللوحة بالثواني' : 'Panel duration in seconds'} {scene.sceneNumber}
+                      <input type="number" min={1} max={120} step={1} value={scene.duration}
+                        onChange={event => {
+                          const seconds=event.currentTarget.valueAsNumber;
+                          if(Number.isInteger(seconds) && seconds>=1 && seconds<=120)
+                            setStoryboard(current=>current.map(item=>item.id===scene.id?{...item,duration:seconds}:item));
+                        }} className="ms-2 w-20 rounded border border-zinc-700 bg-zinc-950 px-2 py-1" />
+                    </label>}
                     <div className="flex items-center justify-between pt-3 border-t border-zinc-800 text-xs text-zinc-400 font-mono">
                       <span>
                         {scene.camera} · {scene.duration}s · {scene.transition}

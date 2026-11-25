@@ -98,9 +98,6 @@ with sync_playwright() as pw:
         expect(video).to_have_attribute('src',VIDEOS[number])
         gallery_route(page,number)
         playback[number]=check_playback(page,video,frame,VIDEOS[number])
-    if os.environ.get('GITHUB_ACTIONS'):
-        statuses = [f"Episode {n}: {r['outcome']} ({r['seconds']:.2f} s)" for n, r in playback.items()]
-        print("::notice title=Original episode playback::" + " / ".join(statuses), flush=True)
     ctx.close()
 
     # A first-time visitor can also skip the arrival, read the new home, and reach the same gallery.

@@ -514,6 +514,8 @@ test('Late Night and the film preview share explicit files across Render and Pag
   f.write('raven/late-night/assets/photo/private.webp', 'UNRELEASED');
   f.write('raven/late-night/ink/art/contact-sheet.png', 'UNRELEASED');
   f.write('raven/late-night/manga/notes.js', 'UNRELEASED');
+  f.write('raven/late-night/nightshift/art/draft.webp', 'UNRELEASED');
+  f.write('raven/late-night/nightshift/unreleased-preview.js', 'UNRELEASED');
   f.write('raven/late-night/ink/art/courier/prompts.json', 'UNRELEASED');
   f.write('raven/raven-17-preview/notes.html', 'UNRELEASED');
   const s = await start(t, {siteRoot:f.root});
@@ -535,6 +537,18 @@ test('Late Night and the film preview share explicit files across Render and Pag
     ['raven/late-night/ink-studio.html', 'text/html'], ['raven/late-night/ink/beacon.js', 'text/javascript'],
     ['raven/late-night/ink-courier.html', 'text/html'], ['raven/late-night/ink/courier.css', 'text/css'],
     ['raven/late-night/ink/courier.js', 'text/javascript'], ['raven/late-night/ink/courier-rules.js', 'text/javascript'],
+    ...['post', 'paper', 'window', 'seat'].flatMap(id => [
+      ['raven/late-night/nightshift-' + id + '.html', 'text/html'],
+      ['raven/late-night/thumbs/nightshift-' + id + '.webp', 'image/webp'],
+      ['raven/late-night/nightshift/' + id + '.css', 'text/css'],
+    ]),
+    ...['post', 'post-rules', 'paper', 'paper-rules', 'window', 'seat-script', 'seat-story', 'seat-rules', 'seat-audio']
+      .map(id => ['raven/late-night/nightshift/' + id + '.js', 'text/javascript']),
+    ...['room', 'wait', 'gaze', 'curtain', 'boat', 'cover'].map(id => ['raven/late-night/nightshift/art/window-' + id + '.webp', 'image/webp']),
+    ...['salma-booth', 'seat-auditorium'].map(id => ['raven/late-night/nightshift/art/' + id + '.webp', 'image/webp']),
+    ...['window', 'seat'].map(id => ['raven/late-night/nightshift/art/' + id + '-assets.json', 'application/json']),
+    ['raven/late-night/nightshift/art/seat-passage.ogg', 'audio/ogg'],
+    ['raven/late-night/ink/print-panels.js', 'text/javascript'],
     ['raven/late-night/evening-programme.js', 'text/javascript'], ['raven/late-night/work-file.js', 'text/javascript'],
     ['raven/late-night/ink/art/courier/manifest.json', 'application/json'],
     ...['route', 'departure', 'crossing', 'letter', 'arrival', 'shelter',
@@ -562,6 +576,7 @@ test('Late Night and the film preview share explicit files across Render and Pag
   }
   for (const prefix of ['', '/abdulrhman']) {
     for (const file of ['raven/late-night/games/notes.js', 'raven/late-night/thumbs/private.webp', 'raven/late-night/assets/photo/private.webp',
+      'raven/late-night/nightshift/art/draft.webp', 'raven/late-night/nightshift/unreleased-preview.js',
       'raven/late-night/ink/art/contact-sheet.png', 'raven/late-night/manga/notes.js', 'raven/late-night/ink/art/courier/prompts.json', 'raven/raven-17-preview/notes.html']) {
       const unknown = await fetch(s.root + prefix + '/' + file,{redirect:'manual'});
       assert.equal(unknown.status,404);

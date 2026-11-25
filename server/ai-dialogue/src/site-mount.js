@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 
-export const STUDIO_ENTRY_ASSETS = ['studio/assets/index-C7tRTuJ0.js', 'studio/assets/index-DI-to4yn.css'];
+export const STUDIO_ENTRY_ASSETS = ['studio/assets/index-WOHAaYmS.js', 'studio/assets/index-B8hYmrFe.css'];
 
 export const AFTER_SHOW_FILES = [
   'index.html', 'content.html', 'app.js', 'state.js', 'style.css',
@@ -34,9 +34,15 @@ const nightActivities = [
 export const LATE_NIGHT_FILES = [
   'index.html', 'boot.js', 'catalog.js', 'hub.js', 'hub.css', 'night-store.js', 'night-shell.js', 'night-shell.css',
   'evening.js', 'evening-programme.js', 'work-file.js', 'connect.js', 'connect.css', 'night-tests.html', 'coast-map.html',
+  ...['nightshift-post', 'nightshift-paper', 'nightshift-window', 'nightshift-seat'].flatMap(id => [id + '.html', 'thumbs/' + id + '.webp']),
+  ...['post.js', 'post.css', 'post-rules.js', 'paper.js', 'paper.css', 'paper-rules.js', 'window.js', 'window.css',
+    'seat-script.js', 'seat-story.js', 'seat-rules.js', 'seat-audio.js', 'seat.css',
+    'art/seat-assets.json', 'art/salma-booth.webp', 'art/seat-auditorium.webp', 'art/seat-passage.ogg',
+    'art/window-assets.json', ...['room', 'wait', 'gaze', 'curtain', 'boat', 'cover'].map(id => 'art/window-' + id + '.webp')
+  ].map(file => 'nightshift/' + file),
   ...nightActivities.flatMap(id => [id + '.html', 'thumbs/' + id + '.webp', 'assets/photo/' + id + '.webp']),
   ...['studio', 'beacon', 'cut', 'camera', 'ferry', 'page', 'courier', 'lines', 'letters'].map(name => 'ink-' + name + '.html'),
-  ...['catalog.js', 'programme.js', 'ink.css', 'beacon.js', 'cut.js', 'camera.js', 'ferry.js', 'page.js', 'courier.js', 'courier-rules.js', 'courier.css'].map(name => 'ink/' + name),
+  ...['catalog.js', 'programme.js', 'ink.css', 'beacon.js', 'cut.js', 'camera.js', 'ferry.js', 'page.js', 'print-panels.js', 'courier.js', 'courier-rules.js', 'courier.css'].map(name => 'ink/' + name),
   ...['ferry-pier', 'ferry-pier-print', 'ferry-signal', 'ferry-deck', 'beacon-night', 'beacon-boats',
     'camera-cover', 'camera-window', 'camera-harbour', 'panel-press', 'panel-type', 'panel-window', 'panel-drying',
     'workshop-lines', 'workshop-letters'].map(name => 'ink/art/' + name + '.webp'),
@@ -136,7 +142,8 @@ const files = [
   ...['archive-opening', 'paper-detail', 'over-shoulder'].flatMap(name =>
     ['mp4', 'webp'].map(extension => `raven/assets/atmosphere-v1/${name}.${extension}`)),
   // Runtime files used by the pinned homepage and its linked studio, not the source/download bundle.
-  'studio/index.html', ...STUDIO_ENTRY_ASSETS, 'studio/assets/index-B9yDZDSb.js', // previous release, for cached clients
+  'studio/index.html', ...STUDIO_ENTRY_ASSETS,
+  'studio/assets/index-C7tRTuJ0.js', 'studio/assets/index-DI-to4yn.css', 'studio/assets/index-B9yDZDSb.js', // previous releases, for cached clients
   'studio/visual-lab/assets/ibm-plex-arabic.woff2',
   ...['01-manor', '02-archive', '03-desk', '04-corridor'].flatMap(name =>
     ['webp', 'png'].map(extension => `studio/visual-lab/assets/${name}.${extension}`)),
@@ -173,7 +180,7 @@ for (const [route, file] of [...routes]) if (route.startsWith('/studio/')) route
 const pagesSections = ['/raven/after-show', '/raven/late-night', '/raven/raven-17-preview', '/raven/episodes'];
 const mime = {'.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.json':'application/json; charset=utf-8',
   '.css':'text/css; charset=utf-8', '.txt':'text/plain; charset=utf-8', '.svg':'image/svg+xml', '.jpg':'image/jpeg', '.webp':'image/webp', '.png':'image/png',
-  '.woff2':'font/woff2', '.ttf':'font/ttf', '.mp3':'audio/mpeg', '.wav':'audio/wav', '.mp4':'video/mp4'};
+  '.woff2':'font/woff2', '.ttf':'font/ttf', '.mp3':'audio/mpeg', '.wav':'audio/wav', '.ogg':'audio/ogg', '.mp4':'video/mp4'};
 export const HOSTED_DIALOGUE_PATHS = new Set(['/raven/dialogue/', '/raven/dialogue/index.html']);
 
 // Check the request target before URL() can normalize traversal. Public filenames are ASCII.

@@ -75,11 +75,13 @@
 | خزانة المفقودات | late-night:lost-and-found | `raven/late-night/lost-and-found.html` | game | listed | 2 | late-night/catalog.js | ar, en | — |
 | القبة ذات السماء الناقصة | late-night:dome-sky | `raven/late-night/dome-sky.html` | game | listed | 3 | late-night/catalog.js | ar, en | PNG |
 | تردّد لشخصين | late-night:echo-two | `raven/late-night/echo-two.html` | game | listed | 4 | late-night/catalog.js | ar, en | — |
+| بريد المصعد | late-night:nightshift-post | `raven/late-night/nightshift-post.html` | game | listed | 4 | late-night/catalog.js | ar, en | — |
 | الاختبار من آخر مقعد | late-night:echo-last-seat | `raven/late-night/echo-last-seat.html` | simulation | listed | 3 | late-night/catalog.js | ar, en | PNG |
 | دقيقة التحميض | late-night:darkroom-minute | `raven/late-night/darkroom-minute.html` | simulation | listed | 4 | late-night/catalog.js | ar, en | PNG |
 | كاميرا بلا وزن | late-night:weightless-cam | `raven/late-night/weightless-cam.html` | simulation | listed | 3 | late-night/catalog.js | ar, en | PNG |
 | مرفأ المدّ والجزر | late-night:tide-harbor | `raven/late-night/tide-harbor.html` | simulation | listed | 3 | late-night/catalog.js | ar, en | PNG |
 | نسيج في مهبّ الهواء | late-night:fabric-wind | `raven/late-night/fabric-wind.html` | simulation | listed | 3 | late-night/catalog.js | ar, en | PNG |
+| ورق تحت المطر | late-night:nightshift-paper | `raven/late-night/nightshift-paper.html` | simulation | listed | 3 | late-night/catalog.js | ar, en | PNG |
 | مخرج من جملة | late-night:director-sentence | `raven/late-night/director-sentence.html` | tool | listed | 4 | late-night/catalog.js | ar, en | — |
 | ممثل طاولة القراءة | late-night:reading-actor | `raven/late-night/reading-actor.html` | tool | listed | 4 | late-night/catalog.js | ar, en | — |
 | إذاعة المدينة التي صنعتها | late-night:city-radio | `raven/late-night/city-radio.html` | tool | listed | 2 | late-night/catalog.js | ar, en | — |
@@ -88,6 +90,8 @@
 | المصعد الذي يتذكّر | late-night:memory-lift | `raven/late-night/memory-lift.html` | story | listed | 4 | late-night/catalog.js | ar, en | JSON |
 | سبع نوافذ مضاءة | late-night:seven-windows | `raven/late-night/seven-windows.html` | story | listed | 3 | late-night/catalog.js | ar, en | JSON |
 | حفلة خلف الستارة | late-night:curtain-party | `raven/late-night/curtain-party.html` | story | listed | 3 | late-night/catalog.js | ar, en | JSON |
+| نافذة فوق البحر | late-night:nightshift-window | `raven/late-night/nightshift-window.html` | story | listed | 3 | late-night/catalog.js | ar, en | — |
+| مقعد حُجز لشخص لن يأتي | late-night:nightshift-seat | `raven/late-night/nightshift-seat.html` | story | listed | 10 | late-night/catalog.js | ar, en | — |
 | متحف الأصوات المنسيّة | late-night:sound-museum | `raven/late-night/sound-museum.html` | story | listed | 3 | late-night/catalog.js | ar, en | JSON |
 | عندي دقيقتين | late-night:time-door | `raven/late-night/time-door.html` | card | listed | — | variable / unlisted | ar, en | — |
 | أمسية من ثلاثة فصول | late-night:three-evening | `raven/late-night/three-evening.html` | story | listed | — | variable / unlisted | ar, en | PNG |

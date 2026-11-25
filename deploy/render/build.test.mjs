@@ -32,6 +32,8 @@ function fixture(t) {
   write(repo,'docs/review.txt','HISTORICAL_REVIEW_NOT_RUNTIME');
   write(repo,'raven/late-night/shelf-experiment.html','UNLISTED_WING_PAGE');
   write(repo,'raven/late-night/manga/notes.js','PRIVATE_DRAWING_NOTE');
+  write(repo,'raven/late-night/nightshift/art/draft.webp','UNRELEASED_STILL');
+  write(repo,'raven/late-night/nightshift/unreleased-preview.js','UNRELEASED_STORY');
   write(repo,'raven/episodes/edit-proposal.html','UNLISTED_GALLERY_PAGE');
   return {repo,sha:commit(repo)};
 }
@@ -60,6 +62,8 @@ test('export comes from the exact Git tree, ignores dirty source/untracked secre
   assert.equal(fs.existsSync(path.join(old,'raven/late-night/shelf-experiment.html')),false);
   assert.equal(fs.existsSync(path.join(old,'raven/episodes/edit-proposal.html')),false);
   assert.equal(fs.existsSync(path.join(old,'raven/late-night/manga/notes.js')),false);
+  for (const name of ['art/draft.webp', 'unreleased-preview.js'])
+    assert.equal(fs.existsSync(path.join(old,'raven/late-night/nightshift',name)),false);
   for (const name of ['raven/episodes/gallery.js', 'raven/episodes/content.html', 'raven/late-night/ink/courier.js',
     ...['ink-lines.html', 'ink-letters.html', 'manga/start.js', 'manga/art.js', 'manga/speed.js', 'manga/bubbles.js',
       'manga/manga.css', 'ink/art/workshop-lines.webp', 'ink/art/workshop-letters.webp'].map(name => 'raven/late-night/' + name)])
@@ -149,6 +153,10 @@ test('a partial Late Night export cannot pass with its lobby alone',t=>{
     'raven/late-night/scenes/screening.js','raven/late-night/assets/museum-ticket.wav',
     'raven/late-night/evening-programme.js','raven/late-night/work-file.js','raven/late-night/ink/courier-rules.js',
     'raven/late-night/ink/art/courier/manifest.json','raven/late-night/ink/art/courier/print-arrival.webp',
+    ...['nightshift-post.html','nightshift-paper.html','nightshift-window.html','nightshift-seat.html',
+      'nightshift/post-rules.js','nightshift/paper-rules.js','nightshift/window.js','nightshift/art/window-gaze.webp',
+      'nightshift/seat-script.js','nightshift/seat-rules.js','nightshift/art/seat-passage.ogg','nightshift/art/salma-booth.webp',
+      'ink/print-panels.js'].map(file => 'raven/late-night/' + file),
     'raven/late-night/thumbs/weightless-cam.webp','raven/raven-17-preview/home.js']){
     assert.ok(CORE_FILES.includes(name),name);
     const file=path.join(publicRoot,name);

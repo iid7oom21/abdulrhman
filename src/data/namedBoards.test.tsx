@@ -22,3 +22,20 @@ it('ignores unrelated stores and rejects untrusted thumbnail paths',()=>{
   localStorage.setItem('other-entry',JSON.stringify(fixture('other')));
   expect(loadBoard('first')).toBeNull();expect(boardList()).toEqual([]);
 });
+
+it('opens each manga in its own activity and rejects uncatalogued panel assets',()=>{
+  const page={...fixture('press'),source:{kind:'manga',activity:'ink-page',piece:'edition-1'}};
+  page.scenes[0].thumbnail='../raven/late-night/ink/art/panel-press.webp';
+  localStorage.setItem(prefix+'press',JSON.stringify(page));
+  const loaded=loadBoard('press')!;
+  expect(boardReturn(loaded.board.source,'ar')).toBe('../raven/late-night/ink-page.html?piece=edition-1&lang=ar');
+  const copy={...page,source:{...page.source,activity:'ink-courier'}};
+  localStorage.setItem(prefix+'press',JSON.stringify(copy));
+  expect(loadBoard('press')).toBeNull();
+  copy.scenes[0].thumbnail='../raven/late-night/ink/art/courier/print-letter.webp';
+  localStorage.setItem(prefix+'press',JSON.stringify(copy));
+  expect(boardReturn(loadBoard('press')!.board.source,'en')).toBe('../raven/late-night/ink-courier.html?piece=edition-1&lang=en');
+  copy.scenes[0].thumbnail='../raven/late-night/ink/art/courier/private.webp';
+  localStorage.setItem(prefix+'press',JSON.stringify(copy));
+  expect(loadBoard('press')).toBeNull();
+});

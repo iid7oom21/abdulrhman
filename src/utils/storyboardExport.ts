@@ -520,9 +520,11 @@ export function renderStoryboardCanvasPages(
       pageCtx.fillStyle = '#1e293b';
       pageCtx.font = `400 22px ${fontFamily}`;
       if (thumbnail) {
-        const width = 288;
+        const scale = Math.min(288 / thumbnail.naturalWidth, 162 / thumbnail.naturalHeight);
+        const width = thumbnail.naturalWidth * scale;
+        const height = thumbnail.naturalHeight * scale;
         const imageX = isAr ? innerAnchorX - width : innerAnchorX;
-        pageCtx.drawImage(thumbnail, imageX, cardY + 62, width, 162);
+        pageCtx.drawImage(thumbnail, imageX, cardY + 62, width, height);
       }
       let textY = cardY + 66 + imageHeight;
       for (const line of promptLines) {

@@ -45,7 +45,7 @@ jobs:
         run: python deploy/render/pages-smoke.py
       - name: Open the episode gallery from the published arrival and home
         run: python deploy/render/screening-room-smoke.py
-      - name: Cross with the shadow and screen an edited director scene
+      - name: Play the station, director, four night-shift activities and verify the full catalogue
         run: python deploy/render/late-night-smoke.py
       - name: Play the approved Ink Nights programme, reopen notebook work and export a manga page
         run: python deploy/render/ink-smoke.py
