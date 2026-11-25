@@ -15,6 +15,7 @@ export const activities=[
 ['tide-harbor','مرفأ المدّ والجزر','Tidal harbour',3,1,'حدّد موعد الرحلة','Time the crossing'],
 ['fabric-wind','نسيج في مهبّ الهواء','Cloth in the wind',3,1,'ثبّت الراية','Rig the banner'],
 ['nightshift-paper','ورق تحت المطر','Paper in the Rain',3,1,'بلّل الحبر','Wet the ink'],
+['harbour-watch','نوبة برج المرفأ','Harbour tower watch',6,1,'استلم الرادار','Take the radar'],
 ['director-sentence','مخرج من جملة','Direct a sentence',4,2,'شغّل فكرتك','Stage your idea'],
 ['reading-actor','ممثل طاولة القراءة','The table read',4,2,'ابدأ البروفة','Start rehearsal'],
 ['city-radio','إذاعة المدينة التي صنعتها','Your city on air',2,2,'ركّب النشرة','Build a bulletin'],

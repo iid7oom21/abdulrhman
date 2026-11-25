@@ -26,7 +26,7 @@ exportsFor('late-night','echo-last-seat darkroom-minute weightless-cam tide-harb
 exportsFor('late-night','memory-lift seven-windows curtain-party sound-museum',['JSON']);
 exportsFor('late-night','screening-room',['TXT']);
 exportsFor('late-night','my-notebook',['JSON','saved image']);
-exportsFor('late-night','nightshift-paper',['PNG']);
+exportsFor('late-night','nightshift-paper harbour-watch',['PNG']);
 exportsFor('ink','ink-camera ink-page',['PNG']);
 exportsFor('ink','ink-courier',['PNG','JSON']);
 
