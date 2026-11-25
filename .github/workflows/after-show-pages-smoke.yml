@@ -4,6 +4,7 @@ on:
   push:
     branches: [main]
     paths:
+      - server/ai-dialogue/src/site-mount.js
       - deploy/render/build.mjs
       - deploy/render/pages-smoke.py
       - deploy/render/late-night-smoke.py
@@ -46,7 +47,7 @@ jobs:
         run: python deploy/render/screening-room-smoke.py
       - name: Cross with the shadow and screen an edited director scene
         run: python deploy/render/late-night-smoke.py
-      - name: Play Ink Nights and export a manga page
+      - name: Play the approved Ink Nights programme, reopen notebook work and export a manga page
         run: python deploy/render/ink-smoke.py
       - name: Keep screening-room mobile evidence
         if: always()

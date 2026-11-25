@@ -24,9 +24,10 @@ with sync_playwright() as pw:
     page.locator('#archive-night-hub').tap()
     page.locator('[data-ink-program]').tap()
     cards = page.locator('[data-ink-route]')
-    expect(cards).to_have_count(6)
+    approved = {'cut', 'ferry', 'page', 'camera', 'beacon', 'courier', 'lines', 'letters'}
+    expect(cards).to_have_count(len(approved))
     routes = {a.get_attribute('data-ink-route'): a.get_attribute('href') for a in cards.all()}
-    assert set(routes) == {'cut', 'ferry', 'page', 'camera', 'beacon', 'courier'}
+    assert set(routes) == approved, sorted(routes)
     for card in cards.all():
         photo = card.locator('img')
         photo.scroll_into_view_if_needed()
@@ -67,6 +68,55 @@ with sync_playwright() as pw:
     step.tap()
     expect(page.locator('[data-beacon="result"]')).to_have_attribute('data-outcome', 'acknowledged')
 
+    def scene(key):
+        return page.locator(f'[data-scene="{key}"]')
+
+    page.goto(routes['lines'])
+    scene('step').select_option('2')
+    scene('check').tap()
+    verdict = page.locator('.manga-result')
+    expect(verdict).to_have_attribute('data-ok', 'false')
+    scene('smear').tap()
+    scene('mode').select_option('budget')
+    scene('check').tap()
+    expect(verdict).to_have_attribute('data-ok', 'true')
+    scene('play').tap()
+    expect(verdict).to_contain_text('✓')
+    scene('save').tap()
+
+    page.goto(routes['letters'])
+    for line, spot in [(0, 1), (1, 0), (2, 2)]:
+        scene(f'line-{line}').tap()
+        scene(f'spot-{spot}').tap()
+    scene('read').tap()
+    expect(verdict).to_have_attribute('data-ok', 'false')
+    for line in range(3):
+        scene(f'line-{line}').tap()
+        scene(f'spot-{line}').tap()
+    scene('read').tap()
+    expect(verdict).to_have_attribute('data-ok', 'true')
+    scene('save').tap()
+
+    pieces = page.evaluate("""() => Object.entries(localStorage)
+        .filter(([key]) => key.startsWith('raven.late-night.v1.piece.'))
+        .map(([, value]) => JSON.parse(value).value)""")
+    saved = {piece['activity']: piece for piece in pieces}
+    assert saved['ink-lines']['data']['step'] == 2 and saved['ink-lines']['data']['smear']
+    assert saved['ink-letters']['data']['spots'] == [0, 1, 2]
+    notebook = routes['letters'].replace('ink-letters.html', 'my-notebook.html')
+    page.goto(notebook)
+    for name, piece in [('letters', saved['ink-letters']), ('lines', saved['ink-lines'])]:
+        link = page.locator(f'a[href*="ink-{name}.html"][href*="piece={piece["id"]}"]')
+        link.first.tap()
+        if name == 'letters':
+            scene('read').tap()
+            expect(verdict).to_have_attribute('data-ok', 'true')
+        else:
+            expect(scene('smear')).to_have_attribute('aria-pressed', 'true')
+            expect(scene('mode')).to_have_value('budget')
+        page.screenshot(path=args.output / f'{name}-reopened.png')
+        page.goto(notebook)
+
     page.goto(routes['courier'])
     for cell in (15, 10, 5, 0, 1, 2, 3, 4, 9, 14, 19, 24):
         page.locator(f'[data-cell="{cell}"]').tap()
@@ -100,6 +150,7 @@ with sync_playwright() as pw:
     sheet.scroll_into_view_if_needed()
     page.screenshot(path=args.output / 'page-on-phone.png')
     proof = {'home': args.home, 'activities': sorted(routes), 'cut_seconds': 6, 'ferry_view': 'shore',
+             'workshop_notebook_reopened': ['ink-lines', 'ink-letters'],
              'camera_parallax_px': 36, 'beacon': 'acknowledged', 'courier': 'delivered in 12 moves',
              'manga_panels': ['window', 'type', 'press'],
              'export_px': [880, 984], 'manga_direction_after_language_switch': 'rtl'}
@@ -107,5 +158,5 @@ with sync_playwright() as pw:
     print(json.dumps(proof))
     if 'GITHUB_STEP_SUMMARY' in os.environ:
         with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
-            summary.write('Played the six Ink Nights activities on Pages at 390px, delivered the courier letter and exported the chosen 880 × 984 manga page.\n')
+            summary.write('Played eight Ink Nights activities at 390px, reopened both saved workshops, delivered the courier letter and exported the chosen 880 × 984 manga page.\n')
     browser.close()

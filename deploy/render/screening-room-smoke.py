@@ -125,6 +125,10 @@ with sync_playwright() as pw:
     proof['legacy_episode_link']=page.url
     (args.output/'journey.json').write_text(json.dumps(proof,indent=2))
     print(json.dumps(proof))
+    if os.environ.get('GITHUB_ACTIONS') == 'true':
+        details = (f"Episode {n}: {r['outcome']} ({r['seconds']:.2f}s decoded, "
+                   f"{r['width']}×{r['height']}, MediaError {r['error']})" for n, r in playback.items())
+        print('::notice title=Episode sources on Pages::' + ' | '.join(details), flush=True)
     if 'GITHUB_STEP_SUMMARY' in os.environ:
         with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as summary:
             summary.write("\nOpened the three-episode gallery from arrival and the home feature.\n\n")

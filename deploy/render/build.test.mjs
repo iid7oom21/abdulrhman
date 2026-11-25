@@ -31,6 +31,7 @@ function fixture(t) {
   git(repo,['init','--object-format=sha1']);publicFiles(repo);
   write(repo,'docs/review.txt','HISTORICAL_REVIEW_NOT_RUNTIME');
   write(repo,'raven/late-night/shelf-experiment.html','UNLISTED_WING_PAGE');
+  write(repo,'raven/late-night/manga/notes.js','PRIVATE_DRAWING_NOTE');
   write(repo,'raven/episodes/edit-proposal.html','UNLISTED_GALLERY_PAGE');
   return {repo,sha:commit(repo)};
 }
@@ -58,7 +59,10 @@ test('export comes from the exact Git tree, ignores dirty source/untracked secre
   assert.equal(fs.existsSync(path.join(old,'docs')),false);
   assert.equal(fs.existsSync(path.join(old,'raven/late-night/shelf-experiment.html')),false);
   assert.equal(fs.existsSync(path.join(old,'raven/episodes/edit-proposal.html')),false);
-  for (const name of ['raven/episodes/gallery.js', 'raven/episodes/content.html', 'raven/late-night/ink/courier.js'])
+  assert.equal(fs.existsSync(path.join(old,'raven/late-night/manga/notes.js')),false);
+  for (const name of ['raven/episodes/gallery.js', 'raven/episodes/content.html', 'raven/late-night/ink/courier.js',
+    ...['ink-lines.html', 'ink-letters.html', 'manga/start.js', 'manga/art.js', 'manga/speed.js', 'manga/bubbles.js',
+      'manga/manga.css', 'ink/art/workshop-lines.webp', 'ink/art/workshop-letters.webp'].map(name => 'raven/late-night/' + name)])
     assert.equal(fs.readFileSync(path.join(old,name),'utf8'),'PUBLIC_FILE');
   assert.equal(fs.existsSync(path.join(old,'original.txt')),false);
   assert.equal(validatePublicExport(old).musicTracks,13);

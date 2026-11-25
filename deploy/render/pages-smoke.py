@@ -37,7 +37,10 @@ def check_deployment(request, home, sha, release, local):
               "late-night/ink/catalog.js", "late-night/ink/cut.js", "late-night/ink/camera.js",
               "late-night/ink/ferry.js", "late-night/ink/page.js", "late-night/ink/beacon.js",
               "late-night/ink-courier.html", "late-night/ink/courier.js", "late-night/ink/courier.css",
-              "late-night/ink/art/panel-press.webp", "../site-entry.js"]
+              "late-night/ink/art/panel-press.webp", "late-night/ink-lines.html", "late-night/ink-letters.html",
+              "late-night/manga/art.js", "late-night/manga/start.js", "late-night/manga/speed.js",
+              "late-night/manga/bubbles.js", "late-night/manga/manga.css", "late-night/ink/art/workshop-lines.webp",
+              "late-night/ink/art/workshop-letters.webp", "../site-entry.js"]
     pinned = {
         asset: subprocess.check_output(["git", "show", f"{sha}:{posixpath.normpath(posixpath.join('raven', asset))}"], cwd=ROOT)
         for asset in assets
