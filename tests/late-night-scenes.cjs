@@ -79,7 +79,7 @@ test('interactive scenes and the screening room under the production prefix',asy
         assert.equal(await field('backstage').count(),0);await fill('seek',2);const closed=await image();
         await fill('seek',8);assert.notEqual(await image(),closed);await click('backstage');
         assert.match(await p.locator('.night-bench').innerText(),/2 s before|2 ث قبل/);
-        assert.match(await p.locator('.ns-list li').first().innerText(),/^1 s/);
+        assert.match(await p.locator('.ns-list li').first().innerText(),/^1 (s|ث)/);
         assert.deepEqual(JSON.parse((await download('export')).body).times,[4,2,1]);await click('save');await fits();
       });
       await suite.test('six-second silent postcard uses three chosen machines and degrades on missing audio',async()=>{
@@ -117,7 +117,7 @@ test('interactive scenes and the screening room under the production prefix',asy
           await field('note').fill('Local viewer reading '+i);await click('return');assert.equal(await p.getByText('Local viewer reading '+i,{exact:true}).count(),0);
           await click('handoff');assert.equal(await p.locator('pre').count(),0);await click('reveal');assert.equal(await p.locator('pre').count(),1);
           assert.equal(await p.getByText('Local viewer reading '+i,{exact:true}).count(),1);await click('next');}
-        const prog=(await download('export')).body.toString();assert.match(prog,/36 s/);assert.ok(!prog.includes('Local viewer reading'));await fits();
+        const prog=(await download('export')).body.toString();assert.match(prog,/36 (s|ث)/);assert.ok(!prog.includes('Local viewer reading'));await fits();
       });
       if(width===320)await suite.test('original director duration survives notebook presentation, private reveal and TXT export',async()=>{
         await open('director-sentence');
@@ -129,11 +129,11 @@ test('interactive scenes and the screening room under the production prefix',asy
         const director=(await pieces()).find(item=>item.activity==='director-sentence'&&item.title===title);
         assert.equal(director.data.duration,15);
         await open('screening-room');for(const id of [director.id,'sample-plane','sample-stage'])await click('pick-'+id);
-        assert.match(await p.locator('.ns-list').innerText(),/15 s/);await click('start');
+        assert.match(await p.locator('.ns-list').innerText(),/15 (s|ث)/);await click('start');
         assert.equal(await field('runtime').inputValue(),'15');assert.equal(await field('runtime').isDisabled(),true);
         const first=await image();await fill('seek',8);assert.notEqual(await image(),first);assert.equal(await p.locator('pre').count(),0);
         for(let i=0;i<3;i++){await click('pass');await click('handoff');await field('reading').selectOption({value:'0'});await click('return');await click('handoff');await click('reveal');await click('next');}
-        const program=(await download('export')).body.toString();assert.ok(program.includes(title+' · 15 s'));assert.match(program,/26 s/);
+        const program=(await download('export')).body.toString();assert.ok(program.includes(title+' · 15 ث')||program.includes(title+' · 15 s'));assert.match(program,/26 (s|ث)/);
       });
       if(width===390)await suite.test('completed original daily enters the pinned weekend; failed cut cannot advance; practice accepts an independent order',async()=>{
         const date='2026-11-21';

@@ -39,7 +39,7 @@ mount({id:'director-sentence',title:['مخرج من جملة','One-sentence dire
     const run=button('play',t('شغّل فكرتي','Play my idea'),()=>{if(validScene(scene))timer.play();});
     body.append(can,caption,row(run,read),field(t('ثانية المشهد','Scene second'),scrub));
     timer=clock(()=>s.duration,(sec,on)=>{
-      time=sec;scrub.value=sec;read.value=sec.toFixed(1)+' / '+s.duration+' s';
+      time=sec;scrub.value=sec;read.value=sec.toFixed(1)+' / '+s.duration+t(' ث',' s');
       const shot=paintScene(can,s,sec),i=s.shots.indexOf(shot);caption.textContent=(i+1)+' / 3 · '+choose(t,describe(s,i))+' · '+t(...lights[shot.lighting])+' · '+t(...motions[shot.motion]);
       run.textContent=on?t('جمّد المشهد','Freeze scene'):sec>=s.duration?t('أعد مشاهدة فكرتي','Replay my scene'):t('شغّل فكرتي','Play my idea');
       can.dataset.shot=shot.id;can.dataset.seconds=sec.toFixed(1);

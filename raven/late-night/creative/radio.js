@@ -36,12 +36,12 @@ mount({id:'city-radio',title:['إذاعة المدينة التي صنعتها',
     const script=chosen(),sec=el('output',null,'cr-meter'),current=el('p',null,'cr-read');
     const scrub=range('seek',time,0,duration(),.1,v=>player.seek(v));const play=button('air',t('شغّل توقيت النشرة','Run bulletin timing'),()=>player.play());
     player=clock(duration,(value,on)=>{
-      time=value;scrub.value=value;sec.value=value.toFixed(1)+' / '+duration()+' s';
+      time=value;scrub.value=value;sec.value=value.toFixed(1)+' / '+duration()+t(' ث',' s');
       const e=script[Math.min(script.length-1,Math.floor(value/10))];
       current.textContent=announce(e,script.indexOf(e));studio(can,t,value,duration(),on);play.textContent=on?t('أوقف التوقيت','Pause timing'):t('شغّل توقيت النشرة','Run bulletin timing');
     });
     playerArea.append(el('h2',t('نشرة الساحل','The coast bulletin')),row(play,sec),field(t('موضع البث','Broadcast position'),scrub),current);
-    script.forEach((e,i)=>playerArea.append(button('source'+i,(i*10)+'–'+((i+1)*10)+' s · '+announce(e,i),()=>{
+    script.forEach((e,i)=>playerArea.append(button('source'+i,(i*10)+'–'+((i+1)*10)+t(' ث',' s')+' · '+announce(e,i),()=>{
       player.seek(i*10);detail.dataset.source=e.activity;detail.replaceChildren(document.createTextNode(t('من سجل اللعب','From the play log')+' · '+timestamp(e)+'\n'+e[lang]));
       const a=origin(e);if(a){detail.append(el('br'),link('./'+a[0]+'.html?lang='+lang,t('افتح النشاط','Open activity')+' · '+t(a[1],a[2])));}
     })));

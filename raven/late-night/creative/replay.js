@@ -66,16 +66,16 @@ mount({id:'replay-caller',title:['معلّق الإعادة','The replay comment
     const can=stage(t('إعادة حركة الكاميرا','Camera motion replay')),read=el('output',null,'cr-meter');
     const scr=range('seek',time,0,run.duration,.25,v=>player.seek(v)),play=button('play',t('شغّل الإعادة','Play replay'),()=>player.play());
     player=clock(()=>run.duration,(sec,on)=>{
-      time=sec;scr.value=sec;drawTrack(can,run,sec,t);read.value=sec.toFixed(2)+' / '+run.duration+' s';play.textContent=on?t('توقّف هنا','Pause here'):t('شغّل الإعادة','Play replay');
+      time=sec;scr.value=sec;drawTrack(can,run,sec,t);read.value=sec.toFixed(2)+' / '+run.duration+t(' ث',' s');play.textContent=on?t('توقّف هنا','Pause here'):t('شغّل الإعادة','Play replay');
     });
     w.append(can,row(play,read),field(t('موضع الإعادة','Replay position'),scr));
     if(alternate)w.append(row(...['A','B'].map(id=>{const b=button('version'+id,id==='A'?t('المحاولة المسجلة','Recorded take'):t('المحاولة الثانية','Second take'),()=>{player.stop();side=id;build();});b.setAttribute('aria-pressed',String(side===id));return b;})));
     w.append(el('h2',side==='A'?t('من سجل المحاولة','From the run log'):t('من محاكاة النسخة الثانية','From the second simulation')));
     comments(run,t).forEach((entry,i)=>{
-      w.append(button('cue'+i,entry.label+' · '+entry.f.t.toFixed(2)+' s · '+entry.f.x.toFixed(1)+' m',()=>player.seek(entry.f.t)));
+      w.append(button('cue'+i,entry.label+' · '+entry.f.t.toFixed(2)+t(' ث',' s')+' · '+entry.f.x.toFixed(1)+' m',()=>player.seek(entry.f.t)));
     });
     const log=el('details'),summary=el('summary',t('سجل الدفعات والمواقع','Push and position log'));log.append(summary);
-    const lines=run.pushes.map(p=>'t '+p.t.toFixed(2)+' s · x '+run.frames[Math.round(p.t*4)].x.toFixed(1)+' m · Δv '+(p.dv>0?'+':'')+p.dv+' m/s');
+    const lines=run.pushes.map(p=>'t '+p.t.toFixed(2)+t(' ث',' s')+' · x '+run.frames[Math.round(p.t*4)].x.toFixed(1)+' m · Δv '+(p.dv>0?'+':'')+p.dv+' m/s');
     log.append(el('p',lines.join('\n')||t('لم تُسجّل دفعات.','No pushes were recorded.'),'cr-read'));w.append(log);
     const proposal=alternative(original);
     const copy={keep:['حافظت على الكاميرا داخل الهدف ثانيتين. كرّر الدفعات لتفهم هذا القرار الناجح.','You held the frame for two seconds. Replay those same pushes to inspect the successful choice.'],repeat:['جرّب الدفعات نفسها في نسخة منفصلة.','Repeat these pushes in a separate take.'],retime:['جرّب تحريك دفعة واحدة في الزمن.','Try moving one push in time.'],add:['جرّب دفعة إضافية لتثبيت الكاميرا.','Try an additional push to steady the camera.'],pair:['جرّب دفعة انطلاق ثم فرملة في نسخة ثانية.','Try a launch followed by braking in a second take.']};
@@ -83,7 +83,7 @@ mount({id:'replay-caller',title:['معلّق الإعادة','The replay comment
       player.stop();alternate=cameraRun(proposal.pushes,original.duration);side='B';time=0;
       ui.recordEvent({ar:'قورنت محاولتان للكاميرا، بزمن ثبات '+original.best.toFixed(2)+' و'+alternate.best.toFixed(2)+' ثانية.',en:'Two camera takes were compared, with stable holds of '+original.best.toFixed(2)+' and '+alternate.best.toFixed(2)+' seconds.',data:{kind:'camera-compare',sourceId:source.id,bestA:original.best,bestB:alternate.best}});build();
     }));
-    if(alternate){const delta=alternate.best-original.best;w.append(el('p',t('أفضل ثبات','Longest hold')+' · A '+original.best.toFixed(2)+' s / B '+alternate.best.toFixed(2)+' s · Δ '+(delta>=0?'+':'')+delta.toFixed(2)+' s','cr-read'));}
+    if(alternate){const delta=alternate.best-original.best;w.append(el('p',t('أفضل ثبات','Longest hold')+' · A '+original.best.toFixed(2)+t(' ث',' s')+' / B '+alternate.best.toFixed(2)+t(' ث',' s')+' · Δ '+(delta>=0?'+':'')+delta.toFixed(2)+t(' ث',' s'),'cr-read'));}
     w.append(link('./weightless-cam.html?lang='+lang,t('العودة إلى الكاميرا','Return to camera')));player.seek(Math.min(time,run.duration));
   }
   build();

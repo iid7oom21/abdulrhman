@@ -83,7 +83,7 @@ function render(ui){
   function paint(){
     const ghost=['play','watch','won'].includes(phase)||reviewing?positionAt(trace,clock):null;
     const door=!!ghost&&onPlate(ghost);view.dataset.phase=phase;view.dataset.door=door?'open':'closed';view.dataset.player=runner.x+','+runner.y;
-    view.dataset.shadow=ghost?ghost.x+','+ghost.y:'';meter.value=clock;timer.textContent=(clock/1000).toFixed(1)+' / 10 s';
+    view.dataset.shadow=ghost?ghost.x+','+ghost.y:'';meter.value=clock;timer.textContent=(clock/1000).toFixed(1)+' / 10'+t(' ث',' s');
     station(c,phase==='watch'||reviewing?null:runner,ghost,door,phase==='play'||phase==='won');
     const msg=phase==='record'?t('يجري التسجيل. اصعد خطًا واحدًا ثم تحرّك يمينًا خانتين إلى الدواسة.','Recording. Move up one lane, then right two spaces to the pedal.'):phase==='play'?t('اعبر الخط الأوسط إلى اليمين عندما يقف الظل على الدواسة.','Cross the middle lane to the right when the shadow reaches the pedal.'):phase==='won'?t('وصلت الحقيبة عبر الباب في ','The mailbag crossed in ')+(crossedAt/1000).toFixed(1)+t(' ث.',' s.'):phase==='watch'?t('مراجعة حركة الظل المسجّلة.','Reviewing the recorded shadow.'):outcome==='timeout'?t('انتهت العشر ثوانٍ والحقيبة في المحطة. أعد العبور أو غيّر التسجيل.','Ten seconds passed with the bag still on the platform. Retry the crossing or replace the recording.'):trace.length?t('تسجيلك جاهز. اعبر بالحقيبة أو افحص الخط الزمني.','Your recording is ready. Cross with the bag or inspect the timeline.'):t('ابدأ تسجيل عشر ثوانٍ. الدواسة في الصف البعيد، والباب عند نهاية الصف الأوسط.','Record ten seconds. The pedal is on the far lane and the door ends the middle lane.');
     if(read.textContent!==msg)read.textContent=msg;
@@ -100,7 +100,7 @@ function render(ui){
         const range=el('input');range.type='range';range.min=0;range.max=LENGTH;range.step=50;range.value=clock;range.dataset.game='scrub';range.setAttribute('aria-label',t('زمن المراجعة','Review time'));range.dir='ltr';
         range.oninput=()=>{clock=+range.value;paint();};
         const first=firstOpening(trace);
-        const cue=el('p',first===null?t('التسجيل لا يلامس الدواسة.','The recording never touches the pedal.'):t('أول فتح عند ','First opening at ')+(first/1000).toFixed(2)+' s');
+        const cue=el('p',first===null?t('التسجيل لا يلامس الدواسة.','The recording never touches the pedal.'):t('أول فتح عند ','First opening at ')+(first/1000).toFixed(2)+t(' ث',' s'));
         cue.dataset.game='first-open';cue.dataset.ms=first??'';details.append(range,cue,button('watch',t('شغّل التسجيل','Replay recording'),()=>begin('watch')));
       }
     }

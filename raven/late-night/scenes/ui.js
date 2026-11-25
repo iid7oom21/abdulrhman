@@ -74,7 +74,7 @@ export function transport(root, ui, duration, renderFrame, done, initial=0) {
   const play=button('',()=>{if(token){stop();update();return;}if(time>=duration)time=0;start=performance.now()-time*1000;tick();},'play');
   const wrap=actions(root,play,control(t('موضع العرض','Playhead'),seek),clock);
   wrap.classList.add('ns-transport');
-  function update(){seek.value=time;clock.value=time.toFixed(1)+' / '+duration+' s';renderFrame(time,!!token);}
+  function update(){seek.value=time;clock.value=time.toFixed(1)+' / '+duration+t(' ث',' s');renderFrame(time,!!token);}
   function stop(){cancelAnimationFrame(token);token=0;play.textContent=t('شغّل العرض','Play');}
   function tick(){
     time=Math.min(duration,(performance.now()-start)/1000);

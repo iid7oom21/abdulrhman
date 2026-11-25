@@ -43,11 +43,11 @@ function render(ui){
     const palette=actions(slot),list=el('ol',null,'ns-list'),buttons=actions(slot),screen=el('div');slot.append(list,screen);
     let player;
     function sync(){
-      list.replaceChildren(...s.shots.map(id=>el('li',SHOTS[id].name[ui.lang]+' · '+SHOTS[id].seconds+' s')));
+      list.replaceChildren(...s.shots.map(id=>el('li',SHOTS[id].name[ui.lang]+' · '+SHOTS[id].seconds+t(' ث',' s'))));
       palette.querySelectorAll('button').forEach((b,i)=>{b.disabled=s.shots.length>=round.slots||s.shots.includes(round.library[i]);});
       undo.disabled=!s.shots.length;watch.disabled=s.shots.length!==round.slots;
     }
-    round.library.forEach(id=>palette.append(button(SHOTS[id].name[ui.lang]+' · '+SHOTS[id].seconds+' s',()=>{player?.stop();screen.replaceChildren();s.shots.push(id);remember();sync();},'shot-'+id)));
+    round.library.forEach(id=>palette.append(button(SHOTS[id].name[ui.lang]+' · '+SHOTS[id].seconds+t(' ث',' s'),()=>{player?.stop();screen.replaceChildren();s.shots.push(id);remember();sync();},'shot-'+id)));
     const undo=button(t('ارفع آخر لقطة','Remove last shot'),()=>{player?.stop();screen.replaceChildren();s.shots.pop();remember();sync();},'undo');
     const watch=button(t('اعرض المونتاج','Screen the cut'),()=>{
       player?.stop();screen.replaceChildren();
@@ -75,7 +75,7 @@ function render(ui){
     let player;
     function sync(){
       museum(v.ctx,s.order.at(-1)??0,0);v.caption.textContent=t('كل معروض يظهر لمدة ثانيتين.','Each exhibit appears for two seconds.');
-      list.replaceChildren(...s.order.map((id,i)=>el('li',i*2+'–'+(i+1)*2+' s · '+t(...options[id]))));
+      list.replaceChildren(...s.order.map((id,i)=>el('li',i*2+'–'+(i+1)*2+t(' ث',' s')+' · '+t(...options[id]))));
       buttons.querySelectorAll('button').forEach((b,i)=>b.disabled=s.order.includes(i));undo.disabled=!s.order.length;watch.disabled=s.order.length!==3;
     }
     options.forEach((v,i)=>buttons.append(button(t(...v),()=>{player?.stop();screen.replaceChildren();s.order.push(i);remember();sync();},'post-'+i)));
