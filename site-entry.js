@@ -27,14 +27,20 @@ export function createEntryGate({ root, show = false, onEnter, onClose, navigate
     </div>
     <div class="archive-entry-content">
       <div class="archive-feature">
-        <p id="archive-entry-copy">ثلاث حلقات</p>
-        <h1 id="archive-entry-title" dir="ltr" translate="no">RAVEN <span>17</span></h1>
-        <a id="archive-episodes" class="archive-feature-link">شاهد الحلقات</a>
+        <p id="archive-entry-copy">سينما وألعاب وورش</p>
+        <h1 id="archive-entry-title">أين تبدأ الليلة؟</h1>
       </div>
       <nav class="archive-night-shortcuts">
+        <a id="archive-episodes">حلقات RAVEN 17</a>
         <a id="archive-case">الاسم المحذوف</a>
-        <a id="archive-play-edit">العب آخر إرسال</a>
+        <a id="archive-after-show">بعد العرض</a>
         <a id="archive-night-hub">آخر الليل</a>
+        <a id="archive-ink">ليالي الحبر</a>
+        <a id="archive-studio">الاستوديو</a>
+        <a id="archive-behind">خلف الكادر</a>
+        <a id="archive-play-edit">العب آخر إرسال</a>
+      </nav>
+      <nav class="archive-time-shortcuts">
         <a id="archive-night-short">عندي دقيقتين</a>
         <a id="archive-night-evening">أبي أمسية كاملة</a>
       </nav>
@@ -49,8 +55,12 @@ export function createEntryGate({ root, show = false, onEnter, onClose, navigate
     const en = language === 'en';
     dialog.lang = en ? 'en' : 'ar';
     const shortcuts = [
-      ['archive-episodes','raven/episodes/','شاهد الحلقات','Watch the episodes'],
+      ['archive-episodes','raven/episodes/','حلقات RAVEN 17','RAVEN 17 episodes'],
       ['archive-case','raven/deleted-name/','الاسم المحذوف','The Deleted Name'],
+      ['archive-after-show','raven/after-show/','بعد العرض','After the Show'],
+      ['archive-ink','raven/late-night/ink-studio.html','ليالي الحبر','Ink Nights'],
+      ['archive-studio','studio/','الاستوديو','Studio'],
+      ['archive-behind','raven/#behind-paper-phone','خلف الكادر','Behind the scenes'],
       ['archive-play-edit','raven/after-show/?activity=edit','العب آخر إرسال','Play Last Transmission'],
       ['archive-night-hub','raven/late-night/','آخر الليل','Late Night'],
       ['archive-night-short','raven/late-night/station-shadow.html','عندي دقيقتين','I have two minutes'],
@@ -64,8 +74,10 @@ export function createEntryGate({ root, show = false, onEnter, onClose, navigate
       item.textContent = en ? english : ar;
     }
     dialog.dir = en ? 'ltr' : 'rtl';
-    dialog.querySelector('#archive-entry-copy').textContent = en ? 'Three episodes' : 'ثلاث حلقات';
-    dialog.querySelector('.archive-night-shortcuts').setAttribute('aria-label',en?'More from RAVEN':'المزيد من رايفن');
+    dialog.querySelector('#archive-entry-title').textContent = en ? 'Where to tonight?' : 'أين تبدأ الليلة؟';
+    dialog.querySelector('#archive-entry-copy').textContent = en ? 'Cinema, games and workshops' : 'سينما وألعاب وورش';
+    dialog.querySelector('.archive-night-shortcuts').setAttribute('aria-label',en?'RAVEN destinations':'وجهات رايفن');
+    dialog.querySelector('.archive-time-shortcuts').setAttribute('aria-label',en?'Choose by time':'اختر بحسب وقتك');
     enterButton.textContent = en ? 'Enter home with music' : 'ادخل الرئيسية مع الموسيقى';
     skipButton.textContent = en ? 'Home' : 'الرئيسية';
     video.setAttribute('aria-label',en?'RAVEN introduction':'مقدمة رايفن');
