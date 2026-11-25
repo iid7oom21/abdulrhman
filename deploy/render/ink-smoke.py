@@ -1,4 +1,4 @@
-"""Play the public Ink Nights programme on a mobile viewport and open an exported manga page."""
+"""Play the public Ink Nights programme on a mobile viewport, its two drawn workshops, and open an exported manga page."""
 import argparse
 import base64
 import json
@@ -24,9 +24,9 @@ with sync_playwright() as pw:
     page.locator('#archive-night-hub').tap()
     page.locator('[data-ink-program]').tap()
     cards = page.locator('[data-ink-route]')
-    expect(cards).to_have_count(6)
+    expect(cards).to_have_count(8)
     routes = {a.get_attribute('data-ink-route'): a.get_attribute('href') for a in cards.all()}
-    assert set(routes) == {'cut', 'ferry', 'page', 'camera', 'beacon', 'courier'}
+    assert set(routes) == {'cut', 'ferry', 'page', 'camera', 'beacon', 'courier', 'lines', 'letters'}
     for card in cards.all():
         photo = card.locator('img')
         photo.scroll_into_view_if_needed()
@@ -75,6 +75,23 @@ with sync_playwright() as pw:
     expect(page.locator('#panels .panel')).to_have_count(3)
     page.screenshot(path=args.output / 'courier-delivered.png')
 
+    page.goto(routes['lines'])
+    page.locator('[data-scene="step"]').select_option('2')
+    page.locator('[data-scene="check"]').tap()
+    expect(page.locator('.manga-result')).to_have_attribute('data-ok', 'false')
+    page.locator('[data-scene="smear"]').tap()
+    page.locator('[data-scene="mode"]').select_option('budget')
+    page.locator('[data-scene="check"]').tap()
+    expect(page.locator('.manga-result')).to_have_attribute('data-ok', 'true')
+
+    page.goto(routes['letters'])
+    for line, spot in ((0, 0), (1, 1), (2, 2)):
+        page.locator(f'[data-scene="line-{line}"]').tap()
+        page.locator(f'[data-scene="spot-{spot}"]').tap()
+    page.locator('[data-scene="read"]').tap()
+    expect(page.locator('.manga-result')).to_have_attribute('data-ok', 'true', timeout=8000)
+    page.screenshot(path=args.output / 'letters-read.png')
+
     page.goto(routes['page'])
     for panel in ('window', 'type', 'press'):
         page.locator('[data-page="pick-' + panel + '"]').tap()
@@ -102,10 +119,12 @@ with sync_playwright() as pw:
     proof = {'home': args.home, 'activities': sorted(routes), 'cut_seconds': 6, 'ferry_view': 'shore',
              'camera_parallax_px': 36, 'beacon': 'acknowledged', 'courier': 'delivered in 12 moves',
              'manga_panels': ['window', 'type', 'press'],
+             'speed_lines': 'twos with a smear frame inside the 18-drawing budget',
+             'speech_bubbles': 'reading order and tails accepted',
              'export_px': [880, 984], 'manga_direction_after_language_switch': 'rtl'}
     (args.output / 'journey.json').write_text(json.dumps(proof, indent=2))
     print(json.dumps(proof))
     if 'GITHUB_STEP_SUMMARY' in os.environ:
         with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
-            summary.write('Played the six Ink Nights activities on Pages at 390px, delivered the courier letter and exported the chosen 880 × 984 manga page.\n')
+            summary.write('Played the eight Ink Nights activities on Pages at 390px, timed the speed lines, lettered the bubbles, delivered the courier letter and exported the chosen 880 × 984 manga page.\n')
     browser.close()
