@@ -44,7 +44,7 @@ function drawTrack(canvas,r,sec,t){
   const x=time=>64+time/r.duration*550, y=position=>209-(position-lo)/(hi-lo)*152;
   c.fillStyle='#192020';c.fillRect(0,0,640,300);
   c.direction='ltr';c.textAlign='left';c.font='17px monospace';
-  c.fillStyle='#e5dbcb';c.fillText(frame.t.toFixed(2)+' s',20,31);
+  c.fillStyle='#e5dbcb';c.fillText(frame.t.toFixed(2)+t(' ث',' s'),20,31);
   c.textAlign='right';c.fillText('x '+frame.x.toFixed(1)+' m    v '+frame.v.toFixed(1)+' m/s',614,31);
   c.fillStyle='#35423e';c.fillRect(x(0),y(12),550,y(8)-y(12));
   const interval=Math.max(2,Math.ceil((hi-lo)/4));
@@ -56,7 +56,7 @@ function drawTrack(canvas,r,sec,t){
   for(let tick=0;tick<=4;tick++){
     const seconds=tick*r.duration/4,px=x(seconds);
     c.fillStyle='#4c5651';c.fillRect(px,57,1,152);
-    c.textAlign='center';c.fillStyle='#c9c8bc';c.fillText(Number(seconds.toFixed(2))+' s',px,237);
+    c.textAlign='center';c.fillStyle='#c9c8bc';c.fillText(Number(seconds.toFixed(2))+t(' ث',' s'),px,237);
   }
   c.strokeStyle='#91a299';c.lineWidth=2;c.beginPath();
   r.frames.forEach((f,i)=>i?c.lineTo(x(f.t),y(f.x)):c.moveTo(x(f.t),y(f.x)));c.stroke();
