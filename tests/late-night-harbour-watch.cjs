@@ -115,6 +115,7 @@ test('stand the harbour watch at the project mount',async t=>{
       const report=control('report');
       await report.locator('h2').waitFor();
       assert.equal(await report.getAttribute('data-verdict'),'clean');
+      assert.ok(await control('finish').isDisabled(),'a finished watch cannot be ended again');
       assert.deepEqual((await report.locator('[data-event]').evaluateAll(items=>items.map(li=>li.dataset.event))).sort(),['arrived','cleared','crossed']);
       await fits();
 
@@ -142,6 +143,7 @@ test('stand the harbour watch at the project mount',async t=>{
       await press('restart');
       assert.equal(await control('clock').textContent(),'03:10:00');
       assert.equal(await control('report').locator('h2').count(),0);
+      assert.ok(await control('finish').isEnabled());
       await control('scenario').selectOption('current');
       await press('pick-najm');await press('order-stop');
       assert.deepEqual(await replies(),['silent']);

@@ -107,8 +107,9 @@ export default function watch(ui) {
   const report = element('section', null, 'vts-report');
   report.dataset.sim = 'report';
   const actions = element('div', null, 'sim-actions');
+  const finish = action('finish', t('أنهِ النوبة الآن', 'End the watch now'), () => { while (!S.state.over) R.step(S.state); S.running = false; sync(); });
   actions.append(
-    action('finish', t('أنهِ النوبة الآن', 'End the watch now'), () => { while (!S.state.over) R.step(S.state); S.running = false; sync(); }),
+    finish,
     action('restart', t('ابدأ النوبة من جديد', 'Restart the watch'), () => { session = fresh(S.scenario); restart(); }));
   box.append(bar, brief, frame, warn, fleet, pad, radioTitle, radio, actions, report);
   ui.root.replaceChildren(box);
@@ -357,6 +358,7 @@ export default function watch(ui) {
     clock.value = R.clock(S.state.time);
     run.textContent = S.state.over ? t('انتهت النوبة', 'Watch ended') : S.running ? t('أوقف الزمن مؤقتًا', 'Pause') : S.state.time > 0 ? t('تابع النوبة', 'Continue the watch') : t('ابدأ النوبة', 'Start the watch');
     run.disabled = S.state.over;
+    finish.disabled = S.state.over;
     run.setAttribute('aria-pressed', String(S.running));
     paceButtons.forEach((b, i) => b.setAttribute('aria-pressed', String(SPEEDS[i] === S.speed)));
     canvas.dataset.time = S.state.time.toFixed(2);
