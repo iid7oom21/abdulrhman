@@ -21,7 +21,7 @@ function soundMuseum(ui){
   function detail(){museum(view.ctx,s.id,.6);view.caption.textContent=t(...machines[s.id])+' · '+t(...soundWords[s.id]);}
   function refresh(){allow.textContent=audible?t('اكتم الصوت','Mute sound'):t('فعّل الصوت','Enable sound');allow.setAttribute('aria-pressed',String(audible));exhibits.querySelectorAll('button').forEach((b,i)=>b.setAttribute('aria-pressed',String(i===s.id)));
     write.disabled=s.order.includes(s.id)||s.order.length>=3;undo.disabled=!s.order.length;show.disabled=s.order.length!==3;
-    queue.replaceChildren(...s.order.map((id,i)=>el('li',i*2+'–'+(i+1)*2+' s · '+t(...machines[id])+' · '+t(...soundWords[id]))));}
+    queue.replaceChildren(...s.order.map((id,i)=>el('li',i*2+'–'+(i+1)*2+t(' ث',' s')+' · '+t(...machines[id])+' · '+t(...soundWords[id]))));}
   function change(){player?.stop();stopAudio();screen.replaceChildren();out.replaceChildren();s.at=0;s.seen=false;refresh();detail();}
   const write=button(t('خذ لحظة من هذه الآلة','Collect this machine'),()=>{if(!s.order.includes(s.id)&&s.order.length<3)s.order.push(s.id);change();},'collect');
   const undo=button(t('ارفع آخر لحظة','Remove last moment'),()=>{s.order.pop();change();},'undo');

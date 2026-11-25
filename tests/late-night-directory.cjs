@@ -231,6 +231,7 @@ test('Late Night public directory, both languages, real paths, recovery and navi
     assert.equal(await padKey.isVisible(), true);
     for (let i = 0; i < 6; i++) await page.keyboard.press('ArrowRight');
     assert.equal(await button('station-view').getAttribute('data-phase'), 'won');
+    assert.match(await page.locator('.game-clock output').innerText(), /^\d+\.\d \/ 10 ث$/, 'the Arabic clock uses the Arabic seconds unit');
     assert.equal(await padKey.isVisible(), false, 'movement is hidden after the crossing');
   });
 
