@@ -144,7 +144,8 @@
       return;
     }
     // Local anchors keep the page's own drawer, focus and scroll behavior.
-    if (target.pathname === location.pathname && target.search === location.search) return;
+    const legacyFilmsLink = ['#films', '#episodeModal'].includes(target.hash) && !document.body.hasAttribute('data-screening-gallery');
+    if (target.pathname === location.pathname && target.search === location.search && !legacyFilmsLink) return;
     remember();
     if (host.navigate(target.href)) {
       event.preventDefault();
@@ -170,5 +171,6 @@
     syncMedia();
     scheduleDepth();
   }, { once: true });
-  document.addEventListener('raven:language', () => host.ready(window));
+  // Let every page component translate its title and metadata before the host copies them.
+  document.addEventListener('raven:language', () => queueMicrotask(() => host.ready(window)));
 })();

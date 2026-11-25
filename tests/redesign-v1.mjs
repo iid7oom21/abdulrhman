@@ -1,6 +1,6 @@
 // RAVEN homepage redesign v1: presentation checks against a served repository root.
 // Run: RAVEN_REDESIGN_URL=http://127.0.0.1:8080/ node tests/redesign-v1.mjs
-// Checks that the artwork bytes are unchanged, the hero frame keeps its contained ratio,
+// Checks approved artwork, the portrait on the homepage and the contained behind-the-scenes film,
 // no text is below 11px, no horizontal scroll at 320/390/1366, and the music bar still works.
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -14,7 +14,9 @@ const repoRoot = new URL('..', import.meta.url).pathname;
 // Artwork that must stay byte-identical to the approved files.
 const PINNED = {
   'assets/raven-home-share.jpg': 'bd4f79aa8cc65d6828b1f4310a1b66c9bd7d639a7c43bce8005dfdb7f47a1547',
-  'assets/intro/raven-intro.jpg': '4b54c40b0e0a13daee2f4f6def71e88ffb640122ecded31f63c188dac68743a5',
+  // The owner updated the intro artwork in d2b94c7.
+  'assets/intro/raven-intro.jpg': '173a2162da6ba4016bd00130657e2ef604e8b988fb7fe2c7753f1dcd76253f6d',
+  'assets/intro/raven-intro-poster.jpg': '9230b490bc76ba707e237de9e053934848be259c91f1a6f05bf8df72f9961171',
   'raven/terminal-preview/assets/raven-intro-poster.jpg': '54511f8eedff55b8419c797f1348f9361bc07c6c011b46f2938ede3b92e213ca',
   'raven/terminal-preview/assets/hero-poster.jpg': '8470eab08bec6cd3d4a7dabb9575412a6146445d5adadf1588d9691eb9922e8b',
 };
@@ -24,7 +26,7 @@ for (const [file, sha] of Object.entries(PINNED)) {
 }
 console.log('PASS: artwork bytes match the pinned SHA-256 values');
 
-const browser = await chromium.launch({ headless: true });
+const browser = await chromium.launch({ headless: true, executablePath: process.env.CHROMIUM_PATH });
 try {
   for (const [label, width, height] of [['320', 320, 640], ['390', 390, 844], ['1366', 1366, 900]]) {
     const context = await browser.newContext({ viewport: { width, height }, reducedMotion: 'reduce', locale: 'ar-SA' });
@@ -38,6 +40,11 @@ try {
     await page.goto(base + 'raven/content.html', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1500);
 
+    const portrait = page.locator('.screenHeroArt img');
+    await portrait.evaluate(img => img.decode());
+    assert.match(await portrait.getAttribute('src'), /raven-intro-poster\.jpg$/);
+    assert.equal(await page.locator('[data-visual-episode], #episodeModal').count(), 0);
+    assert.match(await page.locator('.rvnHeroWatch').getAttribute('href'), /episodes\//);
     const metrics = await page.evaluate(() => {
       const overflow = document.documentElement.scrollWidth - document.documentElement.clientWidth;
       const small = [];
@@ -55,8 +62,8 @@ try {
     });
     assert.equal(metrics.overflow, 0, `${label}px: horizontal scroll ${metrics.overflow}px`);
     assert.deepEqual(metrics.small, [], `${label}px: text under 11px: ${metrics.small.slice(0, 5).join(', ')}`);
-    assert.equal(metrics.fit, 'contain', `${label}px: hero must keep object-fit: contain`);
-    console.log(`PASS: ${label}px layout — no horizontal scroll, no text under 11px, hero contained`);
+    assert.equal(metrics.fit, 'contain', `${label}px: the behind-the-scenes film keeps its full frame`);
+    console.log(`PASS: ${label}px layout — no horizontal scroll, no text under 11px, poster loaded, film contained`);
 
     if (label === '390') {
       // The music bar lives in the parent shell (raven/index.html), not in content.html.

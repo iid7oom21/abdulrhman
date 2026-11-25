@@ -173,8 +173,11 @@ test('atmosphere gallery remains optional, silent and independent of case state'
       await scope.locator('[data-raven-language="en"]').click();await localized(scope,'en');
       assert.equal(await handle.evaluate(media=>media.isConnected),true,'language change retains the media element');
       assert.ok(await video.evaluate((media,before)=>media.currentTime>=before,time));await plays(video);
-      await scope.locator('.rvnHeroWatch').click();await scope.locator('#episodeModal.open').waitFor();
-      assert.equal(await video.evaluate(media=>media.paused),true,'opening the original film pauses the atmosphere clip');
+      await scope.locator('.rvnHeroWatch').click();
+      await page.waitForURL(url => url.pathname.endsWith('/raven/episodes/'));
+      assert.equal(await scope.locator('[data-atmosphere-card] video').count(),0,'leaving the homepage unloads its clips');
+      await scope.locator('[data-visual-episode="1"]').click();
+      await scope.locator('#episodeModal.open').waitFor();
       assert.equal(await scope.locator('[data-rvn-episode]').count(),3);
       await page.keyboard.press('Escape');await scope.locator('#episodeModal.open').waitFor({state:'hidden'});
     });

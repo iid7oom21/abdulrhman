@@ -27,7 +27,7 @@ test('artwork failures stay local to previews and recover only after an explicit
   const browser = await chromium.launch({headless:true, executablePath:process.env.CHROMIUM_PATH || '/usr/bin/chromium', args:['--no-sandbox']});
   t.after(async () => { await browser.close(); await new Promise(resolve => server.close(resolve)); });
 
-  async function session({width = 390, failed = [], delayScript = false, framed = false, controlledClock = false} = {}) {
+  async function session({width = 390, failed = [], delayScript = false, framed = false, controlledClock = false, film = false} = {}) {
     const context = await browser.newContext({viewport:{width,height:844}, reducedMotion:'reduce'});
     const page = await context.newPage(), requests = [], writes = [], errors = [], heldRequests = [];
     const failures = new Set(failed);
@@ -51,15 +51,19 @@ test('artwork failures stay local to previews and recover only after an explicit
       }
       return route.abort();
     });
-    await page.goto(base + (framed ? '/raven/' : '/raven/content.html'));
+    await page.goto(base + (film ? '/raven/episodes/content.html?episode=1' : framed ? '/raven/' : '/raven/content.html'));
     if (framed) {
       await page.locator('#archive-skip').click();
       await page.frameLocator('#site-content').locator('.rvnVaultGrid').waitFor({state:'attached'});
     }
     const view = framed ? await (await page.locator('#site-content').elementHandle()).contentFrame() : page;
-    await view.locator('#vault > details > summary').click();
-    await view.locator('.rvnVaultGrid').scrollIntoViewIfNeeded();
-    await view.waitForFunction(() => [...document.querySelectorAll('.rvnVaultGrid img')].every(img => img.complete));
+    if (film) {
+      await view.locator('#episodeModal.open').waitFor();
+    } else {
+      await view.locator('#vault > details > summary').click();
+      await view.locator('.rvnVaultGrid').scrollIntoViewIfNeeded();
+      await view.waitForFunction(() => [...document.querySelectorAll('.rvnVaultGrid img')].every(img => img.complete));
+    }
     return {context,page,view,requests,writes,errors,failures,holds,heldRequests};
   }
   const count = (requests, original) => requests.filter(value => value.split('?')[0] === original).length;
@@ -72,12 +76,11 @@ test('artwork failures stay local to previews and recover only after an explicit
 
   await t.test('healthy images keep their URLs and art; no fallback or retry requests', async () => {
     const {context,page,requests,writes,errors} = await session();
-    await page.waitForFunction(() => document.querySelector('#ravenEpisodePlayer').hasAttribute('aria-describedby'));
     for (let i = 0; i < 3; i++) {
       assert.equal(await cards(page).nth(i).locator('img').getAttribute('src'), thumbnails[i]);
       assert.ok(await cards(page).nth(i).locator('img').evaluate(img => img.naturalWidth > 0));
     }
-    assert.equal(await page.locator('#ravenEpisodePlayer').getAttribute('poster'), poster);
+    assert.equal(await page.locator('#ravenEpisodePlayer').count(), 0);
     assert.equal(await page.locator('.rvnMediaUnavailable').count(), 0);
     assert.equal(await page.locator('.rvnMediaRetries').isVisible(), false);
     assert.match(await page.locator('link[rel="icon"]').getAttribute('href'), /^\.\/assets\/favicon\.svg$/);
@@ -95,7 +98,7 @@ test('artwork failures stay local to previews and recover only after an explicit
     assert.equal(await first.getAttribute('href'), originalLink);
     assert.equal(await good.locator('img').getAttribute('src'), thumbnails[1]);
     assert.ok(await good.locator('img').evaluate(img => img.naturalWidth > 0));
-    assert.equal(await page.locator('#ravenEpisodePlayer').getAttribute('poster'), poster);
+    assert.equal(await page.locator('#ravenEpisodePlayer').count(), 0);
     const requestsBefore = count(requests, thumbnails[0]);
     await page.waitForTimeout(180);
     assert.equal(count(requests, thumbnails[0]), requestsBefore, 'failure must not schedule a retry');
@@ -130,14 +133,12 @@ test('artwork failures stay local to previews and recover only after an explicit
   });
 
   await t.test('failed film image leaves video and hero sources intact; poster retry never reloads video', async () => {
-    const {context,page,requests,writes,errors,failures} = await session({failed:[poster]});
+    const {context,page,requests,writes,errors,failures} = await session({film:true,failed:[poster]});
     const player = page.locator('#ravenEpisodePlayer');
-    await page.locator('.film.raven.rvnMediaFilmUnavailable').waitFor();
+    await page.locator('.rvnMediaPosterStatus button').waitFor();
     assert.equal(await player.getAttribute('poster'), null);
-    assert.equal(await page.locator('.film.raven').evaluate(node => getComputedStyle(node, '::before').backgroundImage), 'none');
+    assert.equal(await page.locator('.ep-hero-image img').evaluate(img => img.complete && img.naturalWidth > 0), true);
     assert.equal(await page.locator('#rvnVideoError').getAttribute('hidden'), '');
-    assert.equal(await page.locator('#ravenHeroMotion').getAttribute('poster'), './terminal-preview/assets/hero-poster.jpg');
-    assert.equal(await page.locator('.rvnVaultGrid .rvnMediaUnavailable').count(), 0);
     const src = await player.getAttribute('src');
     await page.route(src, route => route.fulfill({status:200, contentType:'video/mp4', body:fs.readFileSync(path.join(root, 'raven/terminal-preview/assets/hero-loop.mp4'))}));
     await player.evaluate(video => video.load());
@@ -150,14 +151,13 @@ test('artwork failures stay local to previews and recover only after an explicit
     });
     const requestsBefore = count(requests, poster);
     failures.delete(poster);
-    const retry = page.locator('.rvnMediaRetries button').last();
+    const retry = page.locator('.rvnMediaPosterStatus button');
     await retry.click();
     await page.waitForFunction(() => document.querySelector('#ravenEpisodePlayer').hasAttribute('poster'));
     assert.equal(await player.getAttribute('src'), src);
-    assert.equal(await page.locator('.film.raven').evaluate(node => node === document.activeElement), true, 'poster retry returns focus to the visible film link when the theater is closed');
+    assert.equal(await player.evaluate(node => node === document.activeElement), true, 'poster retry returns focus to the current film');
     assert.match(await player.getAttribute('poster'), /raven-film-card\.jpg\?raven-media-retry=1$/);
     assert.deepEqual(await page.evaluate(() => window.posterVideoCalls), []);
-    assert.equal(await page.locator('.film.raven').evaluate(node => getComputedStyle(node, '::before').backgroundImage.includes('raven-media-retry=1')), true);
     assert.equal(await page.locator('#rvnVideoError').getAttribute('hidden'), '');
     // Poster/CSS consumers can each load the recovered URL, but no second probe/attempt occurs.
     assert.ok(count(requests, poster) > requestsBefore);
@@ -229,11 +229,10 @@ test('artwork failures stay local to previews and recover only after an explicit
     await context.close();
   });
 
-  await t.test('a stalled poster retry releases both controls without touching video playback', async () => {
-    const {context,page,requests,writes,errors,holds} = await session({failed:[poster], controlledClock:true});
-    await page.locator('.film.raven.rvnMediaFilmUnavailable').waitFor();
-    const retry = page.locator('.rvnMediaRetries button').last();
-    const posterControls = page.locator('.rvnMediaPosterStatus button');
+  await t.test('a stalled poster retry stays available without touching video playback', async () => {
+    const {context,page,requests,writes,errors,holds} = await session({film:true,failed:[poster], controlledClock:true});
+    await page.locator('.rvnMediaPosterStatus button').waitFor();
+    const retry = page.locator('.rvnMediaPosterStatus button');
     const src = await page.locator('#ravenEpisodePlayer').getAttribute('src');
     await page.evaluate(() => {
       window.posterVideoCalls = [];
@@ -242,10 +241,9 @@ test('artwork failures stay local to previews and recover only after an explicit
     const requestCount = count(requests, poster);
     holds.add(poster + '?raven-media-retry=1');
     await retry.click();
-    assert.equal(await posterControls.getAttribute('aria-disabled'), 'true');
+    assert.equal(await retry.getAttribute('aria-disabled'), 'true');
     await page.clock.fastForward(20001);
     assert.equal(await retry.getAttribute('aria-disabled'), 'false');
-    assert.equal(await posterControls.getAttribute('aria-disabled'), 'false');
     assert.equal(await retry.evaluate(node => node === document.activeElement), true);
     assert.match(await page.locator('.rvnMediaPosterStatus [role="status"]').innerText(), /وقتًا أطول/);
     await page.clock.fastForward(60000);

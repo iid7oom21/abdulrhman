@@ -1,6 +1,6 @@
 // The host owns one soundtrack while the content document changes.
 import { createSoundtrack } from './site-audio.js?v=mati-1.0.1';
-import { createEntryGate } from './site-entry.js?v=intro-3';
+import { createEntryGate } from './site-entry.js?v=screen-room-1';
 
 const root = new URL('./', import.meta.url);
 // History navigation changes the document base even though the shell stays mounted.
@@ -13,7 +13,15 @@ const loadMessage = document.querySelector('#site-load-message');
 const retry = document.querySelector('#site-retry');
 const direct = document.querySelector('#site-direct');
 const soundtrack = createSoundtrack(root);
-const routes = ['raven/', 'raven/deleted-name/', 'raven/deleted-name/play/', 'raven/investigation-lab/', 'raven/after-show/'].map(path => new URL(path, root).pathname);
+const musicSettings = document.querySelector('#music-settings');
+musicSettings?.addEventListener('keydown', event => {
+  if (event.key !== 'Escape' || !musicSettings.open) return;
+  musicSettings.open = false;
+  musicSettings.querySelector('summary')?.focus();
+});
+const homePath = new URL('raven/', root).pathname;
+const episodesPath = new URL('raven/episodes/', root).pathname;
+const routes = [homePath, episodesPath, ...['raven/deleted-name/', 'raven/deleted-name/play/', 'raven/investigation-lab/', 'raven/after-show/'].map(path => new URL(path, root).pathname)];
 const pageMetadata = [
   'meta[name="description"]', 'meta[property^="og:"]', 'meta[name^="twitter:"]',
   'link[rel="canonical"]', 'link[rel="alternate"][hreflang]',
@@ -28,6 +36,7 @@ let reconciling = false;
 let loadTimer;
 let loadFailed = false;
 let entryGate = null;
+let pendingFilm = null;
 
 function route(value) {
   let url;
@@ -36,6 +45,13 @@ function route(value) {
   const path = url.pathname.replace(/(?:index|content)\.html$/, '').replace(/\/?$/, '/');
   if (!routes.includes(path)) return null;
   url.pathname = path;
+  const oldFilmsAnchor = ['#films', '#episodeModal'].includes(url.hash);
+  if (path === homePath && (oldFilmsAnchor || url.searchParams.has('episode'))) url.pathname = episodesPath;
+  if (url.pathname === episodesPath) {
+    if (oldFilmsAnchor) url.hash = '';
+    const episode = Number(url.searchParams.get('episode'));
+    if (![1, 2, 3].includes(episode)) url.searchParams.delete('episode');
+  }
   return url;
 }
 
@@ -80,7 +96,6 @@ function restoreChild() {
 }
 
 function show(url, childState = null, view = null, force = false, focus = false) {
-  document.body.classList.remove('is-watching');
   destination = { url, childState, view, focus };
   const content = new URL(url);
   content.pathname += 'content.html';
@@ -92,6 +107,7 @@ function show(url, childState = null, view = null, force = false, focus = false)
   }
   // While a document is loading, retain the latest requested hash and query.
   if (!force && pendingPath === url.pathname) return;
+  document.body.classList.remove('is-watching');
   departingDocument = frame.contentDocument;
   soundtrack.setDepth?.(0, null);
   loadedDocument = null;
@@ -129,13 +145,32 @@ function show(url, childState = null, view = null, force = false, focus = false)
   frame.contentWindow.location.replace(content.href);
 }
 
+// First let the gallery own the child document in the browser's joint history.
+// Once it is ready, opening the selected film adds the playable entry above it.
+function arriveViaGallery(url, pushGallery) {
+  pendingFilm = url;
+  const gallery = new URL(url);
+  gallery.searchParams.delete('episode');
+  updateHistory(gallery, pushGallery);
+  show(gallery);
+}
+
 function navigate(value) {
   const url = route(value);
   if (!url) return false;
+  pendingFilm = null;
   if (url.href === location.href) return true;
   saveView();
-  updateHistory(url, true);
-  show(url, null, null, false, true);
+  let state = null;
+  if (url.pathname === episodesPath && url.searchParams.has('episode')) {
+    if (destination.url.pathname !== episodesPath) {
+      arriveViaGallery(url, true);
+      return true;
+    }
+    state = {rvnTheaterEntry:true};
+    updateHistory(url, !destination.url.searchParams.has('episode'), state);
+  } else updateHistory(url, true);
+  show(url, state, null, false, true);
   return true;
 }
 
@@ -191,9 +226,10 @@ window.RavenSite = {
     loadFailed = false;
     syncLoading();
     soundtrack.sync();
+    document.body.classList.toggle('is-watching', source.body.classList.contains('rvnViewing'));
     entryGate?.sync();
     if (arrived && destination.focus && !destination.view &&
-        !entryGate?.open && !document.activeElement?.closest('.site-player')) {
+        !source.body.classList.contains('rvnViewing') && !entryGate?.open && !document.activeElement?.closest('.site-player')) {
       const main = source.querySelector('main');
       if (main) {
         if (!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
@@ -201,22 +237,27 @@ window.RavenSite = {
       }
     }
     reconciling = false;
+    if (pendingFilm && destination.url.pathname === episodesPath) navigate(pendingFilm.href);
   }
 };
 
 retry.addEventListener('click', () => show(destination.url, destination.childState, destination.view, true));
 history.scrollRestoration = 'manual';
 window.addEventListener('popstate', event => {
+  pendingFilm = null;
   const url = route(location.href);
   if (url) show(url, event.state?.childState, event.state?.view, false, true);
 });
 const initial = route(location.href) || new URL('raven/', root);
-updateHistory(initial, false, history.state?.childState, history.state?.view);
-show(initial, history.state?.childState, history.state?.view);
+if (initial.pathname === episodesPath && initial.searchParams.has('episode') && !history.state?.ravenShell) arriveViaGallery(initial, false);
+else {
+  updateHistory(initial, false, history.state?.childState, history.state?.view);
+  show(initial, history.state?.childState, history.state?.view);
+}
 entryGate = createEntryGate({
   root,
   navigate,
-  show: initial.pathname === routes[0] && !initial.hash && !initial.searchParams.has('episode'),
+  show: initial.pathname === homePath && !initial.hash,
   onEnter: soundtrack.enter,
   onClose() {
     destination.focus = true;

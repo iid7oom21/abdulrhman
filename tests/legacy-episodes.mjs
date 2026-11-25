@@ -10,6 +10,7 @@ import { execFileSync } from 'node:child_process';
 const require = createRequire(import.meta.url);
 const { chromium, webkit, expect } = require(process.env.PLAYWRIGHT_TEST_MODULE || 'playwright/test');
 const base = process.env.RAVEN_LEGACY_URL || 'http://127.0.0.1:8786/raven/';
+const galleryPath = new URL('episodes/', base).pathname;
 const work = mkdtempSync(join(tmpdir(), 'raven-legacy-episodes-'));
 const fixture = join(work, 'playback.mp4');
 execFileSync('ffmpeg', ['-hide_banner', '-loglevel', 'error', '-f', 'lavfi', '-i', 'color=c=black:s=160x90:r=2', '-t', '180', '-an', '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', fixture]);
@@ -125,30 +126,37 @@ try {
   assert.equal(await frame.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
   for (const id of [1,2,3]) assert.ok(requestedFilms.some(url => url.endsWith(`/episode-${id}.mp4`)), `film ${id} was requested`);
 
+  await frame.locator('#rvnAfterBackstage').click();
+  await page.waitForURL(url=>url.pathname===new URL(base).pathname && url.hash==='#studio');
+  await expect(page.frameLocator('#site-content').locator('#studio')).toBeVisible();
+
   // Every saved deep link retains its own source ID, note and locale; no aliasing to another film.
-  for (const id of [1,2,3]) {
-    await page.goto(new URL(`?episode=${id}&lang=en`, base).href, { waitUntil: 'domcontentloaded' });
+  for (const entry of ['', 'episodes/']) for (const id of [1,2,3]) {
+    await page.goto(new URL(`${entry}?episode=${id}&lang=en`, base).href, { waitUntil: 'domcontentloaded' });
     const linked = await (await page.locator('#site-content').elementHandle()).contentFrame();
     await linked.waitForFunction(() => document.documentElement.dataset.ravenRefinement === '2');
     await expect(linked.locator('#ravenEpisodePlayer')).toHaveAttribute('src', new RegExp(`episode-${id}\\.mp4$`));
     await expect(linked.locator('#rvnEndNote')).toHaveValue(expectedNotes[id]);
     await expect(linked.locator('#rvnEpisodeStatus')).toHaveText(`Episode ${id}`);
     await expect(linked.locator('[data-rvn-i18n="filmsIntro"]')).toHaveText('Three episodes. Begin with episode one.');
+    assert.equal(new URL(page.url()).pathname, galleryPath, 'Legacy and current episode links resolve to the gallery');
+    await expect(linked.locator('[data-screening-gallery] [data-visual-episode]')).toHaveCount(3);
     for (const lang of ['ar','en']) {
       await linked.locator(`#episodeModal [data-rvn-lang="${lang}"]`).click();
       await expect(linked.locator('#rvnEpisodeStatus')).toHaveText(lang === 'en' ? `Episode ${id}` : `الحلقة ${id}`);
       assert.equal(new URL(page.url()).searchParams.get('episode'), String(id));
-      assert.equal(new URL(page.url()).searchParams.get('lang'), lang === 'en' ? 'en' : null);
+      assert.equal(new URL(page.url()).searchParams.get('lang') || 'ar', lang);
       await expect(linked.locator('#rvnEndNote')).toHaveValue(expectedNotes[id]);
       await assertStorage(linked);
     }
     assert.equal(await linked.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), true);
   }
-  console.log('PASS: three original episode IDs, fixture playback/resume, isolated progress and notes, final next button, deep links 1/2/3, AR/EN switching, music-off and 320px layout.');
+  console.log('PASS: three original episode IDs, fixture playback/resume, isolated progress and notes, old and canonical deep links 1/2/3, AR/EN switching, music-off and 320px layout.');
   // Revisit the film cards with another tab, without opening a film or consuming its bookmark.
   const shelf = await context.newPage();
   await shelf.goto(new URL('?lang=en#films',base).href);
   const shelfFrame = await (await shelf.locator('#site-content').elementHandle()).contentFrame();
+  await shelf.waitForURL(url=>url.pathname===galleryPath);
   const mark = shelfFrame.locator('[data-film-later="2"]');
   await expect(mark).toHaveAccessibleName('Episode 2 — Watch later');
   await expect(mark).toHaveAttribute('aria-pressed','true');
@@ -172,7 +180,7 @@ try {
   await expect(shelfFrame.locator('.rvnWatchLaterFeedback:visible').first()).toHaveText(/could not confirm/i);
   const third=shelfFrame.locator('[data-film-later="3"]');
   await third.click(); await expect(third).toHaveAttribute('aria-pressed','true');
-  await shelfFrame.locator('.rvnLanguage [data-rvn-lang="ar"]:visible').first().click();
+  await shelfFrame.locator('[data-raven-language="ar"]:visible').first().click();
   await expect(shelfFrame.locator('.rvnWatchLaterFeedback:visible').first()).toHaveText(/تعذّر تأكيد/);
   await shelfFrame.evaluate(()=>{
     const get=Storage.prototype.getItem;
@@ -189,6 +197,60 @@ try {
   await assertStorage(shelfFrame);
   console.log('PASS: manual watch-later from credits, unchanged playback, independent bookmarks across reload and tabs, AR/EN, final episode and failed writes.');
   await context.close();
+
+  // A visitor enters the library without fetching a film. A fresh episode offers
+  // its ordinary open action, and only the episode with real progress can resume.
+  for (const [language,width] of [['ar',320],['en',390]]) {
+    const visit=await browser.newContext({viewport:{width,height:844},hasTouch:true,reducedMotion:'reduce'});
+    try {
+      await visit.addInitScript(()=>{
+        sessionStorage.setItem('raven_studio_ident_v1','1');
+        sessionStorage.setItem('raven_music_enabled_v2','off');
+        if(!localStorage.getItem('library-fixture')) {
+          localStorage.setItem('raven17_episode_2_progress','39');
+          localStorage.setItem('raven17_episode_3_progress','66');
+          localStorage.setItem('library-fixture','1');
+        }
+      });
+      const media=[];
+      await interceptFilms(visit,path=>media.push(path));
+      const tab=await visit.newPage();
+      const scope=tab.frameLocator('#site-content');
+      await tab.goto(new URL('?lang='+language,base).href);
+      const home=scope.locator('.rvnHeroWatch[data-raven-route]');
+      await expect(home).toBeVisible();
+      await expect(scope.locator('[data-visual-episode],.rvnVisualEpisode,#ravenEpisodePlayer')).toHaveCount(0);
+      await home.tap();
+      await tab.waitForURL(url=>url.pathname===galleryPath&&!url.searchParams.has('episode'));
+      await expect(scope.locator('[data-screening-gallery] [data-visual-episode]')).toHaveCount(3);
+      await expect(scope.locator('#episodeModal')).toBeHidden();
+      assert.equal(await scope.locator('html').getAttribute('lang'),language);
+      await expect(scope.locator('[data-film-resume="1"]')).toBeHidden();
+      await expect(scope.locator('[data-film-resume="2"]')).toBeVisible();
+      assert.deepEqual(media,[],'Browsing the library does not start a film');
+      await scope.locator('[data-film-later="3"]').tap();
+      assert.deepEqual(media,[],'Queuing a film does not play it');
+      const native=scope.locator('#ravenEpisodePlayer');
+      await scope.locator('[data-film-resume="2"]').tap();
+      await expect.poll(()=>native.evaluate(v=>!v.paused && v.currentTime>=39 && v.currentTime<46)).toBe(true);
+      await tab.evaluate(()=>history.back());
+      await tab.waitForURL(url=>url.pathname===galleryPath&&!url.searchParams.has('episode'));
+      await expect(scope.locator('#episodeModal')).toBeHidden();
+      await scope.locator('[data-film-start="2"]').tap();
+      await expect.poll(()=>native.evaluate(v=>!v.paused && v.readyState>=2 && v.currentTime<5)).toBe(true);
+      await scope.locator('.episodeClose').tap();
+      await expect(scope.locator('#episodeModal')).toBeHidden();
+      await expect(scope.locator('[data-film-resume="2"]')).toBeHidden();
+      assert.equal(await native.evaluate(()=>localStorage.getItem('raven17_episode_3_progress')),'66');
+      await expect(scope.locator('[data-film-later="3"]')).toHaveAttribute('aria-pressed','true');
+      assert.ok(media.length && media.every(path=>path.endsWith('episode-2.mp4')));
+      await scope.locator('[data-gallery-home]:visible').first().tap();
+      await expect(home).toBeVisible();
+      await tab.waitForURL(url=>url.pathname===new URL(base).pathname);
+      await expect(scope.locator('[data-visual-episode]')).toHaveCount(0);
+    } finally { await visit.close(); }
+  }
+  console.log('PASS: home → library, no film request while browsing, explicit restart/resume, browser Back, close and return home at 320 and 390px.');
 
   // Fail the actual MP4 response before metadata arrives. At this point a native
   // player's currentTime is zero even when this episode has a saved position.
@@ -353,7 +415,7 @@ try {
 
       await noteFrame.locator('.episodeClose').click();
       await expect(noteFrame.locator('#episodeModal')).toHaveAttribute('aria-hidden','true');
-      await noteFrame.locator('[data-rvn-episodes]').first().click();
+      await noteFrame.locator('[data-visual-episode="1"]').click();
       await revealNote();
       assert.equal(await noteFrame.evaluate(() => window.noteTestDocument), 'same-document');
       await expect(note).toHaveValue(text1);

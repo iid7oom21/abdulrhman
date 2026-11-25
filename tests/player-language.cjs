@@ -65,7 +65,7 @@ test('player language survives navigation and simulation keeps each recorded rep
     assert.equal(new URL(page.url()).searchParams.get('lang'), 'en');
     assert.equal(await frame.locator('html').getAttribute('lang'), 'en');
     assert.equal(await page.locator('#music-track-picker option').count(), 13);
-    assert.equal(await frame.locator('[data-rvn-episode]').count(), 3);
+    assert.equal(await frame.locator('[data-rvn-episode]').count(), 0, 'the homepage leads to the episode library');
     await frame.locator('[data-raven-language="ar"]').click();
     await page.waitForURL(url => !url.searchParams.has('lang'));
     await page.reload();

@@ -95,6 +95,18 @@ if('IntersectionObserver' in window&&sectionTargets.size){
   navigationResize=requestAnimationFrame(()=>{navigationResize=0;observeNavigation();});
  },{passive:true});
 }
+const galleryUrl = new URL('../episodes/', document.currentScript.src);
+const galleryPage = document.body.hasAttribute('data-screening-gallery');
+function episodeDestination(n) {
+ const url = new URL(galleryUrl);
+ if(n)url.searchParams.set('episode',String(n));
+ if(lang==='en')url.searchParams.set('lang','en');
+ return url;
+}
+function visitGallery(n) {
+ const url=episodeDestination(n);
+ if(!window.ravenNavigate?.(url.href))location.assign(url.href);
+}
 const EPISODES=[
  {id:1,sourceId:1,src:'https://res.cloudinary.com/du88n6b83/video/upload/v1789985712/raven17/episode-1.mp4'},
  {id:2,sourceId:2,src:'https://res.cloudinary.com/du88n6b83/video/upload/v1789985735/raven17/episode-2.mp4'},
@@ -128,6 +140,7 @@ function saveProgress(episodeId){
 window.RavenEpisodeProgress={read:readProgress};
 function episodeText(n){return lang==='en'?'Episode '+n:'الحلقة '+n}
 function selectEpisode(n,autoplay,updateRoute=true){
+ if(!galleryPage){visitGallery(n);return;}
  n=Math.max(1,Math.min(EPISODES.length,Math.trunc(Number(n)||1)));const previousEpisode=currentEpisode;
  const ep=EPISODES[n-1];const changing=theaterPlayer&&theaterPlayer.getAttribute('src')!==ep.src;if(changing){saveProgress(previousEpisode);theaterPlayer.pause();currentEpisode=n;resumeApplied=false;retryAt=null;lastProgressWrite=0;theaterPlayer.src=ep.src;theaterPlayer.load();}else{currentEpisode=n;}
  document.dispatchEvent(new CustomEvent('raven:episode',{detail:{id:n}}));
@@ -159,9 +172,16 @@ function hideEpisodes(){
  const target=targets.find(node=>node?.isConnected&&node!==document.body&&!node.disabled&&node.getClientRects().length&&!node.closest('[hidden],[inert]')&&getComputedStyle(node).visibility!=='hidden');
  target?.focus({preventScroll:true});
 }
-function openEpisodes(e,requested){e?.preventDefault?.();const n=requested??readEpisodeRoute()??currentEpisode;const modal=$('#episodeModal'),push=!modal?.classList.contains('open')&&!theaterWaitingForIntro&&readEpisodeRoute()===null;writeEpisodeRoute(Math.max(1,Math.min(EPISODES.length,Math.trunc(Number(n)||1))),push);showEpisodes(readEpisodeRoute());}
+function openEpisodes(event,requested){
+ event?.preventDefault?.();
+ if(!galleryPage){visitGallery(requested??readEpisodeRoute());return;}
+ const n=requested??readEpisodeRoute()??currentEpisode;
+ const push=!$('#episodeModal')?.classList.contains('open')&&!theaterWaitingForIntro&&readEpisodeRoute()===null;
+ writeEpisodeRoute(Math.max(1,Math.min(EPISODES.length,Math.trunc(Number(n)||1))),push);
+ showEpisodes(readEpisodeRoute());
+}
 function closeEpisodes(){if(!$('#episodeModal')?.classList.contains('open')&&!theaterWaitingForIntro)return;hideEpisodes();if(history.state?.rvnTheaterEntry)history.back();else removeEpisodeRoute();}
-function syncTheaterRoute(){const n=readEpisodeRoute();if(n===null){hideEpisodes();return;}showEpisodes(n);}
+function syncTheaterRoute(){const n=readEpisodeRoute();if(!galleryPage){if(n!==null||['#films','#episodeModal'].includes(location.hash))visitGallery(n);return;}if(n===null){hideEpisodes();return;}showEpisodes(n);}
 window.addEventListener('popstate',syncTheaterRoute);
 window.ravenSelectEpisode=selectEpisode;window.openEpisodes=openEpisodes;window.closeEpisodes=closeEpisodes;window.closeEpisodesOutside=e=>{if(e.target.id==='episodeModal')closeEpisodes()};
 window.ravenStartEpisode=(event,n)=>{
@@ -208,7 +228,7 @@ if(theaterPlayer){
   document.dispatchEvent(new CustomEvent('raven:ended',{detail:{id:currentEpisode}}));
  });
 }
-shareEpisode?.addEventListener('click',async()=>{const u=new URL(localizedRoute('/'),location.origin);u.searchParams.set('episode',String(currentEpisode));u.hash='episodeModal';const data={title:'RAVEN 17 — '+episodeText(currentEpisode),url:u.toString()};try{if(navigator.share){try{await navigator.share(data);return;}catch(error){if(error.name==='AbortError')return;}}await navigator.clipboard.writeText(data.url);shareEpisode.textContent=t('copied');setTimeout(()=>shareEpisode.textContent=lang==='en'?'Share episode':'مشاركة الحلقة',1600);}catch(_){shareEpisode.textContent=t('copyFailed');}});
+shareEpisode?.addEventListener('click',async()=>{const u=episodeDestination(currentEpisode);const data={title:'RAVEN 17 — '+episodeText(currentEpisode),url:u.toString()};try{if(navigator.share){try{await navigator.share(data);return;}catch(error){if(error.name==='AbortError')return;}}await navigator.clipboard.writeText(data.url);shareEpisode.textContent=t('copied');setTimeout(()=>shareEpisode.textContent=lang==='en'?'Share episode':'مشاركة الحلقة',1600);}catch(_){shareEpisode.textContent=t('copyFailed');}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(modal&&modal.classList.contains('open'))closeEpisodes();else if(menu&&menu.getAttribute('aria-expanded')==='true'){setMenu(false);menu.focus()}return}if(e.key==='Tab'&&modal&&modal.classList.contains('open')){const focusables=all('#episodeModal button,#episodeModal video[controls],#episodeModal a[href],#episodeModal [tabindex="0"]').filter(el=>el.getClientRects().length&&!el.disabled&&!el.closest('[hidden],[inert]'));const first=focusables[0],last=focusables[focusables.length-1];if(!first)return;if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}}});
 if(document.readyState==='complete')syncTheaterRoute();else document.addEventListener('DOMContentLoaded',syncTheaterRoute,{once:true});
 all('.rvnPrivacyLink,.rvnFootPrivacy').forEach(a=>a.addEventListener('click',()=>{const d=$('#ravenPrivacy');if(d)d.open=true}));

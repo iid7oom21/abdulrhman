@@ -105,7 +105,7 @@ test('homepage offers the case directly without starting the dialogue preview', 
       assert.equal(await hero.innerText(), language === 'en' ? 'Discover The Deleted Name' : 'اكتشف قضية الاسم المحذوف');
       assert.equal(await hero.getAttribute('href'), caseHref);
       assert.equal(await page.locator('#music-track-picker option').count(), 13);
-      assert.equal(await frame.locator('[data-rvn-episode]').count(), 3);
+      assert.equal(await frame.locator('[data-rvn-episode]').count(), 0, 'the homepage leads to the episode library');
       assert.equal(await frame.locator('#rvnDialogueFrame').count(), 0);
       assert.equal(await frame.locator('[data-dn-k="previewLabel"], [data-dn-k="openPreview"]').count(), 0);
       assert.deepEqual(await frame.locator('[data-rvn-v2="deletedName"]').allTextContents(),
@@ -237,11 +237,15 @@ test('homepage offers the case directly without starting the dialogue preview', 
     await frame.locator('.rvnHeroWatch').waitFor();
     assert.equal(await page.locator('link[rel="icon"]').evaluate(icon => new URL(icon.href).pathname), homePath + 'assets/favicon.svg');
     await frame.locator('.rvnHeroWatch').click();
+    await page.waitForURL(url => url.pathname === homePath + 'episodes/');
+    await frame.locator('[data-visual-episode="1"]').click();
     await frame.locator('#episodeModal[aria-hidden="false"]').waitFor();
     assert.deepEqual(await frame.locator('[data-rvn-episode]').evaluateAll(nodes => nodes.map(node => node.dataset.rvnEpisode)), ['1','2','3']);
     await frame.locator('.episodeClose').click();
+    await frame.locator('[data-gallery-home]').first().click();
     await frame.locator('[data-rvn-v2="studio"]:visible').click();
     await page.waitForURL(url => url.pathname === homePath && url.hash === '#studio');
+    await frame.locator('#studio details > summary').click();
     assert.equal(await frame.locator('#studio .rvnStudioCard:visible').count(), 3);
     assert.equal(await frame.locator('a[href*="investigation-lab"],a[href*="localhost"],a[href*="127.0.0.1"]').count(), 0);
 

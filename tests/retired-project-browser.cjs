@@ -116,6 +116,11 @@ test('retirement preserves the film and case journeys and redirects saved links'
       }
       await page.keyboard.press('Escape');
       await frame.locator('#episodeModal.open').waitFor({state:'hidden'});
+      // Returning from a home search must restore the shelf itself. A correct
+      // parent URL can still conceal a home document nested inside the frame.
+      await frame.locator('[data-screening-gallery] .ep-episodes').waitFor();
+      assert.equal(await frame.locator('iframe#site-content').count(),0);
+      await frame.locator('[data-gallery-home]:visible').first().click();
       await frame.locator('#rvnHeroEnterDeletedName').click();
       await frame.locator('[data-hook-action="open"]').waitFor();
       assert.equal(await frame.locator('html').getAttribute('lang'), language);
