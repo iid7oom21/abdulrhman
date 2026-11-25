@@ -18,6 +18,23 @@ test('old title workshop, three windows, portfolio, two-person planner and quick
  const back=p.locator('.night-wing'),heading=()=>p.locator('.night-chapter h2').first().innerText();
  const titleFrame=p.frameLocator('#site-content'),q=id=>titleFrame.locator('[data-sc="'+id+'"]'),win=id=>p.locator('[data-scene="'+id+'"]');
  const items=()=>p.locator('.night-item');
+ // The coastal still is a single wide image, unlike the adjacent three-shot montage.
+ for (const [width, lang] of [[320,'en'],[390,'ar'],[1280,'en']]) {
+   await p.setViewportSize({width,height:844});
+   await p.goto(host+'?lang='+lang+'#late-night');
+   const feature = titleFrame.locator('#late-night');
+   await feature.scrollIntoViewIfNeeded();
+   const fits = await feature.locator('img').evaluate(async image => {
+     await image.decode();
+     return Math.abs(image.clientWidth - image.parentElement.clientWidth) <= 1
+       && Math.abs(image.clientWidth / image.clientHeight - image.naturalWidth / image.naturalHeight) < 0.02;
+   });
+   assert.ok(fits, width+'px: the coastal artwork fills its frame at its original proportions');
+   await feature.locator('.afterShowPlay').click();
+   await p.waitForURL(base+'?lang='+lang);
+   await p.locator('.night-grid a').first().waitFor();
+ }
+ await p.setViewportSize({width:390,height:844});
  await p.goto(host+'?lang=en');await p.locator('#archive-night-short').click();await p.waitForURL('**/station-shadow.html?lang=en');
  await p.locator('.night-bench button:enabled').first().click();assert.equal(await p.locator('.night-bench canvas').count(),1);
  await visit('time-door');assert.equal(await p.locator('.night-bench a').count(),2);await p.locator('a[href*="festival-chair"]').click();
