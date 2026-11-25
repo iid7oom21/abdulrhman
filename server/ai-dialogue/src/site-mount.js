@@ -109,6 +109,10 @@ const files = [
   'raven/assets/favicon.svg',
   ...['jonas', 'claire', 'elena', 'mateo', 'noah', 'evidence_table'].map(name =>
     `raven/assets/images/deleted-name/${name}.jpg`),
+  // Smaller WebP copies of the same portraits for the homepage cards (srcset); the JPGs stay the originals.
+  ...['jonas', 'claire', 'elena', 'mateo', 'noah'].map(name =>
+    `raven/assets/images/deleted-name/web/${name}-600.webp`),
+  'raven/assets/images/deleted-name/web/evidence_table-640h.webp',
   'raven/assets/raven-homepage-v6.css', 'raven/assets/raven-redesign-v1.css',
   'raven/assets/raven-polish-v2.css', 'raven/assets/raven-i18n.js',
   'raven/assets/raven-visual-scenes.js', 'raven/assets/raven-visual-scenes.css',
