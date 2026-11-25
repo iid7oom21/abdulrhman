@@ -105,11 +105,33 @@ with sync_playwright() as pw:
                             reduced_motion='reduce',locale='en')
     page=ctx.new_page()
     page.goto(args.home+'?lang=en',wait_until='domcontentloaded')
+    welcome_art = page.locator('#archive-entry-gate .archive-entry-art')
+    expect(welcome_art).to_be_in_viewport()
+    welcome = welcome_art.evaluate('''async image => {
+      await image.decode();
+      return {source: new URL(image.currentSrc).pathname, width: image.naturalWidth, height: image.naturalHeight,
+              fit: getComputedStyle(image).objectFit};
+    }''')
+    assert welcome == {'source': urlsplit(args.home).path + 'terminal-preview/assets/hero-poster.jpg',
+                       'width': 910, 'height': 512, 'fit': 'contain'}, welcome
     page.locator('#archive-entry-gate').press('Escape')
     frame=page.frame_locator('#site-content')
     home_entry=frame.locator('a.rvnHeroWatch')
     expect(home_entry).to_be_visible()
     expect(frame.locator('.rvnVisualEpisode, [data-visual-episode], #episodeModal')).to_have_count(0)
+    masthead = frame.locator('header#top #ravenHeroMotion')
+    expect(masthead).to_be_in_viewport(ratio=1)
+    expect(masthead).to_have_attribute('poster', './terminal-preview/assets/hero-poster.jpg')
+    expect(masthead.locator('source')).to_have_attribute('src', './terminal-preview/assets/hero-loop.mp4')
+    masthead_proof = masthead.evaluate('''async video => {
+      const still = new Image();
+      still.src = video.poster;
+      await still.decode();
+      return {width: still.naturalWidth, height: still.naturalHeight, fit: getComputedStyle(video).objectFit,
+              paused: video.paused, muted: video.muted};
+    }''')
+    assert masthead_proof == {'width': 910, 'height': 512, 'fit': 'contain', 'paused': True, 'muted': True}, masthead_proof
+    page.screenshot(path=args.output/'original-masthead-en-320.png')
     frame.locator('.filmPoster img').evaluate('image => image.decode()')
     for title in ('after-show-title','late-night-title','ink-title'):
         expect(frame.locator('#'+title+' a')).to_be_in_viewport(ratio=1)
@@ -122,7 +144,7 @@ with sync_playwright() as pw:
     frame=gallery_route(page)
     expect(frame.locator('html')).to_have_attribute('lang','en')
     proof={'home':args.home,'gallery':page.url,'episode_cards':3,'home_episode_cards':0,
-           'arrival_and_home_entry_verified':True,'episode_playback':playback}
+           'arrival_and_home_entry_verified':True,'welcome_poster':welcome,'original_masthead':masthead_proof,'episode_playback':playback}
     page.goto(args.home+'?episode=1&lang=en',wait_until='domcontentloaded')
     expect(page.frame_locator('#site-content').locator('#ravenEpisodePlayer')).to_be_visible()
     gallery_route(page,1)
@@ -132,6 +154,8 @@ with sync_playwright() as pw:
     if os.environ.get('GITHUB_ACTIONS') == 'true':
         details = (f"Episode {n}: {r['outcome']} ({r['seconds']:.2f}s decoded, "
                    f"{r['width']}×{r['height']}, MediaError {r['error']})" for n, r in playback.items())
+        print('::notice title=RAVEN masthead on Pages::Original 910×512 poster visible in full on 320px mobile; '
+              'its approved silent loop remained paused with reduced motion.', flush=True)
         print('::notice title=Episode sources on Pages::' + ' | '.join(details), flush=True)
     if 'GITHUB_STEP_SUMMARY' in os.environ:
         with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as summary:

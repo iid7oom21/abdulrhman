@@ -31,6 +31,8 @@ def check_deployment(request, home, sha, release, local):
               "after-show/edit.js", "after-show/screencraft.js", "after-show/screencraft-glass.js",
               "assets/raven-visual-home.css", "assets/raven-visual-home.js", "assets/raven-enhancements-v1.js",
               "assets/raven-i18n.js", "assets/raven-refinement-v2.js", "../assets/intro/raven-intro-poster.jpg",
+              "terminal-preview/assets/hero-poster.jpg", "terminal-preview/assets/hero-loop.mp4",
+              "../site-player.css", "../site-player.js",
               "late-night/night-shell.js", "late-night/hub.css", "late-night/ink/art/ferry-pier-print.webp",
               "late-night/games/games.css", "late-night/games/station.js", "late-night/creative/scene.js",
               "late-night/assets/photo/harbour-cinema.webp", "late-night/assets/photo/station-shadow.webp",
