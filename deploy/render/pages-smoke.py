@@ -28,7 +28,10 @@ def check_deployment(request, home, sha, release, local):
     assets = ["after-show/edit.js", "after-show/screencraft.js", "after-show/screencraft-glass.js",
               "assets/raven-visual-home.css", "late-night/night-shell.js", "late-night/hub.css",
               "late-night/games/games.css", "late-night/games/station.js", "late-night/creative/scene.js",
-              "late-night/assets/photo/harbour-cinema.webp", "late-night/assets/photo/station-shadow.webp"]
+              "late-night/assets/photo/harbour-cinema.webp", "late-night/assets/photo/station-shadow.webp",
+              "late-night/ink/catalog.js", "late-night/ink/cut.js", "late-night/ink/camera.js",
+              "late-night/ink/ferry.js", "late-night/ink/page.js", "late-night/ink/beacon.js",
+              "late-night/ink/art/panel-press.webp"]
     pinned = {
         asset: subprocess.check_output(["git", "show", f"{sha}:raven/{asset}"], cwd=ROOT)
         for asset in assets
