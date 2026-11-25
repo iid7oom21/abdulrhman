@@ -167,8 +167,8 @@ const rotorPolygons=[
 ];
 const bellOutline=[[614,120],[624,124],[626,137],[636,145],[645,153],[649,174],[651,193],[659,206],[672,217],[671,225],[636,230],[628,230],[628,236],[623,240],[625,247],[621,255],[612,255],[609,250],[610,241],[605,238],[605,231],[568,228],[556,224],[558,216],[568,208],[575,200],[581,184],[582,161],[589,147],[606,138],[607,126]];
 function museumPhotograph(c,id,time,on,plate,base) {
-  const left = [0,122,298][id];
-  c.save();c.scale(768/470,512/313.33);c.translate(-left,-26);
+  const left = [0,128,228][id], center = [147,397,615][id];
+  c.save();c.scale(768/540,512/360);c.translate(-left,-28);
   c.drawImage(plate,0,0,768,512);
   const motion=on ? time : 0;
   if (id === 0) {
@@ -187,6 +187,12 @@ function museumPhotograph(c,id,time,on,plate,base) {
     photoCutout(c,plate,bellOutline,img=>c.drawImage(img,0,0));
     c.restore();
   }
+  // A narrow pool of exhibition light keeps neighboring objects in context
+  // while the chosen machine is in focus, from its highest part to its plinth.
+  const shade=c.createLinearGradient(center-325,0,center+325,0);
+  shade.addColorStop(0,'#080906c9');shade.addColorStop(.32,'#11110b00');
+  shade.addColorStop(.68,'#11110b00');shade.addColorStop(1,'#080906c9');
+  rect(c,left,28,540,360,shade);
   c.restore();
 }
 
