@@ -5,7 +5,7 @@ import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {AFTER_SHOW_FILES, LATE_NIGHT_FILES, RAVEN17_PREVIEW_FILES, STUDIO_ENTRY_ASSETS} from '../../server/ai-dialogue/src/site-mount.js';
 
-export const SITE_COMMIT = 'c42f39d9bad6ec10ed18a4988c64e279bed92e81';
+export const SITE_COMMIT = '4043f5ea9bdca9943f764061df25b3cd63df545c';
 export const PUBLIC_RELEASE = '2026-11-25-coastal-cinema-1';
 export const EXPORT_MARKER = '.raven-render-export.json';
 // Render builds from a shallow, single-branch checkout and removes its Git
