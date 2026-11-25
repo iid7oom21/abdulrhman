@@ -18,5 +18,9 @@ export const items = [
   {
     page: 'ink-beacon', cover: 'beacon-night', title: ['حارس المنارة', 'Lighthouse Keeper'],
     action: ['وجّه الضوء', 'Aim the light']
+  },
+  {
+    page: 'ink-courier', cover: 'ferry-pier-print', title: ['ساعي المطر', 'Rain Courier'],
+    action: ['العب وارسم مانجا جولتك', 'Play and compose your manga']
   }
 ];
