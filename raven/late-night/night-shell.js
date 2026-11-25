@@ -1,5 +1,11 @@
 import {pieces,writePiece,events,recordEvent,loadDraft,saveDraft,download} from './night-store.js';
 
+// A location still accompanies activities whose working view is a diagram or script.
+const locationHeaders = new Set([
+  'echo-last-seat', 'weightless-cam', 'tide-harbor', 'fabric-wind',
+  'reading-actor', 'city-radio', 'puzzle-owner', 'replay-caller',
+]);
+
 export function element(tag, text, cls) {
   const node=document.createElement(tag);
   if(text!==undefined && text!==null) node.textContent=text;
@@ -27,6 +33,18 @@ export function mount({id,title,intro=['',''],render}) {
   foot.append(all,home); shell.after(foot);
   const header=element('header',null,'night-heading');
   header.append(heading,lead);
+  if (locationHeaders.has(id)) {
+    const still = element('img', null, 'night-location');
+    still.alt = '';
+    still.decoding = 'async';
+    still.addEventListener('error', () => {
+      still.remove();
+      header.classList.remove('with-location');
+    }, {once:true});
+    header.classList.add('with-location');
+    header.append(still);
+    still.src = new URL('./assets/photo/' + id + '.webp', import.meta.url).href;
+  }
   shell.replaceChildren(header,notice,bench);
   let lastIssue=null, clean;
   function showIssue(problem) {

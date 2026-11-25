@@ -5,7 +5,7 @@ const fs=require('node:fs/promises');
 const {chromium}=require('playwright');
 
 const root=path.resolve(__dirname,'..'),base='http://night.test/abdulrhman/',q=base+'raven/late-night/';
-const type={'.js':'text/javascript','.css':'text/css','.html':'text/html','.woff2':'font/woff2'};
+const type={'.js':'text/javascript','.css':'text/css','.html':'text/html','.woff2':'font/woff2','.webp':'image/webp'};
 test('measured geometry, tide solutions, camera impulses and contiguous cloth intervals',async()=>{
   const {pulse,crossing,clothRun}=await import('../raven/late-night/sims/models.js');
   const {cameraRun}=await import('../raven/late-night/sims/camera-rules.js');
@@ -76,6 +76,7 @@ test('play all five simulators at the project mount',async t=>{
       await p.waitForFunction(()=>document.querySelector('audio').currentTime>0);await click('sound');
       await click('save');await download();await fits();
       await enter('darkroom-minute');const a=await pixels();const aw=await get('win');
+      assert.equal(await get('negative'),'window-studio-v1');
       await click('develop');await click('pin0');await fill('time',35);await fill('mask',90);
       await click('pin1');assert.equal(await p.locator('.sim-edit canvas').count(),2);await click('see0');assert.equal(await pixels(),a);
       await click('see1');assert.notEqual(await pixels(),a);assert.notEqual(await get('win'),aw);
@@ -109,8 +110,29 @@ test('play all five simulators at the project mount',async t=>{
       for(const r of pieces){
         await p.goto(q+r.activity+'.html?piece='+r.id+'&lang='+lang);await p.locator('.sim-actions button').first().waitFor();
         if(r.activity==='weightless-cam')assert.equal(await get('hold'),'2');
-        if(r.activity==='darkroom-minute')assert.equal(await control('time').inputValue(),'35');
+        if(r.activity==='darkroom-minute'){
+          assert.equal(await control('time').inputValue(),'35');
+          assert.equal(await get('negative'),r.data.print.negative);
+        }
         if(r.activity==='fabric-wind')assert.equal(await control('frame').inputValue(),'4.8');
+      }
+      if(lang==='ar'&&width===320){
+        broken='/darkroom-minute.webp';await enter('darkroom-minute');
+        assert.equal(await get('negative'),'window-drawing-v1');
+        await fill('time',17);await click('pin0');const fallback=await pixels();
+        broken='';await click('retry-photo');await control('retry-photo').waitFor({state:'detached'});
+        assert.equal(await get('negative'),'window-studio-v1');assert.notEqual(await pixels(),fallback);
+        assert.equal(await control('time').inputValue(),'17');
+        await click('see0');assert.equal(await pixels(),fallback);await download();
+        const piece=pieces.find(r=>r.activity==='darkroom-minute');
+        await p.evaluate(piece=>{
+          const key='raven.late-night.v1.piece.'+piece.id;
+          const legacy=JSON.parse(localStorage.getItem(key));
+          delete legacy.value.data.print.negative;
+          localStorage.setItem(key,JSON.stringify(legacy));
+        },piece);
+        await p.goto(q+'darkroom-minute.html?piece='+piece.id+'&lang='+lang);
+        await control('develop').waitFor();assert.equal(await get('negative'),'window-drawing-v1');
       }
       await p.addInitScript(()=>{Storage.prototype.setItem=()=>{throw new Error('storage denied');};});
       await enter('fabric-wind');await click('save');assert.ok(await p.locator('.night-notice').isVisible());

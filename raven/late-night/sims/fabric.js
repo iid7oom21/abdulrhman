@@ -7,28 +7,34 @@ export default function fabric(ui){
   const pinned=(u,v,time)=>clothVertex(u,v,time,cfg);
   const seconds = (time, digits = 1) => quantity(ui.lang, time, digits, t('ث','s'));
   function render(time, playing = false){
-    moment=time;const c=w.c,p=(u,v)=>pinned(u,v,time),vis=clothVisibility(time,cfg);shade(c,'#2b4654','#9aa392');
-    for(let i=0;i<12;i++){const x=i*57,h=63+((i*23)%59);c.fillStyle=i%2?'#839084':'#566c6b';c.fillRect(x,225-h,54,h);for(let k=0;k<6;k++){c.fillStyle=k%3?'#314949':'#cab384';c.fillRect(x+8+(k%3)*13,235-h+Math.floor(k/3)*18,7,11);}}
-    c.fillStyle='#7b7564';c.fillRect(0,219,640,46);
+    moment=time;const c=w.c,p=(u,v)=>pinned(u,v,time),vis=clothVisibility(time,cfg);shade(c,'#242725','#131617');
+    // The rig is shown in elevation; the tracked parade marker is below the fabric.
+    for(let x=40;x<640;x+=40)line(c,x,29,x,191,'#343a36');
+    for(let y=38;y<191;y+=30)line(c,36,y,605,y,'#343a36');
+    line(c,36,204,605,204,'#77766b');
     const bodyX=560-(time/9)*490;
-    for(let k=0;k<4;k++){const x=bodyX+k*20,y=204+k%2*4;dot(c,x,y-12,5,'#c5ae87');c.fillStyle=k%2?'#5c4038':'#3e5a4f';c.fillRect(x-5,y-7,10,17);line(c,x-3,y+9,x-6+Math.sin(time*5)*4,y+17,'#333c39',2.5);line(c,x+3,y+9,x+5-Math.sin(time*5)*4,y+17,'#333c39',2.5);}
+    for(let k=0;k<4;k++){const x=bodyX+k*11;dot(c,x,204,2.8,'#d6b993');}
     // Draw the fabric in strips. Their surface Jacobian also drives the motif-exposure score.
     const steps=30;
     for(let u=0;u<steps;u++)for(let v=0;v<4;v++){
       const a=u/steps,b=v/4,pts=[p(a,b),p(a+1/steps,b),p(a+1/steps,b+.25),p(a,b+.25)];
-      const brightness=Math.max(20,Math.min(53,29+11*(pts[1][0]-pts[0][0])/((cfg.right-cfg.left)/steps)));
-      poly(c,pts,'hsl(354 31% '+brightness+'%)');}
+      const brightness=Math.max(16,Math.min(48,26+10*(pts[1][0]-pts[0][0])/((cfg.right-cfg.left)/steps)));
+      poly(c,pts,'hsl(17 42% '+brightness+'%)');}
+    for(let i=1;i<steps;i++){
+      c.beginPath();for(let j=0;j<=8;j++){const [x,y]=p(i/steps,j/8);if(j)c.lineTo(x,y);else c.moveTo(x,y);}
+      c.strokeStyle=i%4?'rgba(243,214,174,.14)':'rgba(24,15,11,.30)';c.lineWidth=.7;c.stroke();
+    }
     const peak=[];for(let i=0;i<=5;i++)peak.push(p(.34+.16*i/5,.72-.42*i/5));
     for(let i=1;i<=5;i++)peak.push(p(.50+.16*i/5,.30+.42*i/5));
     for(let i=1;i<=5;i++)peak.push(p(.66-.32*i/5,.72));poly(c,peak,'#e2c697');
-    const middle=[p(.44,.62),p(.50,.46),p(.56,.62)];poly(c,middle,'#774d4c');
+    const middle=[p(.44,.62),p(.50,.46),p(.56,.62)];poly(c,middle,'#734c39');
     for(const x of [cfg.left,cfg.right]){line(c,x,54,x,30,'#cfbe9d',2);dot(c,x,54,4,'#d9c4a1');}
     // The proscenium masks the edges and a lower lintel hides sagging cloth.
-    c.fillStyle='#475851';c.fillRect(130,47,17,122);c.fillRect(482,47,17,122);c.fillRect(130,166,369,7);
-    c.fillStyle='#293936';c.fillRect(0,260,640,60);result.bands.forEach((v,i)=>{c.fillStyle=v?'#b6c29d':'#a17066';c.fillRect(42+i*9.2,278,8.6,8);});
+    c.fillStyle='#54534a';c.fillRect(130,47,17,122);c.fillRect(482,47,17,122);c.fillRect(130,166,369,7);
+    c.fillStyle='#191b1a';c.fillRect(0,260,640,60);result.bands.forEach((v,i)=>{c.fillStyle=v?'#b9c0a3':'#966f61';c.fillRect(42+i*9.2,278,8.6,8);});
     const x=42+Math.max(0,Math.min(6,time-2))/6*552;line(c,x,270,x,292,'#f4d5a3',2);ink(c,'0:02',42,307);ink(c,'0:08',568,307);
     w.canvas.dataset.best=result.best;w.canvas.dataset.time=time.toFixed(1);
-    w.describe(t('الشعار مثلث داخل الراية. يمر الموكب بين الثانية ٢ و٨؛ يحتاج رؤية متصلة مدتها ثانيتان.','The flag has a triangular emblem. The parade passes from second 2 to 8 and needs two continuous seconds of visibility.'));
+    w.describe(t('النقاط تحت الراية تتابع الموكب. يمرّ بين الثانية ٢ و٨ ويحتاج أن يرى الشعار المثلث ثانيتين متصلتين.','The markers track the parade below the banner. It passes from second 2 to 8 and needs two continuous seconds of visibility of the triangular emblem.'));
     const readings = [
       t('الإطار ', 'Frame ') + isolate(seconds(time)),
       vis.clear ? t('الشعار مكشوف', 'Emblem exposed') : t('الشعار محجوب أو مطوي', 'Emblem obscured or folded'),

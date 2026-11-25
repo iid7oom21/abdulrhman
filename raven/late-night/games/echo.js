@@ -1,4 +1,5 @@
-import {start,keepButton,el,button,group,canvas,output,box,dot,line,gradient} from './tools.js';
+import {start,keepButton,el,button,group,canvas,output,box,dot,line,gradient,loadPhoto,redrawWhenLoaded} from './tools.js';
+const pierPhoto=loadPhoto('echo-chart');
 const names=[['رصيف الملح','Salt pier'],['رصيف الزجاج','Glass pier'],['رصيف الحبال','Rope pier']];
 const objects=[['جرس','Bell'],['فانوس','Beacon'],['عوامة','Buoy']];
 const dictionary=[['الملح','Salt'],['الزجاج','Glass'],['الحبال','Rope'],['الجرس الأول','First bell'],['الجرس الثاني','Second bell'],['بريد','Mail']];
@@ -6,23 +7,47 @@ const times=[['20:10','20:40'],['20:20','20:50'],['20:30','21:00']];
 const variants=[{icons:[1,2,0],object:2,bell:1},{icons:[2,0,1],object:1,bell:0},{icons:[0,1,2],object:0,bell:1}];
 let variant=0,solo=false,phase='sender',signals=[],pier=0,time='20:10',meaning='',imported=false;
 const task=()=>variants[variant],targetPier=()=>task().icons.indexOf(task().object);
-function harbor(c,mapped,marks){
-  gradient(c,'#20333e','#606a61');dot(c,'#cdbb90',508,41,16);for(let i=0;i<18;i++){const x=i*42-11,y=103-(i*17)%35;box(c,'#304149',x,y,39,40);line(c,'#394951',6,[[x-1,y],[x+18,y-11],[x+40,y]]);box(c,'#d9b57b',x+9,y+9,4,6);}
-  box(c,'#29444b',0,129,640,191);
-  for(let y=143;y<320;y+=13)for(let x=(y*7)%53;x<650;x+=71)line(c,'#556d68',1,[[x,y],[x+27,y]]);
-  for(let j=0;j<3;j++){
-    const x=115+j*195;
-    box(c,'#675c4c',x-24,127,47,114);box(c,'#88755b',x-29,235,57,10);
-    for(let y=130;y<240;y+=8)line(c,'#403e36',1,[[x-22,y],[x+21,y]]);
-    for(const o of [-30,25]){box(c,'#3d4944',x+o,233,6,30);box(c,'#a69671',x+o,233,6,4);}
-    if(mapped){
-      const v=marks[j];if(v===0){dot(c,'#c5a66b',x,167,8);box(c,'#bd9e66',x-10,169,20,3);dot(c,'#c5a66b',x,175,2);}
-      if(v===1){box(c,'#665f4c',x-4,163,8,12);box(c,'#f1d797',x-3,165,6,6);line(c,'#1f393c',2,[[x-6,163],[x,159],[x+6,163]]);}
-      if(v===2){dot(c,'#b58b66',x,169,6);line(c,'#eed5a7',3,[[x-6,169],[x+6,169]]);}
+// The plate contains three empty piers. Only the sender’s map receives the scenario signals.
+function pierMap(label, marks) {
+  const view=canvas(label), c=view.getContext('2d');
+  function draw() {
+    if(pierPhoto.naturalWidth) c.drawImage(pierPhoto,0,0,640,320);
+    else {
+      gradient(c,'#253739','#143036');
+      box(c,'#625646',0,0,640,36);
+      for(const x of [89,312,545]) {
+        box(c,'#514c42',x-18,34,36,243);
+        for(let y=41;y<275;y+=10) line(c,'#776959',1,[[x-17,y],[x+17,y]]);
+      }
     }
-    c.fillStyle='#dfd0aa';c.font='16px sans-serif';c.textAlign='center';c.fillText(String.fromCharCode(65+j),x,220);
+    for(const [i,x] of [89,312,545].entries()){
+      // The fixed pier letters are public. The removable signal plates are private.
+      box(c,'#102326',x-18,55,36,33);
+      c.fillStyle='#e5ded1';c.textAlign='center';c.font='20px monospace';
+      c.fillText(String.fromCharCode(65+i),x,79);
+      if(!marks) continue;
+      const y=219, ink='#f2dfaf';
+      dot(c,'#131f21',x,y,24);
+      c.beginPath();c.strokeStyle='#bba882';c.lineWidth=1.5;c.arc(x,y,23,0,2*Math.PI);c.stroke();
+      switch(marks[i]){
+        case 0:
+          c.beginPath();c.strokeStyle=ink;c.lineWidth=2.5;
+          c.moveTo(x-9,y+6);c.quadraticCurveTo(x-7,y+4,x-7,y-2);
+          c.bezierCurveTo(x-7,y-13,x+7,y-13,x+7,y-2);
+          c.quadraticCurveTo(x+7,y+4,x+9,y+6);c.closePath();c.stroke();
+          dot(c,ink,x,y+9,2);break;
+        case 1:
+          line(c,ink,2,[[x-8,y+8],[x+8,y+8],[x+6,y-5],[x-6,y-5],[x-8,y+8]]);
+          line(c,ink,2,[[x-8,y-5],[x,y-11],[x+8,y-5]]);
+          dot(c,'#f4be62',x,y+1,3);break;
+        case 2:
+          line(c,ink,2,[[x,y-12],[x,y-6],[x+7,y+4],[x+4,y+8],[x-4,y+8],[x-7,y+4],[x,y-6]]);
+          line(c,'#dcaa73',3,[[x-5,y+1],[x+5,y+1]]);break;
+      }
+    }
   }
-  line(c,'#d0c49f',2,[[12,284],[187,275],[353,284],[545,272]]);box(c,'#b39c78',541,265,25,6);
+  draw();redrawWhenLoaded(pierPhoto,view,draw);
+  return view;
 }
 function render(ui){
  const {root,t}=ui;
@@ -38,7 +63,7 @@ function render(ui){
    root.replaceChildren();const scenario=task(),station=targetPier(),targetTime=times[station][scenario.bell];
    const signalText=signals.map(n=>t(...dictionary[n])).join(' / ');
    if(phase==='sender'){
-     const img=canvas(t('خريطة الأرصفة للمرسل','Sender’s pier map'));harbor(img.getContext('2d'),true,scenario.icons);
+     const img=pierMap(t('خريطة الأرصفة للمرسل','Sender’s pier map'),scenario.icons);
      const brief=el('p',t('حقيبة البريد عند علامة ','The mailbag is at the ')+t(...objects[scenario.object])+t('، وتغادر في ',' and leaves at the ')+t(...dictionary[3+scenario.bell])+'.','game-note');brief.dataset.game='private-map';
      const legend=el('p',names.map((n,j)=>String.fromCharCode(65+j)+' · '+t(...n)+' — '+t(...objects[scenario.icons[j]])).join('   /   '));
      const codes=group(...dictionary.map((d,i)=>button('signal-'+i,t(...d),()=>{if(signals.length<3){signals.push(i);refresh();}})));codes.querySelectorAll('button').forEach(b=>b.disabled=signals.length===3);
@@ -51,7 +76,7 @@ function render(ui){
      const title=el('h2',solo?t('الجدول جاهز لك','Your timetable is ready'):t('دور مستلم البريد','The mail receiver’s turn'));
      root.append(title,el('p',solo?t('افتح الدور الثاني واقرأ الإشارات التي اخترتها.','Open the second role and read your signals.'):t('أعطِ الهاتف لزميلك. يفتح هو جدول القارب.','Pass the device. The receiver opens the boat schedule.')),button('receive',t('افتح دور المستلم','Open receiver role'),()=>{phase='receiver';refresh();}));
    }else if(phase==='receiver'){
-     const img=canvas(t('أرصفة قارب البريد','Mail boat piers'));harbor(img.getContext('2d'),false,[]);
+     const img=pierMap(t('أرصفة قارب البريد','Mail boat piers'));
      const table=el('table');table.dir=ui.lang==='ar'?'rtl':'ltr';const head=table.createTHead().insertRow();
      for(const label of [t('الرصيف','Pier'),t(...dictionary[3]),t(...dictionary[4])])head.append(el('th',label));
      names.forEach((n,j)=>{const row=table.insertRow();row.append(el('th',t(...n)),el('td',times[j][0]),el('td',times[j][1]));});

@@ -58,48 +58,157 @@ export function buildScene(input,setting){
   const s={version:1,prompt:p,setting,duration:8+seed%8,blackout:3+(seed>>>3)%3,
     shots:cues.map((id,i)=>({id,lighting:[warm?'amber':dim?'dim':'dusk','dim',dim?'dusk':'amber'][i],motion:[walking?'walk':'pan','still','walk'][i]}))};retime(s);return s;
 }
-const paint=(c,col,x,y,w,h)=>{c.fillStyle=col;c.fillRect(x,y,w,h);};
-function line(c,col,w,x,y,X,Y){c.strokeStyle=col;c.lineWidth=w;c.beginPath();c.moveTo(x,y);c.lineTo(X,Y);c.stroke();}
-function circle(c,col,x,y,r){c.fillStyle=col;c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.fill();}
-export function paintScene(canvas,s,time){
-  const c=canvas.getContext('2d');if(!c||!validScene(s))return null;
-  const i=s.shots.findLastIndex(k=>time>=k.start),shot=s.shots[Math.max(0,i)],p=Math.max(0,Math.min(1,(time-shot.start)/shot.seconds));
-  const shift=shot.motion==='pan'?p*42:0;
-  c.save();c.scale(canvas.width/640,canvas.height/300);
-  const bg=c.createLinearGradient(0,0,0,300),dim=shot.lighting==='dim',warm=shot.lighting==='amber';
-  bg.addColorStop(0,dim?'#223644':warm?'#46454c':'#466675');bg.addColorStop(.72,dim?'#5c7379':warm?'#d0a271':'#f0c48e');bg.addColorStop(1,'#536d70');paint(c,bg,0,0,640,300);
-  c.save();c.translate(-shift,0);const base=s.setting==='square'?165:180;
-  for(let k=0;k<18;k++){const x=k*44-20,y=117+Math.sin(k*1.5)*22;
-    paint(c,dim?'#48595b':'#677574',x,y,39,base-y);
-    for(let j=0;j<3;j++)for(let h=0;h<4;h++)paint(c,(k+j+h)%5?'#8b9489':'#d7b685',x+4+j*11,y+6+h*10,4,4);}
-  if(s.setting==='pier'){
-    paint(c,'#6b8588',0,167,720,42);
-    for(let k=0;k<17;k++)line(c,'#a1b1a1',1,k*41,178+k%5,k*41+21,178+k%5);
-    paint(c,'#3f5150',0,202,720,9);
-    for(let k=0;k<10;k++){paint(c,'#354749',k*85,169,4,70);line(c,'#4e5e59',2,k*85,181,k*85+85,181);}
-  }else if(s.setting==='cinema'){
-    paint(c,'#3f494c',67,77,500,127);paint(c,'#917c6a',59,82,522,8);paint(c,'#455255',138,114,347,91);
-    for(let k=0;k<5;k++){paint(c,'#708282',151+k*65,131,53,61);line(c,'#a8a796',2,163+k*65,177,190+k*65,134);}
-    paint(c,'#af8d69',52,199,531,6);
-  }else{
-    paint(c,'#6e6860',305,75,45,116);paint(c,'#8a8170',299,78,57,7);paint(c,'#777669',315,52,26,30);circle(c,'#dac9a0',328,103,13);
-    line(c,'#4d5853',2,328,103,328,94);line(c,'#4d5853',2,328,103,336,106);
-    for(let k=0;k<4;k++)line(c,'#c4b699',2,0,210+k*19,690,200+k*19);
+// Coordinates are on the 764 × 430 location plate. Each polygon follows the
+// inside edge of the practical sign so the blackout survives a different cut.
+const sets = {
+  pier: {file: 'director-sentence', sign: [[573,214],[677,214],[677,255],[573,255]], floor: 351, height: 155, mark: 321},
+  cinema: {file: 'director-cinema', sign: [[566,178],[709,179],[709,247],[566,247]], floor: 383, height: 220, mark: 353},
+  square: {file: 'director-square', sign: [[625,213],[731,209],[731,258],[625,262]], floor: 378, height: 147, mark: 368}
+};
+const bitmaps = new Map();
+const footage = new Map();
+const waiting = new WeakMap();
+
+function loadPlate(file) {
+  if (!bitmaps.has(file)) {
+    bitmaps.set(file, new Promise(resolve => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = () => resolve(null);
+      image.src = new URL('../assets/photo/' + file + '.webp', import.meta.url).href;
+    }));
   }
-  paint(c,'#4c4b46',0,230,720,70);
-  for(let k=0;k<15;k++)line(c,'#857860',1,k*63-90,300,k*49,232);
-  const glow=c.createRadialGradient(132,96,2,132,96,93);glow.addColorStop(0,warm?'#ffc96aa0':'#dfb57c60');glow.addColorStop(1,'#dfb57c00');paint(c,glow,30,15,203,167);
-  paint(c,'#303d40',129,95,5,135);circle(c,'#efe0ae',132,96,7);paint(c,'#303d40',112,86,40,5);
-  const sx=s.setting==='cinema'?228:383;
-  paint(c,'#2a393e',sx,81,137,39);paint(c,time>=s.blackout?'#314049':'#edca88',sx+5,86,127,29);
-  if(time<s.blackout){for(let k=0;k<9;k++)paint(c,'#796e58',sx+15+k*12,97,6,7);}
-  const x=shot.motion==='walk'?(i===0?140:370)+p*105:shot.motion==='pan'?331:361;
-  const step=shot.motion==='walk'?Math.sin(p*Math.PI*8)*8:0;
-  circle(c,'#2d393c',x,163,10);paint(c,'#2c3b40',x-11,174,23,38);
-  line(c,'#29383c',6,x-6,208,x-10-step,235);line(c,'#29383c',6,x+5,208,x+9+step,235);
-  c.restore();paint(c,'#121e26',0,0,640,13);paint(c,'#121e26',0,281,640,19);c.restore();return shot;
+  return bitmaps.get(file);
 }
-export function sceneThumbnails(s){
-  if(!validScene(s))return [];
-  return s.shots.map(p=>{const c=document.createElement('canvas');c.width=384;c.height=180;paintScene(c,s,p.start+p.seconds/2);return c.toDataURL('image/webp',.74);});
+function locationFootage(setting) {
+  if (!footage.has(setting)) {
+    const entry = {};
+    entry.ready = Promise.all([loadPlate(sets[setting].file),loadPlate('director-figure')])
+      .then(([plate, performer]) => {entry.images = {plate, performer};});
+    footage.set(setting, entry);
+  }
+  return footage.get(setting);
+}
+
+export function retrySceneImages(setting) {
+  const entry=footage.get(setting);
+  if (!entry?.images) return;
+  if (!entry.images.plate) bitmaps.delete(sets[setting].file);
+  if (!entry.images.performer) bitmaps.delete('director-figure');
+  footage.delete(setting);
+}
+
+function drawSign(ctx, corners, lit) {
+  ctx.save();
+  ctx.beginPath();
+  corners.forEach(([x,y],i) => i ? ctx.lineTo(x,y) : ctx.moveTo(x,y));
+  ctx.closePath();
+  if (lit) {
+    ctx.globalCompositeOperation = 'screen';
+    ctx.fillStyle = 'rgba(255,201,123,0.76)';
+    ctx.shadowColor = 'rgba(248,177,82,0.55)';
+    ctx.shadowBlur = 12;
+  } else {
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = '#555659';
+  }
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawPerformer(ctx, model, sprite, index, progress, traverse) {
+  // The four exposures share a footline. Travel is measured in strides so a
+  // slower edit also slows the gait, instead of letting the feet skate.
+  const height = model.height, distance = traverse ? height * 1.42 : height * .94;
+  const reach = model.mark;
+  const x = index === 0 ? reach - distance * (1-progress) : reach + (index === 2 ? distance * progress : 0);
+  if (index === 1) return; // The insert cuts away from the performer to the sign.
+  const phase = index === 0 ? distance*progress : distance*(1+progress);
+  const exposure = Math.floor(phase/(height*.125)) % 4;
+  ctx.save();
+  ctx.translate(x,model.floor);
+  const shadow=ctx.createRadialGradient(0,0,0,0,0,height*.28);
+  shadow.addColorStop(0,'rgba(11,17,22,.52)');shadow.addColorStop(1,'rgba(11,17,22,0)');
+  ctx.save();ctx.scale(1,.11);ctx.fillStyle=shadow;ctx.fillRect(-height*.28,-height*.28,height*.56,height*.56);ctx.restore();
+  const width = height * 180 / 248;
+  ctx.drawImage(sprite,exposure*180,0,180,248,-width/2,-height,width,height);
+  ctx.restore();
+}
+
+function drawLocation(ctx, images, s, index, p, time) {
+  const model = sets[s.setting], shot = s.shots[index];
+  const [left, top] = model.sign[0], [right, bottom] = model.sign[2];
+  const framing = index === 1 ? 1.74 : index === 2 ? 1.08 : 1.02;
+  const zoom = framing + (shot.motion==='walk' && index===1 ? p*.16 : 0);
+  const viewWidth = 764/zoom, viewHeight = 358/zoom;
+  const target = index === 1 ? (left+right)/2 : model.mark+10;
+  const room = 764-viewWidth, travel = shot.motion==='pan' ? Math.min(room,42) : 0;
+  const center = Math.max(travel/2,Math.min(room-travel/2,target-viewWidth/2));
+  const x = center + (p-.5)*travel;
+  const y = Math.max(0,Math.min(430-viewHeight,(index===1?(top+bottom)/2:224)-viewHeight/2));
+  ctx.save();
+  ctx.scale(zoom,zoom);ctx.translate(-x,-y);
+  ctx.drawImage(images.plate,0,0,764,430);
+  drawSign(ctx,model.sign,time<s.blackout);
+  drawPerformer(ctx,model,images.performer,index,p,shot.motion==='walk');
+  ctx.fillStyle = {dusk:'rgba(44,76,112,.08)',dim:'rgba(9,17,27,.27)',amber:'rgba(210,133,59,.14)'}[shot.lighting];
+  ctx.fillRect(0,0,764,430);
+  ctx.restore();
+}
+
+function drawMotionPlan(ctx, s, time, failed) {
+  ctx.fillStyle='#162129';ctx.fillRect(0,0,764,358);
+  ctx.strokeStyle='#557078';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(35,246);ctx.lineTo(729,246);ctx.stroke();
+  ctx.fillStyle=time<s.blackout?'#e9bc78':'#364953';ctx.fillRect(490,105,112,56);
+  const x=112+480*time/s.duration;
+  ctx.fillStyle='#dfd7ca';ctx.beginPath();ctx.arc(x,232,7,0,Math.PI*2);ctx.fill();
+  if (failed) {
+    const ar=document.documentElement.lang==='ar';ctx.direction=ar?'rtl':'ltr';
+    ctx.textAlign=ar?'right':'left';ctx.font='20px sans-serif';ctx.fillStyle='#e2d9c9';
+    ctx.fillText(ar?'تعذّر تحميل الصورة · مخطط الحركة':'Image unavailable · movement plan',ar?729:35,312);
+  }
+}
+
+export function paintScene(canvas,s,time) {
+  const ctx=canvas.getContext('2d');
+  if (!ctx || !validScene(s)) return null;
+  const index=Math.max(0,s.shots.findLastIndex(shot=>time>=shot.start));
+  const shot=s.shots[index], progress=Math.max(0,Math.min(1,(time-shot.start)/shot.seconds));
+  const entry=locationFootage(s.setting);
+  const previousVisual=canvas.dataset.visual;
+  if (entry.images) waiting.delete(canvas);
+  ctx.save();
+  ctx.scale(canvas.width/764,canvas.height/358);
+  if (entry.images?.plate && entry.images.performer) {
+    drawLocation(ctx,entry.images,s,index,progress,time);
+    canvas.dataset.visual='photograph';
+  } else {
+    drawMotionPlan(ctx,s,time,!!entry.images);
+    canvas.dataset.visual=entry.images?'movement-plan':'loading';
+    if (!entry.images) {
+      const previous=waiting.get(canvas);
+      waiting.set(canvas,{s,time,entry});
+      if (previous?.entry!==entry) entry.ready.then(()=>{
+        const latest=waiting.get(canvas);
+        if (latest?.entry===entry && canvas.isConnected) {
+          waiting.delete(canvas);paintScene(canvas,latest.s,latest.time);
+        }
+      });
+    }
+  }
+  ctx.restore();
+  if (previousVisual!==canvas.dataset.visual) canvas.dispatchEvent(new Event('visualchange'));
+  return shot;
+}
+
+export async function sceneThumbnails(s) {
+  if (!validScene(s)) return [];
+  await locationFootage(s.setting).ready;
+  return s.shots.map(shot=>{
+    const canvas=document.createElement('canvas');
+    canvas.width=384;canvas.height=180;
+    paintScene(canvas,s,shot.start+shot.seconds/2);
+    return canvas.toDataURL('image/webp',.74);
+  });
 }

@@ -33,6 +33,13 @@ export function slider(min,max,value,fn,id,step=1) {
 export function board(root, ar, en, t) {
   const figure=el('figure',null,'ns-stage'), canvas=el('canvas'),caption=el('figcaption');
   canvas.width=720;canvas.height=330;canvas.setAttribute('role','img');canvas.setAttribute('aria-label',t(ar,en));
+  canvas.addEventListener('scene-photo-missing', event => {
+    const retry = button(t('أعد تحميل صورة المشهد','Reload scene photograph'), () => {
+      retry.remove();
+      event.detail();
+    },'retry-scene-photo');
+    figure.append(retry);
+  });
   figure.append(canvas,caption);root.append(figure);
   return {canvas,ctx:canvas.getContext('2d'),caption};
 }
@@ -51,10 +58,11 @@ export function downloadCanvas(canvas,name) {
   canvas.toBlob(blob=>{if(blob)file(name,blob);},'image/png');
 }
 export function thumbnail(canvas) {
-  const copy=el('canvas');copy.width=288;copy.height=132;
+  if (canvas.dataset.art === 'loading') return undefined;
+  const copy=el('canvas');copy.width=288;copy.height=Math.round(copy.width*canvas.height/canvas.width);
   const c=copy.getContext('2d');
   if (!c || !canvas.getContext('2d')) return undefined;
-  c.drawImage(canvas,0,0,288,132);return copy.toDataURL('image/webp',.77);
+  c.drawImage(canvas,0,0,copy.width,copy.height);return copy.toDataURL('image/webp',.77);
 }
 export function bound(value,fallback,min,max) {
   return Number.isFinite(value)?Math.max(min,Math.min(max,value)):fallback;

@@ -24,6 +24,9 @@ test('old title workshop, three windows, portfolio, two-person planner and quick
    await p.goto(host+'?lang='+lang+'#late-night');
    const feature = titleFrame.locator('#late-night');
    await feature.scrollIntoViewIfNeeded();
+   assert.match(await feature.locator('img').getAttribute('src'), /late-night\/assets\/photo\/harbour-cinema\.webp$/);
+   const loaded = await feature.locator('img').evaluate(async image => {await image.decode(); return new URL(image.currentSrc).pathname;});
+   assert.equal(loaded.split('/').pop(),width <= 640 ? 'harbour-cinema-mobile.webp' : 'harbour-cinema.webp');
    const fits = await feature.locator('img').evaluate(async image => {
      await image.decode();
      return Math.abs(image.clientWidth - image.parentElement.clientWidth) <= 1
@@ -36,7 +39,7 @@ test('old title workshop, three windows, portfolio, two-person planner and quick
  }
  await p.setViewportSize({width:390,height:844});
  await p.goto(host+'?lang=en');await p.locator('#archive-night-short').click();await p.waitForURL('**/station-shadow.html?lang=en');
- await p.locator('.night-bench button:enabled').first().click();assert.equal(await p.locator('.night-bench canvas').count(),1);
+ await p.locator('[data-game="record"]').click();assert.equal(await p.locator('.night-bench canvas[data-phase="record"]').count(),1);
  await visit('time-door');assert.equal(await p.locator('.night-bench a').count(),2);await p.locator('a[href*="festival-chair"]').click();
  await p.getByLabel('Visitors').selectOption('two');await p.getByLabel('Sound').selectOption('off');const old=p.locator('.night-chapter').nth(0),fresh=p.locator('.night-chapter').nth(1);
  assert.ok((await old.locator('h3').innerText()).includes('Director'));assert.ok((await fresh.locator('h3').innerText()).includes('Echo')||(await fresh.locator('a').getAttribute('href')).includes('echo-two'));

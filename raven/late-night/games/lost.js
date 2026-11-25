@@ -1,12 +1,13 @@
-import {start, el, button, group, canvas, output, box, dot, line, gradient} from './tools.js';
+import {start, el, button, group, canvas, output, box, dot, line, gradient, loadPhoto, redrawWhenLoaded, drawPhotoFrame} from './tools.js';
 
 const slug='lost-and-found';
+const itemPhotos = loadPhoto('lost-items');
 const objects=[
-  {kind:'scarf',name:['وشاح أزرق','Blue scarf'],detail:['صوف أزرق، عند طرفه زر معدني دائري.','Blue wool with a round metal button on one end.'],color:'#458aa3',tie:'#d9caa6',button:true},
-  {kind:'umbrella',name:['مظلة بنية','Brown umbrella'],detail:['قماش بني ومقبض خشبي، وعلى الرباط خيط أزرق.','Brown canopy, wooden handle, blue thread on its strap.'],color:'#91675a',tie:'#629fcb',wood:true},
-  {kind:'scarf',name:['وشاح كهرماني','Amber scarf'],detail:['صوف بلون الكهرمان، ينتهي بهدب أسود.','Amber wool with black fringes.'],color:'#b8905d',tie:'#333135'},
-  {kind:'umbrella',name:['مظلة خضراء','Green umbrella'],detail:['قماش أخضر ومقبض خشبي، وعلى الرباط خيط أصفر.','Green canopy, wooden handle, yellow thread on its strap.'],color:'#497868',tie:'#efc359',wood:true},
-  {kind:'flask',name:['قارورة شاي','Tea flask'],detail:['أسطوانة خضراء داكنة بغطاء معدني على شكل كوب.','Dark green cylinder with a metal cup-shaped lid.'],color:'#4a6665',tie:'#b4a086'}
+  {kind:'scarf',name:['وشاح أزرق','Blue scarf'],detail:['صوف أزرق، عند طرفه زر معدني دائري.','Blue wool with a round metal button on one end.'],color:'#458aa3',tie:'#d9caa6',button:true,focus:[.83,.82]},
+  {kind:'umbrella',name:['مظلة بنية','Brown umbrella'],detail:['قماش بني ومقبض خشبي، وعلى الرباط خيط أزرق.','Brown canopy, wooden handle, blue thread on its strap.'],color:'#91675a',tie:'#629fcb',wood:true,focus:[.67,.53]},
+  {kind:'scarf',name:['وشاح كهرماني','Amber scarf'],detail:['صوف بلون الكهرمان، ينتهي بهدب أسود.','Amber wool with black fringes.'],color:'#b8905d',tie:'#333135',focus:[.5,.94]},
+  {kind:'umbrella',name:['مظلة خضراء','Green umbrella'],detail:['قماش أخضر ومقبض خشبي، وعلى الرباط خيط أصفر.','Green canopy, wooden handle, yellow thread on its strap.'],color:'#497868',tie:'#efc359',wood:true,focus:[.64,.53]},
+  {kind:'flask',name:['قارورة شاي','Tea flask'],detail:['أسطوانة خضراء داكنة بغطاء معدني على شكل كوب.','Dark green cylinder with a metal cup-shaped lid.'],color:'#4a6665',tie:'#b4a086',focus:[.07,.53]}
 ];
 const cards=[
   {request:['وشاح أزرق بطرفه زر معدني','A blue scarf with a metal button on one end'],matches:o=>o.kind==='scarf'&&o.button},
@@ -59,6 +60,15 @@ function paintItem(c,obj,x,y,scale){
 }
 function draw(screen){
   const c=screen.getContext('2d');if(!c)return;
+  if (itemPhotos.naturalWidth) {
+    const [focusX, focusY] = objects[state.index].focus;
+    const offset = -Math.round(phase * screen.width);
+    drawPhotoFrame(c, itemPhotos, state.index, {
+      left:offset, focusX, focusY, zoom:state.seen.includes(state.index) ? 1.55 : 1
+    });
+    if (offset) drawPhotoFrame(c, itemPhotos, (state.index + 1) % objects.length, {left:offset + screen.width});
+    return;
+  }
   gradient(c,'#14272d','#60716a');
   for(let i=0;i<5;i++){
     const x=i*141-30;box(c,'#2c4144',x,19,127,113);box(c,'#425452',x+5,23,117,98);
@@ -92,6 +102,7 @@ function render(ui) {
   const {root,t}=ui;view=ui;
   const localized=obj=>t(...obj), item=objects[state.index], active=state.active;
   const screen=canvas(localized(item.name));screen.dataset.game='belt';draw(screen);
+  redrawWhenLoaded(itemPhotos,screen,()=>draw(screen));
   root.replaceChildren(screen);
   if(state.finished){
     const report=el('ol');
@@ -125,11 +136,15 @@ function render(ui) {
     moving=true;startTime=performance.now();belt.textContent=t('أوقف السير','Pause the belt');
     function tick(now){
       if(!moving || view!==ui || !screen.isConnected)return;
-      const elapsed=now-startTime;
+      const elapsed=now-startTime, previousPhase=phase;
       if(elapsed>=4200){
         state.index=(state.index+1)%objects.length;startTime=now;phase=0;refreshBeltText();
-      } else phase=matchMedia('(prefers-reduced-motion: reduce)').matches?0:Math.max(0,(elapsed-3400)/800);
-      draw(screen);raf=requestAnimationFrame(tick);
+        draw(screen);
+      } else {
+        phase=matchMedia('(prefers-reduced-motion: reduce)').matches?0:Math.max(0,(elapsed-3400)/800);
+        if(phase!==previousPhase) draw(screen);
+      }
+      raf=requestAnimationFrame(tick);
     }
     raf=requestAnimationFrame(tick);
   });

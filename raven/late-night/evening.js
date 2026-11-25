@@ -21,7 +21,7 @@ function portfolio(ui) {
       const card=el('article',null,'night-item'),name=el('h3',p.title),thumb=el('img');
       const active=activities.find(a=>a[0]===p.activity);
       const img=isImage(p.thumbnail);
-      if(img || active){thumb.src=img?p.thumbnail:'./thumbs/'+p.activity+'.webp';thumb.alt=img?p.title:t('صورة النشاط','Activity still');thumb.loading='lazy';card.append(thumb);}
+      if(img || active){thumb.src=img?p.thumbnail:'./thumbs/'+p.activity+'.webp?v=cinema';thumb.alt=img?p.title:t('غلاف النشاط','Activity cover');thumb.loading='lazy';card.append(thumb);}
       const date=new Date(p.at);
       const info=el('p',(!Number.isNaN(date.valueOf()) ? date.toLocaleDateString(ui.lang) : '')+' · JSON');
       const row=el('div',null,'night-row'),target=workURL(ui,p);

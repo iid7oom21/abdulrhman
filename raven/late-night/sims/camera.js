@@ -1,5 +1,5 @@
 import {cameraRun,cameraStep} from './camera-rules.js';
-import {surface,action,shade,line,dot,poly,ink,archive,output,quantity,isolate,updateReading} from './kit.js';
+import {surface,action,shade,line,dot,ink,archive,output,quantity,isolate,updateReading} from './kit.js';
 let pushes=[],time=0,running=false,finished=false,timer=0,latest=null;
 function stop(){running=false;clearInterval(timer);timer=0;}
 export default function camera(ui){
@@ -9,13 +9,20 @@ export default function camera(ui){
   }
   function paint(){
     const r=cameraRun(pushes,time),f=r.frames.at(-1),c=w.c;
-    shade(c,'#14232f','#35464b');
-    for(let i=0;i<60;i++)dot(c,(i*119+23)%640,(i*61+13)%182,i%3===0?1.4:.75,'#d5dacd');
-    for(let i=0;i<5;i++)line(c,i*145-26,168,i*145+32,61,'#4e5e61',5);
-    c.fillStyle='#c3a77e';c.fillRect(0,183,640,3);const xx=x=>Math.max(13,Math.min(627,76+x*28));
+    shade(c,'#272c2c','#141919');
+    const xx=x=>Math.max(13,Math.min(627,76+x*28));
+    for(let metres=0;metres<=18;metres+=2){
+      const x=xx(metres);line(c,x,49,x,166,'#363e3c');line(c,x,164,x,170,'#aca89a');
+      if(metres%4===0)ink(c,quantity(ui.lang,metres,0,t('م','m')),x,184,'#c4beae',12,'center');
+    }
+    line(c,35,165,607,165,'#78796e');
     c.strokeStyle='#e9c88d';c.lineWidth=2;c.setLineDash([6,5]);c.strokeRect(xx(8),69,xx(12)-xx(8),94);c.setLineDash([]);
-    const pos=xx(f.x);poly(c,[[pos-15,105],[pos+13,105],[pos+13,131],[pos-15,131]],'#d8c8a6','#262a29');
-    poly(c,[[pos+13,113],[pos+24,108],[pos+24,128],[pos+13,124]],'#899a93');
+    const pos=xx(f.x);
+    c.fillStyle='#323b3a';c.strokeStyle='#dbd3c0';c.lineWidth=1.6;
+    c.fillRect(pos-16,106,29,21);c.strokeRect(pos-16,106,29,21);
+    c.strokeRect(pos-10,99,17,5);c.strokeRect(pos+13,110,12,12);
+    for(let i=0;i<3;i++)line(c,pos+17+i*3,111,pos+17+i*3,121,'#b1ad9e');
+    line(c,pos-21,130,pos+27,130,'#afa995',2.5);
     if(f.v!==0)line(c,pos,141,Math.min(635,Math.max(5,pos+f.v*6)),141,'#ef9b71',3);
     ink(c,t('الموضع مع الزمن','Position over time'),604,214,'#e1d2b6',13,'right');
     line(c,33,288,605,288,'#758782');line(c,33,218,33,288,'#758782');

@@ -1,6 +1,6 @@
 import {mount} from '../night-shell.js';
 import {el,button,field,select,range,words,row,output,surface,stage,clock,choose,link} from './kit.js';
-import {places,lights,motions,matchCatalog,buildScene,retime,describe,validScene,paintScene,sceneThumbnails} from './scene.js';
+import {places,lights,motions,matchCatalog,buildScene,retime,describe,validScene,paintScene,sceneThumbnails,retrySceneImages} from './scene.js';
 
 const example=['انتظار عند رصيف بعد انطفاء اللوحة','Waiting on a pier after the sign goes dark'];
 let scene=null,prompt='',languageOfPrompt='',feeding=false,wantsPlace=false,lastPlace='pier',time=0,timer,saved;
@@ -19,7 +19,19 @@ mount({id:'director-sentence',title:['مخرج من جملة','One-sentence dire
     compose(match.setting);
   });
   desk.append(field(t('فكرة المشهد','Scene idea'),idea),row(generate),choice,body,status);
-  if(!scene){const preview=stage(t('الرصيف من كتالوج مواقع التصوير','Pier from the set library'));paintScene(preview,buildScene(example[0],'pier'),1);body.append(preview,el('p',t('من مكتبة التصوير المحلية · الرصيف','Local set library · Pier'),'cr-caption'));}
+  function retryControl(canvas,s,frame){
+    const retry=button('retry-image',t('أعد تحميل صورة المشهد','Retry scene photography'),()=>{
+      retrySceneImages(s.setting);paintScene(canvas,s,frame());
+    });
+    const update=()=>{retry.hidden=canvas.dataset.visual!=='movement-plan';};
+    canvas.addEventListener('visualchange',update);update();
+    return retry;
+  }
+  if(!scene){
+    const preview=stage(t('الرصيف من كتالوج مواقع التصوير','Pier from the set library')),sample=buildScene(example[0],'pier');
+    body.append(preview,el('p',t('من مكتبة التصوير المحلية · الرصيف','Local set library · Pier'),'cr-caption'),retryControl(preview,sample,()=>1));
+    paintScene(preview,sample,1);
+  }
   function renderChoice(){
     choice.hidden=!wantsPlace;body.hidden=wantsPlace||Boolean(scene&&scene.prompt!==prompt);if(!wantsPlace)return;timer?.stop();
     const set=select('substitute',Object.entries(places).map(([id,n])=>[id,t(...n)]),lastPlace,v=>{lastPlace=v;});
@@ -37,7 +49,7 @@ mount({id:'director-sentence',title:['مخرج من جملة','One-sentence dire
     const s=scene,can=stage(t(...places[s.setting])),caption=el('p',null,'cr-caption'),read=el('output',null,'cr-meter');
     const scrub=range('seek',time,0,s.duration,.1,v=>timer.seek(v));
     const run=button('play',t('شغّل فكرتي','Play my idea'),()=>{if(validScene(scene))timer.play();});
-    body.append(can,caption,row(run,read),field(t('ثانية المشهد','Scene second'),scrub));
+    body.append(can,caption,retryControl(can,s,()=>time),row(run,read),field(t('ثانية المشهد','Scene second'),scrub));
     timer=clock(()=>s.duration,(sec,on)=>{
       time=sec;scrub.value=sec;read.value=sec.toFixed(1)+' / '+s.duration+' s';
       const shot=paintScene(can,s,sec),i=s.shots.indexOf(shot);caption.textContent=(i+1)+' / 3 · '+choose(t,describe(s,i))+' · '+t(...lights[shot.lighting])+' · '+t(...motions[shot.motion]);
@@ -62,15 +74,17 @@ mount({id:'director-sentence',title:['مخرج من جملة','One-sentence dire
         item.append(row(field(t('الضوء','Lighting'),model('lighting',lights)),field(t('الحركة','Movement'),model('motion',motions))));return item;
       }));
     }
-    function store(){
+    async function store(){
       if(!validScene(s))return null;
-      const rec=ui.savePiece({title:s.prompt,type:'night-scene',data:structuredClone(s),thumbnail:sceneThumbnails(s)[0]});
+      const snapshot=structuredClone(s),frames=await sceneThumbnails(snapshot);
+      if(!can.isConnected||JSON.stringify(snapshot)!==JSON.stringify(s))return null;
+      const rec=ui.savePiece({title:snapshot.prompt,type:'night-scene',data:snapshot,thumbnail:frames[0]});
       if(rec){saved=rec;status.textContent=t('أُضيف المشهد إلى دفتر أعمالك.','The scene was added to your notebook.');}
       else status.textContent=t('تعذّر تأكيد الحفظ. يظل المشهد متاحًا هنا.','Saving could not be confirmed. The scene remains open here.');
       return rec;
     }
     const links=row();function refreshLinks(){
-      links.replaceChildren(button('save',t('احفظ المشهد في دفتري','Save scene to notebook'),()=>{store();refreshLinks();}));
+      links.replaceChildren(button('save',t('احفظ المشهد في دفتري','Save scene to notebook'),async e=>{e.currentTarget.disabled=true;await store();refreshLinks();}));
       if(saved?.id)links.append(link('./idea-to-studio.html?'+new URLSearchParams({lang,piece:saved.id}),t('عاين نقله إلى الاستوديو','Preview studio handoff')));
     }
     body.append(links);drawShots();refreshLinks();timer.seek(time);

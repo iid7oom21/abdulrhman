@@ -32,6 +32,22 @@ test('the dome projects both target solutions and the phone handoff hides the se
       const tap = key => field(key).click();
       try {
         await page.goto(base + 'dome-sky.html?lang=' + lang);
+        await expect.poll(() => field('sky').evaluate(async view => {
+          const backdrop = new Image();
+          backdrop.src = new URL('assets/photo/dome-sky.webp', location.href);
+          await backdrop.decode();
+          const expected = document.createElement('canvas');
+          expected.width=view.width; expected.height=view.height;
+          const c=expected.getContext('2d');
+          c.drawImage(backdrop,0,0,view.width,view.height);
+          const source=c.getImageData(68,112,8,8).data;
+          const scene=view.getContext('2d').getImageData(68,112,8,8).data;
+          return source.every((v,i)=>v===scene[i]);
+        })).toBe(true);
+        await field('A-plus').focus();
+        await page.keyboard.press('Enter');
+        await expect(field('A-plus')).toBeFocused();
+        await tap('reset');
         await tap('check');
         await expect(page.locator('[data-result=different]')).toBeVisible();
         await tap('A-plus'); await tap('B-plus'); await tap('B-plus');
@@ -48,14 +64,40 @@ test('the dome projects both target solutions and the phone handoff hides the se
         assert.deepEqual(bytes.subarray(0,8),Buffer.from([137,80,78,71,13,10,26,10]));
         assert.equal(bytes.readUInt32BE(16),640);
         assert.equal(bytes.readUInt32BE(20),320);
+        if (lang==='ar') {
+          await page.route('**/assets/photo/*.webp', route=>route.abort());
+          await page.reload();
+          await tap('A-plus'); await tap('B-plus'); await tap('B-plus');
+          await tap('check');
+          await expect(page.locator('[data-result=match]')).toBeVisible();
+          await page.unroute('**/assets/photo/*.webp');
+        }
 
         await page.goto(base + 'echo-two.html?lang=' + lang);
+        const senderMarker = await page.locator('.game-art').evaluate(view => {
+          const ctx=view.getContext('2d');
+          return [...ctx.getImageData(312,204,10,20).data];
+        });
         for (const signal of ['signal-1','signal-4','signal-5']) await tap(signal);
         await expect(field('signal-0')).toBeDisabled();
         await tap('pass');
         await expect(field('private-map')).toHaveCount(0);
         await page.setViewportSize({width:844,height:width});
         await tap('receive');
+        await expect.poll(() => page.locator('.game-art').evaluate(async view => {
+          const plate = new Image();
+          plate.src = new URL('assets/photo/echo-chart.webp', location.href);
+          await plate.decode();
+          const expected = document.createElement('canvas');
+          expected.width=view.width; expected.height=view.height;
+          const c=expected.getContext('2d');
+          c.drawImage(plate,0,0,view.width,view.height);
+          const original=c.getImageData(312,204,10,20).data;
+          const receiver=view.getContext('2d').getImageData(312,204,10,20).data;
+          return original.every((v,i)=>v===receiver[i]);
+        })).toBe(true);
+        const receiverMarker=await page.locator('.game-art').evaluate(view=>[...view.getContext('2d').getImageData(312,204,10,20).data]);
+        assert.notDeepEqual(senderMarker,receiverMarker);
         await page.setViewportSize({width,height:844});
         await page.locator('[data-night-language]').click();
         await expect(field('private-map')).toHaveCount(0);
