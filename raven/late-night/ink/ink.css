@@ -1,0 +1,167 @@
+:root {
+  --night: #14191a;
+  --paper: #f3ecda;
+  --gold: #e6bc92;
+  --muted: #bbc7c5;
+  --edge: #4b5655;
+  --ink-sheet: #e9e3ce;
+  --ink-type: #182323;
+}
+body {
+  background: var(--night);
+}
+.night-mast { background: #101617; }
+#night-app { padding-block-start: clamp(1.5rem, 4vw, 3rem); }
+.night-heading { margin-block-end: 1.25rem; }
+.night-heading h1 { font-size: clamp(2rem, 5vw, 3.8rem); line-height: 1.2; }
+.night-heading .night-intro { margin: .45rem 0 0; }
+html[lang="en"] :is(.night-heading h1,.ink-listing h2) { font-family: Georgia, serif; font-weight: 400; }
+button, select, textarea, input:not([type="range"]):not([type="checkbox"]) {
+  border-radius: 2px;
+  border-color: #637171;
+  background: #253031;
+}
+button[aria-pressed="true"], button.primary {
+  background: var(--gold);
+  color: #23201b;
+  border-color: var(--gold);
+}
+.night-bench :is(button, label, output, figcaption, p) { overflow-wrap: anywhere; }
+.night-bench [hidden] { display: none; }
+
+#night-app[data-room="ink-studio"] { padding-block-start: 0; }
+[data-room="ink-studio"] .night-heading {
+  border-block-end: 1px solid var(--edge);
+  margin-block: 0 clamp(1.1rem, 3vw, 2.3rem);
+  padding-block: clamp(1.5rem, 4vw, 3rem);
+}
+[data-room="ink-studio"] .night-heading h1 { font-size: clamp(3rem, 7vw, 5.7rem); }
+.ink-programme {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(1.25rem, 3vw, 2.5rem) clamp(.85rem, 2.5vw, 2rem);
+}
+.night-bench .ink-listing {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: var(--paper);
+}
+.ink-listing img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  background: #233032;
+}
+.ink-listing-copy { min-width: 0; padding-block: .75rem .25rem; }
+.ink-listing h2 { font-size: clamp(1.2rem, 2.8vw, 2.15rem); line-height: 1.25; margin: 0; overflow-wrap: anywhere; }
+.ink-entry-action { display: inline-block; margin-top: .25rem; font-size: 1rem; color: var(--gold); }
+.ink-entry-action::after { content: "←" / ""; padding-inline-start: .55em; }
+html[dir="ltr"] .ink-entry-action::after { content: "→" / ""; }
+.ink-listing:hover .ink-entry-action, .ink-listing:focus-visible .ink-entry-action { text-decoration: underline; text-underline-offset: .24em; }
+.ink-programme .ink-listing:first-child {
+  grid-column: 1/-1;
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  background: var(--ink-sheet);
+  color: var(--ink-type);
+}
+.ink-listing:first-child .ink-listing-copy { padding: clamp(1rem, 4vw, 3rem); align-self: center; }
+.ink-listing:first-child h2 { font-size: clamp(1.8rem, 4vw, 3.5rem); }
+.ink-listing:first-child .ink-entry-action { color: var(--ink-type); margin-block-start: .65rem; border-bottom: 1px solid #837e6b; }
+.ink-listing:first-child img { height: auto; aspect-ratio: 16 / 9; align-self: center; }
+.ink-listing:first-child:has(img[hidden]) { grid-template-columns: minmax(0, 1fr); }
+
+.ink-stage {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  align-items: center;
+  margin: 1.25rem 0;
+  padding: clamp(.45rem, 1.4vw, .9rem);
+  border: 1px solid var(--edge);
+  background: #0e1415;
+}
+.ink-stage > :is(img,canvas,video) { display: block; width: 100%; max-width: 900px; height: auto; object-fit: contain; }
+.ink-stage > canvas[data-page="sheet"] { max-width: 540px; }
+.ink-stage figcaption {
+  width: 100%;
+  padding: .65rem .25rem .1rem;
+  line-height: 1.45;
+  color: var(--paper);
+}
+.ink-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .55rem .85rem;
+  margin-block: 1rem;
+}
+.ink-controls > * { min-width: 0; max-width: 100%; }
+.ink-controls :is(label,fieldset) { display: grid; grid-template-columns: minmax(0, 1fr); gap: .25rem; }
+.ink-controls select { min-width: 0; max-width: 100%; }
+.ink-controls input[type="range"] { max-width: 100%; accent-color: var(--gold); }
+.ink-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(8.5rem, 100%), 1fr));
+  gap: .65rem;
+  margin-block: 1rem;
+}
+button.ink-card {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: .45rem;
+  padding: .35rem .35rem .55rem;
+  text-align: start;
+  color: var(--paper);
+  border: 1px solid var(--edge);
+  background: #1c2728;
+}
+button.ink-card img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; display: block; }
+button.ink-card :is(span,strong,small) { padding-inline: .25rem; }
+button.ink-card[aria-pressed="true"] { color: var(--ink-type); background: var(--ink-sheet); border-color: var(--ink-sheet); }
+.ink-result {
+  margin-block: 1rem;
+  padding: .85rem 1rem;
+  border-inline-start: 3px solid var(--gold);
+  background: #243030;
+}
+.ink-result > :first-child { margin-block-start: 0; }
+.ink-result > :last-child { margin-block-end: 0; }
+.ink-result:empty { display: none; }
+.ink-timeline { padding-inline-start: 1.55rem; }
+.ink-timeline li { padding-block: .4rem; border-block-end: 1px solid var(--edge); }
+@media (max-width: 640px) {
+  .ink-programme .ink-listing:first-child { display: flex; }
+  .ink-listing:first-child .ink-listing-copy { align-self: stretch; padding: .8rem 1rem 1rem; }
+  .ink-listing-copy { padding-block-start: .55rem; }
+  .ink-entry-action { font-size: .92rem; }
+  .ink-strip { grid-template-columns: repeat(2, minmax(0,1fr)); }
+}
+
+@media (min-width: 56rem) {
+  [data-room="ink-cut"] .night-bench {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+    align-items: start;
+    gap: 1rem clamp(1rem, 3vw, 2.25rem);
+  }
+  [data-room="ink-cut"] .ink-stage { margin-block: 0; }
+  [data-room="ink-cut"] .night-bench > section > :first-child { margin-block-start: 0; }
+  [data-room="ink-cut"] .night-bench > a { grid-column: 1 / -1; }
+}
+@media (max-width: 640px) {
+  [data-room="ink-cut"] .ink-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .4rem; }
+}
+@media (max-width: 360px) and (max-height: 700px) {
+  [data-room="ink-cut"] .night-bench:has(.ink-strip) .ink-stage {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: .5rem;
+  }
+  [data-room="ink-cut"] .night-bench:has(.ink-strip) .ink-stage figcaption { padding: 0; }
+}

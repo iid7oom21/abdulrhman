@@ -1,14 +1,15 @@
 import {mount,element as el,action,link} from './night-shell.js';
 import {deletePiece,download,loadDraft,saveDraft} from './night-store.js';
 import {activities,extras} from './catalog.js';
+import {items as inkActivities} from './ink/catalog.js';
 const id=document.querySelector('#night-app').dataset.room;
 const labels=extras.find(a=>a[0]===id) || ['coast-map','خريطة الساحل والسينما القديمة','The coast and the old cinema'];
 const isImage=value=>typeof value==='string' && /^data:image\/(png|jpeg|webp);base64,/.test(value);
 const params=new URLSearchParams(location.search);
 function workURL(ui,p) {
   if(p.activity==='titles')return ui.url('../after-show/?activity=titles&nightPiece='+encodeURIComponent(p.id));
-  const route=[...activities,...extras].find(s=>s[0]===p.activity);
-  return route ? ui.url(route[0]+'.html?piece='+encodeURIComponent(p.id)) : null;
+  const known=[...activities,...extras].some(s=>s[0]===p.activity) || inkActivities.some(s=>s.page===p.activity);
+  return known ? ui.url(p.activity+'.html?piece='+encodeURIComponent(p.id)) : null;
 }
 function portfolio(ui) {
   const {root,t}=ui;

@@ -42,6 +42,23 @@ mount({
     sections.forEach((name, i) => nav.append(link(t(...name), '#room-' + i)));
     root.append(nav);
 
+    const ink = link('', url('ink-studio.html'), 'night-ink-entry');
+    ink.dataset.inkProgram = '';
+    const print = element('img');
+    print.alt = '';
+    print.width = 520;
+    print.height = 293;
+    print.loading = 'lazy';
+    print.addEventListener('error', () => { print.hidden = true; }, {once:true});
+    print.src = './ink/art/ferry-pier-print.webp';
+    const inkCopy = element('div');
+    inkCopy.append(
+      element('h2', t('ليالي الحبر', 'Ink Nights')),
+      element('span', t('ادخل المرفأ المرسوم', 'Enter the ink-drawn harbour'))
+    );
+    ink.append(print, inkCopy);
+    root.append(ink);
+
     sections.forEach((name, i) => {
       const section = element('section', null, 'night-room');
       section.id = 'room-' + i;

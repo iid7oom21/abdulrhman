@@ -4,6 +4,7 @@
   const words = {
     lateNight:['آخر الليل','Late Night'],twoMinutes:['عندي دقيقتين','I have two minutes'],fullEvening:['أبي أمسية كاملة','Plan a full evening'],
     nightPitch:['مدينة ساحلية وسينما قديمة. سجّل حركتك في المحطّة، أو اصنع مشهدًا عند الرصيف.','A coastal town and an old cinema. Record a route through the station or stage a scene on the pier.'],enterNight:['ادخل آخر الليل','Enter Late Night'],
+    inkNights:['ليالي الحبر · أنمي ومانجا','Ink Nights · Anime and manga'],
     afterShow:['بعد العرض','After the Show'],
     afterShowPitch:['عندك ١٢ ثانية وثلاث لقطات. بأي لقطة تفتتح المشهد؟','You have twelve seconds and three shots. Which one opens your scene?'],
     afterShowPlay:['العب آخر إرسال','Play Last Transmission'],
