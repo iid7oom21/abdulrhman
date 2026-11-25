@@ -22,5 +22,13 @@ export const items = [
   {
     page: 'ink-courier', cover: 'ferry-pier-print', title: ['ساعي المطر', 'Rain Courier'],
     action: ['العب وارسم مانجا جولتك', 'Play and compose your manga']
+  },
+  {
+    page: 'ink-lines', cover: 'workshop-lines', title: ['خطوط السرعة', 'Speed lines'],
+    action: ['اضبط إيقاع اللقطة', 'Time the motion']
+  },
+  {
+    page: 'ink-letters', cover: 'workshop-letters', title: ['فقاعات الحوار', 'Speech bubbles'],
+    action: ['وزّع فقاعات الحوار', 'Place the speech bubbles']
   }
 ];
