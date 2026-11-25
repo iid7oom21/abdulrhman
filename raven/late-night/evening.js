@@ -1,5 +1,5 @@
 import {mount,element as el,action,link} from './night-shell.js';
-import {deletePiece,download,loadDraft,saveDraft} from './night-store.js';
+import {deletePiece,download,loadDraft,saveDraft,writePiece} from './night-store.js';
 import {activities,extras} from './catalog.js';
 import {items as inkActivities} from './ink/catalog.js';
 const id=document.querySelector('#night-app').dataset.room;
@@ -7,12 +7,46 @@ const labels=extras.find(a=>a[0]===id) || ['coast-map','خريطة الساحل 
 const isImage=value=>typeof value==='string' && /^data:image\/(png|jpeg|webp);base64,/.test(value);
 const params=new URLSearchParams(location.search);
 function workURL(ui,p) {
+  if(p.schemaVersion!==undefined && p.schemaVersion!==1)return null;
   if(p.activity==='titles')return ui.url('../after-show/?activity=titles&nightPiece='+encodeURIComponent(p.id));
   const known=[...activities,...extras].some(s=>s[0]===p.activity) || inkActivities.some(s=>s.page===p.activity);
   return known ? ui.url(p.activity+'.html?piece='+encodeURIComponent(p.id)) : null;
 }
+// Other evening entries do not need the import validators or camera replay engine.
+let workFiles;
+const formats=id==='my-notebook'?import('./work-file.js').catch(()=>null):null;
+const kindNames={scene:['مشهد','Scene'],manga:['مانغا','Manga'],frame:['كادر','Frame'],replay:['إعادة','Replay']};
 function portfolio(ui) {
   const {root,t}=ui;
+  const picker=el('input'),importStatus=el('p'),confirm=el('div',null,'night-row');
+  picker.type='file';picker.accept='.json,application/json';picker.id='night-work-import';
+  importStatus.setAttribute('role','status');
+  let request=0;
+  picker.onchange=async()=>{
+    const token=++request,file=picker.files[0];confirm.replaceChildren();importStatus.textContent='';
+    if(!file)return;
+    try {
+      if(file.size>workFiles.MAX_FILE_BYTES)throw new Error('size');
+      const piece=workFiles.readWork(await file.text());
+      if(request!==token || !picker.isConnected)return;
+      importStatus.textContent=t('معاينة القطعة','Preview work')+' · '+piece.title;
+      confirm.append(action(t('أضف إلى دفتري','Add to my portfolio'),()=>{
+        if(!writePiece(piece.activity,piece))return;
+        confirm.replaceChildren();picker.value='';paint();
+        importStatus.textContent=t('أُضيفت نسخة جديدة إلى دفترك.','A new copy was added to your portfolio.');
+      }),action(t('إلغاء','Cancel'),()=>{picker.value='';confirm.replaceChildren();importStatus.textContent='';}));
+    } catch(error) {
+      if(request!==token)return;
+      const reasons={
+        size:['أقصى حجم لملف العمل ٦٤ كيلوبايت.','Work files can be up to 64 KiB.'],
+        json:['تعذّرت قراءة JSON في هذا الملف.','The file could not be read as JSON.'],
+        settings:['تعذّر فتح إعدادات القطعة أو أحد عناصرها.','The settings or an asset identifier could not be opened.'],
+        format:['اختر ملف عمل من دفتر آخر الليل بإصدار مدعوم.','Choose a supported Late Night work file.']
+      };
+      importStatus.textContent=t(...(reasons[error.message]||reasons.format));
+      picker.value='';
+    }
+  };
   const paint=()=>{
     root.replaceChildren();
     const shelf=el('div',null,'night-shelf'),items=ui.pieces();
@@ -22,19 +56,31 @@ function portfolio(ui) {
       const card=el('article',null,'night-item'),name=el('h3',p.title),thumb=el('img');
       const active=activities.find(a=>a[0]===p.activity);
       const img=isImage(p.thumbnail);
-      if(img || active){thumb.src=img?p.thumbnail:'./thumbs/'+p.activity+'.webp?v=cinema';thumb.alt=img?p.title:t('غلاف النشاط','Activity cover');thumb.loading='lazy';card.append(thumb);}
+      const ink=inkActivities.find(a=>a.page===p.activity);
+      if(img || active || ink){thumb.src=img?p.thumbnail:ink?'./ink/art/'+ink.cover+'.webp':'./thumbs/'+p.activity+'.webp?v=cinema';thumb.alt=img?p.title:t('غلاف النشاط','Activity cover');thumb.loading='lazy';card.append(thumb);}
       const date=new Date(p.at);
-      const info=el('p',(!Number.isNaN(date.valueOf()) ? date.toLocaleDateString(ui.lang) : '')+' · JSON');
+      const portable=workFiles?.portableWork(p),kind=workFiles?.workKind(p);
+      const info=el('p',[kind?t(...kindNames[kind]):null,!Number.isNaN(date.valueOf())?date.toLocaleDateString(ui.lang):null,'JSON'].filter(Boolean).join(' · '));
       const row=el('div',null,'night-row'),target=workURL(ui,p);
       if(target)row.append(link(t('افتح للتعديل','Open to edit'),target));
-      row.append(action(t('تنزيل JSON','Download JSON'),()=>download(p.activity+'.json',p)));
+      row.append(action(t('تنزيل JSON','Download JSON'),()=>download(p.activity+'.json',portable||p)));
       if(img){const image=link(t('تنزيل الصورة','Download image'),p.thumbnail);image.download=p.activity+'.'+p.thumbnail.match(/^data:image\/(\w+)/)[1];row.append(image);}
       const remove=action(t('حذف القطعة','Delete piece'),()=>{
         row.replaceChildren(el('span',t('تحذف هذه القطعة؟','Delete this piece?')),action(t('حذف','Delete'),()=>{if(deletePiece(p.id))paint();}),action(t('رجوع','Cancel'),paint));
       });
       row.append(remove);card.append(name,info,row);shelf.append(card);
     }
-  };paint();
+    if(workFiles) {
+      const form=el('section',null,'night-chapter'),label=el('label',t('استورد قطعة من ملف JSON','Import work from a JSON file'));
+      label.htmlFor=picker.id;
+      form.append(label,picker,importStatus,confirm);root.append(form);
+    }
+  };
+  const changed=e=>{if(e.key?.startsWith('raven.late-night.v1.piece.'))paint();};
+  let active=true;
+  window.addEventListener('storage',changed);paint();
+  if(!workFiles)formats.then(module=>{if(module && active){workFiles=module;paint();}});
+  return ()=>{active=false;request++;window.removeEventListener('storage',changed);};
 }
 
 const festivalChoices=[
@@ -47,8 +93,9 @@ const festivalChoices=[
   })
 ];
 const oldUrl=(ui,activity)=>ui.url('../after-show/?activity='+activity);
-let program=loadDraft('festival-chair') || {};
+let program;
 function plan(ui) {
+  program??=loadDraft('festival-chair') || {};
   const {root,t}=ui;
   root.replaceChildren();
   const controls=el('div',null,'night-row');
@@ -83,7 +130,9 @@ function plan(ui) {
 }
 
 let chapterState=null;
+const guided=id==='three-evening'?await import('./evening-programme.js'):null;
 function three(ui) {
+  if(guided.isProgramme(ui.editData) || params.get('programme')==='coast' || (!params.has('programme') && !params.has('titlePiece') && !params.has('shotPiece') && !ui.editData && guided.hasProgramme()))return guided.renderProgramme(ui);
   const {root,t}=ui;
   const snapshot=ui.editData || chapterState || loadDraft('three-evening') || {};
   const all=ui.pieces();
@@ -110,6 +159,7 @@ function three(ui) {
     const box=el('section',null,'night-chapter'),part=[['ورشة العنوان','Title workshop'],['سبع نوافذ مضاءة','Seven lit windows'],['بطاقة النهاية','End card']][step-1];
     box.append(el('h2',step+' / 3 · '+t(...part)));root.append(box);
     if(step===1){
+      box.append(link(t('اختر فصول أمسيتك','Choose your evening chapters'),ui.url('three-evening.html?programme=coast')));
       box.append(el('p',t('اكتب كلمتي العنوان في ورشة «بعد العرض»، ثم اختر نقلهما إلى أمسيتك.','Write two title words in the After the Show workshop, then choose to bring them here.')),link(t('افتح ورشة العنوان','Open the title workshop'),ui.url('../after-show/?activity=titles&nightEvening=1'),'night-cta'));
       if(title)box.append(action(t('تابع بعنواني','Continue with my title'),()=>draw(2)));
     } else if(step===2){

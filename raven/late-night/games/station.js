@@ -1,7 +1,7 @@
 import {makeStationScene} from './station-scene.js';
 import {start,keepButton,el,button,canvas,output} from './tools.js';
 import {LENGTH,ORIGIN,onPlate,positionAt,move,firstOpening} from './station-model.js';
-let phase='idle',trace=[],runner={...ORIGIN},clock=0,started=0,raf=0,paintActive=null;
+let phase='idle',trace=[],runner={...ORIGIN},clock=0,started=0,raf=0;
 let outcome='',crossedAt=null,reviewing=false,restored=false;
 function render(ui){
   const {t,root}=ui;
@@ -25,7 +25,7 @@ function render(ui){
   const positions=[['left','←',-1,0],['up','↑',0,-1],['down','↓',0,1],['right','→',1,0]];
   directions.dir='ltr';
   function step(dx,dy){
-    if(!['record','play'].includes(phase))return;
+    if(document.hidden||!['record','play'].includes(phase))return;
     const now=Math.min(LENGTH,Math.round(performance.now()-started));
     if(now>=LENGTH){tick();return;}
     const p=move(runner,dx,dy,phase==='play'&&onPlate(positionAt(trace,now)));
@@ -39,7 +39,7 @@ function render(ui){
     paint();
   }
   const keyhandler=e=>{if(e.target.matches('input,select,textarea'))return;const d=positions.find(([k])=>e.key.toLowerCase()==='arrow'+k);if(d&&['play','record'].includes(phase)){e.preventDefault();step(d[2],d[3]);}};
-  if(render.keys)document.removeEventListener('keydown',render.keys);render.keys=keyhandler;document.addEventListener('keydown',keyhandler);
+  document.addEventListener('keydown',keyhandler);
   positions.forEach(([key,label,x,y])=>{const b=button(key,label,()=>step(x,y));b.setAttribute('aria-label',t({left:'يسار',up:'فوق',down:'تحت',right:'يمين'}[key],key));directions.append(b);});
   function begin(next){
     cancelAnimationFrame(raf);clock=0;runner={...ORIGIN};reviewing=false;crossedAt=null;outcome='';
@@ -51,7 +51,7 @@ function render(ui){
     if(clock>=LENGTH){
       if(phase==='play')outcome='timeout';phase='ready';controls();paint();return;
     }
-    paint();raf=requestAnimationFrame(()=>paintActive.tick());
+    paint();raf=requestAnimationFrame(tick);
   }
   function paint(){
     const ghost=['play','watch','won'].includes(phase)||reviewing?positionAt(trace,clock):null;
@@ -85,7 +85,27 @@ function render(ui){
     row.append(button('record',trace.length?t('استبدل التسجيل','Replace recording'):t('سجّل عشر ثوانٍ','Record ten seconds'),()=>begin('record')));
     if(phase==='won')row.append(keepButton(ui,t('احتفظ ببطاقة العبور','Keep crossing card'),()=>({title:t('بطاقة عبور البريد','Mail crossing card'),type:'station-shadow',data:{crossedMs:crossedAt,trace:trace.map(v=>({...v}))}})));
   }
-  root.replaceChildren(view,clockBox,read,row,directions,details,retryArt);paintActive={tick};
-  controls();paint();scene.load();
+  const active = () => ['record','play','watch'].includes(phase);
+  function suspend() {
+    cancelAnimationFrame(raf);
+    if (active()) clock = Math.min(LENGTH, performance.now() - started);
+  }
+  function resume() {
+    if (document.hidden || !active()) return;
+    cancelAnimationFrame(raf);
+    started = performance.now() - clock;
+    tick();
+  }
+  function visibility() { if (document.hidden) suspend(); else resume(); }
+  document.addEventListener('visibilitychange',visibility);
+  window.addEventListener('pageshow',resume);
+  root.replaceChildren(view,clockBox,read,row,directions,details,retryArt);
+  controls();paint();scene.load();resume();
+  return () => {
+    if (!document.hidden) suspend();
+    document.removeEventListener('keydown',keyhandler);
+    document.removeEventListener('visibilitychange',visibility);
+    window.removeEventListener('pageshow',resume);
+  };
 }
 start(1,'station-shadow',['عشر ثوانٍ في المحطّة','Ten seconds at the station'],['سجّل طريقًا لظلك ثم خذ حقيبة البريد عبر باب العربة.','Record a path for your shadow, then carry the mailbag through the carriage door.'],render);

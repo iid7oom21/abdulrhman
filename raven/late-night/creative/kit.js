@@ -11,10 +11,20 @@ export function stage(label){const c=el('canvas');c.width=640;c.height=300;c.set
 export function clock(max,paint,onEnd){
   let frame=0,t=0,playing=false;
   const reduce=matchMedia('(prefers-reduced-motion:reduce)');
-  function stop(){cancelAnimationFrame(frame);playing=false;}
+  function stop(){
+    cancelAnimationFrame(frame);
+    playing=false;
+    document.removeEventListener('visibilitychange',visibility);
+    window.removeEventListener('pagehide',pause);
+  }
+  function pause(){ if(playing){stop();paint(t,false);} }
+  function visibility(){ if(document.hidden)pause(); }
   function seek(value){stop();t=Math.max(0,Math.min(max(),value));paint(t,false);}
   function play(){
     if(playing){seek(t);return;}
+    if(document.hidden)return;
+    document.addEventListener('visibilitychange',visibility);
+    window.addEventListener('pagehide',pause);
     if(t>=max())t=0;playing=true;const start=performance.now()-t*1000;let last=-1000;
     function tick(now){
       if(!playing)return;

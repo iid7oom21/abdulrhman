@@ -1,7 +1,7 @@
 import {mount,element,action,link} from './night-shell.js';
 import {nowId} from './night-store.js';
 import {SHOTS} from '../after-show/edit-rules.js';
-import {validScene,sceneThumbnails,describe} from './creative/scene.js';
+import {validScene,sceneThumbnails,describe,retrySceneImages} from './creative/scene.js';
 
 const slug=document.body.dataset.activity;
 const titles={
@@ -42,6 +42,10 @@ function renderBoard(ui){
       const imgs=await sceneThumbnails(data);
       if(version!==paintVersion||!panel.isConnected)return;
       panel.replaceChildren();
+      if(imgs.length!==data.shots.length){
+        panel.append(element('p',t('تعذّر تجهيز صور المشهد. يمكنك إعادة تحميلها أو اختيار مصدر آخر.','The scene frames could not be prepared. Retry the artwork or choose another source.')),
+          action(t('أعد تحميل الصور','Retry artwork'),()=>{retrySceneImages(data.setting);paint();}));return;
+      }
       const labels=[t('وصول','Arrival'),t('انطفاء','Blackout'),t('مغادرة','Departure')];
       scenes=data.shots.map((shot,i)=>({id:'director-'+(i+1),sceneNumber:i+1,title:labels[i],prompt:describe(data,i)[lang],duration:shot.seconds,camera:shot.motion==='pan'?'pan-right':'static-tripod',transition:'cut',thumbnail:imgs[i]}));
       source={kind:'director',piece:selected.id};

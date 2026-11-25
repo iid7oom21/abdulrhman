@@ -190,3 +190,7 @@ html[lang="en"] [data-room="index"] :is(.night-heading h1,.night-feature h2,.nig
 html[lang="en"] .night-ink-entry h2 { font-family: Georgia, serif; font-weight: 400; }
 .night-ink-entry span { display: inline-block; padding-top: .2em; color: #3d4540; text-decoration: underline; text-underline-offset: .22em; }
 .night-ink-entry:hover span { color: #6c3924; }
+
+.night-programme-options {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr));gap:.85rem}
+.night-programme-options label {display:grid;gap:.35rem;min-width:0}
+.night-programme-options select {width:100%;min-width:0;max-width:100%}

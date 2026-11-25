@@ -38,7 +38,9 @@ function aperture(ui){
   function render(){
     begin(ui);aperture(ui);
   }
-  onLeave(pause);
+  function visibility(){if(document.hidden)pause();}
+  document.addEventListener('visibilitychange',visibility);
+  onLeave(()=>{pause();document.removeEventListener('visibilitychange',visibility);});
   if(s.phase==='choose'){
     stories.forEach((v,i)=>pick.append(button(label(i),()=>{if(!s.started){s.started=true;start();}if(s.order.includes(i))s.order=s.order.filter(n=>n!==i);else if(s.remaining>0&&s.order.length<3)s.order.push(i);sync();},'window-'+i)));
     menu.append(toggle,launch,reset);sync();return;

@@ -46,27 +46,50 @@ export function mount({id,title,intro=['',''],render}) {
     still.src = new URL('./assets/photo/' + id + '.webp', import.meta.url).href;
   }
   shell.replaceChildren(header,notice,bench);
-  let lastIssue=null, clean;
+  let lastIssue=null, lastSaved=null, clean;
   function showIssue(problem) {
-    lastIssue=problem;
+    lastIssue=problem;lastSaved=null;
     notice.hidden=false;
     notice.replaceChildren(element('span',problem.reason==='read'
       ? t('تعذّرت قراءة الحفظ على هذا الجهاز.','Saved data could not be read on this device.')
       : t('لم يتأكد الحفظ على هذا الجهاز. احتفظ بنسخة قبل المغادرة.','Saving could not be confirmed on this device. Keep a copy before leaving.')));
-    if(problem.value) notice.append(action(t('تنزيل نسخة JSON','Download JSON'),()=>download('late-night-copy.json',problem.value)));
+    if(problem.reason==='quota') {
+      notice.firstChild.textContent=t('امتلأت مساحة الحفظ. نزّل القطعة أو اختر من دفترك ما تريد حذفه.','Device storage is full. Download your work or choose a piece to remove.');
+      const manage=link(t('افتح دفتري في تبويب آخر','Open my portfolio in another tab'),url('my-notebook.html'));
+      manage.target='_blank';manage.rel='noopener';notice.append(document.createTextNode(' '),manage);
+    }
+    if(problem.reason==='conflict') notice.firstChild.textContent=t('تغيّرت المسودة في تبويب آخر. نزّل نسختك أو أعد فتح آخر حفظ.','This draft changed in another tab. Download your copy or reopen the latest save.');
+    if(problem.value) notice.append(action(t('تنزيل نسخة JSON','Download JSON'),async()=>{
+      let copy=problem.value;
+      if(copy.activity && copy.data) {
+        try {const {portableWork}=await import('./work-file.js');copy=portableWork(copy)||copy;} catch { /* The local record can still be downloaded. */ }
+      }
+      download('late-night-copy.json',copy);
+    }));
   }
   window.addEventListener('night:storage',event=>showIssue(event.detail));
   function t(ar,en){return lang==='en' ? en : ar;}
   function url(path) {const u=new URL(path,location.href);u.searchParams.set('lang',lang);return u.href;}
   const selected=params.get('piece');
   const original=selected ? pieces().find(p=>p.id===selected && p.activity===id) : null;
+  function showSaved(item){
+    lastIssue=null;lastSaved=item;notice.hidden=false;
+    notice.replaceChildren(element('span',t('حُفظت القطعة على هذا الجهاز.','Saved on this device.')),document.createTextNode(' '),link(t('دفتر أعمالي','My portfolio'),url('my-notebook.html')));
+    const run=params.get('nightProgramme');
+    if(/^[a-z0-9-]{1,90}$/i.test(run || '')) {
+      const back=new URL('three-evening.html',location.href);
+      back.searchParams.set('programme','coast');back.searchParams.set('run',run);back.searchParams.set('earned',item.id);
+      notice.append(document.createTextNode(' · '),link(t('راجع القطعة لأمسيتك','Review this work for your evening'),url(back)));
+    }
+  }
   const ui={root:bench,t,url, get lang(){return lang;}, editData:original?.data ?? null,
     pieces, events, savePiece:p=>{
       const item=writePiece(id,p);
-      if(item){lastIssue=null;notice.hidden=false;notice.replaceChildren(element('span',t('حُفظت القطعة على هذا الجهاز.','Saved on this device.')),document.createTextNode(' '),link(t('دفتر أعمالي','My portfolio'),url('my-notebook.html')));}
+      if(item)showSaved(item);
       return item;
     }, recordEvent:e=>recordEvent(id,e),
-    load:()=>loadDraft(id),save:data=>saveDraft(id,data)};
+    load:()=>loadDraft(id),save:data=>saveDraft(id,data),
+    replaceDraft:data=>saveDraft(id,data,{replace:true})};
   function switchLanguage(){
     lang=lang==='ar'?'en':'ar';
     const target=new URL(location.href); target.searchParams.set('lang',lang);
@@ -83,7 +106,7 @@ export function mount({id,title,intro=['',''],render}) {
     tongue.dataset.nightLanguage='';
     all.textContent=t('كل التجارب','All experiences'); all.href=url('./#catalog');
     home.textContent=t('العودة إلى RAVEN','Return to RAVEN');home.href=url('../');
-    if(lastIssue) showIssue(lastIssue);
+    if(lastIssue)showIssue(lastIssue);else if(lastSaved)showSaved(lastSaved);
     bench.replaceChildren(); clean=render(ui);
   }
   paint();

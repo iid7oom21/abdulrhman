@@ -1,2 +1,59 @@
 <!doctype html>
-<html lang="ar" dir="rtl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ساعي المطر · RAVEN</title><link rel="stylesheet" href="./ink/courier.css"></head><body><main><header><a id="back" href="./ink-studio.html">ليالي الحبر</a><button id="language">English</button></header><h1 id="title"></h1><p id="intro"></p><nav><button id="gameTab"></button><button id="weatherTab"></button><button id="mangaTab"></button></nav><section><canvas id="scene" width="800" height="340" role="img"></canvas><p id="caption"></p></section><section id="game"><p id="brief"></p><div id="board" role="group"></div><div class="controls"><button id="undo"></button><button id="reset"></button></div><p id="status" role="status" aria-live="polite"></p></section><section id="weather" hidden><h2 id="weatherTitle"></h2><label><span id="rainLabel"></span><input id="rain" type="range" min="0" max="100" value="60"></label><label><span id="windLabel"></span><input id="wind" type="range" min="-50" max="50" value="15"></label><p id="measure"></p><button id="print"></button><p id="exportStatus" role="status"></p></section><section id="manga" hidden><h2 id="mangaTitle"></h2><p id="mangaHint"></p><div id="panels" class="panels"></div><button id="export"></button></section><small id="note"></small><noscript>تحتاج هذه التجربة JavaScript. This experience requires JavaScript.</noscript></main><script src="./ink/courier.js"></script></body></html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#131c20">
+  <script src="./boot.js"></script>
+  <title>ساعي المطر · آخر الليل</title>
+  <link rel="stylesheet" href="./night-shell.css">
+  <link rel="stylesheet" href="./ink/ink.css">
+  <link rel="stylesheet" href="./ink/courier.css">
+  <script type="module" src="./ink/courier.js"></script>
+</head>
+<body>
+  <main id="night-app" data-room="ink-courier"><noscript><p>فعّل JavaScript للعب ساعي المطر. Enable JavaScript to play Rain Courier. <a href="./ink-studio.html">ليالي الحبر / Ink Nights</a></p></noscript></main>
+  <template id="courier-view">
+    <nav class="courier-tabs">
+      <button id="gameTab" aria-controls="game"></button><button id="weatherTab" aria-controls="weather"></button><button id="mangaTab" aria-controls="manga"></button>
+    </nav>
+    <p id="recovery" role="status" hidden></p>
+    <section id="game">
+      <div class="courier-layout">
+        <figure class="courier-stage">
+          <img id="stage-art" width="960" height="540" alt="">
+          <figcaption id="caption"></figcaption>
+          <button id="retry-stage" hidden></button>
+        </figure>
+        <div class="courier-map">
+          <h2 id="map-title"></h2>
+          <p id="brief"></p>
+          <div id="board" role="group" dir="ltr" aria-labelledby="map-title"></div>
+          <div id="legend" class="courier-legend"></div>
+          <div class="courier-readout"><span id="steps-meter"></span><span id="wet-meter"></span></div>
+          <p id="status" role="status"></p>
+          <p id="preview" aria-live="polite"></p>
+          <button id="confirm" class="primary" disabled></button>
+          <button id="see-manga" class="primary" hidden></button>
+          <div class="courier-transport"><button id="undo"></button><button id="reset"></button></div>
+        </div>
+      </div>
+    </section>
+    <section id="weather" hidden>
+      <h2 id="weatherTitle"></h2>
+      <div class="courier-layout">
+        <figure class="courier-stage"><canvas id="scene" width="800" height="450" role="img"></canvas><figcaption id="weather-caption"></figcaption><button id="retry-weather" hidden></button></figure>
+        <div class="courier-map"><label for="rain" id="rainLabel"></label><input id="rain" type="range" min="0" max="100" step="1">
+          <label for="wind" id="windLabel"></label><input id="wind" type="range" min="-50" max="50" step="1">
+          <p id="measure"></p><button id="print"></button><p id="exportStatus" role="status"></p></div>
+      </div>
+    </section>
+    <section id="manga" hidden>
+      <h2 id="mangaTitle"></h2><p id="mangaHint"></p><div id="panels" class="courier-panels"></div>
+      <div class="courier-transport"><button id="save-manga" class="primary"></button><button id="export"></button></div>
+      <p id="manga-status" role="status"></p>
+    </section>
+    <a id="back" href="./ink-studio.html"></a>
+  </template>
+</body>
+</html>

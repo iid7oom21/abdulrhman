@@ -1,0 +1,151 @@
+{
+  "version": 1,
+  "origin": "Original illustrations generated for RAVEN with OpenAI ImageGen from text prompts, then cropped and encoded locally as WebP.",
+  "usage": "RAVEN project artwork for the Rain Courier activity and its player-created local print editions.",
+  "thirdPartyImages": "No external image or stock-art license used. All illustrations originated from text prompts for this activity.",
+  "assets": [
+    {
+      "id": "route",
+      "file": "route.webp",
+      "medium": "anime",
+      "description": {
+        "ar": "مرفأ مضاء بالمصابيح، بينه وبين السينما طريق مبتل.",
+        "en": "A lamplit port and a wet road leading to the old cinema."
+      },
+      "width": 672,
+      "height": 378,
+      "bytes": 53766,
+      "sha256": "0441a7952e5dcc9b310d57f4b86def86aa677d90e6f76e7c6862b4ac0c88d35e"
+    },
+    {
+      "id": "departure",
+      "file": "departure.webp",
+      "medium": "anime",
+      "description": {
+        "ar": "الساعي بمعطفه المرجاني يغادر الرصيف تحت المطر.",
+        "en": "The courier in a coral coat sets out from the quay in the rain."
+      },
+      "width": 672,
+      "height": 378,
+      "bytes": 51166,
+      "sha256": "01bc11487802cbcadc2c68c5401c2f2585a6b67908d79021536b8cbb1af0227c"
+    },
+    {
+      "id": "crossing",
+      "file": "crossing.webp",
+      "medium": "anime",
+      "description": {
+        "ar": "يعبر الساعي جدار المرفأ والريح تدفع بمعطفه.",
+        "en": "The courier crosses the breakwater as the wind catches the coat."
+      },
+      "width": 672,
+      "height": 378,
+      "bytes": 46630,
+      "sha256": "37b5a6fd7d03aa7dcc1703192700c02e5f2c3302781c05c2f6c1523f1077712a"
+    },
+    {
+      "id": "letter",
+      "file": "letter.webp",
+      "medium": "anime",
+      "description": {
+        "ar": "يد الساعي تلتقط الظرف من علبة الجمع الخشبية.",
+        "en": "The courier’s hand lifts the envelope from the wooden collection tray."
+      },
+      "width": 672,
+      "height": 378,
+      "bytes": 36848,
+      "sha256": "f22f927921a244acd1f576edfd12d47e9a0ad96b58dc75a50d0e93295d386dae"
+    },
+    {
+      "id": "arrival",
+      "file": "arrival.webp",
+      "medium": "anime",
+      "description": {
+        "ar": "يمدّ الساعي الظرف عبر فتحة الاستلام في شباك السينما.",
+        "en": "The courier passes the envelope through the cinema’s intake window."
+      },
+      "width": 672,
+      "height": 378,
+      "bytes": 46264,
+      "sha256": "3bf5271ee01b2856a9fe8000cd50509fd63a662b9c55a252ea6d2d00df94ec67"
+    },
+    {
+      "id": "shelter",
+      "file": "shelter.webp",
+      "medium": "anime",
+      "description": {
+        "ar": "الساعي ينتظر تحت غطاء عند الرصيف فيما يهطل المطر.",
+        "en": "The courier waits under cover by the quay as the rain falls."
+      },
+      "width": 672,
+      "height": 378,
+      "bytes": 43756,
+      "sha256": "bdd67d0f42b21300847ba6215882d426a53f8478bb9cd9ac7f415dd495ee20b1"
+    },
+    {
+      "id": "print-departure",
+      "file": "print-departure.webp",
+      "medium": "manga",
+      "description": {
+        "ar": "الساعي بمعطفه المرجاني يغادر الرصيف تحت المطر.",
+        "en": "The courier in a coral coat sets out from the quay in the rain."
+      },
+      "width": 768,
+      "height": 432,
+      "bytes": 111564,
+      "sha256": "019a03472d14dca1ceca671c50654b89a8a6d4ee9cd176ef3ce3cb87742ff7d9"
+    },
+    {
+      "id": "print-crossing",
+      "file": "print-crossing.webp",
+      "medium": "manga",
+      "description": {
+        "ar": "يعبر الساعي جدار المرفأ والريح تدفع بمعطفه.",
+        "en": "The courier crosses the breakwater as the wind catches the coat."
+      },
+      "width": 768,
+      "height": 432,
+      "bytes": 118444,
+      "sha256": "447e50f15a978e288202f2accb6196834935e527cf888c7e5f0fff73d44103d7"
+    },
+    {
+      "id": "print-letter",
+      "file": "print-letter.webp",
+      "medium": "manga",
+      "description": {
+        "ar": "يد الساعي تلتقط الظرف من علبة الجمع الخشبية.",
+        "en": "The courier’s hand lifts the envelope from the wooden collection tray."
+      },
+      "width": 768,
+      "height": 432,
+      "bytes": 101110,
+      "sha256": "ca01087e3d54bb308315056f4210509bdb0d27eac3eec4f6d6bf4a82f81ca3ff"
+    },
+    {
+      "id": "print-arrival",
+      "file": "print-arrival.webp",
+      "medium": "manga",
+      "description": {
+        "ar": "يمدّ الساعي الظرف عبر فتحة الاستلام في شباك السينما.",
+        "en": "The courier passes the envelope through the cinema’s intake window."
+      },
+      "width": 768,
+      "height": 432,
+      "bytes": 95526,
+      "sha256": "db51e7234fb03b3307013ecb11fbbf1cb0e623d595087aed02399dfd191c215c"
+    },
+    {
+      "id": "print-shelter",
+      "file": "print-shelter.webp",
+      "medium": "manga",
+      "description": {
+        "ar": "الساعي ينتظر تحت غطاء عند الرصيف فيما يهطل المطر.",
+        "en": "The courier waits under cover by the quay as the rain falls."
+      },
+      "width": 768,
+      "height": 432,
+      "bytes": 107988,
+      "sha256": "a551542dac435180f09f8bcc70b5b0e18f1164de7b80bc3a73ddd8566437db36"
+    }
+  ]
+}

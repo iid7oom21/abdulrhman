@@ -209,7 +209,20 @@ function render(ui) {
   if (mode === 'result') result();
   else if (mode === 'playing' || mode === 'paused') playback();
   else edit();
-  return () => cancelAnimationFrame(raf);
+  function pauseOnExit() {
+    if (mode !== 'playing') return;
+    elapsed = Math.min(lengthOf(cut) * 1000, performance.now() - started);
+    mode = 'paused';
+    playback();
+  }
+  function visibility() { if (document.hidden) pauseOnExit(); }
+  document.addEventListener('visibilitychange',visibility);
+  window.addEventListener('pagehide',pauseOnExit);
+  return () => {
+    cancelAnimationFrame(raf);
+    document.removeEventListener('visibilitychange',visibility);
+    window.removeEventListener('pagehide',pauseOnExit);
+  };
 }
 
 mount({id:'ink-cut', title:['القطع الأخير','The Final Cut'], intro:[

@@ -75,8 +75,31 @@ export function archive(ui,w,type,title,data){
   return r;
 }
 export function playFrames(ms,update,complete){
-  let frame=0,stop=false;const start=performance.now(),reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function tick(now){if(stop)return;const t=Math.min(1,(now-start)/ms);update(t);if(t<1)frame=requestAnimationFrame(tick);else complete?.();}
-  if(reduced){update(1);complete?.();}else frame=requestAnimationFrame(tick);
-  return ()=>{stop=true;cancelAnimationFrame(frame);};
+  let frame=0, elapsed=0, start=performance.now(), stopped=false;
+  function stop() {
+    stopped=true;
+    cancelAnimationFrame(frame);
+    document.removeEventListener('visibilitychange',visibility);
+    window.removeEventListener('pagehide',stop);
+  }
+  function tick(now) {
+    if (stopped || document.hidden) return;
+    elapsed=now-start;
+    const fraction=Math.min(1,elapsed/ms);
+    update(fraction);
+    if (fraction<1) frame=requestAnimationFrame(tick);
+    else {stop();complete?.();}
+  }
+  function visibility() {
+    cancelAnimationFrame(frame);
+    if (document.hidden) elapsed=performance.now()-start;
+    else {start=performance.now()-elapsed;frame=requestAnimationFrame(tick);}
+  }
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) {update(1);complete?.();}
+  else {
+    document.addEventListener('visibilitychange',visibility);
+    window.addEventListener('pagehide',stop);
+    frame=requestAnimationFrame(tick);
+  }
+  return stop;
 }

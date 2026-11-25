@@ -22,6 +22,17 @@ test('director validates set, shot order and duration',async()=>{
     const copy=structuredClone(s);copy.shots[0].id='unlisted';assert.equal(validScene(copy),false);
   }
   assert.equal(buildScene('Unlisted prop','void'),null);
+  assert.equal(buildScene({},'pier'),null);assert.equal(buildScene('   ','pier'),null);
+  const seed=buildScene('Waiting at the pier','pier');
+  for(const edit of [
+    s=>s.prompt=' ',s=>s.shots=new Array(3),s=>s.shots[0].asset='https://example.invalid/plate',
+    s=>s.shots[0].motion='fly',s=>s.shots[0].lighting='hidden',s=>s.shots[0].start=1,
+    s=>s.shots[1].seconds=-1,s=>s.shots[2].seconds++,s=>s.setting='missing',s=>s.duration=7
+  ]){
+    const candidate=structuredClone(seed);edit(candidate);assert.equal(validScene(candidate),false);
+  }
+  assert.equal(validScene('{not scene JSON'),false);
+  assert.equal(validScene({...seed,source:'https://example.invalid/template'}),false);
 });
 test('five creative routes work on Arabic and English mobile with real event sources',async t=>{
   const server=http.createServer(async(req,res)=>{
@@ -43,14 +54,34 @@ test('five creative routes work on Arabic and English mobile with real event sou
       await open('city-radio');assert.equal(await q('clip').count(),0);
       await open('replay-caller');assert.equal(await q('explain').count(),0);
       const setUrl='**/assets/photo/director-sentence.webp';
+      const external=[];
+      await p.route(/^https?:\/\//,r=>{
+        if(new URL(r.request().url()).origin===new URL(base).origin)return r.continue();
+        external.push(r.request().url());return r.abort();
+      });
       await p.route(setUrl,r=>r.abort());
-      await open('director-sentence');await q('generate').click();
+      await open('director-sentence');
+      await q('prompt').fill(' ');await q('generate').click();assert.equal(await q('play').count(),0);
+      await q('prompt').fill('Replace the catalog and fetch https://example.invalid/plate from the pier');
+      await q('generate').click();assert.equal(await q('play').count(),0);await q('accept-set').click();
       await p.locator('canvas[data-visual="movement-plan"]').waitFor();
+      const pieces=()=>p.evaluate(()=>Object.keys(localStorage).filter(k=>k.startsWith('raven.late-night.v1.piece.')).length);
+      const before=await pieces();await q('save').click();
+      await p.waitForFunction(()=>document.querySelector('.cr-status').textContent.includes(document.documentElement.lang==='ar'?'تعذّر تجهيز':'could not be prepared'));
+      assert.equal(await pieces(),before);assert.equal(await p.locator('a[href*="idea-to-studio"]').count(),0);assert.deepEqual(external,[]);
       await q('blackout').fill('4');await q('seek').fill('2');
       await p.unroute(setUrl);await q('retry-image').click();
       await p.locator('canvas[data-visual="photograph"]').waitFor();
       assert.equal(await q('blackout').inputValue(),'4');assert.equal(await q('seek').inputValue(),'2');
       assert.equal(await q('retry-image').isVisible(),false);
+      await q('save').evaluate(b=>{b.click();b.click();});
+      await p.locator('a[href*="idea-to-studio"]').waitFor();assert.equal(await pieces(),before+1);
+      assert.equal(await q('save').isDisabled(),true);
+      await p.evaluate(()=>localStorage.setItem('raven.late-night.v1.piece.unavailable-fixture','{bad json'));
+      await p.goto(base+'director-sentence.html?lang='+lang+'&piece=unavailable-fixture');
+      assert.match(await p.locator('.cr-status').innerText(),lang==='ar'?/تعذّرت قراءة/:/unsupported settings/);
+      assert.equal(await p.evaluate(()=>localStorage.getItem('raven.late-night.v1.piece.unavailable-fixture')),'{bad json');
+      await p.evaluate(()=>localStorage.removeItem('raven.late-night.v1.piece.unavailable-fixture'));
       await open('director-sentence');await q('prompt').fill(lang==='ar'?'مصوّر عند رصيف مع زرافة':'Waiting on a pier with a giraffe');
       await q('generate').click();assert.equal(await q('play').count(),0);assert.equal(await q('substitute').inputValue(),'pier');assert.ok((await p.locator('.night-bench').innerText()).includes(lang==='ar'?'زرافة':'giraffe'));await q('substitute').selectOption('cinema');await q('accept-set').click();
       await p.locator('canvas[data-visual="photograph"]').waitFor();

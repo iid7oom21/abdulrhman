@@ -20,7 +20,7 @@ export const items = [
     action: ['وجّه الضوء', 'Aim the light']
   },
   {
-    page: 'ink-courier', cover: 'ferry-pier-print', title: ['ساعي المطر', 'Rain Courier'],
+    page: 'ink-courier', cover: 'courier/departure', title: ['ساعي المطر', 'Rain Courier'],
     action: ['العب وارسم مانجا جولتك', 'Play and compose your manga']
   },
   {

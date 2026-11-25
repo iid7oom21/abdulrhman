@@ -5,14 +5,27 @@ const cues=['arrival','blackout','departure'];
 const objectWords={ar:['تدخل الشخصية','تخفت اللوحة','تغادر الشخصية'],en:['The figure arrives','The sign goes dark','The figure departs']};
 const phrases={pier:['عند الرصيف','on the pier'],cinema:['أمام شباك السينما','outside the box office'],square:['في ساحة الساعة','in the clock square']};
 export function describe(s,i){return {ar:objectWords.ar[i]+' '+phrases[s.setting][0],en:objectWords.en[i]+' '+phrases[s.setting][1]};}
+const record=(value,fields)=>value!==null && typeof value==='object' && !Array.isArray(value) &&
+  Object.keys(value).every(key=>fields.includes(key));
 export function validScene(s){
-  if(!s||s.version!==1||!Object.hasOwn(places,s.setting)||typeof s.prompt!=='string'||s.prompt.length>160||
-    !Number.isInteger(s.duration)||s.duration<8||s.duration>15||!Number.isInteger(s.blackout)||s.blackout<2||s.blackout>s.duration-3||!Array.isArray(s.shots)||s.shots.length!==3)return false;
-  let n=0;
-  return s.shots.every((p,i)=>{
-    if(!p||p.id!==cues[i]||p.start!==n||!Number.isInteger(p.seconds)||p.seconds<1||!Object.hasOwn(lights,p.lighting)||!Object.hasOwn(motions,p.motion))return false;
-    n+=p.seconds;return true;
-  })&&n===s.duration&&s.shots[1].start===s.blackout;
+  if(!record(s,['version','prompt','setting','duration','blackout','shots']) || s.version!==1 ||
+    typeof s.prompt!=='string' || !s.prompt.trim() || s.prompt.length>160 ||
+    typeof s.setting!=='string' || !Object.hasOwn(places,s.setting) ||
+    !Number.isInteger(s.duration)||s.duration<8||s.duration>15 ||
+    !Number.isInteger(s.blackout)||s.blackout<2||s.blackout>s.duration-3 ||
+    !Array.isArray(s.shots)||s.shots.length!==cues.length)return false;
+  let end=0;
+  for(const [i,id] of cues.entries()){
+    const shot=s.shots[i];
+    if(!record(shot,['id','start','seconds','lighting','motion','description']) || shot.id!==id ||
+      shot.start!==end || !Number.isInteger(shot.seconds)||shot.seconds<1 ||
+      typeof shot.lighting!=='string'||!Object.hasOwn(lights,shot.lighting) ||
+      typeof shot.motion!=='string'||!Object.hasOwn(motions,shot.motion))return false;
+    if(shot.description!==undefined && (!record(shot.description,['ar','en']) ||
+      !['ar','en'].every(lang=>typeof shot.description[lang]==='string' && shot.description[lang].length<=240)))return false;
+    end+=shot.seconds;
+  }
+  return end===s.duration && s.shots[1].start===s.blackout;
 }
 export function retime(s){
   const last=s.duration-s.blackout,middle=Math.max(1,Math.floor(last/2));
@@ -51,7 +64,8 @@ export function matchCatalog(sentence){
   return {setting,unknown:[...new Set(unknown)],ready:Boolean(setting)&&unknown.length===0};
 }
 export function buildScene(input,setting){
-  const p=String(input).trim().slice(0,160);if(!p||!Object.hasOwn(places,setting))return null;
+  if(typeof input!=='string'||!input.trim()||input.length>160||typeof setting!=='string'||!Object.hasOwn(places,setting))return null;
+  const p=input.trim();
   let seed=0;for(const ch of p)seed=(seed*31+ch.codePointAt(0))>>>0;
   const dim=/عتمة|خافت|dark|shadow|dim/iu.test(p),warm=/ذهبي|كهرماني|فانوس|golden|amber|lantern/iu.test(p);
   const walking=/يسير|يمشي|يمر|خطو|walk|cross/iu.test(p);
@@ -204,11 +218,16 @@ export function paintScene(canvas,s,time) {
 
 export async function sceneThumbnails(s) {
   if (!validScene(s)) return [];
-  await locationFootage(s.setting).ready;
-  return s.shots.map(shot=>{
-    const canvas=document.createElement('canvas');
-    canvas.width=384;canvas.height=180;
-    paintScene(canvas,s,shot.start+shot.seconds/2);
-    return canvas.toDataURL('image/webp',.74);
-  });
+  const entry=locationFootage(s.setting);
+  await entry.ready;
+  if(!entry.images.plate||!entry.images.performer)return [];
+  try{
+    const frames=s.shots.map(shot=>{
+      const canvas=document.createElement('canvas');
+      canvas.width=384;canvas.height=180;
+      if(!paintScene(canvas,s,shot.start+shot.seconds/2)||canvas.dataset.visual!=='photograph')return '';
+      return canvas.toDataURL('image/webp',.74);
+    });
+    return frames.every(frame=>/^data:image\/(?:webp|png);base64,.+/.test(frame))?frames:[];
+  }catch{return [];}
 }

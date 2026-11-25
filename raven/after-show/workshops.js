@@ -33,3 +33,23 @@ export const workshops = Object.fromEntries([
   workshop('filmlab', 'split-screen', 6, 'الشخص الذي قابل نفسه', 'Meeting a double', 'اجمع أداءين في مقهى كي تتسلم يدٌ الكوبَ من الأخرى.', 'Blend two performances and time a cup passing between hands.', 'اجمع الأداءين', 'Composite the takes'),
   workshop('filmlab', 'branch-film', 8, 'فيلم له بابان', 'A film with two doors', 'اربط غرف متحف بخيارات ثم شاهد إلى أين تقود نهاياتك.', 'Link museum rooms with choices and play through the endings you built.', 'ارسم التفرعات', 'Build the paths')
 ]);
+
+export const catalog = {
+  ...workshops,
+  edit: ['آخر إرسال','Last Transmission','عرّف بالمكان والفعل والأثر في مونتاج من ثلاث لقطات.','Introduce a place, an action and its trace in three shots.','ركّب اللقطات','Make the cut',3,'hand','edit'],
+  projection: ['وردية غرفة العرض','Projection shift','وزّع الفنيين والشاشة قبل الافتتاح.','Schedule the crew and the screen before opening.','شغّل الوردية','Run the shift',4,'preview-projection','sims'],
+  light: ['طاولة الضوء','The light table','حرّك الظل وصوّر ملمس الورق.','Move the shadow and photograph the paper.','اضبط الضوء','Set the light',3,'preview-light','sims'],
+  sound: ['خارج الكادر','Offscreen sound','ركّب صوت الحركة في اللحظة المناسبة.','Place each sound at the instant of the action.','اضبط التوقيت','Set the cues',2,'preview-sound','sims'],
+  archive: ['نقطة تفتيش الأرشيف','Archive check','طابق الشحنة مع طلب العرض.','Match the delivery against its screening order.','افحص الشحنة','Check a delivery',2,'preview-archive','sims'],
+  continuity: ['عين الاستمرارية','Continuity eye','قارن ديكور اللقطتين وابحث عمّا تحرّك.','Compare two setups and spot what moved.','قارن اللقطتين','Compare the shots',2,'preview-continuity','events'],
+  budget: ['ميزانية اللقطة','Shot budget','اختر كيف تصرف عشر وحدات إنتاج.','Decide how to spend ten production units.','وزّع الميزانية','Build a budget',3,'preview-budget','events'],
+  grade: ['غرفة التلوين','Colour grading suite','لوّن لقطة وحرّك الفاصل لتقارنها بالأصل.','Grade a frame and slide the divider to compare it with the original.','لوّن اللقطة','Grade a shot',3,'preview-grade','lens'],
+  camera: ['مصمّم اللقطة','Camera shot designer','اتخذ موقعك حول الطاولة واضبط حجم الظرف في الكادر.','Choose a camera height and frame the envelope on the table.','اضبط الكادر','Frame the shot',2,'preview-camera','lens'],
+  festival: ['ليلة العرض','Screening night','اختر المونتاج والضوء والصوت ثم اعرض نسختك.','Cut, light and score a scene, then watch your version.','ابدأ الأمسية','Start the night',10,'lamp','events'],
+  daily: ['تحدّي اليوم','Daily assignment','مواد اليوم وتكليفه واحدة لكل اللاعبين.','Everyone gets the same materials and brief today.','افتح تكليف اليوم','Open today’s brief',3,'exterior','edit'],
+  duo: ['المخرج والمونتير','Director and editor','شخصان، جهاز واحد، وطلب ينتظر تفسيره.','Two people share one device and interpret a brief.','سلّم الدور','Pass the director’s brief',5,'hand','edit'],
+  free: ['مونتاج حر','Open cutting room','غيّر لقطة بين نسختين وشاهد الفرق.','Change one shot between two cuts and compare.','افتح الطاولة','Open the bench',5,'envelope','edit'],
+  brief: ['مولّد التكليفات','Director’s briefs','اختر إيقاعًا وقيدًا واحصل على جولة قابلة للعب.','Pick a pace and a constraint to get a playable brief.','أنشئ تكليفًا','Generate a brief',2,'lamp','edit'],
+  custom: ['اصنع تحدّيك','Build a challenge','حدّد قواعد جولتك وجرّبها قبل تنزيلها.','Set the rules and play your round before exporting.','صمّم الجولة','Design a round',5,'exterior','edit'],
+  card: ['بطاقة العرض','Screening card','عاين بطاقتك واحفظ صورة منها.','Preview your card and save an image.','افتح البطاقة','Open the card',1,'envelope','events']
+};

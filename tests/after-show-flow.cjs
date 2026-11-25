@@ -54,15 +54,29 @@ async function place(frame, shot, slot) {
   await frame.locator('[data-slot="' + slot + '"]').click();
 }
 
-async function screen(frame, order, matchesBrief) {
-  await frame.locator('[data-edit-action="play"]').click();
+async function screen(frame, order, matchesBrief, {missingMiddle = false, replay = false} = {}) {
+  const observed = [];
+  const started = Date.now();
+  await frame.locator(replay ? '[data-edit-action="replay"]' : '[data-edit-action="play"]').click();
   for (const id of order) {
-    await expect(frame.locator('[data-current-shot="' + id + '"]')).toBeVisible({ timeout: 9000 });
+    const visible = frame.locator('[data-current-shot="' + id + '"]');
+    await expect(visible).toBeVisible({timeout:9000});
+    if (id === 'hand' && missingMiddle) {
+      await expect(visible.locator('.cut-fallback strong')).not.toBeEmpty();
+      await expect(visible.locator('[data-edit-action="retry-image"]')).toBeVisible();
+    }
+    observed.push({shot:id, elapsedMs:Date.now()-started});
   }
+  // A previous verdict stays readable while replaying. The Replay control returns only when
+  // this particular playback has reached its end.
+  await expect(frame.locator('[data-edit-action="replay"]')).toBeVisible({timeout:9000});
   const result = frame.locator('[data-edit-result]');
   await expect(result).toBeVisible({ timeout: 9000 });
   await expect(result).toHaveAttribute('data-time', 'true');
   await expect(result).toHaveAttribute('data-order', String(matchesBrief));
+  const durationMs = Date.now() - started;
+  assert.ok(durationMs >= 11750, 'the visitor saw twelve seconds of real-time playback');
+  return {durationMs, observed, missingMiddle, replay};
 }
 
 test('a first-time visitor can play Last Transmission directly from the mobile entrance', async t => {
@@ -120,13 +134,14 @@ test('a visitor edits and screens a timed cut through the real Pages project mou
       const networkWrites = [];
       const appErrors = [];
       const denied = [];
+      let blockMiddle = block;
       await context.route('**/*', route => {
         const req = route.request();
         const url = new URL(req.url());
         if (url.origin !== origin) return route.abort();
         localRequests.push(url.pathname);
         if (!['GET','HEAD'].includes(req.method())) networkWrites.push(req.method() + ' ' + url.pathname);
-        if (block && url.pathname.endsWith('/after-show/assets/hand.webp')) {
+        if (blockMiddle && url.pathname.endsWith('/after-show/assets/hand.webp')) {
           denied.push(url.pathname);
           return route.abort();
         }
@@ -155,7 +170,7 @@ test('a visitor edits and screens a timed cut through the real Pages project mou
       for (let i = 0; i < shots.length; i++) await place(frame, shots[i], i);
       await expect(frame.locator('[data-edit-result]')).toHaveCount(0);
       assert.equal(await frame.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
-      await screen(frame, shots, true);
+      const screenings = [await screen(frame, shots, true, {missingMiddle:blockMiddle})];
       if (out) {
         await frame.locator('[data-edit-result]').scrollIntoViewIfNeeded();
         await page.screenshot({path:path.join(out,'edit-' + lang + '-' + width + '.png')});
@@ -163,15 +178,19 @@ test('a visitor edits and screens a timed cut through the real Pages project mou
       if (block) assert.ok(denied.length > 0, 'middle still actually failed');
       else assert.ok(localRequests.includes(mount + 'raven/after-show/assets/hand.webp'));
 
+      screenings.push(await screen(frame, shots, true, {missingMiddle:blockMiddle, replay:true}));
+
       // The selected 12-second cut must still exist in the other language and after a reload.
       await frame.locator('#as-language').click();
       frame = await activityFrame(page, '[data-slot="2"]');
       await expect(frame.locator('html')).toHaveAttribute('lang', lang === 'ar' ? 'en' : 'ar');
+      blockMiddle = true;
       await page.reload();
       frame = await activityFrame(page, '[data-slot="2"]');
       await expect(frame.locator('[data-edit-action="play"]')).toBeEnabled();
       await place(frame, 'envelope', 0);
-      await screen(frame, ['envelope', 'hand', 'exterior'], false);
+      screenings.push(await screen(frame, ['envelope', 'hand', 'exterior'], false, {missingMiddle:true}));
+      if (out) fs.writeFileSync(path.join(out,'montage-'+lang+'-'+width+'.json'),JSON.stringify(screenings,null,2)+'\n');
       if (lang === 'ar' && width === 320) {
         // The explicit preview transfers only the chosen shots to the normal English studio.
         await frame.locator('[data-edit-action="studio"]').click();

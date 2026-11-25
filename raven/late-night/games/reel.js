@@ -2,7 +2,7 @@ import {start,keepButton,el,button,group,canvas,output,box,dot,line,gradient,loa
 import {cols,rows,goal,spawn,obstacle,souvenir,turns,vector,roll} from './reel-model.js';
 const floorPlate = loadPhoto('reel-board');
 const fresh=()=>[0,1,2].map(()=>({x:null,y:null,rot:0}));let pieces=fresh(),chosen=0,round=1,result=null,preview=null,started=0,loop=0;
-let drawActive=null,imported=false,track=null;
+let elapsed=0,imported=false,track=null;
 const xy=(x,y)=>[100+x*74,49+y*55];
 const port=([x,y],[dx,dy])=>[x+dx*29,y+dy*24];
 const lerp=([ax,ay],[bx,by],t)=>[ax+(bx-ax)*t,ay+(by-ay)*t];
@@ -109,7 +109,7 @@ function render(ui){
       b.setAttribute('aria-label',name+(piece>=0?' · '+t('قطعة ','Bend ')+(piece+1):''));b.disabled=occupied;if(piece===chosen)b.setAttribute('aria-pressed','true');board.append(b);
     }
     actions.replaceChildren();const run=button('roll',t('أطلق البكرة','Release the reel'),()=>{
-      preview=roll(pieces);track=makeTrack(preview.route,pieces);result=null;started=performance.now();layout();animate();
+      preview=roll(pieces);track=makeTrack(preview.route,pieces);result=null;elapsed=0;started=performance.now();layout();animate();
     });run.disabled=pieces.some(p=>p.x===null);actions.append(run);
     if(result){
       const win=result.reason==='box'&&(round===1||result.souvenir);
@@ -124,12 +124,32 @@ function render(ui){
   }
   function animate(){
     if(!preview)return;
-    const u=Math.min(1,(performance.now()-started)/1500);
+    elapsed=performance.now()-started;
+    const u=Math.min(1,elapsed/1500);
     scene(c,1-(1-u)**1.4,preview);
-    if(u<1){loop=requestAnimationFrame(()=>drawActive.animate());return;}
+    if(u<1){loop=requestAnimationFrame(animate);return;}
     result=preview;preview=null;ui.recordEvent({ar:'أطلقت البكرة عبر أرض الصالة.',en:'You released the reel across the auditorium.',data:{route:result.route,reason:result.reason,souvenir:result.souvenir}});layout();
   }
-  drawActive={animate};root.replaceChildren(view,notes,controls,board,actions,read);layout();
+  root.replaceChildren(view,notes,controls,board,actions,read);layout();
   redrawWhenLoaded(floorPlate,view,()=>{if(!preview) scene(c,1,result);});
+  function suspend() {
+    cancelAnimationFrame(loop);
+    if (preview) elapsed=performance.now()-started;
+  }
+  function resume() {
+    if (document.hidden || !preview) return;
+    cancelAnimationFrame(loop);
+    started=performance.now()-elapsed;
+    animate();
+  }
+  function visibility(){ if (document.hidden) suspend(); else resume(); }
+  document.addEventListener('visibilitychange',visibility);
+  window.addEventListener('pageshow',resume);
+  resume();
+  return () => {
+    if (!document.hidden) suspend();
+    document.removeEventListener('visibilitychange',visibility);
+    window.removeEventListener('pageshow',resume);
+  };
 }
 start(2,'reel-run',['بكرة تدور في سينما نائمة','A reel in a sleeping cinema'],['ضع ثلاث وصلات منحنية لتمر البكرة حول الصندوق في وسط الصالة.','Place three bends to carry the reel around the obstruction.'],render);
