@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import json
 import os
+import posixpath
 import re
 import shutil
 import subprocess
@@ -36,12 +37,11 @@ def check_deployment(request, home, sha, release, local):
               "late-night/ink/catalog.js", "late-night/ink/cut.js", "late-night/ink/camera.js",
               "late-night/ink/ferry.js", "late-night/ink/page.js", "late-night/ink/beacon.js",
               "late-night/ink-courier.html", "late-night/ink/courier.js", "late-night/ink/courier.css",
-              "late-night/ink/art/panel-press.webp"]
+              "late-night/ink/art/panel-press.webp", "../site-entry.js"]
     pinned = {
-        asset: subprocess.check_output(["git", "show", f"{sha}:raven/{asset}"], cwd=ROOT)
+        asset: subprocess.check_output(["git", "show", f"{sha}:{posixpath.normpath(posixpath.join('raven', asset))}"], cwd=ROOT)
         for asset in assets
     }
-    pinned["../site-entry.js"] = subprocess.check_output(["git", "show", f"{sha}:site-entry.js"], cwd=ROOT)
     deadline = time.monotonic() + (15 if local else 240)
     while True:
         try:
