@@ -50,7 +50,7 @@ export function createEntryGate({ root, show = false, onEnter, onClose, navigate
   const soundButton = dialog.querySelector('#archive-sound');
   const skipButton = dialog.querySelector('#archive-skip');
   const enterButton = dialog.querySelector('#archive-enter');
-  dialog.querySelector('img').src = new URL('assets/intro/raven-intro.jpg', root).href;
+  dialog.querySelector('.archive-entry-art').src = new URL('raven/terminal-preview/assets/hero-poster.jpg', root).href;
   const sync = (language = document.documentElement.lang) => {
     const en = language === 'en';
     dialog.lang = en ? 'en' : 'ar';

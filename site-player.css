@@ -182,6 +182,8 @@ html[dir="rtl"] .music-settings-panel { inset-inline-end:max(8px,env(safe-area-i
 .archive-intro { display:none; }
 .archive-sound { display:none; position:absolute; z-index:1; inset-block-end:12px; inset-inline-end:16px; background:#101416db; text-decoration:none; border:1px solid #b1aaa07a; }
 .archive-entry.is-intro .archive-intro, .archive-entry.is-intro .archive-sound { display:block; }
+.archive-entry .archive-entry-art { object-fit:contain; object-position:center; background:#0a0a09; }
+.archive-entry.is-fallback .archive-entry-media::after { background:none; }
 .archive-entry-content {
   grid-area:content; align-self:center; width:min(100%,38rem); margin-inline:auto;
   padding:clamp(1.5rem,4vw,5rem); padding-block-end:max(1.5rem,env(safe-area-inset-bottom));

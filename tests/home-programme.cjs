@@ -50,6 +50,16 @@ test('the bilingual homepage exposes the three playable worlds and leads to ever
       await page.goto(home+'?lang='+lang,{waitUntil:'domcontentloaded'});
       const gate = page.locator('#archive-entry-gate[open]');
       await expect(gate).toBeVisible();
+      const posterURL = new URL('terminal-preview/assets/hero-poster.jpg',home).href;
+      const welcomePoster = gate.locator('img.archive-entry-art');
+      await expect(welcomePoster).toBeVisible();
+      const welcome = await welcomePoster.evaluate(async image=>{
+        await image.decode();
+        return {url:image.currentSrc, size:[image.naturalWidth,image.naturalHeight], fit:getComputedStyle(image).objectFit};
+      });
+      assert.equal(welcome.url,posterURL);
+      assert.deepEqual(welcome.size,[910,512]);
+      assert.equal(welcome.fit,'contain','the reduced-motion arrival preserves the full gold RAVEN artwork');
       if(out)await page.screenshot({path:path.join(out,'arrival-'+lang+'-'+width+'.png')});
       await gate.locator('#archive-skip').click();
       const frame=page.frameLocator('#site-content'), entry=frame.locator('.rvnHeroWatch');
@@ -57,6 +67,23 @@ test('the bilingual homepage exposes the three playable worlds and leads to ever
       await expect(frame.locator('html')).toHaveAttribute('dir',lang==='en'?'ltr':'rtl');
       await frame.locator('html').evaluate(async html=>{await html.ownerDocument.fonts.ready;
         await Promise.all([...html.querySelectorAll('.homePoster img')].map(img=>img.decode()));});
+      await expect(frame.locator('#ravenHeroMotion')).toHaveCount(1);
+      const film = frame.locator('header#top #ravenHeroMotion');
+      await expect(film).toBeInViewport({ratio:1});
+      const masthead = await film.evaluate(video=>{
+        const rect=video.getBoundingClientRect(), nav=video.ownerDocument.querySelector('.ravenNav');
+        const cards=[...video.ownerDocument.querySelectorAll('.homePoster')];
+        return {poster:video.poster, source:video.querySelector('source').src, muted:video.muted, paused:video.paused,
+          fit:getComputedStyle(video).objectFit, top:rect.top, bottom:rect.bottom, navigationBottom:nav.getBoundingClientRect().bottom,
+          precedesCards:cards.length===2 && cards.every(card=>Boolean(video.compareDocumentPosition(card)&Node.DOCUMENT_POSITION_FOLLOWING)),
+          firstCardTop:Math.min(...cards.map(card=>card.getBoundingClientRect().top))};
+      });
+      assert.equal(masthead.poster,posterURL);
+      assert.equal(masthead.source,new URL('terminal-preview/assets/hero-loop.mp4',home).href);
+      assert.equal(masthead.fit,'contain');
+      assert.ok(masthead.muted && masthead.paused,'reduced motion shows the original still without starting the loop');
+      assert.ok(masthead.precedesCards && masthead.top>=masthead.navigationBottom-1,'the brand appears below the menu, before the film and case');
+      if(touch)assert.ok(masthead.bottom<=masthead.firstCardTop+1,'both mobile cards follow the full masthead');
       assert.ok(await frame.locator('html').evaluate(el=>el.scrollWidth<=el.clientWidth+1),'home must fit the viewport');
       const measurements=[];
       for(const world of links.slice(0,3)){
@@ -92,8 +119,54 @@ test('the bilingual homepage exposes the three playable worlds and leads to ever
         await page.goto(home+'?lang='+lang,{waitUntil:'domcontentloaded'});
         await expect(entry).toBeVisible();await expect(gate).toHaveCount(0);
       }
-      report.push({width,height,lang,input:touch?'tap':'keyboard',firstViewport:measurements,visited});
+      report.push({width,height,lang,input:touch?'tap':'keyboard',welcome,masthead,firstViewport:measurements,visited});
     }finally{await ctx.close();}
   });
   if(out)await fs.writeFile(path.join(out,'home-journeys.json'),JSON.stringify({home,checks:report},null,2)+'\n');
+});
+
+test('the original silent loop starts after entry and pauses outside the viewport', async t=>{
+  const home = await serve(t);
+  const browser = await chromium.launch({executablePath:process.env.CHROMIUM_PATH || '/usr/bin/chromium'});
+  t.after(()=>browser.close());
+  const page = await browser.newPage({viewport:{width:390,height:844},hasTouch:true,isMobile:true,reducedMotion:'no-preference'});
+  await page.route('**/*',route=>new URL(route.request().url()).origin===new URL(home).origin?route.continue():route.abort());
+  await page.goto(home,{waitUntil:'domcontentloaded'});
+  const frame = page.frameLocator('#site-content'), masthead = frame.locator('#ravenHeroMotion');
+  const gate = page.locator('#archive-entry-gate[open]');
+  await expect(gate).toBeVisible();
+  await expect(masthead).toHaveJSProperty('paused',true);
+  await gate.locator('#archive-skip').tap();
+  await expect.poll(()=>masthead.evaluate(video=>video.currentTime)).toBeGreaterThan(0);
+  await expect(masthead).toHaveJSProperty('muted',true);
+  await frame.locator('#behind-paper-phone').scrollIntoViewIfNeeded();
+  await expect(masthead).toHaveJSProperty('paused',true);
+  await masthead.scrollIntoViewIfNeeded();
+  await expect(masthead).toHaveJSProperty('paused',false);
+});
+
+test('a failed masthead video leaves its original poster and the episode entrance available', async t=>{
+  const home = await serve(t), out = process.env.HOME_QA_DIR;
+  const browser = await chromium.launch({executablePath:process.env.CHROMIUM_PATH || '/usr/bin/chromium'});
+  t.after(()=>browser.close());
+  const page = await browser.newPage({viewport:{width:390,height:844},hasTouch:true,isMobile:true,reducedMotion:'no-preference'});
+  const loop = new URL('terminal-preview/assets/hero-loop.mp4',home).href;
+  await page.route('**/*',route=>{
+    const url = route.request().url();
+    if(url===loop || new URL(url).origin!==new URL(home).origin) return route.abort();
+    return route.continue();
+  });
+  const failed = page.waitForEvent('requestfailed',request=>request.url()===loop);
+  await page.goto(home,{waitUntil:'domcontentloaded'});
+  await page.locator('#archive-skip').tap();
+  await failed;
+  const frame = page.frameLocator('#site-content'), masthead = frame.locator('#ravenHeroMotion');
+  await expect(masthead).toBeInViewport({ratio:1});
+  assert.equal(await masthead.evaluate(async video=>{
+    const poster = new Image();poster.src=video.poster;await poster.decode();return poster.naturalWidth;
+  }),910);
+  const episodes = frame.locator('.rvnHeroWatch');
+  if(out) await masthead.screenshot({path:path.join(out,'blocked-video-poster.png')});
+  await episodes.tap();
+  await expect(frame.locator('[data-visual-episode="1"]').first()).toBeVisible();
 });

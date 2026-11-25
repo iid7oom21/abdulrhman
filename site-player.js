@@ -1,6 +1,6 @@
 // The host owns one soundtrack while the content document changes.
 import { createSoundtrack } from './site-audio.js?v=mati-1.0.1';
-import { createEntryGate } from './site-entry.js?v=home-programme-1';
+import { createEntryGate } from './site-entry.js?v=original-masthead-1';
 
 const root = new URL('./', import.meta.url);
 // History navigation changes the document base even though the shell stays mounted.
@@ -175,6 +175,7 @@ function navigate(value) {
 }
 
 window.RavenSite = {
+  get entryOpen() { return Boolean(entryGate?.open); },
   navigate,
   gesture: soundtrack.gesture,
   toggleMusic: soundtrack.toggleMusic,
@@ -262,6 +263,7 @@ entryGate = createEntryGate({
   onClose() {
     destination.focus = true;
     if (!currentChild()) return;
+    frame.contentDocument.dispatchEvent(new Event('raven:intro-complete'));
     const main = frame.contentDocument.querySelector('main');
     if (main) {
       if (!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');

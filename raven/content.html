@@ -20,7 +20,7 @@
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet"/>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-<link as="image" fetchpriority="high" href="../assets/intro/raven-intro-poster.jpg" rel="preload"/>
+<link as="image" fetchpriority="high" href="./terminal-preview/assets/hero-poster.jpg" rel="preload"/>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&amp;family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&amp;family=Noto+Naskh+Arabic:wght@400..700&amp;family=Space+Grotesk:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
 <noscript><style>.reveal{opacity:1;transform:none}</style></noscript>
 <script type="application/ld+json">{"@context": "https://schema.org", "@type": "Organization", "@id": "https://iid7oom21.github.io/abdulrhman/raven/#raven", "name": "RAVEN", "url": "https://iid7oom21.github.io/abdulrhman/raven/", "description": "مشروع سينمائي مستقل لقصص الغموض والعوالم الأصلية.", "founder": {"@type": "Person", "name": "عبدالرحمن العتيبي", "alternateName": "Abdulrahman Alotaibi", "url": "https://iid7oom21.github.io/abdulrhman/raven/#about", "jobTitle": "كاتب وصانع أفلام مستقل ومؤسس RAVEN"}}</script>
@@ -35,7 +35,7 @@ window.ravenIntro={complete:true,finish:function(){}};
 <link href="./assets/raven-redesign-v1.css?v=scope-20261119" rel="stylesheet"/>
 <link href="./assets/raven-polish-v2.css?v=scope-20261119" rel="stylesheet"/>
 <link href="./assets/raven-media-fallback.css?v=screening-room-1" rel="stylesheet"/>
-<link href="./assets/raven-visual-home.css?v=home-programme-2" rel="stylesheet"/>
+<link href="./assets/raven-visual-home.css?v=original-masthead-1" rel="stylesheet"/>
 <link href="./assets/raven-home-resume.css?v=watch-later-1" rel="stylesheet"/>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="RAVEN">
@@ -112,16 +112,21 @@ window.ravenIntro={complete:true,finish:function(){}};
 <main id="main-content" tabindex="-1">
 <header class="homeDoubleBill" id="top">
 <span id="films" class="screenAnchor" aria-hidden="true"></span>
-<div class="wrap homeBillGrid">
+<div class="wrap homeMasthead">
+<h1 class="rvnVisuallyHidden" dir="ltr" translate="no">RAVEN</h1>
+<div class="refHeroBg"><video aria-hidden="true" class="refHeroVideo" disablepictureinpicture="" disableremoteplayback="" id="ravenHeroMotion" loop="" muted="" playsinline="" poster="./terminal-preview/assets/hero-poster.jpg" preload="none" tabindex="-1" webkit-playsinline="">
+<source src="./terminal-preview/assets/hero-loop.mp4" type="video/mp4"/>
+</video></div>
+<div class="homeBillGrid">
 <article class="homePoster filmPoster">
-<img src="../assets/intro/raven-intro-poster.jpg" width="720" height="1280" fetchpriority="high" alt="">
-<div><h1 dir="ltr" translate="no">RAVEN <span>17</span></h1>
+<img src="../assets/intro/raven-intro-poster.jpg" width="720" height="1280" alt="">
+<div><h2 dir="ltr" translate="no">RAVEN <span>17</span></h2>
 <a class="rvnHeroWatch" data-raven-route="./episodes/" data-rvn-visual="episodeList" href="./episodes/?lang=ar">تصفّح الحلقات</a></div></article>
 <article class="homePoster casePoster">
 <picture><source media="(max-width:690px)" srcset="./assets/visual-20261119/case-entry-mobile.webp"><img src="./assets/visual-20261119/case-entry.webp" width="720" height="480" alt=""></picture>
 <div><h2 data-rvn-visual="caseName">الاسم المحذوف</h2>
 <a id="rvnHeroEnterDeletedName" data-dn-link="hero" href="./deleted-name/">اكتشف قضية الاسم المحذوف</a></div></article>
-</div></header>
+</div></div></header>
 <aside class="rvnCaseResume" id="rvnCaseResume" hidden aria-labelledby="rvnCaseResumeTitle">
 <div><p class="rvnResumeKicker" data-home-resume="caseKicker">جلسة قضية متاحة</p><h3 id="rvnCaseResumeTitle" data-home-resume="caseTitle">ارجع للقضية</h3><p id="rvnCaseResumeStatus"></p></div>
 <a id="rvnCaseResumeLink" href="./deleted-name/play/" data-home-resume="caseAction">ارجع للقضية</a>
@@ -206,9 +211,7 @@ window.ravenIntro={complete:true,finish:function(){}};
 <section class="rvnStudio" id="studio">
 <div class="wrap">
 <div class="sectionHead"><div><h2>خلف الكادر</h2></div><p>الشخصية ثابتة. الحركة مقصودة. والتفاصيل تخدم الحكاية.</p></div>
-<div class="screenProductionFilm"><div class="refHeroBg"><video aria-hidden="true" class="refHeroVideo" disablepictureinpicture="" disableremoteplayback="" id="ravenHeroMotion" loop="" muted="" playsinline="" poster="./terminal-preview/assets/hero-poster.jpg" preload="none" tabindex="-1" webkit-playsinline="">
-<source src="./terminal-preview/assets/hero-loop.mp4" type="video/mp4"/>
-</video></div><a class="rvnVisualTextLink" data-rvn-visual="openPaperClip" href="#atmosphere-paper-detail-title">افتح مقطع «الورق والهاتف»</a></div>
+<div class="screenProductionFilm"><a class="rvnVisualTextLink" data-rvn-visual="openPaperClip" href="#atmosphere-paper-detail-title">افتح مقطع «الورق والهاتف»</a></div>
 <details class="screenProduction"><summary data-rvn-visual="notes">ملاحظات الإنتاج</summary>
 <div class="rvnStudioGrid">
 <article class="rvnStudioCard reveal"><small>01 · ثبات الشخصية</small><h3>هوية لا تتبدّل</h3><p>ملامح الوجه، الشعر، الهيئة والملابس مرجع ثابت. نضبط الإكسسوارات والإضاءة وما يُسمح بتغييره قبل بناء المشهد.</p></article>
@@ -358,7 +361,7 @@ window.ravenIntro={complete:true,finish:function(){}};
     (()=>{
       const video=document.getElementById('ravenHeroMotion');
       const toggle=document.getElementById('ravenMotionToggle');
-      const hero=video?.closest('.screenProductionFilm');
+      const hero=video?.closest('.refHeroBg');
       if(!video||!toggle||!hero)return;
       const motion=window.matchMedia('(prefers-reduced-motion: reduce)');
       let userPaused=false;
@@ -379,7 +382,8 @@ window.ravenIntro={complete:true,finish:function(){}};
         if(motionLabel)motionLabel.textContent=label;
       };
       const play=()=>{
-        if(userPaused||reducedMotion||!inView||document.hidden||failed||window.ravenIntro?.complete===false||document.body.classList.contains('rvnViewing'))return;
+        if(userPaused||reducedMotion||!inView||document.hidden||failed||document.body.classList.contains('rvnViewing'))return;
+        try { if(window.parent.RavenSite?.entryOpen) return; } catch { /* A standalone view can play independently. */ }
         const pending=video.play();
         if(pending&&typeof pending.catch==='function')pending.catch(()=>{toggle.hidden=false;syncToggle();});
       };
