@@ -24,7 +24,7 @@ function aperture(ui){
   const label=i=>t(...stories[i][0]),story=i=>t(...stories[i][1]);
   let interval=0,latest=0,player;
   function pause(){if(interval){s.remaining=Math.max(0,s.remaining-(performance.now()-latest)/1000);clearInterval(interval);interval=0;}timeText();}
-  function timeText(){clock.value=t('الوقت المتاح ','Time available ')+Math.ceil(s.remaining)+' s';toggle.textContent=interval?t('أوقف ساعة الاختيار','Pause selection clock'):t('شغّل ساعة الاختيار','Run selection clock');}
+  function timeText(){clock.value=t('الوقت المتاح ','Time available ')+Math.ceil(s.remaining)+t(' ث',' s');toggle.textContent=interval?t('أوقف ساعة الاختيار','Pause selection clock'):t('شغّل ساعة الاختيار','Run selection clock');}
   function start(){if(interval||s.remaining<=0)return;latest=performance.now();interval=setInterval(()=>{const now=performance.now();s.remaining=Math.max(0,s.remaining-(now-latest)/1000);latest=now;if(s.remaining===0){pause();sync();}else{timeText();if(!matchMedia('(prefers-reduced-motion: reduce)').matches)windows(view.ctx,-1,30-s.remaining);}},150);timeText();}
   const toggle=button('',()=>interval?pause():start(),'clock');
   const launch=button(t('اعرض نوافذي الثلاث','Screen my three windows'),()=>{pause();s.phase='screen';s.at=0;s.completed=false;render();},'screen');

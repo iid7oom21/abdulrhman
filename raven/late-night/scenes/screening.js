@@ -35,7 +35,7 @@ function render(ui){
     const list=el('ol',null,'ns-list'),choices=actions(root),note=status(root);
     library.forEach(p=>{const i=s.selection.indexOf(p.id);const b=button(p.title,()=>{if(i>=0)s.selection.splice(i,1);else if(s.selection.length<3)s.selection.push(p.id);redraw();},'pick-'+p.id);
       b.setAttribute('aria-pressed',String(i>=0));b.disabled=i<0&&s.selection.length>=3;choices.append(b);});
-    selected.filter(Boolean).forEach(p=>list.append(el('li',p.title+' · '+p.seconds+' s')));
+    selected.filter(Boolean).forEach(p=>list.append(el('li',p.title+' · '+p.seconds+t(' ث',' s'))));
     root.append(list);const start=button(t('ابدآ برنامج العرض','Begin screening programme'),()=>{
       if(s.selection.length!==3){note.textContent=t('اختارا ثلاث قطع أولًا.','Choose three pieces first.');return;}
       s.lengths=s.selection.map(id=>library.find(p=>p.id===id).seconds);s.phase='present';s.index=0;redraw();
@@ -44,10 +44,10 @@ function render(ui){
   if(s.phase==='program'){
     root.append(el('h2',t('برنامج هذه الأمسية','Tonight’s screening programme')));
     const list=el('ol',null,'ns-list');
-    const lines=selected.map((p,i)=>p.title+' · '+s.lengths[i]+' s');lines.forEach(v=>list.append(el('li',v)));root.append(list);
+    const lines=selected.map((p,i)=>p.title+' · '+s.lengths[i]+t(' ث',' s'));lines.forEach(v=>list.append(el('li',v)));root.append(list);
     const total=s.lengths.reduce((v,n)=>v+n,0);
-    root.append(el('p',t('زمن البرنامج ','Programme duration ')+total+' s'));
-    actions(root,button(t('نزّلا برنامج العرض','Download programme'),()=>file('raven-screening-programme.txt',[t(...title),...lines,t('المدة الكلية ','Total duration ')+total+' s'].join('\n'),'text/plain;charset=utf-8'),'export'),button(t('أمسية جديدة','New screening'),reset,'retry'));
+    root.append(el('p',t('زمن البرنامج ','Programme duration ')+total+t(' ث',' s')));
+    actions(root,button(t('نزّلا برنامج العرض','Download programme'),()=>file('raven-screening-programme.txt',[t(...title),...lines,t('المدة الكلية ','Total duration ')+total+t(' ث',' s')].join('\n'),'text/plain;charset=utf-8'),'export'),button(t('أمسية جديدة','New screening'),reset,'retry'));
     return;
   }
   const current=selected[s.index];
@@ -73,7 +73,7 @@ function render(ui){
   else root.append(el('p',t('بطاقة عرض نصية · ','Text screening card · ')+current.title));
   if(s.phase==='present'){
     root.append(el('p',t('دور الصانع · قدّم هذه القطعة للمشاهد.','Maker’s turn · introduce this piece to the viewer.')));
-    const timing=select([...new Set([s.lengths[s.index],3,6,9,12,15,30])].sort((a,b)=>a-b).map(n=>[String(n),n+' s']),String(s.lengths[s.index]),v=>{s.lengths[s.index]=Number(v);},'runtime');
+    const timing=select([...new Set([s.lengths[s.index],3,6,9,12,15,30])].sort((a,b)=>a-b).map(n=>[String(n),n+t(' ث',' s')]),String(s.lengths[s.index]),v=>{s.lengths[s.index]=Number(v);},'runtime');
     // A timed work keeps its source duration. Only a still has an adjustable display hold.
     timing.disabled=!!current.sourceSeconds;
     root.append(control(current.sourceSeconds?t('مدة القطعة الأصلية','Source running time'):t('مدة عرض الصورة في البرنامج','Still display time in programme'),timing));

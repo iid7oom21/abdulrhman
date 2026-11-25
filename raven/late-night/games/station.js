@@ -56,7 +56,7 @@ function render(ui){
   function paint(){
     const ghost=['play','watch','won'].includes(phase)||reviewing?positionAt(trace,clock):null;
     const door=!!ghost&&onPlate(ghost);view.dataset.phase=phase;view.dataset.door=door?'open':'closed';view.dataset.player=runner.x+','+runner.y;
-    view.dataset.shadow=ghost?ghost.x+','+ghost.y:'';meter.value=clock;timer.textContent=(clock/1000).toFixed(1)+' / 10 s';
+    view.dataset.shadow=ghost?ghost.x+','+ghost.y:'';meter.value=clock;timer.textContent=(clock/1000).toFixed(1)+' / 10'+t(' ث',' s');
     const player=phase==='watch'||reviewing?null:runner;
     scene.draw(player,ghost,door,phase==='play'||phase==='won');
     const describe=p=>t('الخانة '+(p.x+1)+' من اليسار، الصف '+(p.y+1)+' من الخلف','column '+(p.x+1)+' from the left, lane '+(p.y+1)+' from the back');
@@ -78,7 +78,7 @@ function render(ui){
         const range=el('input');range.type='range';range.min=0;range.max=LENGTH;range.step=50;range.value=clock;range.dataset.game='scrub';range.setAttribute('aria-label',t('زمن المراجعة','Review time'));range.dir='ltr';
         range.oninput=()=>{clock=+range.value;paint();};
         const first=firstOpening(trace);
-        const cue=el('p',first===null?t('التسجيل لا يلامس الدواسة.','The recording never touches the pedal.'):t('أول فتح عند ','First opening at ')+(first/1000).toFixed(2)+' s');
+        const cue=el('p',first===null?t('التسجيل لا يلامس الدواسة.','The recording never touches the pedal.'):t('أول فتح عند ','First opening at ')+(first/1000).toFixed(2)+t(' ث',' s'));
         cue.dataset.game='first-open';cue.dataset.ms=first??'';details.append(range,cue,button('watch',t('شغّل التسجيل','Replay recording'),()=>begin('watch')));
       }
     }
