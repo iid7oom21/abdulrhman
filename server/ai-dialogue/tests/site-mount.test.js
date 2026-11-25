@@ -512,6 +512,7 @@ test('Late Night and the film preview share explicit files across Render and Pag
   f.write('raven/late-night/games/notes.js', 'UNRELEASED');
   f.write('raven/late-night/thumbs/private.webp', 'UNRELEASED');
   f.write('raven/late-night/assets/photo/private.webp', 'UNRELEASED');
+  f.write('raven/late-night/ink/art/contact-sheet.png', 'UNRELEASED');
   f.write('raven/raven-17-preview/notes.html', 'UNRELEASED');
   const s = await start(t, {siteRoot:f.root});
   for (const section of ['late-night', 'raven-17-preview']) {
@@ -529,6 +530,8 @@ test('Late Night and the film preview share explicit files across Render and Pag
     ['raven/late-night/scenes/art.js', 'text/javascript'], ['raven/late-night/hub.css', 'text/css'],
     ['raven/late-night/thumbs/station-shadow.webp', 'image/webp'], ['raven/late-night/assets/museum-mill.wav', 'audio/wav'],
     ['raven/late-night/assets/photo/station-shadow.webp', 'image/webp'], ['raven/late-night/assets/photo/harbour-cinema.webp', 'image/webp'],
+    ['raven/late-night/ink-studio.html', 'text/html'], ['raven/late-night/ink/beacon.js', 'text/javascript'],
+    ['raven/late-night/ink/art/ferry-pier.webp', 'image/webp'],
     ['raven/raven-17-preview/index.html', 'text/html'], ['raven/raven-17-preview/home.js', 'text/javascript']
   ];
   for (const [name, type] of files) {
@@ -545,7 +548,8 @@ test('Late Night and the film preview share explicit files across Render and Pag
     }
   }
   for (const prefix of ['', '/abdulrhman']) {
-    for (const file of ['raven/late-night/games/notes.js', 'raven/late-night/thumbs/private.webp', 'raven/late-night/assets/photo/private.webp', 'raven/raven-17-preview/notes.html']) {
+    for (const file of ['raven/late-night/games/notes.js', 'raven/late-night/thumbs/private.webp', 'raven/late-night/assets/photo/private.webp',
+      'raven/late-night/ink/art/contact-sheet.png', 'raven/raven-17-preview/notes.html']) {
       const unknown = await fetch(s.root + prefix + '/' + file,{redirect:'manual'});
       assert.equal(unknown.status,404);
       assert.doesNotMatch(await unknown.text(),/UNRELEASED/);

@@ -33,6 +33,7 @@ def check_deployment(request, home, sha, release, local):
         asset: subprocess.check_output(["git", "show", f"{sha}:raven/{asset}"], cwd=ROOT)
         for asset in assets
     }
+    pinned["../site-entry.js"] = subprocess.check_output(["git", "show", f"{sha}:site-entry.js"], cwd=ROOT)
     deadline = time.monotonic() + (15 if local else 240)
     while True:
         try:
@@ -151,12 +152,9 @@ def main():
         page = ctx.new_page()
         page.goto(home + "?lang=ar", wait_until="domcontentloaded")
         frame = page.frame_locator("#site-content")
-        skip = page.locator("#archive-skip")
-        if skip.is_visible():
-            skip.click()
-        launch = frame.locator("[data-after-show-play]")
-        expect(launch).to_be_visible()
-        launch.click()
+        launch = page.locator("#archive-play-edit")
+        expect(launch).to_be_in_viewport()
+        launch.tap()
         expect(frame.locator("html")).to_have_attribute("lang", "ar")
         order = ["exterior", "hand", "envelope"]
         for index, shot in enumerate(order):
