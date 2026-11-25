@@ -1,7 +1,7 @@
 // A session welcome, independent of the persistent soundtrack and page routing.
 // The first visit in a session plays the RAVEN intro film. If the film cannot
 // play, or motion is reduced, the welcome text and the enter button are shown.
-export function createEntryGate({ root, show = false, onEnter, onClose } = {}) {
+export function createEntryGate({ root, show = false, onEnter, onClose, navigate } = {}) {
   if (!show || typeof HTMLDialogElement === 'undefined') return null;
   let seen = false;
   try { seen = sessionStorage.getItem('raven_studio_ident_v1') === '1'; } catch {}
@@ -27,6 +27,7 @@ export function createEntryGate({ root, show = false, onEnter, onClose } = {}) {
       <p id="archive-entry-note">يمكنك التحكم بالأغنية من شريط الصوت.</p>
     </div>
     <nav class="archive-night-shortcuts">
+      <a id="archive-play-edit">العب آخر إرسال</a>
       <a id="archive-night-hub">آخر الليل</a>
       <a id="archive-night-short">عندي دقيقتين</a>
       <a id="archive-night-evening">أبي أمسية كاملة</a>
@@ -45,13 +46,14 @@ export function createEntryGate({ root, show = false, onEnter, onClose } = {}) {
     const en = language === 'en';
     dialog.lang = en ? 'en' : 'ar';
     const shortcuts = [
-      ['hub','','آخر الليل','Late Night'],
-      ['short','station-shadow.html','عندي دقيقتين','I have two minutes'],
-      ['evening','festival-chair.html','أبي أمسية كاملة','Plan a full evening']
+      ['archive-play-edit','raven/after-show/?activity=edit','العب آخر إرسال','Play Last Transmission'],
+      ['archive-night-hub','raven/late-night/','آخر الليل','Late Night'],
+      ['archive-night-short','raven/late-night/station-shadow.html','عندي دقيقتين','I have two minutes'],
+      ['archive-night-evening','raven/late-night/festival-chair.html','أبي أمسية كاملة','Plan a full evening']
     ];
     for (const [id, path, ar, english] of shortcuts) {
-      const item = dialog.querySelector('#archive-night-' + id);
-      const target = new URL('raven/late-night/' + path, root);
+      const item = dialog.querySelector('#' + id);
+      const target = new URL(path, root);
       target.searchParams.set('lang', en ? 'en' : 'ar');
       item.href = target.href;
       item.textContent = en ? english : ar;
@@ -84,7 +86,12 @@ export function createEntryGate({ root, show = false, onEnter, onClose } = {}) {
     onEnter?.(event);
     dialog.close();
   });
-  dialog.querySelector('.archive-night-shortcuts').addEventListener('click', event => { if (event.target.closest('a')) dialog.close(); });
+  dialog.querySelector('.archive-night-shortcuts').addEventListener('click', event => {
+    const link = event.target.closest('a[href]');
+    if (!link || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    if (navigate?.(link.href)) event.preventDefault();
+    dialog.close();
+  });
   skipButton.addEventListener('click', () => dialog.close());
   soundButton.addEventListener('click', () => {
     video.muted = !video.muted;

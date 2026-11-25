@@ -65,6 +65,42 @@ async function screen(frame, order, matchesBrief) {
   await expect(result).toHaveAttribute('data-order', String(matchesBrief));
 }
 
+test('a first-time visitor can play Last Transmission directly from the mobile entrance', async t => {
+  const origin = await localSite(t);
+  const browser = await chromium.launch({executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium', args: ['--no-sandbox']});
+  t.after(() => browser.close());
+  for (const [lang, width, reducedMotion] of [['ar', 320, 'reduce'], ['en', 390, 'no-preference']]) {
+    await t.test(lang + ' ' + width + 'px', async t => {
+      const context = await browser.newContext({viewport: {width, height: 800}, hasTouch: true, reducedMotion});
+      t.after(() => context.close());
+      await context.route('**/*', route => new URL(route.request().url()).origin === origin ? route.continue() : route.abort());
+      const page = await context.newPage();
+      await page.goto(origin + mount + 'raven/?lang=' + lang, {waitUntil: 'domcontentloaded'});
+      const play = page.locator('dialog[open] #archive-play-edit');
+      await expect(play).toHaveText(lang === 'ar' ? 'العب آخر إرسال' : 'Play Last Transmission');
+      await expect(play).toHaveAttribute('href', origin + mount + 'raven/after-show/?activity=edit&lang=' + lang);
+      const box = await play.boundingBox();
+      assert.ok(box && box.x >= 0 && box.y >= 0 && box.x + box.width <= width && box.y + box.height <= 800);
+      assert.equal(await page.evaluate(() => sessionStorage.getItem('raven_studio_ident_v1')), null);
+      if (process.env.AFTER_SHOW_QA_DIR) {
+        fs.mkdirSync(process.env.AFTER_SHOW_QA_DIR, {recursive:true});
+        await page.screenshot({path:path.join(process.env.AFTER_SHOW_QA_DIR, 'welcome-edit-' + lang + '-' + width + '.png')});
+      }
+      await play.tap();
+      await expect(page).toHaveURL(origin + mount + 'raven/after-show/?activity=edit&lang=' + lang);
+      await expect(page.locator('dialog[open]')).toHaveCount(0);
+      const frame = await activityFrame(page, '[data-shot="exterior"]');
+      await expect(frame.locator('html')).toHaveAttribute('lang', lang);
+      await frame.locator('[data-shot="exterior"]').tap();
+      await frame.locator('[data-slot="0"]').tap();
+      await expect(frame.locator('[data-slot="0"]')).toContainText(lang === 'ar' ? 'واجهة المبنى' : 'The exterior');
+      await page.goBack();
+      await expect(page.frameLocator('#site-content').locator('[data-after-show-play]')).toBeVisible();
+      await expect(page.locator('dialog[open]')).toHaveCount(0);
+    });
+  }
+});
+
 test('a visitor edits and screens a timed cut through the real Pages project mount', { timeout: 210000, concurrency: 2 }, async t => {
   const origin = await localSite(t);
   const browser = await chromium.launch({

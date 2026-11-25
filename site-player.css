@@ -100,4 +100,10 @@ body.is-watching #music-toggle{max-width:none;min-height:44px;padding:8px 14px;b
 
 .archive-night-shortcuts{position:absolute;z-index:3;inset-block-start:0;inset-inline:0;display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:4px 10px;padding:7px 12px;background:#0e1112e8}
 .archive-night-shortcuts a{display:inline-flex;align-items:center;min-height:44px;color:#efdbb8;text-underline-offset:4px;font:14px/1.4 Arial,sans-serif}
+.archive-night-shortcuts #archive-play-edit{justify-content:center;padding:0 12px;background:#ddc398;color:#161714;text-decoration:none;font-weight:600}
 .archive-entry.is-fallback .archive-entry-content{padding-block:72px 80px}
+@media(max-width:480px){
+  .archive-night-shortcuts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:2px 8px}
+  .archive-night-shortcuts a{justify-content:center}
+  .archive-entry.is-fallback .archive-entry-content{padding-block-start:104px}
+}

@@ -1,6 +1,6 @@
 // The host owns one soundtrack while the content document changes.
 import { createSoundtrack } from './site-audio.js?v=mati-1.0.1';
-import { createEntryGate } from './site-entry.js?v=intro-2';
+import { createEntryGate } from './site-entry.js?v=intro-3';
 
 const root = new URL('./', import.meta.url);
 // History navigation changes the document base even though the shell stays mounted.
@@ -215,6 +215,7 @@ updateHistory(initial, false, history.state?.childState, history.state?.view);
 show(initial, history.state?.childState, history.state?.view);
 entryGate = createEntryGate({
   root,
+  navigate,
   show: initial.pathname === routes[0] && !initial.hash && !initial.searchParams.has('episode'),
   onEnter: soundtrack.enter,
   onClose() {
