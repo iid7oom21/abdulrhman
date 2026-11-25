@@ -105,12 +105,27 @@ function show(url, childState = null, view = null, force = false, focus = false)
   recovery.classList.add('is-loading');
   syncLoading();
   clearTimeout(loadTimer);
-  loadTimer = setTimeout(() => {
+  const started = Date.now();
+  const expire = () => {
+    // On a slow connection the page can be parsed and readable long before its
+    // deferred scripts finish. Keep the small loading note over such a page
+    // instead of covering it with a failure; fail only if it never gets there.
+    let parsed = false;
+    try {
+      const doc = frame.contentDocument;
+      parsed = Boolean(doc) && doc !== departingDocument && doc.readyState !== 'loading' &&
+        route(frame.contentWindow.location.href)?.pathname === url.pathname;
+    } catch { parsed = false; }
+    if (parsed && Date.now() - started < 60000) {
+      loadTimer = setTimeout(expire, 4000);
+      return;
+    }
     loadFailed = true;
     retry.hidden = false;
     recovery.classList.remove('is-loading');
     syncLoading();
-  }, 12000);
+  };
+  loadTimer = setTimeout(expire, 12000);
   frame.contentWindow.location.replace(content.href);
 }
 
