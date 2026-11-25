@@ -35,7 +35,7 @@ window.ravenIntro={complete:true,finish:function(){}};
 <link href="./assets/raven-redesign-v1.css?v=scope-20261119" rel="stylesheet"/>
 <link href="./assets/raven-polish-v2.css?v=scope-20261119" rel="stylesheet"/>
 <link href="./assets/raven-media-fallback.css?v=screening-room-1" rel="stylesheet"/>
-<link href="./assets/raven-visual-home.css?v=screening-room-1" rel="stylesheet"/>
+<link href="./assets/raven-visual-home.css?v=home-programme-2" rel="stylesheet"/>
 <link href="./assets/raven-home-resume.css?v=watch-later-1" rel="stylesheet"/>
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="RAVEN">
@@ -99,7 +99,10 @@ window.ravenIntro={complete:true,finish:function(){}};
 <a data-rvn-i18n="films" data-raven-route="./episodes/" href="./episodes/?lang=ar">الأفلام</a>
 <a data-rvn-v2="deletedName" href="#deleted-name-experience">الاسم المحذوف</a>
 <a data-rvn-v2="studio" href="#studio">خلف الكادر</a>
-<a data-rvn-visual="workshops" href="#workshops">ورش وتجارب</a>
+<a data-after-show-menu data-night-route="./after-show/" href="./after-show/" data-rvn-visual="afterShow">بعد العرض</a>
+<a data-night-route="./late-night/" href="./late-night/" data-rvn-visual="lateNight">آخر الليل</a>
+<a data-night-route="./late-night/ink-studio.html" href="./late-night/ink-studio.html" data-rvn-visual="inkTitle">ليالي الحبر</a>
+<a data-night-route="../studio/" href="../studio/" data-rvn-visual="creativeStudio">الاستوديو</a>
 <a data-rvn-v2="creatorNav" href="#about">صانع RAVEN</a>
 <a data-rvn-v2="vault" href="#vault">المواد البصرية</a>
 <a data-rvn-i18n="contact" href="#raven-collaborate">التواصل</a>
@@ -107,48 +110,49 @@ window.ravenIntro={complete:true,finish:function(){}};
 </div>
 </nav>
 <main id="main-content" tabindex="-1">
-<header class="screenHero" id="top">
+<header class="homeDoubleBill" id="top">
 <span id="films" class="screenAnchor" aria-hidden="true"></span>
-<div class="screenHeroArt" aria-hidden="true"><img src="../assets/intro/raven-intro-poster.jpg" width="720" height="1280" fetchpriority="high" alt=""></div>
-<div class="screenHeroCopy">
-<p class="screenMeta" data-rvn-visual="filmType">سلسلة سينمائية · ثلاث حلقات</p>
-<h1 dir="ltr" translate="no">RAVEN <span>17</span></h1>
-<p class="screenSynopsis" data-rvn-i18n="ravenStory">غموض نفسي، أدلة لا تقول الحقيقة كاملة، وشخصية لا تكشف كل ما تعرفه.</p>
-<div class="screenActions">
-<a class="rvnHeroWatch screenPlay" data-raven-route="./episodes/" data-rvn-visual="episodeList" href="./episodes/?lang=ar">تصفّح الحلقات</a>
-<a class="screenTextLink" id="rvnHeroEnterDeletedName" data-dn-link="hero" href="./deleted-name/">اكتشف قضية الاسم المحذوف</a>
-</div>
+<div class="wrap homeBillGrid">
+<article class="homePoster filmPoster">
+<img src="../assets/intro/raven-intro-poster.jpg" width="720" height="1280" fetchpriority="high" alt="">
+<div><h1 dir="ltr" translate="no">RAVEN <span>17</span></h1>
+<a class="rvnHeroWatch" data-raven-route="./episodes/" data-rvn-visual="episodeList" href="./episodes/?lang=ar">تصفّح الحلقات</a></div></article>
+<article class="homePoster casePoster">
+<picture><source media="(max-width:690px)" srcset="./assets/visual-20261119/case-entry-mobile.webp"><img src="./assets/visual-20261119/case-entry.webp" width="720" height="480" alt=""></picture>
+<div><h2 data-rvn-visual="caseName">الاسم المحذوف</h2>
+<a id="rvnHeroEnterDeletedName" data-dn-link="hero" href="./deleted-name/">اكتشف قضية الاسم المحذوف</a></div></article>
 </div></header>
 <aside class="rvnCaseResume" id="rvnCaseResume" hidden aria-labelledby="rvnCaseResumeTitle">
 <div><p class="rvnResumeKicker" data-home-resume="caseKicker">جلسة قضية متاحة</p><h3 id="rvnCaseResumeTitle" data-home-resume="caseTitle">ارجع للقضية</h3><p id="rvnCaseResumeStatus"></p></div>
 <a id="rvnCaseResumeLink" href="./deleted-name/play/" data-home-resume="caseAction">ارجع للقضية</a>
 </aside>
-<nav class="screenChoices" data-rvn-visual-label="explore" aria-label="اختر تجربة">
-<a data-night-route="./late-night/station-shadow.html" data-rvn-visual="twoMinutes" href="./late-night/station-shadow.html">عندي دقيقتين</a>
-<a data-night-route="./late-night/festival-chair.html" data-rvn-visual="fullEvening" href="./late-night/festival-chair.html">أبي أمسية كاملة</a>
-<a href="#workshops" data-rvn-visual="workshops">ورش وتجارب</a>
-<a href="#raven-atmosphere" data-rvn-visual="behind">خلف الكادر</a></nav>
+
 <section class="screenProgramme" id="workshops" aria-labelledby="workshops-title">
 <span id="selected-works" class="screenAnchor" aria-hidden="true"></span>
-<div class="wrap"><h2 id="workshops-title" data-rvn-visual="workshops">ورش وتجارب</h2>
+<div class="wrap"><h2 id="workshops-title" data-rvn-visual="playAndMake">العب واصنع</h2>
 <div class="screenFeatures">
 <article id="after-show" class="screenFeature" aria-labelledby="after-show-title">
 <div class="screenPrint afterShowStrip" aria-hidden="true"><img src="./after-show/assets/exterior.webp" width="440" height="248" loading="lazy" decoding="async" alt=""><img src="./after-show/assets/hand.webp" width="440" height="248" loading="lazy" decoding="async" alt=""><img src="./after-show/assets/envelope.webp" width="440" height="248" loading="lazy" decoding="async" alt=""></div>
-<div class="screenFeatureCopy"><h3 id="after-show-title" data-rvn-visual="afterShow">بعد العرض</h3>
+<div class="screenFeatureCopy"><h3 id="after-show-title"><a data-after-show-hub data-rvn-visual="afterShow" href="./after-show/?lang=ar">بعد العرض</a></h3>
 <p data-rvn-visual="afterShowPitch">عندك ١٢ ثانية وثلاث لقطات. بأي لقطة تفتتح المشهد؟</p>
 <div><a data-after-show-play class="afterShowPlay" data-rvn-visual="afterShowPlay" href="./after-show/?activity=edit&amp;lang=ar">العب آخر إرسال</a>
-<a data-after-show-hub data-rvn-visual="afterShowAll" href="./after-show/?lang=ar">كل التجارب</a></div></div></article>
+</div></div></article>
 <article id="late-night" class="screenFeature" aria-labelledby="late-night-title">
 <div class="screenPrint nightFeatureArt" aria-hidden="true"><picture><source media="(max-width:640px)" srcset="./late-night/assets/photo/harbour-cinema-mobile.webp"><img src="./late-night/assets/photo/harbour-cinema.webp" width="1440" height="960" loading="lazy" decoding="async" alt=""></picture></div>
-<div class="screenFeatureCopy"><h3 id="late-night-title" data-rvn-visual="lateNight">آخر الليل</h3>
+<div class="screenFeatureCopy"><h3 id="late-night-title"><a href="./late-night/" data-night-route="./late-night/" data-rvn-visual="lateNight">آخر الليل</a></h3>
 <p data-rvn-visual="nightPitch">سجّل مسارك في المحطّة أو اصنع مشهدًا عند الرصيف.</p>
-<div><a class="afterShowPlay" data-night-route="./late-night/" data-rvn-visual="enterNight" href="./late-night/">ادخل آخر الليل</a></div></div></article>
+<div><a class="afterShowPlay" data-night-route="./late-night/#catalog" data-rvn-visual="exploreNight" href="./late-night/#catalog">الألعاب والمحاكاة</a></div></div></article>
 <article id="ink-nights" class="screenFeature" aria-labelledby="ink-title">
 <div class="screenPrint" aria-hidden="true"><img src="./late-night/ink/art/ferry-pier-print.webp" width="520" height="293" loading="lazy" decoding="async" alt=""></div>
-<div class="screenFeatureCopy"><h3 id="ink-title" data-rvn-visual="inkTitle">ليالي الحبر</h3>
+<div class="screenFeatureCopy"><h3 id="ink-title"><a href="./late-night/ink-studio.html" data-night-route="./late-night/ink-studio.html" data-rvn-visual="inkTitle">ليالي الحبر</a></h3>
 <p data-rvn-visual="inkPitch">ركّب مشهد أنمي أو اطبع صفحة مانغا من لقطات المرفأ.</p>
-<div><a data-night-route="./late-night/ink-studio.html" data-rvn-visual="enterInk" href="./late-night/ink-studio.html">ادخل ليالي الحبر</a></div></div></article>
+<div><a data-night-route="./late-night/ink-studio.html" data-rvn-visual="animeManga" href="./late-night/ink-studio.html">الأنمي والمانجا</a></div></div></article>
 </div></div></section>
+<nav class="screenChoices" data-rvn-visual-label="explore" aria-label="اختر تجربة">
+<a data-night-route="./late-night/station-shadow.html" data-rvn-visual="twoMinutes" href="./late-night/station-shadow.html">عندي دقيقتين</a>
+<a data-night-route="./late-night/festival-chair.html" data-rvn-visual="fullEvening" href="./late-night/festival-chair.html">أبي أمسية كاملة</a>
+<a data-home-studio data-night-route="../studio/" href="../studio/?lang=ar" data-rvn-visual="creativeStudio">الاستوديو</a>
+<a data-home-backstage href="#behind-paper-phone" data-rvn-visual="behind">خلف الكادر</a></nav>
 <section aria-labelledby="rvnDeletedNameTitle" class="rvnArchiveExperience rvnCaseSpotlight" id="dialogue-preview">
 <span id="deleted-name-experience" aria-hidden="true"></span>
 <div class="wrap">
@@ -348,7 +352,7 @@ window.ravenIntro={complete:true,finish:function(){}};
 <script defer="" src="./assets/raven-refinement-v2.js?v=screening-room-1"></script>
 <script defer src="./assets/raven-media-fallback.js?v=screening-room-1"></script>
 <script defer src="./assets/raven-deleted-name-home.js?v=atmosphere-20261119"></script>
-<script defer src="./assets/raven-visual-home.js?v=screening-room-1"></script>
+<script defer src="./assets/raven-visual-home.js?v=home-programme-2"></script>
 <script defer src="./assets/raven-home-resume.js?v=screening-room-1"></script>
 <script>
     (()=>{

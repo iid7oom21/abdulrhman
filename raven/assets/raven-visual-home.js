@@ -2,6 +2,8 @@
 (() => {
   'use strict';
   const words = {
+    caseName:['الاسم المحذوف','The Deleted Name'],creativeStudio:['الاستوديو','Studio'],playAndMake:['العب واصنع','Play and create'],
+    exploreNight:['الألعاب والمحاكاة','Games and simulations'],animeManga:['الأنمي والمانجا','Anime and manga'],
     lateNight:['آخر الليل','Late Night'],twoMinutes:['عندي دقيقتين','I have two minutes'],fullEvening:['أبي أمسية كاملة','Plan a full evening'],
     nightPitch:['سجّل مسارك في المحطّة أو اصنع مشهدًا عند الرصيف.','Record your route at the station or stage a scene on the pier.'],enterNight:['ادخل آخر الليل','Enter Late Night'],
     inkTitle:['ليالي الحبر','Ink Nights'],inkPitch:['ركّب مشهد أنمي أو اطبع صفحة مانغا من لقطات المرفأ.','Cut an anime scene or print a manga page from the harbour.'],enterInk:['ادخل ليالي الحبر','Enter Ink Nights'],

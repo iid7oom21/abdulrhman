@@ -1,6 +1,6 @@
 // The host owns one soundtrack while the content document changes.
 import { createSoundtrack } from './site-audio.js?v=mati-1.0.1';
-import { createEntryGate } from './site-entry.js?v=screen-room-1';
+import { createEntryGate } from './site-entry.js?v=home-programme-1';
 
 const root = new URL('./', import.meta.url);
 // History navigation changes the document base even though the shell stays mounted.

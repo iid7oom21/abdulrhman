@@ -40,7 +40,7 @@ try {
     await page.goto(base + 'raven/content.html', { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1500);
 
-    const portrait = page.locator('.screenHeroArt img');
+    const portrait = page.locator('.filmPoster img');
     await portrait.evaluate(img => img.decode());
     assert.match(await portrait.getAttribute('src'), /raven-intro-poster\.jpg$/);
     assert.equal(await page.locator('[data-visual-episode], #episodeModal').count(), 0);
