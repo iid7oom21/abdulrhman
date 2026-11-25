@@ -68,6 +68,7 @@ export function submitRequest(requestId, characterId, message, sharedFacts = [],
       // Provider messages may contain secrets or untrusted output. Only closed codes cross HTTP.
       record.error = ['provider_unavailable','provider_rejected','provider_invalid_output','provider_busy'].includes(failure.code)
         ? failure.code : 'simulation_error';
+      try { lifecycle.onFailed?.(failure); } catch { /* A diagnostic hook must not change the recorded outcome. */ }
     } else if (!response || typeof response.text !== 'string' || !response.text.trim() || response.text.length > 40000 || typeof response.refused !== 'boolean') {
       record.status = 'error'; record.error = 'provider_invalid_output';
     } else {

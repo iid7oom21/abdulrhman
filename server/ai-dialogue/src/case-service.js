@@ -8,6 +8,7 @@ import {CaseError, canonical, caseFingerprint, validateCasePack, validateOpening
   applyCaseAction, projectCaseState, validateCaseRequest, validateStoredCaseState} from './case-engine.js';
 import {buildInvestigationHint, InterrogationContextError} from './interrogation-context.js';
 import {createInterrogationExecutor, InterrogationError} from './interrogation-dialogue.js';
+import {errorFields} from './log.js';
 
 export const DEFAULT_CASE_STORAGE_PATH = fileURLToPath(new URL('../.data/case-store.json', import.meta.url));
 const COOKIE = 'raven_case_session';
@@ -76,7 +77,7 @@ function projectionMatches(stored, current) {
 
 export function createCaseService({contentPath = null, storagePath = null, pack:injectedPack = null,
   siteRoot = null, secureCookie = false, openStore = openCaseStore, maxSessions = 10000, maxOperations = 4096, checkpointKey = null,
-  interrogationPolicy = null, interrogationProvider = null, onInterrogationTrace = null, interrogationEnableCache = true} = {}) {
+  interrogationPolicy = null, interrogationProvider = null, onInterrogationTrace = null, interrogationEnableCache = true, log = null} = {}) {
   const checkpoints = checkpointKey === null || checkpointKey === undefined ? null : createCaseCheckpoint(checkpointKey);
   if (checkpoints && storagePath) throw new CaseError('case_checkpoint_configuration_invalid');
   if (checkpoints) {
@@ -114,13 +115,24 @@ export function createCaseService({contentPath = null, storagePath = null, pack:
   };
   const disk = storagePath ? openStore(storagePath, {validate:validateSnapshot}) : null;
   if (disk) {
-    const snapshot = disk.load();
-    if (snapshot !== null) { validateSnapshot(snapshot); sessions = new Map(snapshot.sessions.map(session => [session.id, session])); }
+    try {
+      const snapshot = disk.load();
+      if (snapshot !== null) { validateSnapshot(snapshot); sessions = new Map(snapshot.sessions.map(session => [session.id, session])); }
+    } catch (error) {
+      // Startup stops here: this line is the only record of why the service refused to boot.
+      log?.error('case_store_load_failed', {storagePath, ...errorFields(error)});
+      throw error;
+    }
   }
   const commit = candidate => {
     if (writeBlocked) throw new CaseError('storage_unavailable', 503);
     try { disk?.save({schemaVersion:1,sessions:[...candidate.values()]}); }
-    catch { writeBlocked = true; throw new CaseError('storage_unavailable', 503); }
+    catch (error) {
+      writeBlocked = true;
+      // One line per outage: every later write is refused before it reaches the disk.
+      log?.error('case_store_write_failed', {storagePath, persistence, ...errorFields(error)});
+      throw new CaseError('storage_unavailable', 503);
+    }
     sessions = candidate;
   };
   const compatible = session => pack && session.state.contentVersion === pack.contentVersion && session.state.caseId === pack.caseId;
@@ -212,7 +224,7 @@ export function createCaseService({contentPath = null, storagePath = null, pack:
       const session = sessions.get(sessionId);
       return session && compatible(session) ? {state:clone(session.state)} : null;
     },
-    async handle(req, res, url, json) {
+    async handle(req, res, url, json, context = {}) {
       if (!url.pathname.startsWith('/api/case/')) return false;
       try {
         if (req.method === 'GET' && url.pathname === '/api/case/config') { json(200, config()); return true; }
@@ -325,6 +337,10 @@ export function createCaseService({contentPath = null, storagePath = null, pack:
       } catch (error) {
         if (error instanceof InterrogationError) { json(error.status, {error:error.code}); return true; }
         if (error instanceof InterrogationContextError) { json(400, {error:error.code}); return true; }
+        // An unexpected failure becomes case_unavailable; without this line nothing names its cause.
+        if (!(error instanceof CaseError)) {
+          log?.error('case_request_failed', {requestId:context.requestId, method:req.method, path:url.pathname, ...errorFields(error)});
+        }
         json(error instanceof CaseError ? error.status : 503, {error:error instanceof CaseError ? error.code : 'case_unavailable'}); return true;
       }
     },

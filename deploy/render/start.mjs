@@ -9,6 +9,7 @@ import {createPreviewServer} from '../../server/ai-dialogue/src/server.js';
 import {loadCaseContent} from '../../server/ai-dialogue/src/case-service.js';
 import {validateCasePack} from '../../server/ai-dialogue/src/case-engine.js';
 import {simulateReply} from '../../server/ai-dialogue/src/dialogue.js';
+import {createLog} from '../../server/ai-dialogue/src/log.js';
 import {SITE_COMMIT, PUBLIC_RELEASE, EXPORT_MARKER, validatePublicExport} from './build.mjs';
 
 export const MAX_CONTENT_BYTES = 8 * 1024 * 1024;
@@ -182,7 +183,8 @@ export function createRenderServer(options = {}) {
       caseCheckpointKey:runtime.storageMode === 'browser-checkpoint' ? (options.env || process.env).RAVEN_CASE_CHECKPOINT_KEY : null,
       secureCookie:true,generate:simulateReply,providerInfo:{provider:'simulation',model:null},
       readControls:() => ({providerCallsEnabled:false,controlAvailable:true,purchasesEnabled:false,
-        entitlementUseEnabled:false,writtenDialogueAvailable:true})});
+        entitlementUseEnabled:false,writtenDialogueAvailable:true}),
+      log:options.log ?? createLog()});
     return {server,runtime};
   } catch { throw new RenderStartupError('render_server_unavailable'); }
 }
