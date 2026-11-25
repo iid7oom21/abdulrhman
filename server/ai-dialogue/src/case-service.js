@@ -204,6 +204,14 @@ export function createCaseService({contentPath = null, storagePath = null, pack:
     fail(plain(body),'invalid_request'); return body;
   };
   return {
+    // Server-internal and read-only; deliberately not an HTTP route. Returns a deep
+    // copy of a known current-version session's engine state, or null. Used by the
+    // local case-dialogue adapter; no caller can write a session through it.
+    readSessionState(sessionId) {
+      if (typeof sessionId !== 'string' || !/^[a-f0-9]{64}$/.test(sessionId)) return null;
+      const session = sessions.get(sessionId);
+      return session && compatible(session) ? {state:clone(session.state)} : null;
+    },
     async handle(req, res, url, json) {
       if (!url.pathname.startsWith('/api/case/')) return false;
       try {
