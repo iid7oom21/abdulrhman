@@ -5,7 +5,7 @@ import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {AFTER_SHOW_FILES, LATE_NIGHT_FILES, RAVEN17_PREVIEW_FILES, STUDIO_ENTRY_ASSETS} from '../../server/ai-dialogue/src/site-mount.js';
 
-export const SITE_COMMIT = 'a38c150096684ece03eca08d39ce648f9565a8ab';
+export const SITE_COMMIT = '67ddb0417d26e8e9fc84de5b566a5f935e43fe35';
 export const PUBLIC_RELEASE = '2026-11-23-late-night-1';
 export const EXPORT_MARKER = '.raven-render-export.json';
 // Render builds from a shallow, single-branch checkout and removes its Git
