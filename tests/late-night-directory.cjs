@@ -13,7 +13,7 @@ const types = {'.html':'text/html', '.js':'text/javascript', '.css':'text/css', 
   '.png':'image/png', '.woff2':'font/woff2', '.svg':'image/svg+xml', '.json':'application/json'};
 const activities = [
   'station-shadow', 'reel-run', 'last-minute-auction', 'lost-and-found', 'dome-sky', 'echo-two',
-  'nightshift-post', 'echo-last-seat', 'darkroom-minute', 'weightless-cam', 'tide-harbor', 'fabric-wind', 'nightshift-paper', 'director-sentence',
+  'nightshift-mirrors', 'nightshift-post', 'echo-last-seat', 'darkroom-minute', 'weightless-cam', 'tide-harbor', 'fabric-wind', 'nightshift-paper', 'director-sentence',
   'reading-actor', 'city-radio', 'puzzle-owner', 'replay-caller', 'memory-lift', 'seven-windows', 'curtain-party', 'nightshift-window', 'nightshift-seat', 'sound-museum',
 ];
 const extras = ['time-door', 'three-evening', 'my-notebook', 'festival-chair', 'idea-to-studio',

@@ -7,6 +7,7 @@ export const activities=[
 ['lost-and-found','خزانة المفقودات','Lost and found',2,0,'افحص الأغراض','Inspect the items'],
 ['dome-sky','القبة ذات السماء الناقصة','The incomplete sky',3,0,'أدر القرصين','Turn the discs'],
 ['echo-two','تردّد لشخصين','A frequency for two',4,0,'أرسل إشارة','Send a signal'],
+['nightshift-mirrors','ظلال المنارتين','Twin Lighthouse Shadows',4,0,'وجّه الشعاعين','Aim the two beams'],
 ['nightshift-post','بريد المصعد','Elevator Mail',4,0,'شغّل مصعد البريد','Run the mail lift'],
 ['echo-last-seat','الاختبار من آخر مقعد','The last-seat soundcheck',3,1,'اختر مقعدًا','Choose a seat'],
 ['darkroom-minute','دقيقة التحميض','A minute in the darkroom',4,1,'اطبع صورتك','Make a print'],
