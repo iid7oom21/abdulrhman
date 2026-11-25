@@ -91,6 +91,9 @@ test('Late Night public directory, both languages, real paths, recovery and navi
       await page.goto(base + '?lang=' + lang);
       await ready(page);
       await inspect(page, lang, 'directory');
+      const mastStill = await page.locator('.night-heading').evaluate(e => getComputedStyle(e).backgroundImage);
+      const mastPath = base.pathname+'assets/photo/harbour-cinema'+(width <= 640 ? '-mobile' : '')+'.webp';
+      assert.ok(mastStill.includes(mastPath), 'the masthead selects the appropriate coastal still');
       const featureRatio = await page.locator('.night-feature img').evaluate(async image => {
         await image.decode();
         const box = image.getBoundingClientRect();
@@ -102,11 +105,41 @@ test('Late Night public directory, both languages, real paths, recovery and navi
       const previews = await page.locator('.night-card img').evaluateAll(async images =>
         Promise.all(images.map(async img => {
           img.loading = 'eager'; await img.decode();
-          return {name:new URL(img.currentSrc).pathname.split('/').pop(), width:img.naturalWidth, height:img.naturalHeight,
+          return {path:new URL(img.currentSrc).pathname, width:img.naturalWidth, height:img.naturalHeight,
             title:img.closest('a').querySelector('h3')?.innerText.trim()};
         })));
-      assert.deepEqual(previews.map(p=>p.name), activities.map(id=>id+'.webp'));
-      for(const preview of previews) assert.ok(preview.width > 0 && preview.height > 0 && preview.title, preview.name);
+      assert.deepEqual(previews.map(p=>p.path), activities.map(id=>base.pathname+'thumbs/'+id+'.webp'));
+      for (const preview of previews) {
+        assert.equal(preview.width, 520, preview.path);
+        assert.ok(preview.height > 0 && preview.title, preview.path);
+      }
+      const largeStills = await page.evaluate(() => performance.getEntriesByType('resource')
+        .map(item => new URL(item.name).pathname)
+        .filter(path => path.includes('/late-night/assets/photo/')));
+      assert.deepEqual([...new Set(largeStills)], [mastPath],
+        'only the masthead needs a full-size photograph in the directory');
+      if (width === 320 && lang === 'en') {
+        const differences = await page.locator('.night-card img').evaluateAll(async images => {
+          function sample(image) {
+            const canvas = document.createElement('canvas');
+            canvas.width = canvas.height = 16;
+            const ctx = canvas.getContext('2d');
+            ctx.imageSmoothingQuality = 'high';
+            ctx.drawImage(image, 0, 0, 16, 16);
+            return ctx.getImageData(0, 0, 16, 16).data;
+          }
+          return Promise.all(images.map(async thumb => {
+            const cover = new Image();
+            const name = new URL(thumb.currentSrc).pathname.split('/').pop();
+            cover.src = './assets/photo/' + name;
+            await cover.decode();
+            const original = sample(cover), print = sample(thumb);
+            const error = print.reduce((sum, v, i) => sum + Math.abs(v - original[i]), 0) / print.length;
+            return {name, error};
+          }));
+        });
+        for (const {name, error} of differences) assert.ok(error < 5, name+' should be a scaled copy of its activity still');
+      }
       for (const id of [...activities, ...extras]) {
         const link = entry(page, id);
         const expected = await link.getAttribute('href');
@@ -132,7 +165,7 @@ test('Late Night public directory, both languages, real paths, recovery and navi
 
   await t.test('mobile keyboard entry with missing artwork and reduced motion', async st => {
     const {page, ctx, errors} = await context(st, 390, 'ar');
-    await ctx.route('**/thumbs/*.webp', route => route.abort());
+    await ctx.route(/\/late-night\/(thumbs|assets\/photo)\/[^/]+\.webp(?:\?|$)/, route => route.abort());
     await page.goto(base + '?lang=ar');
     const feature = page.locator('.night-feature');
     await feature.locator('img[hidden]').waitFor({state:'attached'});
@@ -151,8 +184,8 @@ test('Late Night public directory, both languages, real paths, recovery and navi
     await page.keyboard.press('Tab'); await station.focus();
     assert.ok(await station.evaluate(a => a.matches(':focus-visible') && getComputedStyle(a).outlineStyle !== 'none'));
     await page.keyboard.press('Enter'); await ready(page);
-    const first = page.locator('.night-bench button:enabled:visible').first();
-    await first.focus(); await page.keyboard.press('Enter');
+    const record = page.locator('[data-game="record"]');
+    await record.focus(); await page.keyboard.press('Enter');
     const board = page.locator('canvas[data-phase="record"]');
     await board.waitFor();
     const start = await board.getAttribute('data-player'); await page.keyboard.press('ArrowUp');
@@ -200,6 +233,35 @@ test('Late Night public directory, both languages, real paths, recovery and navi
     assert.equal(await button('station-view').getAttribute('data-phase'), 'won');
     assert.match(await page.locator('.game-clock output').innerText(), /^\d+\.\d \/ 10 ث$/, 'the Arabic clock uses the Arabic seconds unit');
     assert.equal(await padKey.isVisible(), false, 'movement is hidden after the crossing');
+  });
+
+  await t.test('station artwork can be retried during a recording without moving the player or clearing the trace', async st => {
+    const {page, errors} = await context(st, 320, 'en');
+    const porter = '**/assets/photo/station-porter.webp';
+    const failedImage = route => route.abort();
+    await page.route(porter, failedImage);
+    await page.goto(new URL('station-shadow.html?lang=en', base).href);
+    const view = page.locator('[data-game="station-view"]');
+    const retry = page.getByRole('button', {name:'Reload station artwork'});
+    await retry.waitFor();
+    await page.waitForSelector('[data-scenery="photo"][data-porter="marker"]');
+    await page.clock.install();
+    await page.locator('[data-game="record"]').press('Enter');
+    for (const key of ['ArrowUp', 'ArrowRight', 'ArrowRight']) await page.keyboard.press(key);
+    assert.equal(await view.getAttribute('data-player'), '2,0');
+    await page.unroute(porter, failedImage);
+    await retry.press('Enter');
+    await page.waitForSelector('[data-porter="photo"]');
+    assert.equal(await retry.isVisible(), false);
+    assert.equal(await view.getAttribute('data-phase'), 'record');
+    assert.equal(await view.getAttribute('data-player'), '2,0');
+    await page.clock.fastForward(10016);
+    await page.locator('[data-game="cross"]').press('Enter');
+    await page.clock.fastForward(1500);
+    assert.equal(await view.getAttribute('data-door'), 'open');
+    for (let i = 0; i < 6; i++) await page.keyboard.press('ArrowRight');
+    assert.equal(await view.getAttribute('data-phase'), 'won');
+    assert.deepEqual(errors, []);
   });
 
   await t.test('390px | rejected portfolio save recovers the exact editable still as a JSON download', async st => {

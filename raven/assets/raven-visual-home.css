@@ -128,20 +128,14 @@ main :where(h1,h2,h3,p,a,button,summary){overflow-wrap:anywhere}
 .nightHomeChoices{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px 18px;margin-block:12px}.nightHomeChoices a{display:inline-flex;align-items:center;min-height:44px}
 
 #late-night.afterShowFeature {
-  background: #101a23;
-  color: #f3ead9;
-  border-block: 1px solid #46535b;
+  background: #161513;
+  color: #f5eee4;
+  border-block: 1px solid #4c453d;
 }
-#late-night .afterShowLead p { color: #cad4d8; }
-#late-night .afterShowLead a { color: #e7d2a8; }
-#late-night .afterShowLead .afterShowPlay { color: #171b1c; background: #dec394; }
-.nightFeatureArt {
-  overflow: hidden;
-  border: 1px solid #4c5960;
-  background: #111a23;
-}
-.nightFeatureArt img {
-  display: block;
-  width: 100%;
-  height: auto;
-}
+#late-night .afterShowLead h2 { font-size: clamp(2.4rem, 5vw, 4.4rem); }
+#late-night .afterShowLead p { color: #dbd3c6; }
+#late-night .afterShowLead a { color: #eac396; }
+#late-night .afterShowLead .afterShowPlay { color: #22180f; background: #efceac; }
+#late-night .nightFeatureArt { background: #25221d; }
+#late-night .nightFeatureArt picture { display: block; }
+#late-night .nightFeatureArt img { display: block; width: 100%; height: auto; }

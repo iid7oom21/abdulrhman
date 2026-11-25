@@ -1,170 +1,174 @@
+body:has([data-room="index"]) {
+  --night: #141412;
+  --paper: #f7f1e8;
+  --gold: #edcaa3;
+  --muted: #c5c0b7;
+  --edge: #49463e;
+  background: var(--night);
+}
+body:has([data-room="index"]) .night-mast { background: #141412; }
+body:has([data-room="index"]) .night-wrap { width: min(1140px, calc(100% - clamp(32px, 7vw, 96px))); }
+body:has([data-room="index"]) .night-lang { background: transparent; border-color: var(--edge); border-radius: 0; }
+#night-app[data-room="index"] { padding-block-start: 0; }
 [data-room="index"] .night-heading {
+  display: grid;
+  align-content: end;
+  min-height: clamp(17rem, 33vw, 25rem);
   position: relative;
   isolation: isolate;
-  display: grid;
-  align-content: center;
-  min-height: 142px;
-  margin-bottom: 18px;
-  padding: 16px clamp(18px, 3vw, 34px);
-  background: #121e24;
-  border-bottom: 1px solid #76664b;
-  overflow: hidden;
+  padding: clamp(1.25rem, 4vw, 3.25rem);
+  background: #25231f url("./assets/photo/harbour-cinema.webp") center 54% / cover no-repeat;
+  color: #fff9ee;
 }
 [data-room="index"] .night-heading::before {
   content: "";
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(var(--marquee-direction, 90deg), transparent 19%, #121e2433 32%, #121e24 52%),
-              url("./assets/hero.png") var(--harbour-position, left 71%) / 64% auto no-repeat;
+  background: linear-gradient(0deg, #11100ff2 3%, #11100fac 36%, #11100f15 72%, transparent);
 }
-html[dir="ltr"] [data-room="index"] .night-heading::before {
-  --marquee-direction: 270deg;
-  --harbour-position: right -110px bottom 29%;
+[data-room="index"] .night-heading h1 {
+  font-size: clamp(3rem, 7vw, 5.25rem);
+  line-height: 1.14;
+  font-weight: 600;
+}
+html[lang="en"] [data-room="index"] :is(.night-heading h1,.night-feature h2,.night-room > h2,.night-card h3) {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
 }
 [data-room="index"] .night-intro {
-  max-width: 55%;
-  margin: 5px 0 0;
-  color: var(--paper);
+  margin: .45em 0 0;
+  max-width: 48ch;
+  font-size: clamp(.97rem, 1.5vw, 1.12rem);
+  color: #f2eadd;
 }
 .night-feature {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1.32fr);
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
   grid-template-areas: "details frame";
-  align-items: stretch;
-  overflow: hidden;
-  border: 1px solid #5e594c;
-  border-radius: 8px;
-  background: linear-gradient(145deg, #2b302e, #212725);
+  align-items: center;
+  gap: clamp(1rem, 5vw, 4rem);
+  padding-block: clamp(1.3rem, 3.4vw, 2.8rem);
 }
+.night-feature > div { grid-area: details; min-width: 0; }
 .night-feature img {
   grid-area: frame;
   display: block;
-  align-self: center;
   width: 100%;
   height: auto;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
-  background: #1c292d;
-}
-.night-feature > div {
-  grid-area: details;
-  align-self: center;
-  padding: clamp(18px, 3vw, 36px);
+  aspect-ratio: auto 3 / 2;
+  background: #211f1b;
 }
 .night-feature-meta {
+  display: flex;
+  align-items: center;
+  gap: .65rem;
+  margin: 0 0 .5rem;
   color: var(--gold);
-  margin: 0 0 6px;
   font-size: .9rem;
 }
+.night-feature-meta::before { content: ""; width: 1.7rem; height: 1px; background: #ac8763; }
 .night-feature h2 {
-  font-size: clamp(1.6rem, 3.1vw, 2.7rem);
-  line-height: 1.3;
-  margin: 0 0 14px;
+  font-size: clamp(1.7rem, 3.8vw, 3.15rem);
+  line-height: 1.23;
+  margin: 0 0 .75rem;
 }
 .night-feature-actions, .night-links, .night-row {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 8px 12px;
+  gap: 6px 18px;
 }
-.night-more { display: inline-flex; align-items: center; padding-inline: 6px; min-height: 44px; }
+.night-feature-actions .night-cta {
+  border: 0;
+  border-radius: 0;
+  color: #20170e;
+  background: var(--gold);
+  min-height: 46px;
+  padding: .5rem 1.1rem;
+}
+.night-more { display: inline-flex; align-items: center; min-height: 44px; text-underline-offset: .32em; }
 .night-filters {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin: 22px 0;
-  border: 1px solid var(--edge);
-  border-radius: 6px;
-  overflow: hidden;
-  background: #1a2629;
+  display: flex;
+  flex-wrap: wrap;
+  border-block: 1px solid var(--edge);
 }
 .night-filters a, .night-links a {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  min-height: 44px;
+  min-width: 0;
+  min-height: 48px;
   text-decoration: none;
   overflow-wrap: anywhere;
 }
 .night-filters a {
+  flex: 1 1 max-content;
   justify-content: center;
-  text-align: center;
-  padding: 8px;
-  line-height: 1.4;
+  gap: .65rem;
+  padding: .5rem .75rem;
+  color: var(--paper);
 }
-.night-filters a + a { border-inline-start: 1px solid var(--edge); }
-.night-filters a:hover, .night-filters a:focus-visible { background: #2a3839; }
-.night-filters a:focus-visible { outline-offset: -3px; }
-.night-links a { padding: 6px 12px; border: 1px solid var(--edge); }
-.night-bench > section { margin-block-end: 28px; }
-[data-room="index"] .night-bench > section > h2 {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-block: 0 14px;
-}
-[data-room="index"] .night-bench > section > h2::after {
-  content: "";
-  flex: 1;
-  height: 1px;
-  background: var(--edge);
+.night-filters a::after { content: "↓" / ""; color: var(--gold); }
+.night-filters a:hover, .night-more:hover, .night-links a:hover { text-decoration: underline; text-underline-offset: .3em; }
+.night-room { margin-block: clamp(2rem, 4.5vw, 4rem); }
+.night-room > h2 {
+  margin: 0 0 1.15rem;
+  line-height: 1.25;
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
 }
 .night-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(206px, 100%), 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1rem, 2.5vw, 2rem);
 }
 .night-grid .night-card {
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
   color: var(--paper);
   text-decoration: none;
-  border: 1px solid var(--edge);
-  border-radius: 6px;
-  background: #1c292b;
 }
-.night-card:hover { border-color: var(--gold); }
+.night-card:hover h3, .night-card:focus-visible h3 { text-decoration: underline; text-underline-offset: .23em; }
 .night-card img {
   display: block;
   width: 100%;
   height: auto;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 16 / 10;
   object-fit: cover;
-  background: #263131;
+  background: #24221f;
 }
-.night-card div {
-  flex: 1;
-  display: grid;
-  grid-template-rows: 1fr auto;
-  grid-template-columns: minmax(0, 1fr);
-  overflow-wrap: anywhere;
-  gap: 4px;
-  padding: 11px 13px;
-}
-.night-card h3 { font-size: 1.07rem; line-height: 1.45; margin: 0; }
-.night-card small { color: var(--gold); font-size: .85rem; }
+.night-card div { padding: .65rem 0 0; }
+.night-card h3 { font-size: clamp(1.1rem, 1.9vw, 1.45rem); line-height: 1.35; margin: 0; }
+.night-card small { display: block; color: var(--muted); font-size: .9rem; margin-top: .2em; }
+.night-feature :is(h2,a), .night-card :is(h3,small) { overflow-wrap: anywhere; }
 .night-card img[hidden], .night-feature img[hidden] { display: none; }
-.night-feature:has(img[hidden]) {
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: "details";
-}
-@media (max-width: 600px) {
-  [data-room="index"] .night-heading { min-height: 114px; margin-bottom: 12px; }
-  [data-room="index"] .night-heading::before {
-    background-size: auto, 78% auto;
-    background-position: center, var(--harbour-position, left 77%);
+.night-feature:has(img[hidden]) { grid-template-columns: minmax(0, 1fr); grid-template-areas: "details"; }
+.night-links { justify-content: flex-start; gap: 0 1.5rem; border-block: 1px solid var(--edge); }
+.night-links a { padding-block: .5rem; }
+
+@media (max-width: 640px) {
+  [data-room="index"] .night-heading {
+    min-height: clamp(14rem, 62vw, 18rem);
+    margin-inline: calc(clamp(32px, 7vw, 96px) / -2);
+    background-image: url("./assets/photo/harbour-cinema-mobile.webp");
+    background-position: 46% 55%;
   }
-  html[dir="ltr"] [data-room="index"] .night-heading::before { --harbour-position: right -15vw bottom 23%; }
-  .night-feature { grid-template-columns: 1fr; grid-template-areas: "frame" "details"; }
-  .night-feature > div { padding: 12px 15px 14px; }
-  .night-feature-meta { margin: 0 0 2px; }
-  .night-feature h2 { margin-bottom: 10px; }
-  .night-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
-  .night-card div { padding: 8px 10px; }
-  .night-card h3 { font-size: 1rem; }
-  .night-bench > section { margin-block-end: 20px; }
-  .night-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 16px 0 22px; }
-  .night-filters a:nth-child(3) { border-inline-start: 0; }
-  .night-filters a:nth-child(n+3) { border-block-start: 1px solid var(--edge); }
+  .night-feature {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 34%);
+    gap: 12px;
+  }
+  .night-feature-meta { margin-bottom: .35rem; font-size: .85rem; }
+  .night-feature-meta::before { width: 1rem; }
+  .night-feature h2 { font-size: clamp(1.35rem, 5.2vw, 1.8rem); }
+  .night-feature-actions { gap: 0 12px; }
+  .night-feature-actions .night-cta { padding-inline: .75rem; }
+  .night-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.15rem .85rem; }
+  .night-filters { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .night-filters a { justify-content: space-between; gap: .5rem; padding: .4rem .5rem; }
+  .night-filters a:nth-child(n+3) { border-top: 1px solid var(--edge); }
+  .night-card div { padding-block-start: .5rem; }
+}
+@media (max-width: 22em) {
+  .night-feature { grid-template-columns: minmax(0, 1fr) minmax(0, 30%); }
 }
 .night-shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(240px,100%),1fr));gap:12px}.night-item,.night-chapter{border:1px solid var(--edge);padding:16px;background:#222829}.night-item img{max-height:190px;object-fit:contain;display:block}.night-item h3,.night-chapter h2{margin-block:0 .4em}.night-chapter a{display:inline-flex;align-items:center;min-height:44px}.night-row{margin-block:12px}.night-row label{display:grid;gap:4px}.night-poster{display:block;background:#171e23;width:min(100%,400px);height:auto}

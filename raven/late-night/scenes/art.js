@@ -1,4 +1,4 @@
-// Original scenic flats painted on a 720 × 330 stage.
+// Interactive photographs, with local schematic fallback when a plate cannot load.
 const W=720,H=330;
 function rect(c,x,y,w,h,col){c.fillStyle=col;c.fillRect(x,y,w,h);}
 function line(c,x,y,xx,yy,col,w=2){c.strokeStyle=col;c.lineWidth=w;c.beginPath();c.moveTo(x,y);c.lineTo(xx,yy);c.stroke();}
@@ -8,7 +8,197 @@ function gradient(c,a,b){const g=c.createLinearGradient(0,0,W,H);g.addColorStop(
 function vignette(c){const g=c.createRadialGradient(350,130,65,360,180,430);g.addColorStop(0,'#10202600');g.addColorStop(1,'#07171c77');c.fillStyle=g;c.fillRect(0,0,W,H);}
 function wood(c,x,y,w,h){rect(c,x,y,w,h,'#755843');for(let i=3;i<h;i+=6)line(c,x+(i*13)%17,y+i,x+w-((i*7)%29),y+i+1,i%2?'#8c6b4b':'#644c3a',.8);}
 function person(c,x,y,size,col,arm=0){c.save();c.translate(x,y);c.scale(size,size);circ(c,0,-20,7,'#d9ad83');rect(c,-6,-13,13,22,col);line(c,-1,8,-7,23,'#293b40',4);line(c,4,8,9,23,'#293b40',4);line(c,5,-8,17,-6-arm,col,4);c.restore();}
+// The camera stays in the visitor's scene. A late plate download repaints the most
+// recent frame (including its cue time), even if playback is currently paused.
+const photographs = new Map();
+const currentFrames = new WeakMap();
+function scenePhoto(id, context) {
+  let entry = photographs.get(id);
+  if (!entry) {
+    const image = new Image();
+    entry = { image, state: 'loading', contexts: new Set() };
+    photographs.set(id, entry);
+    function settled(state) {
+      entry.state = state;
+      for (const c of entry.contexts) {
+        if (c.canvas.isConnected) currentFrames.get(c)?.();
+      }
+      entry.contexts.clear();
+    }
+    image.onload = () => settled('ready');
+    image.onerror = () => settled('missing');
+    image.src = new URL('../assets/photo/' + id + '.webp', import.meta.url).href;
+  }
+  if (entry.state === 'loading') entry.contexts.add(context);
+  return entry;
+}
+function photoFrame(c, ids, repaint, paint) {
+  if (typeof Image === 'undefined' || !c.canvas) return false;
+  currentFrames.set(c, repaint);
+  const entries = ids.map(id => scenePhoto(id, c));
+  if (entries.some(entry => entry.state === 'missing')) {
+    if (c.canvas.height !== H) c.canvas.height = H;
+    if (c.canvas.dataset.art !== 'diagram') {
+      c.canvas.dataset.art = 'diagram';
+      c.canvas.dispatchEvent(new CustomEvent('scene-photo-missing', {detail: () => {
+        for (const id of ids) {
+          if (photographs.get(id)?.state === 'missing') photographs.delete(id);
+        }
+        currentFrames.get(c)?.();
+      }}));
+    }
+    return false;
+  }
+  // Match the 3:2 camera negative, including the thumbnails saved by visitors.
+  if (c.canvas.height !== 480) c.canvas.height = 480;
+  if (entries.some(entry => entry.state === 'loading')) {
+    c.canvas.dataset.art = 'loading';
+    c.fillStyle = '#191715';
+    c.fillRect(0, 0, 720, 480);
+    return true;
+  }
+  c.canvas.dataset.art = 'photo';
+  c.save();
+  c.scale(720 / 768, 480 / 512);
+  paint(...entries.map(entry => entry.image));
+  c.restore();
+  return true;
+}
+
+// The transparent props retain their photographed proportions. Anchors are
+// measured on the floor in plate coordinates, so moving one keeps its footing.
+const props = [[11,4,170,316],[200,4,175,316],[431,4,98,316],[577,235,190,85]];
+function setProp(c, atlas, id, x, floor, height) {
+  const [sx,sy,w,h] = props[id], width = w * height / h;
+  c.drawImage(atlas, sx, sy, w, h, x - width / 2, floor - height, width, height);
+}
+function liftPhotograph(c, era, moved, plate, atlas) {
+  c.drawImage(plate, 0, 0, 768, 512);
+  const rug = moved[2] ? 625 : 387, chair = moved[0] ? 126 : 535;
+  setProp(c,atlas,3,rug,452,66);
+  if (moved[2] && era) {
+    c.save();
+    c.setLineDash([2,2]);
+    for (let i=0;i<era;i++) line(c,rug-43,433+5*i,rug+44,432+5*i,'#b49973',1.3);
+    c.restore();
+  }
+  setProp(c,atlas,2,moved[1]?545:54,408,193);
+  setProp(c,atlas,1,chair,421,132);
+  if (moved[0] && era) {
+    // A cover in 2004, then a padded cushion on the same bentwood seat.
+    c.fillStyle = era === 1 ? '#af9e81' : '#61746a';
+    c.beginPath(); c.ellipse(chair,359,25,era === 1 ? 3 : 5,0,0,2*Math.PI); c.fill();
+  }
+  if (era === 0) rect(c,0,0,768,512,'#986d2c17');
+  if (era === 2) {
+    rect(c,0,0,768,512,'#12253540');
+    if (moved[1]) {
+      const glow=c.createRadialGradient(548,250,10,565,242,133);
+      glow.addColorStop(0,'#ffd89942');glow.addColorStop(1,'#ffcd9000');
+      rect(c,400,100,330,320,glow);
+    }
+  }
+}
+
+// Centers measured on the actual facade, in reading order on both language routes.
+const windowCenters = [[108,122],[292,122],[477,122],[664,122],[165,353],[387,353],[618,353]];
+function windowPhotograph(c,focus,phase,plate) {
+  c.save();
+  if (focus>=0) {
+    const [x,y]=windowCenters[focus];
+    const width=274, height=width*2/3;
+    const left=Math.max(0,Math.min(768-width,x-width/2));
+    c.scale(768/width,512/height);
+    c.translate(-left, -(y-height/2));
+  }
+  c.drawImage(plate,0,0,768,512);
+  const beat=phase+(focus===1?3:focus===6?8:0), pos=paperFlight(beat);
+  if (beat%15<5) {
+    // Fold stays in the second window only until the launch. The same plane
+    // subsequently traverses the wide view and the edited close-ups.
+    const fold=2*Math.cos(beat*2);
+    poly(c,[[285,178],[296,175+fold],[290,182]],'#f6e4bd');
+  }
+  if (pos) {
+    const x=pos.x*768/W, y=(pos.y-87)*208/119+162;
+    poly(c,[[x,y],[x-18,y-6],[x-11,y+2]],'#f6e5b5');
+    poly(c,[[x,y],[x-11,y+2],[x-13,y+6]],'#c8bba1');
+  }
+  c.restore();
+}
+function curtainPhotograph(c,times,sec,back,open,closed,atlas) {
+  c.drawImage(open,0,0,768,512);
+  const lit=sec>=times[1];
+  if (!lit) rect(c,0,0,768,512,'#10121b72');
+  else {
+    const spot=c.createRadialGradient(408,328,8,399,307,165);
+    spot.addColorStop(0,'#ffc47e35');spot.addColorStop(1,'#ffd29300');
+    rect(c,180,100,460,330,spot);
+  }
+  if (sec>=times[2]) {
+    const walk=Math.min(1,(sec-times[2])/1.3);
+    c.save();
+    c.filter=lit?'brightness(.83)':'brightness(.49)';
+    setProp(c,atlas,0,144+walk*243,404,164);
+    c.restore();
+  }
+  const reveal=back?1:Math.min(1,Math.max(0,sec-times[0])/1.2);
+  if (reveal===1) return;
+  c.save();
+  if (!lit) c.filter='brightness(.73)';
+  // Gather the two physical halves at the wings, keeping the footlights and
+  // proscenium in their original positions during the move.
+  const width=333*(1-reveal);
+  c.drawImage(closed,51,0,333,421,51,0,width,421);
+  c.drawImage(closed,384,0,333,421,717-width,0,width,421);
+  c.restore();
+}
+
+function photoCutout(c,plate,outline,paint) {
+  c.save(); c.beginPath(); c.moveTo(...outline[0]);
+  for (const point of outline.slice(1)) c.lineTo(...point);
+  c.closePath();c.clip();paint(plate);c.restore();
+}
+const rotorPolygons=[
+  [[397,147],[313,57],[292,86],[389,157]],
+  [[393,148],[466,49],[493,70],[407,155]],
+  [[401,153],[507,224],[483,254],[396,165]],
+  [[396,153],[304,241],[322,262],[404,161]]
+];
+const bellOutline=[[614,120],[624,124],[626,137],[636,145],[645,153],[649,174],[651,193],[659,206],[672,217],[671,225],[636,230],[628,230],[628,236],[623,240],[625,247],[621,255],[612,255],[609,250],[610,241],[605,238],[605,231],[568,228],[556,224],[558,216],[568,208],[575,200],[581,184],[582,161],[589,147],[606,138],[607,126]];
+function museumPhotograph(c,id,time,on,plate,base) {
+  const left = [0,128,228][id], center = [147,397,615][id];
+  c.save();c.scale(768/540,512/360);c.translate(-left,-28);
+  c.drawImage(plate,0,0,768,512);
+  const motion=on ? time : 0;
+  if (id === 0) {
+    const length = 11*(1-Math.cos(motion*3));
+    c.drawImage(plate,77,286,41,20,77,286,41,20+length);
+  } else if (id === 1) {
+    const hub=[397,154];
+    c.drawImage(base,283,39,238,233,283,39,238,233);
+    c.save(); c.translate(...hub); c.rotate(motion*2.3); c.translate(-hub[0],-hub[1]);
+    for(const outline of rotorPolygons) photoCutout(c,plate,outline,img=>c.drawImage(img,0,0));
+    c.restore();
+    c.drawImage(plate,387,144,21,22,387,144,21,22);
+  } else {
+    c.drawImage(base,552,119,126,143,552,119,126,143);
+    c.save();c.translate(615,121);c.rotate(Math.sin(motion*8)*Math.exp(-motion)*.17);c.translate(-615,-121);
+    photoCutout(c,plate,bellOutline,img=>c.drawImage(img,0,0));
+    c.restore();
+  }
+  // A narrow pool of exhibition light keeps neighboring objects in context
+  // while the chosen machine is in focus, from its highest part to its plinth.
+  const shade=c.createLinearGradient(center-325,0,center+325,0);
+  shade.addColorStop(0,'#080906c9');shade.addColorStop(.32,'#11110b00');
+  shade.addColorStop(.68,'#11110b00');shade.addColorStop(1,'#080906c9');
+  rect(c,left,28,540,360,shade);
+  c.restore();
+}
+
 export function lobby(c,era,changed){if(!c)return;
+  if (photoFrame(c,['memory-lift','scene-props'],()=>lobby(c,era,changed),
+    (plate,atlas)=>liftPhotograph(c,era,changed,plate,atlas))) return;
   gradient(c,['#4b655c','#627c76','#253d4b'][era],['#bc9a68','#bcaf89','#436465'][era]);
   rect(c,0,222,W,108,['#8f7657','#a09479','#6d7369'][era]);
   for(let x=-240;x<800;x+=75)line(c,350+(x-350)*.45,221,x,H,'#675f51',1);
@@ -57,6 +247,7 @@ function airborne(c,pos,origin=[0,0]){
 }
 export function windows(c,focus=-1,phase=0){
   if(!c)return;
+  if (photoFrame(c,['seven-windows'],()=>windows(c,focus,phase),plate=>windowPhotograph(c,focus,phase,plate))) return;
   gradient(c,'#1a3442','#385052');
   if(focus>=0){
     // The edited close-ups of the child and recipient begin at their respective narrative moments.
@@ -71,7 +262,10 @@ export function windows(c,focus=-1,phase=0){
   wood(c,27,5,660,9);wood(c,37,143,640,9);rect(c,40,285,638,32,'#414d47');
   airborne(c,paperFlight(phase));vignette(c);
 }
-export function theater(c,times,sec,back=false){if(!c)return;gradient(c,'#182932','#475753');rect(c,43,37,634,218,sec>=times[1]?'#798276':'#293b3d');
+export function theater(c,times,sec,back=false){if(!c)return;
+  if (photoFrame(c,['curtain-party','curtain-closed','scene-props'],()=>theater(c,times,sec,back),
+    (open,closed,atlas)=>curtainPhotograph(c,times,sec,back,open,closed,atlas))) return;
+  gradient(c,'#182932','#475753');rect(c,43,37,634,218,sec>=times[1]?'#798276':'#293b3d');
   wood(c,38,251,643,26);for(let x=35;x<690;x+=40)line(c,x,252,x-10,276,'#8d7052',1);
   const lit=sec>=times[1];
   if(lit)poly(c,[[355,39],[375,39],[499,250],[263,250]],'#d7c08b77');
@@ -81,6 +275,7 @@ export function theater(c,times,sec,back=false){if(!c)return;gradient(c,'#182932
   wood(c,28,19,662,13);for(let x=10;x<723;x+=44){circ(c,x,322,21,'#1b2b31');circ(c,x+2,320,15,'#2f4241');}vignette(c);
 }
 export function museum(c,id,time=0,on=true){if(!c)return;
+  if (photoFrame(c,['sound-museum','museum-base'],()=>museum(c,id,time,on),(plate,base)=>museumPhotograph(c,id,time,on,plate,base))) return;
   gradient(c,'#243d43','#65736a');const p=on?time:0;
   rect(c,47,30,626,203,'#3e5555');rect(c,58,41,604,181,'#526662');wood(c,126,217,468,21);rect(c,156,238,407,64,'#534f43');
   if(id===0){wood(c,285,77,145,143);rect(c,295,87,125,121,'#5b706c');rect(c,310,111,92,13,'#192d2e');rect(c,328,124,52,17+Math.abs(Math.sin(p*3))*48,'#ddc690');line(c,419,121,460,90+Math.sin(p*3)*18,'#ad9469',8);circ(c,462,90+Math.sin(p*3)*18,8,'#594738');}

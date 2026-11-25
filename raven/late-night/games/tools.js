@@ -40,3 +40,24 @@ export function keepButton(ui,label,piece){
   });
   return control;
 }
+
+export function loadPhoto(name) {
+  const image = new Image();
+  image.src = new URL('../assets/photo/' + name + '.webp', import.meta.url);
+  return image;
+}
+
+export function redrawWhenLoaded(image, screen, draw) {
+  if (!image.complete) image.addEventListener('load', () => {
+    if (screen.isConnected) draw();
+  }, {once:true});
+}
+
+// Each frame of a contact sheet is a 640 × 320 film still.
+export function drawPhotoFrame(context, sheet, index, {left=0, width=640, zoom=1, focusX=.5, focusY=.5}={}) {
+  const croppedWidth = width / zoom;
+  const croppedHeight = 320 / zoom;
+  const sourceX = (index % 2) * 640 + focusX * (640 - croppedWidth);
+  const sourceY = Math.floor(index / 2) * 320 + focusY * (320 - croppedHeight);
+  context.drawImage(sheet, sourceX, sourceY, croppedWidth, croppedHeight, left, 0, width, 320);
+}

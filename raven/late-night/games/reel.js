@@ -1,5 +1,6 @@
-import {start,keepButton,el,button,group,canvas,output,box,dot,line,gradient} from './tools.js';
+import {start,keepButton,el,button,group,canvas,output,box,dot,line,gradient,loadPhoto,redrawWhenLoaded} from './tools.js';
 import {cols,rows,goal,spawn,obstacle,souvenir,turns,vector,roll} from './reel-model.js';
+const floorPlate = loadPhoto('reel-board');
 const fresh=()=>[0,1,2].map(()=>({x:null,y:null,rot:0}));let pieces=fresh(),chosen=0,round=1,result=null,preview=null,started=0,loop=0;
 let drawActive=null,imported=false,track=null;
 const xy=(x,y)=>[100+x*74,49+y*55];
@@ -47,8 +48,20 @@ function trailAt(points,fraction){
 }
 
 function scene(c,fraction,out){
-  gradient(c,'#493c39','#202c31');for(let i=0;i<16;i++){line(c,'#64544a',1,[[0,12+i*19],[640,12+i*19]]);}
-  for(let i=0;i<cols;i++)for(let j=0;j<rows;j++){const [x,y]=xy(i,j);box(c,(i+j)%2?'#4c4a43':'#555147',x-36,y-26,72,52);dot(c,'#6c6655',x,y,2);}
+  if(floorPlate.naturalWidth) c.drawImage(floorPlate,0,0,640,320,0,0,640,320);
+  else gradient(c,'#42372f','#211e1b');
+  box(c,'rgba(22,20,17,.38)',0,0,640,320);
+  c.save();
+  c.strokeStyle='#e3d7bb5e'; c.lineWidth=1; c.setLineDash([3,5]);
+  c.fillStyle='#f1e5c9'; c.font='14px monospace'; c.textAlign='center';
+  for(let i=0;i<cols;i++){
+    const [x]=xy(i,0); c.fillText(String.fromCharCode(65+i),x,16);
+    for(let j=0;j<rows;j++){
+      const cy=xy(i,j)[1]; c.strokeRect(x-36,cy-26,72,52);
+      if(i===0) c.fillText(String(j+1),44,cy+4);
+    }
+  }
+  c.restore();
   const [ox,oy]=xy(...obstacle);box(c,'#252d2d',ox-30,oy-20,60,40);box(c,'#856e50',ox-30,oy-19,60,5);
   for(let i=0;i<2;i++)line(c,'#69645a',3,[[ox-22+i*42,oy-11],[ox-22+i*42,oy+13]]);
   const [gx,gy]=xy(...goal);box(c,'#222d2f',gx-23,gy-14,46,30);line(c,'#d5af70',3,[[gx-22,gy-15],[gx-17,gy-23],[gx+21,gy-19],[gx+23,gy-14]]);
@@ -65,8 +78,16 @@ function scene(c,fraction,out){
     const trail=trailAt(track,fraction);
     line(c,'#c6bfa1',2,trail);pos=trail.at(-1);
   }
-  dot(c,'#242a2b',pos[0],pos[1],18);dot(c,'#b9b0a0',pos[0],pos[1],15);
-  for(let i=0;i<5;i++){const a=i*Math.PI*2/5+fraction*6;dot(c,'#454746',pos[0]+Math.cos(a)*8,pos[1]+Math.sin(a)*8,3.5);}
+  dot(c,'#242a2b',pos[0],pos[1],18);
+  if(floorPlate.naturalWidth){
+    c.save();c.translate(...pos);c.rotate(fraction*6);
+    c.beginPath();c.arc(0,0,16,0,Math.PI*2);c.clip();
+    c.drawImage(floorPlate,0,320,128,128,-16,-16,32,32);
+    c.restore();
+  } else {
+    dot(c,'#b9b0a0',pos[0],pos[1],15);
+    for(let i=0;i<5;i++){const a=i*Math.PI*2/5+fraction*6;dot(c,'#454746',pos[0]+Math.cos(a)*8,pos[1]+Math.sin(a)*8,3.5);}
+  }
 }
 function render(ui){
   const {t,root}=ui;
@@ -109,5 +130,6 @@ function render(ui){
     result=preview;preview=null;ui.recordEvent({ar:'أطلقت البكرة عبر أرض الصالة.',en:'You released the reel across the auditorium.',data:{route:result.route,reason:result.reason,souvenir:result.souvenir}});layout();
   }
   drawActive={animate};root.replaceChildren(view,notes,controls,board,actions,read);layout();
+  redrawWhenLoaded(floorPlate,view,()=>{if(!preview) scene(c,1,result);});
 }
 start(2,'reel-run',['بكرة تدور في سينما نائمة','A reel in a sleeping cinema'],['ضع ثلاث وصلات منحنية لتمر البكرة حول الصندوق في وسط الصالة.','Place three bends to carry the reel around the obstruction.'],render);

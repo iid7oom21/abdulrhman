@@ -30,12 +30,18 @@ function renderBoard(ui){
   const maker=usefulLink(ui,'افتح مخرج من جملة','Open the scene director','./director-sentence.html');
   const bench=usefulLink(ui,'افتح لوحة المونتاج','Open the cutting room','../after-show/?activity=edit');sources.append(maker,bench);
   select.onchange=()=>{selected=records.find(p=>p.id===select.value);fromCut=select.value==='cut';paint();};
-  function paint(){
+  let paintVersion=0;
+  async function paint(){
+    const version=++paintVersion;
     panel.replaceChildren();let scenes=[],source=null;
     if(fromCut&&ids){
       scenes=ids.map((id,index)=>({id:'cut-'+(index+1),sceneNumber:index+1,title:SHOTS[id].name[lang],prompt:SHOTS[id].description[lang],duration:SHOTS[id].seconds,camera:'static-tripod',transition:'cut',thumbnail:'../raven/after-show/assets/'+id+'.webp'}));source={kind:'cut',route:cut,shots:ids};
     }else if(selected){
-      const data=selected.data,imgs=sceneThumbnails(data);
+      const data=selected.data;
+      panel.append(element('p',t('جارٍ تجهيز اللقطات…','Preparing shot frames…')));
+      const imgs=await sceneThumbnails(data);
+      if(version!==paintVersion||!panel.isConnected)return;
+      panel.replaceChildren();
       const labels=[t('وصول','Arrival'),t('انطفاء','Blackout'),t('مغادرة','Departure')];
       scenes=data.shots.map((shot,i)=>({id:'director-'+(i+1),sceneNumber:i+1,title:labels[i],prompt:describe(data,i)[lang],duration:shot.seconds,camera:shot.motion==='pan'?'pan-right':'static-tripod',transition:'cut',thumbnail:imgs[i]}));
       source={kind:'director',piece:selected.id};

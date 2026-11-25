@@ -18,9 +18,14 @@ export default function echo(ui){
   const axisNumbers = new Intl.NumberFormat(t('ar-u-nu-arab','en'));
   const convert=([x,y])=>[42+x*22,47+y*12];
   function paint(progress=1){
-    const r=pulse(sx,seat,curtain),c=w.c;shade(c,'#293938','#132d31');
-    c.fillStyle='#52615a';c.fillRect(32,31,560,154);c.fillStyle='#384b46';c.fillRect(39,39,546,139);
-    for(let row=0;row<3;row++)for(let i=0;i<8;i++){c.fillStyle=row===seat?'#b2a17c':'#69746a';c.fillRect(134+i*43,61+row*35,16,12);c.fillRect(132+i*43,70+row*35,20,5);}
+    const r=pulse(sx,seat,curtain),c=w.c;shade(c,'#272a28','#141919');
+    c.fillStyle='#1c2220';c.fillRect(32,31,560,154);c.strokeStyle='#77796e';c.lineWidth=1.5;c.strokeRect(32,31,560,154);
+    for(let row=0;row<3;row++)for(let i=0;i<8;i++){
+      const x=134+i*43,y=61+row*35;
+      c.fillStyle=row===seat?'#716453':'#43443d';c.fillRect(x,y,16,12);
+      c.strokeStyle=row===seat?'#aa9e86':'#79796c';c.lineWidth=1.3;c.strokeRect(x,y,16,12);
+      line(c,x-2,y+2,x-2,y+11,c.strokeStyle,1.7);line(c,x+18,y+2,x+18,y+11,c.strokeStyle,1.7);
+    }
     const source=convert([r.sx,r.sy]),at=convert(r.receiver),ref=convert([24,r.wallY]);line(c,570,31,570,185,curtain?'#9c645c':'#cbb17e',curtain?13:4);
     const draw=(p,q,col)=>line(c,...p,...q,col,2);
     draw(source,at,'#ebd6a7');draw(source,ref,'#74c3bb');draw(ref,at,'#74c3bb');

@@ -1,4 +1,6 @@
-import {start,keepButton,el,button,group,canvas,output,box,dot,line,gradient} from './tools.js';
+import {start,keepButton,el,button,group,canvas,output,box,dot,line,gradient,loadPhoto,redrawWhenLoaded} from './tools.js';
+const domePhoto = loadPhoto('dome-sky');
+const brassDisc = loadPhoto('dome-disc');
 const holes=[[0,1,4,5,7,12,13,14,15],[0,1,2,3,4,5,7,10,15]],target=[1,2,5,6];
 const shift=(v,angle)=>Math.floor(v/8)*8+(v%8+angle)%8;
 function projection(a,b){
@@ -12,23 +14,69 @@ function spot(n,cx,cy,r){
 function circle(c,x,y,r,color){
   c.beginPath();c.arc(x,y,r,0,Math.PI*2);c.strokeStyle=color;c.lineWidth=1;c.stroke();
 }
-function disc(c,x,y,r,open,col){
-  dot(c,'#534737',x,y,r+3);dot(c,col,x,y,r);circle(c,x,y,r-5,'#93866d');dot(c,'#bd9c63',x,y,3);
-  for(let i=0;i<8;i++){const a=i*Math.PI/4;c.beginPath();c.strokeStyle='#c5b690';c.moveTo(x+Math.sin(a)*(r-5),y+Math.cos(a)*(r-5));c.lineTo(x+Math.sin(a)*(r-9),y+Math.cos(a)*(r-9));c.stroke();}
-  for(const n of open){const [sx,sy]=spot(n,x,y,r);dot(c,'#282e2e',sx,sy,6);dot(c,'#ddc483',sx+1,sy,3.6);}
+function disc(c, x, y, r, open, angle) {
+  c.save();
+  c.shadowOffsetY = 3;
+  c.shadowBlur = 6;
+  c.shadowColor = '#070605';
+  dot(c, '#382e26', x, y, r+2);
+  c.restore();
+  c.save();
+  c.translate(x,y);
+  c.rotate(angle * Math.PI / 4);
+  if (brassDisc.naturalWidth) {
+    c.beginPath(); c.arc(0,0,r,0,Math.PI*2); c.clip();
+    c.drawImage(brassDisc,0,0,192,192,-r,-r,r*2,r*2);
+  } else {
+    const metal = c.createLinearGradient(-r,-r,r,r);
+    metal.addColorStop(0,'#aaa393'); metal.addColorStop(.32,'#685a47');
+    metal.addColorStop(.58,'#9b8867'); metal.addColorStop(1,'#463f33');
+    dot(c,metal,0,0,r);
+    for (let n=2;n<r;n+=3) circle(c,0,0,n,'#ede0ba14');
+    dot(c,'#4c4539',0,0,3);
+  }
+  c.restore();
+  circle(c,x,y,r-2,'#f4dcac80');
+  for (const n of open) {
+    const [sx,sy]=spot(n,x,y,r);
+    dot(c,'#dac395',sx+.6,sy+1,3.9);
+    dot(c,'#171c19',sx,sy,3.6);
+  }
 }
 function visual(c,a,b,free){
-  const lights=projection(a,b);gradient(c,'#111f30','#33484b');
-  for(let i=0;i<46;i++)dot(c,'#71828866',(i*137+21)%640,13+(i*31)%161,0.9);
-  c.save();c.translate(323,235);c.scale(1,.6);for(let i=0;i<3;i++)circle(c,0,0,208+i*9,'#536267');c.restore();
-  for(let i=0;i<16;i++){const [x,y]=spot(i,318,123,110);dot(c,lights.includes(i)?'#eedb9f':'#6d8291',x,y,lights.includes(i)?4.5:2);
-    if(lights.includes(i)){line(c,'#d5bd7d',1,[[x-8,y],[x+8,y]]);line(c,'#d5bd7d',1,[[x,y-8],[x,y+8]]);}
+  const lights=projection(a,b);
+  if (domePhoto.naturalWidth) c.drawImage(domePhoto,0,0,640,320);
+  else gradient(c,'#11191e','#45433b');
+  for(let i=0;i<16;i++){
+    const [x,y]=spot(i,318,115,106);
+    if(lights.includes(i)){
+      const glow=c.createRadialGradient(x,y,0,x,y,12);
+      glow.addColorStop(0,'#fff2c6');glow.addColorStop(.2,'#ffe5ab');
+      glow.addColorStop(.42,'#efcc7366');glow.addColorStop(1,'#d0ac5d00');
+      dot(c,glow,x,y,12);
+    } else dot(c,'#89989b',x,y,1.4);
   }
-  box(c,'#273537',0,232,640,88);for(let n=0;n<13;n++)line(c,'#4b514b',1,[[n*52,233],[n*49,319]]);
-  disc(c,124,245,57,holes[0].map(v=>shift(v,a)),'#7e6950');disc(c,285,245,57,holes[1].map(v=>shift(v,b)),'#606a67');
+  if(brassDisc.naturalWidth) c.drawImage(brassDisc,0,192,640,80,0,225,640,95);
+  else box(c,'#46392f',0,225,640,95);
+  const edge=c.createLinearGradient(0,225,0,251);
+  edge.addColorStop(0,'#100c0bb3');edge.addColorStop(1,'#100c0b00');
+  box(c,edge,0,225,640,26);
+  c.save();c.translate(0,264);c.scale(1,.72);
+  disc(c,150,0,49,holes[0].map(v=>shift(v,a)),a);
+  disc(c,280,0,49,holes[1].map(v=>shift(v,b)),b);
+  c.restore();
+  c.fillStyle='#eee4d2';c.font='13px monospace';c.textAlign='center';
+  c.fillText('A',150,313);c.fillText('B',280,313);
   if(!free){
-    box(c,'#ded1ad',459,191,138,101);for(let i=0;i<16;i++){const [x,y]=spot(i,529,240,47);dot(c,target.includes(i)?'#364750':'#b2ac96',x,y,target.includes(i)?3:1);}
-    line(c,'#9b8e72',1,[[468,282],[583,282]]);
+    c.save(); c.translate(503,265); c.scale(1,.72); c.rotate(-.065);
+    const stock=c.createLinearGradient(-64,-49,64,49);
+    stock.addColorStop(0,'#d3c9b6');stock.addColorStop(1,'#aa9a7d');
+    box(c,'#161711aa',-61,-42,126,92);box(c,stock,-63,-45,126,92);
+    for(let i=0;i<16;i++){
+      const [x,y]=spot(i,0,0,43);
+      dot(c,target.includes(i)?'#383c3c':'#978d7e',x,y,target.includes(i)?2.8:1);
+    }
+    c.restore();
   }
 }
 let a=0,b=0,free=false,checked=false,restored=false;
@@ -39,6 +87,8 @@ function render(ui){
   view.dataset.game='sky';const c=view.getContext('2d'),board=group(),tools=group(),map=el('p'),req=el('p',null,'game-note'),read=output();
   const eq=()=>projection(a,b).join()===target.join();
   function paint(){
+    const focused=board.contains(document.activeElement)||tools.contains(document.activeElement)
+      ? document.activeElement.dataset.game : null;
     const lit=projection(a,b);visual(c,a,b,free);
     view.dataset.lit=lit.map(label).join(',');view.dataset.a=a;view.dataset.b=b;
     map.textContent=t('الخانات المضاءة: ','Lit cells: ')+(lit.length?lit.map(label).join(' · '):t('لا شيء','None'));
@@ -61,7 +111,9 @@ function render(ui){
     }));
     if(free||(checked&&eq()))tools.append(keepButton(ui,t('احتفظ بإسقاطك','Keep this projection'),()=>({title:t('إسقاط القبة','Dome projection'),type:'dome-sky',data:{a,b,free,lit:projection(a,b)},thumbnail:view.toDataURL('image/webp',.45)})));
     tools.append(button('reset',t('أعد ضبط القرصين','Reset the discs'),()=>{a=0;b=0;checked=false;paint();}));
+    if(focused) root.querySelector('[data-game="'+focused+'"]')?.focus({preventScroll:true});
   }
   root.replaceChildren(view,req,map,board,tools,read);paint();
+  for(const image of [domePhoto,brassDisc]) redrawWhenLoaded(image,view,()=>visual(c,a,b,free));
 }
 start(5,'dome-sky',['القبة ذات السماء الناقصة','The unfinished sky'],['أدر القرصين. يمر شعاع الضوء في المواضع التي تلتقي فيها فتحتان.','Rotate two punched discs. Light passes where two holes meet.'],render);

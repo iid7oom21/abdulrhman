@@ -42,8 +42,29 @@ test('five creative routes work on Arabic and English mobile with real event sou
       const fit=()=>p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1);
       await open('city-radio');assert.equal(await q('clip').count(),0);
       await open('replay-caller');assert.equal(await q('explain').count(),0);
+      const setUrl='**/assets/photo/director-sentence.webp';
+      await p.route(setUrl,r=>r.abort());
+      await open('director-sentence');await q('generate').click();
+      await p.locator('canvas[data-visual="movement-plan"]').waitFor();
+      await q('blackout').fill('4');await q('seek').fill('2');
+      await p.unroute(setUrl);await q('retry-image').click();
+      await p.locator('canvas[data-visual="photograph"]').waitFor();
+      assert.equal(await q('blackout').inputValue(),'4');assert.equal(await q('seek').inputValue(),'2');
+      assert.equal(await q('retry-image').isVisible(),false);
       await open('director-sentence');await q('prompt').fill(lang==='ar'?'مصوّر عند رصيف مع زرافة':'Waiting on a pier with a giraffe');
       await q('generate').click();assert.equal(await q('play').count(),0);assert.equal(await q('substitute').inputValue(),'pier');assert.ok((await p.locator('.night-bench').innerText()).includes(lang==='ar'?'زرافة':'giraffe'));await q('substitute').selectOption('cinema');await q('accept-set').click();
+      await p.locator('canvas[data-visual="photograph"]').waitFor();
+      const photo=()=>p.locator('canvas').evaluate(c=>c.toDataURL());
+      // Sample the centre of the physical box-office sign, first in the wide
+      // shot, then in the matching insert on the exact edited blackout frame.
+      const signLuma=x=>p.locator('canvas').evaluate((c,relativeX)=>{
+        const rgb=c.getContext('2d').getImageData(c.width*relativeX,c.height*.49,1,1).data;
+        return .21*rgb[0]+.72*rgb[1]+.07*rgb[2];
+      },x);
+      const firstShot=await photo(),lit=await signLuma(.835);
+      await q('seek').fill('1.5');assert.notEqual(await photo(),firstShot);
+      await q('seek').fill(await q('blackout').inputValue());
+      assert.ok(lit>await signLuma(.71)+45,'the actual sign goes dark at the edited second');
       await q('prompt').fill(lang==='ar'?'انتظار عند رصيف بعد انطفاء اللوحة':'Waiting on a pier after the sign goes dark');await q('generate').click();
       await q('duration').selectOption('8');await q('blackout').fill('3');
       await q('lighting1').selectOption('amber');await q('motion1').selectOption('pan');

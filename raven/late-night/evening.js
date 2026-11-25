@@ -21,7 +21,7 @@ function portfolio(ui) {
       const card=el('article',null,'night-item'),name=el('h3',p.title),thumb=el('img');
       const active=activities.find(a=>a[0]===p.activity);
       const img=isImage(p.thumbnail);
-      if(img || active){thumb.src=img?p.thumbnail:'./thumbs/'+p.activity+'.webp';thumb.alt=img?p.title:t('صورة النشاط','Activity still');thumb.loading='lazy';card.append(thumb);}
+      if(img || active){thumb.src=img?p.thumbnail:'./thumbs/'+p.activity+'.webp?v=cinema';thumb.alt=img?p.title:t('غلاف النشاط','Activity cover');thumb.loading='lazy';card.append(thumb);}
       const date=new Date(p.at);
       const info=el('p',(!Number.isNaN(date.valueOf()) ? date.toLocaleDateString(ui.lang) : '')+' · JSON');
       const row=el('div',null,'night-row'),target=workURL(ui,p);
@@ -121,7 +121,11 @@ function three(ui) {
       const c=canvas.getContext('2d'),img=new Image();
       function drawCard(){
         c.fillStyle='#17262b';c.fillRect(0,0,700,860);
-        if(img.naturalWidth)c.drawImage(img,36,38,628,400);
+        if(img.naturalWidth){
+          const scale=Math.min(628/img.naturalWidth,400/img.naturalHeight);
+          const width=img.naturalWidth*scale,height=img.naturalHeight*scale;
+          c.drawImage(img,(canvas.width-width)/2,38+(400-height)/2,width,height);
+        }
         c.fillStyle='#dcc799';c.fillRect(36,466,628,2);c.textAlign='center';
         c.direction=ui.lang==='ar'?'rtl':'ltr';c.font='bold 49px NightPlex, sans-serif';c.fillText(title.title,350,610,620);
         c.font='28px NightPlex, sans-serif';c.fillText(shot.title,350,685,620);

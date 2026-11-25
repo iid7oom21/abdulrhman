@@ -30,10 +30,22 @@ test('interactive scenes and the screening room under the production prefix',asy
     try {
       await suite.test('each standalone scene loads only the requested activity and shared drawing helpers',async()=>{
         for(const route of ['memory-lift','seven-windows','curtain-party','sound-museum']){
-          await open(route);await p.locator('.ns-stage canvas').waitFor();
+          await open(route);const negative=p.locator('.ns-stage canvas[data-art="photo"]');await negative.waitFor();
+          assert.equal(await negative.evaluate(c=>c.width/c.height),1.5);
           const modules=await p.evaluate(()=>performance.getEntriesByType('resource').map(e=>new URL(e.name).pathname).filter(n=>n.includes('/late-night/scenes/')&&n.endsWith('.js')).map(n=>n.split('/').at(-1)));
           assert.deepEqual([...new Set(modules)].sort(),[route+'.js','scene-piece.js','start.js','art.js','ui.js'].sort());
         }
+      });
+      await suite.test('a missing stage plate keeps the cue sheet, audience view and save available',async()=>{
+        deniedFile='curtain-closed.webp';
+        try {
+          await open('curtain-party');await p.locator('.ns-stage canvas[data-art="diagram"]').waitFor();
+          await fill('seek',8);await click('backstage');await click('save');await fits();
+          assert.deepEqual(JSON.parse((await download('export')).body).times,[1,3,4]);
+          deniedFile='';await click('retry-scene-photo');
+          await p.locator('.ns-stage canvas[data-art="photo"]').waitFor();
+          assert.equal(await field('seek').inputValue(),'8');
+        } finally { deniedFile=''; }
       });
       await suite.test('edits from 1978 leave distinct later visual and textual traces',async()=>{
         await open('memory-lift');await field('move-0').waitFor();const before=await image();
@@ -61,7 +73,7 @@ test('interactive scenes and the screening room under the production prefix',asy
         const exp=await download('export');assert.deepEqual(JSON.parse(exp.body).windows,[3,2,7]);
       });
       await suite.test('one plane folds, launches and later reaches window seven in the wide scene',async()=>{
-        await open('seven-windows');
+        await open('seven-windows');await p.locator('.ns-stage canvas[data-art="photo"]').waitFor();
         const trace=await p.evaluate(async()=>{
           const {windows,paperFlight}=await import('./scenes/art.js');
           const canvas=document.createElement('canvas');canvas.width=720;canvas.height=330;

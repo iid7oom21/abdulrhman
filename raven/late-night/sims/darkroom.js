@@ -1,7 +1,25 @@
-import {surface,action,select,slider,element,output,archive,playFrames,quantity,isolate,updateReading} from './kit.js';
+import {surface,action,slider,element,output,archive,playFrames,quantity,isolate,updateReading} from './kit.js';
 const W=580,H=254,win=[42,28,188,182],face=[371,61,89,92];
-let art=null,s={exposure:13,x:73,y:45,strength:0},pins=[null,null],view='live';
-function source(){
+const studio='window-studio-v1',study='window-drawing-v1';
+async function loadStudioNegative(){
+  const stop=new AbortController();
+  const timer=setTimeout(()=>stop.abort(),3500);
+  let bitmap;
+  try{
+    const reply=await fetch(new URL('../assets/photo/darkroom-minute.webp',import.meta.url),{signal:stop.signal});
+    if(!reply.ok) return null;
+    bitmap=await createImageBitmap(await reply.blob());
+    const film=document.createElement('canvas');film.width=W;film.height=H;
+    const c=film.getContext('2d',{willReadFrequently:true}),scale=Math.max(W/bitmap.width,H/bitmap.height);
+    const width=bitmap.width*scale,height=bitmap.height*scale;
+    c.drawImage(bitmap,(W-width)/2,(H-height)/2,width,height);
+    return c.getImageData(0,0,W,H);
+  }catch{return null;}
+  finally{clearTimeout(timer);bitmap?.close();}
+}
+let photograph=await loadStudioNegative();
+let art=null,s={exposure:13,x:73,y:45,strength:0,negative:studio},pins=[null,null],view='live';
+function drawing(){
   if(art)return art;
   const paper=document.createElement('canvas');paper.width=W;paper.height=H;const c=paper.getContext('2d',{willReadFrequently:true});
   const grad=c.createLinearGradient(0,0,W,H);grad.addColorStop(0,'#a09e91');grad.addColorStop(.54,'#595850');grad.addColorStop(1,'#302e2d');
@@ -29,7 +47,8 @@ function histogram(data,roi){
   return {range:max-min,detail:Math.round(100*visible/(w*h)),edges};
 }
 function print(cfg){
-  const photo=source(),frame=new ImageData(W,H);const maskX=cfg.x/100*W,maskY=cfg.y/100*H;
+  const usePhoto=cfg.negative===studio&&photograph;
+  const photo=usePhoto||drawing(),frame=new ImageData(W,H);const maskX=cfg.x/100*W,maskY=cfg.y/100*H;
   const exposure=cfg.exposure/13;
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
     const i=(y*W+x)*4,lum=photo.data[i]/255,noise=(((x*1297+y*3167+(x*y)%523)%13)-6)*.6;
@@ -37,9 +56,9 @@ function print(cfg){
     const transmission=(1-lum*.92)**1.58,paper=Math.max(0,Math.min(255,325*Math.exp(-exposure*(1-mask*cfg.strength*.008)*3.3*transmission)-29+noise));
     frame.data[i]=paper;frame.data[i+1]=paper*.985;frame.data[i+2]=paper*.93;frame.data[i+3]=255;
   }
-  return {frame,window:histogram(frame.data,win),face:histogram(frame.data,face)};
+  return {frame,window:histogram(frame.data,win),face:histogram(frame.data,face),negative:usePhoto?studio:study};
 }
-const valid=data=>data&&Number.isFinite(data.exposure)?{exposure:Math.max(3,Math.min(45,data.exposure)),x:Math.max(0,Math.min(100,data.x??73)),y:Math.max(0,Math.min(100,data.y??45)),strength:Math.max(0,Math.min(100,data.strength??0))}:null;
+const valid=data=>data&&Number.isFinite(data.exposure)?{exposure:Math.max(3,Math.min(45,data.exposure)),x:Math.max(0,Math.min(100,data.x??73)),y:Math.max(0,Math.min(100,data.y??45)),strength:Math.max(0,Math.min(100,data.strength??0)),negative:data.negative===studio?studio:study}:null;
 export default function darkroom(ui){
   const {t}=ui,w=surface(ui);let cancel=()=>{},last;
   const pinnedFrames=new WeakMap();
@@ -63,7 +82,11 @@ export default function darkroom(ui){
   }
   function paint(progress=1){
     const c=w.c;const f=last.frame;
-    c.fillStyle='#5b332e';c.fillRect(0,0,640,320);c.fillStyle='#222c29';c.fillRect(14,13,612,293);c.fillStyle='#e7dfcd';c.fillRect(24,23,592,274);
+    const tray=c.createLinearGradient(0,0,160,320);
+    tray.addColorStop(0,'#61574a');tray.addColorStop(.22,'#272826');tray.addColorStop(1,'#161716');
+    c.fillStyle=tray;c.fillRect(0,0,640,320);
+    c.fillStyle='#111513';c.fillRect(14,13,612,293);
+    c.fillStyle='#e4dfd2';c.fillRect(24,23,592,274);
     c.putImageData(f,30,31);if(progress<1){c.fillStyle='rgba(230,224,204,'+(1-progress)+')';c.fillRect(30,31,W,H);}
     updateReading(w.read, [
       t('مدى النافذة ', 'Window tonal span ') + range(last.window.range),
@@ -71,8 +94,10 @@ export default function darkroom(ui){
       t('مدى الوجه ', 'Face tonal span ') + range(last.face.range),
       t('بكسلاته ذات تفصيل ', 'Unclipped face pixels ') + percent(last.face.detail)
     ].join(' · '));
-    w.canvas.dataset.win=last.window.range;w.canvas.dataset.face=last.face.range;
-    w.describe(t('طبعة تدريب لوجه دمية في الظل ونافذة ساطعة. القياس من مستطيل داخل كل منطقة.','Training print of a mannequin in shadow beside a bright window. Each region is sampled directly.'));
+    w.canvas.dataset.win=last.window.range;w.canvas.dataset.face=last.face.range;w.canvas.dataset.negative=last.negative;
+    w.describe(last.negative===studio
+      ? t('طبعة رأس جبسي قرب نافذة الميناء. القياسان من بكسلات النافذة والوجه.','A plaster head beside the harbour window. The two readings sample the window and face pixels.')
+      : t('طبعة من الرسم التدريبي للنافذة والدمية.','A print from the illustrated window and mannequin study.'));
   }
   function refresh(){last=readFrame(display());paint();comp();}
   function comp(){
@@ -97,10 +122,20 @@ export default function darkroom(ui){
         en:'The window and mannequin print developed at '+seconds+' seconds.',
         data:{kind:'darkroom',exposure:seconds,window:last.window.detail,face:last.face.detail}
       }));comp();}),
-    ...[0,1].flatMap(i=>[action('pin'+i,t('ثبّت ','Pin ')+(i?'B':'A'),()=>{pins[i]={...display()};comp();gallery();}),
+    ...[0,1].flatMap(i=>[action('pin'+i,t('ثبّت ','Pin ')+(i?'B':'A'),()=>{pins[i]={...display(),negative:last.negative};comp();gallery();}),
       action('see'+i,t('اعرض ','View ')+(i?'B':'A'),()=>{cancel();view=String(i);refresh();})]),
     act('live','الطبعة الجارية','Working print',()=>{cancel();view='live';refresh();}),
-    act('save','احفظ الطبعة المعروضة','Save displayed print',()=>archive(ui,w,'print',t('طبعة غرفة التحميض','Darkroom print'),{print:{...display()}})),
+    act('save','احفظ الطبعة المعروضة','Save displayed print',()=>archive(ui,w,'print',t('طبعة غرفة التحميض','Darkroom print'),{print:{...display(),negative:last.negative}})),
     act('export','نزّل الطبعة المعروضة','Download displayed print',()=>{const p=document.createElement('canvas');p.width=W;p.height=H;p.getContext('2d').putImageData(last.frame,0,0);output(p,'darkroom-print');}));
+  if(!photograph&&s.negative===studio){
+    const info=element('p',t('تعذّر تحميل صورة الاستوديو. يمكنك متابعة التحميض بالرسم التدريبي.','The studio still could not load. You can develop the illustrated study.'));
+    info.setAttribute('role','status');
+    const retry=act('retry-photo','أعد تحميل الصورة','Retry still',async()=>{
+      retry.disabled=true;const loaded=await loadStudioNegative();
+      if(loaded&&w.box.isConnected){photograph=loaded;cancel();view='live';refresh();info.remove();retry.remove();}
+      retry.disabled=false;
+    });
+    w.actions.before(info);w.actions.prepend(retry);
+  }
   refresh();gallery();return ()=>cancel();
 }

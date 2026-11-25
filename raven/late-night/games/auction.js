@@ -1,6 +1,7 @@
-import {start, el, button, group, canvas, output, box, dot, line, gradient} from './tools.js';
+import {start, el, button, group, canvas, output, box, dot, line, gradient, loadPhoto, redrawWhenLoaded, drawPhotoFrame} from './tools.js';
 
 const slug = 'last-minute-auction';
+const lotPhotos = loadPhoto('auction-lots');
 const lots = [
   {name:['مصباح المسرح','Stage lamp'], rival:3},
   {name:['عدسة العرض','Projection lens'], rival:3},
@@ -49,6 +50,17 @@ function lotArt(c, round, x, scale=1) {
 function draw(screen, round, balance) {
   const c = screen.getContext('2d');
   if (!c) return;
+  if (lotPhotos.naturalWidth) {
+    if (round < lots.length) drawPhotoFrame(c, lotPhotos, round);
+    else if (ending() === 'assembled') {
+      drawPhotoFrame(c, lotPhotos, 0, {width:320});
+      drawPhotoFrame(c, lotPhotos, 1, {left:320, width:320});
+    } else {
+      const finalLot = {machine:2, shadow:0, unlit:3}[ending()];
+      drawPhotoFrame(c, lotPhotos, finalLot);
+    }
+    return;
+  }
   gradient(c,'#101820','#4c4340');
   for(let x=0;x<640;x+=20){
     box(c,x%60===0?'#283137':'#212a31',x,0,2,223);
@@ -81,6 +93,7 @@ function render(ui) {
   const after=sales.length===3, round=sales.length;
   const screen=canvas(t('منضدة المزاد والقطعة المعروضة','Auction table and current lot'));
   draw(screen,round,credits());
+  redrawWhenLoaded(lotPhotos,screen,()=>draw(screen,round,credits()));
   if(after)screen.setAttribute('aria-label',t(...programs[ending()]));
   root.replaceChildren(screen);
   root.append(el('p',t('برنامج الليلة يحتاج جهاز عرض، أو مصباحًا وعدسة معًا. يصلح المصباح وحده لعرض ظلال.','Tonight’s film needs a projector, or a lamp and lens together. A lamp alone can stage a shadow show.')));
