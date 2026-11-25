@@ -26,7 +26,7 @@ export const AFTER_SHOW_FILES = [
 
 const nightActivities = [
   'station-shadow', 'reel-run', 'last-minute-auction', 'lost-and-found', 'dome-sky', 'echo-two',
-  'echo-last-seat', 'darkroom-minute', 'weightless-cam', 'tide-harbor', 'fabric-wind',
+  'echo-last-seat', 'darkroom-minute', 'weightless-cam', 'tide-harbor', 'fabric-wind', 'harbour-watch',
   'director-sentence', 'reading-actor', 'city-radio', 'puzzle-owner', 'replay-caller',
   'memory-lift', 'seven-windows', 'curtain-party', 'sound-museum',
 ];
@@ -61,7 +61,7 @@ export const LATE_NIGHT_FILES = [
   ...['auction.js', 'dome.js', 'echo.js', 'games.css', 'lost.js', 'reel.js', 'reel-model.js',
     'station.js', 'station-model.js', 'station-scene.js', 'tools.js'].map(name => 'games/' + name),
   ...['camera.js', 'camera-rules.js', 'darkroom.js', 'echo.js', 'fabric.js', 'kit.js', 'main.js',
-    'models.js', 'sims.css', 'tide.js'].map(name => 'sims/' + name),
+    'models.js', 'sims.css', 'tide.js', 'vts.js', 'vts-rules.js'].map(name => 'sims/' + name),
   ...['creative.css', 'director.js', 'kit.js', 'puzzle-rules.js', 'puzzle.js', 'radio.js',
     'reading.js', 'replay.js', 'scene.js'].map(name => 'creative/' + name),
   ...['art.js', 'memory-lift.js', 'seven-windows.js', 'curtain-party.js', 'sound-museum.js',

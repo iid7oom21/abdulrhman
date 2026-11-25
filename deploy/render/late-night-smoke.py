@@ -11,7 +11,7 @@ from playwright.sync_api import expect, sync_playwright
 ACTIVITIES = {
     'station-shadow', 'reel-run', 'last-minute-auction', 'lost-and-found', 'dome-sky',
     'echo-two', 'echo-last-seat', 'darkroom-minute', 'weightless-cam', 'tide-harbor',
-    'fabric-wind', 'director-sentence', 'reading-actor', 'city-radio', 'puzzle-owner',
+    'fabric-wind', 'harbour-watch', 'director-sentence', 'reading-actor', 'city-radio', 'puzzle-owner',
     'replay-caller', 'memory-lift', 'seven-windows', 'curtain-party', 'sound-museum',
     'nightshift-post', 'nightshift-paper', 'nightshift-window', 'nightshift-seat', 'nightshift-mirrors',
 }
@@ -79,6 +79,30 @@ def edit_window(page, route):
     expect(page.locator('#window-time')).to_have_value('12')
     expect(page.locator('#window-reading')).to_contain_text('while the boat was in view')
     return {'take_seconds': 12, 'gaze_seconds': 5, 'boat_seconds': 4}
+
+
+def stand_harbour_watch(page, route):
+    """Dawn fog: slow the inbound ship, compress time, then slow the outbound ferry inside the safe window."""
+    page.goto(route)
+    sim = lambda key: page.locator(f'[data-sim="{key}"]')
+    expect(sim('clock')).to_have_text('03:10:00')
+    sim('pick-safa').tap()
+    sim('order-slow').tap()
+    sim('pace-60').tap()
+    sim('run').tap()
+    page.wait_for_function("Number(document.querySelector('[data-sim=radar]').dataset.time || 0) >= 7", timeout=30000)
+    sim('run').tap()
+    minute = float(sim('radar').get_attribute('data-time'))
+    assert minute < 11, minute
+    sim('pick-dana').tap()
+    sim('order-half').tap()
+    sim('finish').tap()
+    expect(sim('report')).to_have_attribute('data-verdict', 'clean')
+    expect(sim('report').locator('[data-event]')).to_have_count(3)
+    page.screenshot(path=args.output / 'harbour-watch.png', full_page=True)
+    sim('save').tap()
+    expect(page.locator('.sim-confirm')).to_be_visible()
+    return {'verdict': 'clean', 'second_order_minute': round(minute, 2), 'calls': 2}
 
 
 def light_harbour_windows(page, route):
@@ -243,7 +267,8 @@ with sync_playwright() as pw:
     window = edit_window(page, routes['nightshift-window'])
     seat = keep_seat_endings(page, routes['nightshift-seat'])
     mirrors = light_harbour_windows(page, routes['nightshift-mirrors'])
-    result={'mirrors': mirrors, 'seat': seat, 'activity_ids': sorted(routes), 'post': post, 'paper': paper, 'window': window,
+    watch = stand_harbour_watch(page, routes['harbour-watch'])
+    result={'watch': watch, 'mirrors': mirrors, 'seat': seat, 'activity_ids': sorted(routes), 'post': post, 'paper': paper, 'window': window,
             'loaded_activities':len(routes),'home':args.home,'station':'crossed with recorded shadow','first_open_ms':opening,
             'director_seconds':8,'edited_blackout_seconds':3,'languages':['ar','en']}
     (args.output/'journey.json').write_text(json.dumps(result,indent=2))
