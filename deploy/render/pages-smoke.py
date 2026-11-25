@@ -51,6 +51,10 @@ def check_deployment(request, home, sha, release, local):
         "post.js", "post-rules.js", "paper.js", "paper-rules.js", "window.js", "art/window-room.webp",
         "seat-story.js", "seat-script.js", "seat-rules.js", "seat-audio.js", "art/seat-passage.ogg",
     ))
+    assets.extend("late-night/" + name for name in (
+        "harbour-watch.html", "sims/vts.js", "sims/vts-rules.js", "sims/main.js", "sims/sims.css",
+        "thumbs/harbour-watch.webp", "assets/photo/harbour-watch.webp",
+    ))
     assets.extend(["late-night/thumbs/nightshift-mirrors.webp", "late-night/catalog.js", "late-night/evening.js", "late-night/connect.js", "../studio/index.html"])
     studio = subprocess.check_output(["git", "show", f"{sha}:studio/index.html"], cwd=ROOT, text=True)
     entry = re.findall(r'(?:src|href)="\./(assets/index-[A-Za-z0-9_-]+\.(?:js|css))"', studio)
