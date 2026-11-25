@@ -537,12 +537,12 @@ test('Late Night and the film preview share explicit files across Render and Pag
     ['raven/late-night/ink-studio.html', 'text/html'], ['raven/late-night/ink/beacon.js', 'text/javascript'],
     ['raven/late-night/ink-courier.html', 'text/html'], ['raven/late-night/ink/courier.css', 'text/css'],
     ['raven/late-night/ink/courier.js', 'text/javascript'], ['raven/late-night/ink/courier-rules.js', 'text/javascript'],
-    ...['post', 'paper', 'window', 'seat'].flatMap(id => [
+    ...['post', 'paper', 'window', 'seat', 'mirrors'].flatMap(id => [
       ['raven/late-night/nightshift-' + id + '.html', 'text/html'],
       ['raven/late-night/thumbs/nightshift-' + id + '.webp', 'image/webp'],
       ['raven/late-night/nightshift/' + id + '.css', 'text/css'],
     ]),
-    ...['post', 'post-rules', 'paper', 'paper-rules', 'window', 'seat-script', 'seat-story', 'seat-rules', 'seat-audio']
+    ...['post', 'post-rules', 'paper', 'paper-rules', 'window', 'seat-script', 'seat-story', 'seat-rules', 'seat-audio', 'mirror-rules', 'mirrors']
       .map(id => ['raven/late-night/nightshift/' + id + '.js', 'text/javascript']),
     ...['room', 'wait', 'gaze', 'curtain', 'boat', 'cover'].map(id => ['raven/late-night/nightshift/art/window-' + id + '.webp', 'image/webp']),
     ...['salma-booth', 'seat-auditorium'].map(id => ['raven/late-night/nightshift/art/' + id + '.webp', 'image/webp']),

@@ -17,6 +17,7 @@ routes = (
     ('post', 'late-night/nightshift-post.html', '[data-post]'),
     ('window', 'late-night/nightshift-window.html', '#window-play'),
     ('seat', 'late-night/nightshift-seat.html', '[data-inspect]'),
+    ('mirrors', 'late-night/nightshift-mirrors.html', '[data-fire]'),
 )
 rows = []
 with sync_playwright() as pw:

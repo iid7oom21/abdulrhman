@@ -155,6 +155,7 @@ test('a partial Late Night export cannot pass with its lobby alone',t=>{
     'raven/late-night/ink/art/courier/manifest.json','raven/late-night/ink/art/courier/print-arrival.webp',
     ...['nightshift-post.html','nightshift-paper.html','nightshift-window.html','nightshift-seat.html',
       'nightshift/post-rules.js','nightshift/paper-rules.js','nightshift/window.js','nightshift/art/window-gaze.webp',
+      'nightshift-mirrors.html','thumbs/nightshift-mirrors.webp','nightshift/mirrors.js','nightshift/mirrors.css','nightshift/mirror-rules.js',
       'nightshift/seat-script.js','nightshift/seat-rules.js','nightshift/art/seat-passage.ogg','nightshift/art/salma-booth.webp',
       'ink/print-panels.js'].map(file => 'raven/late-night/' + file),
     'raven/late-night/thumbs/weightless-cam.webp','raven/raven-17-preview/home.js']){

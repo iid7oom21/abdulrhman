@@ -43,12 +43,13 @@ def check_deployment(request, home, sha, release, local):
               "late-night/ink/art/workshop-letters.webp", "late-night/evening-programme.js", "late-night/work-file.js",
               "late-night/ink/courier-rules.js", "late-night/ink/art/courier/manifest.json",
               "late-night/ink/art/courier/route.webp", "late-night/ink/art/courier/print-arrival.webp", "late-night/ink/print-panels.js", "../site-entry.js"]
-    assets.extend("late-night/nightshift-" + name + ".html" for name in ("post", "paper", "window", "seat"))
+    assets.extend("late-night/nightshift-" + name + ".html" for name in ("post", "paper", "window", "seat", "mirrors"))
     assets.extend("late-night/nightshift/" + name for name in (
+        "mirror-rules.js", "mirrors.js", "mirrors.css",
         "post.js", "post-rules.js", "paper.js", "paper-rules.js", "window.js", "art/window-room.webp",
         "seat-story.js", "seat-script.js", "seat-rules.js", "seat-audio.js", "art/seat-passage.ogg",
     ))
-    assets.extend(["late-night/catalog.js", "late-night/evening.js", "late-night/connect.js", "../studio/index.html"])
+    assets.extend(["late-night/thumbs/nightshift-mirrors.webp", "late-night/catalog.js", "late-night/evening.js", "late-night/connect.js", "../studio/index.html"])
     studio = subprocess.check_output(["git", "show", f"{sha}:studio/index.html"], cwd=ROOT, text=True)
     entry = re.findall(r'(?:src|href)="\./(assets/index-[A-Za-z0-9_-]+\.(?:js|css))"', studio)
     if sorted(Path(asset).suffix for asset in entry) != [".css", ".js"]:

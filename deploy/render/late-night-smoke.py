@@ -13,7 +13,7 @@ ACTIVITIES = {
     'echo-two', 'echo-last-seat', 'darkroom-minute', 'weightless-cam', 'tide-harbor',
     'fabric-wind', 'director-sentence', 'reading-actor', 'city-radio', 'puzzle-owner',
     'replay-caller', 'memory-lift', 'seven-windows', 'curtain-party', 'sound-museum',
-    'nightshift-post', 'nightshift-paper', 'nightshift-window', 'nightshift-seat',
+    'nightshift-post', 'nightshift-paper', 'nightshift-window', 'nightshift-seat', 'nightshift-mirrors',
 }
 
 
@@ -79,6 +79,35 @@ def edit_window(page, route):
     expect(page.locator('#window-time')).to_have_value('12')
     expect(page.locator('#window-reading')).to_contain_text('while the boat was in view')
     return {'take_seconds': 12, 'gaze_seconds': 5, 'boat_seconds': 4}
+
+
+def light_harbour_windows(page, route):
+    page.goto(route)
+    # Three fixed visitor solutions for these three harbour layouts.
+    stages = [((0, 0, 0), 1), ((1, 0, 0), 0), ((1, 1, 1), 1)]
+    for stage, (angles, release) in enumerate(stages):
+        expect(page.locator('[data-stage]')).to_have_attribute('data-stage', str(stage))
+        for number, angle in enumerate(angles):
+            mirror = page.locator(f'[data-mirror="{number}"]')
+            if mirror.get_attribute('data-angle') != str(angle):
+                mirror.tap()
+                page.locator('[data-turn="1"]').tap()
+                expect(mirror).to_have_attribute('data-angle', str(angle))
+        if stage == 0:
+            page.locator('[data-release="0"]').tap()
+            page.locator('[data-fire]').tap()
+            expect(page.locator('[data-result]')).to_have_attribute('data-won', 'false')
+            expect(page.locator('[data-beam="0"]')).to_have_attribute('data-hit', 'shutter')
+        page.locator(f'[data-release="{release}"]').tap()
+        page.locator('[data-fire]').tap()
+        expect(page.locator('[data-result]')).to_have_attribute('data-won', 'true')
+        expect(page.locator('[data-beam][data-hit="window"]')).to_have_count(2)
+        if stage < len(stages) - 1:
+            page.locator('[data-next]').tap()
+    page.screenshot(path=args.output / 'harbour-mirrors.png')
+    page.locator('[data-again]').tap()
+    expect(page.locator('[data-stage]')).to_have_attribute('data-stage', '0')
+    return {'stages_lit': len(stages), 'shutter_intercepted': True, 'restarted': True}
 
 
 def keep_seat_endings(page, route):
@@ -213,7 +242,8 @@ with sync_playwright() as pw:
     paper = print_paper(page, routes['nightshift-paper'])
     window = edit_window(page, routes['nightshift-window'])
     seat = keep_seat_endings(page, routes['nightshift-seat'])
-    result={'seat': seat, 'activity_ids': sorted(routes), 'post': post, 'paper': paper, 'window': window,
+    mirrors = light_harbour_windows(page, routes['nightshift-mirrors'])
+    result={'mirrors': mirrors, 'seat': seat, 'activity_ids': sorted(routes), 'post': post, 'paper': paper, 'window': window,
             'loaded_activities':len(routes),'home':args.home,'station':'crossed with recorded shadow','first_open_ms':opening,
             'director_seconds':8,'edited_blackout_seconds':3,'languages':['ar','en']}
     (args.output/'journey.json').write_text(json.dumps(result,indent=2))
@@ -221,10 +251,11 @@ with sync_playwright() as pw:
     if os.environ.get('GITHUB_ACTIONS') == 'true':
         print(f"::notice title=Late Night on Pages::{len(routes)} approved activities; "
               f"{post['on_time']} deliveries; export {paper['printed_px']} pixels verified; "
-              f"{window['take_seconds']}s coastal take; three saved and reopened endings with audio.", flush=True)
+              f"{window['take_seconds']}s coastal take; three saved and reopened endings with audio; "
+              f"{mirrors['stages_lit']} mirror stages completed and replayed.", flush=True)
     if 'GITHUB_STEP_SUMMARY' in os.environ:
         with open(os.environ['GITHUB_STEP_SUMMARY'],'a') as summary:
             summary.write(f"Played the published station in mobile Chrome. The recorded shadow opened the door at {opening} ms. "
                           f"Played an edited eight-second scene in English after setting its blackout to three seconds in Arabic. "
-                          f"Delivered three parcels, printed the edited paper and screened a twelve-second window scene. Restored the story bookmark, heard its excerpt and reopened all three endings. Opened all {len(routes)} approved activities. See journey.json and mobile screenshots in the run artifacts.\n")
+                          f"Delivered three parcels, printed the edited paper and screened a twelve-second window scene. Restored the story bookmark, heard its excerpt and reopened all three endings. Lit both windows in three mirror stages, observed the moving shutter block a beam and restarted. Opened all {len(routes)} approved activities. See journey.json and mobile screenshots in the run artifacts.\n")
     browser.close()

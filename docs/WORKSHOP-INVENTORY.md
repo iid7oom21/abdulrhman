@@ -75,6 +75,7 @@
 | خزانة المفقودات | late-night:lost-and-found | `raven/late-night/lost-and-found.html` | game | listed | 2 | late-night/catalog.js | ar, en | — |
 | القبة ذات السماء الناقصة | late-night:dome-sky | `raven/late-night/dome-sky.html` | game | listed | 3 | late-night/catalog.js | ar, en | PNG |
 | تردّد لشخصين | late-night:echo-two | `raven/late-night/echo-two.html` | game | listed | 4 | late-night/catalog.js | ar, en | — |
+| ظلال المنارتين | late-night:nightshift-mirrors | `raven/late-night/nightshift-mirrors.html` | game | listed | 4 | late-night/catalog.js | ar, en | — |
 | بريد المصعد | late-night:nightshift-post | `raven/late-night/nightshift-post.html` | game | listed | 4 | late-night/catalog.js | ar, en | — |
 | الاختبار من آخر مقعد | late-night:echo-last-seat | `raven/late-night/echo-last-seat.html` | simulation | listed | 3 | late-night/catalog.js | ar, en | PNG |
 | دقيقة التحميض | late-night:darkroom-minute | `raven/late-night/darkroom-minute.html` | simulation | listed | 4 | late-night/catalog.js | ar, en | PNG |

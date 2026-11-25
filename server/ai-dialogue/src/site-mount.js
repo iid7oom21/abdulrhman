@@ -34,8 +34,9 @@ const nightActivities = [
 export const LATE_NIGHT_FILES = [
   'index.html', 'boot.js', 'catalog.js', 'hub.js', 'hub.css', 'night-store.js', 'night-shell.js', 'night-shell.css',
   'evening.js', 'evening-programme.js', 'work-file.js', 'connect.js', 'connect.css', 'night-tests.html', 'coast-map.html',
-  ...['nightshift-post', 'nightshift-paper', 'nightshift-window', 'nightshift-seat'].flatMap(id => [id + '.html', 'thumbs/' + id + '.webp']),
+  ...['nightshift-post', 'nightshift-paper', 'nightshift-window', 'nightshift-seat', 'nightshift-mirrors'].flatMap(id => [id + '.html', 'thumbs/' + id + '.webp']),
   ...['post.js', 'post.css', 'post-rules.js', 'paper.js', 'paper.css', 'paper-rules.js', 'window.js', 'window.css',
+    'mirrors.js', 'mirrors.css', 'mirror-rules.js',
     'seat-script.js', 'seat-story.js', 'seat-rules.js', 'seat-audio.js', 'seat.css',
     'art/seat-assets.json', 'art/salma-booth.webp', 'art/seat-auditorium.webp', 'art/seat-passage.ogg',
     'art/window-assets.json', ...['room', 'wait', 'gaze', 'curtain', 'boat', 'cover'].map(id => 'art/window-' + id + '.webp')
