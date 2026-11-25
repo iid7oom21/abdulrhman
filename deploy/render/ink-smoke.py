@@ -1,4 +1,4 @@
-"""Play the public Ink Nights programme on a mobile viewport and open an exported manga page."""
+"""Play the public Ink Nights programme on a mobile viewport, reopen drawing workshops and inspect the exported manga page."""
 import argparse
 import base64
 import json
@@ -95,6 +95,7 @@ with sync_playwright() as pw:
         scene(f'spot-{line}').tap()
     scene('read').tap()
     expect(verdict).to_have_attribute('data-ok', 'true')
+    page.screenshot(path=args.output / 'letters-read.png')
     scene('save').tap()
 
     pieces = page.evaluate("""() => Object.entries(localStorage)
@@ -150,6 +151,8 @@ with sync_playwright() as pw:
     sheet.scroll_into_view_if_needed()
     page.screenshot(path=args.output / 'page-on-phone.png')
     proof = {'home': args.home, 'activities': sorted(routes), 'cut_seconds': 6, 'ferry_view': 'shore',
+             'speed_lines': 'twos with a smear frame inside the 18-drawing budget',
+             'speech_bubbles': 'reading order and tails accepted',
              'workshop_notebook_reopened': ['ink-lines', 'ink-letters'],
              'camera_parallax_px': 36, 'beacon': 'acknowledged', 'courier': 'delivered in 12 moves',
              'manga_panels': ['window', 'type', 'press'],
