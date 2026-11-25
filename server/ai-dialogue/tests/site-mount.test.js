@@ -354,9 +354,11 @@ test('visual scenes and linked studio serve reviewed assets across root and lega
     assert.equal(movie.status, 206); assert.equal(movie.headers.get('content-range'), 'bytes 2-5/10');
     assert.equal(await movie.text(), 'cdef');
   }
-  const back = await fetch(s.root + '/abdulrhman/raven/index.html?lang=en', {redirect:'manual'});
-  assert.equal(back.status, 308); assert.equal(back.headers.get('location'), '/raven/?lang=en');
-  assert.equal(back.headers.get('set-cookie'), null);
+  for (const entry of ['/abdulrhman/raven', '/abdulrhman/raven/', '/abdulrhman/raven/index.html']) {
+    const back = await fetch(s.root + entry + '?lang=en', {redirect:'manual'});
+    assert.equal(back.status, 308); assert.equal(back.headers.get('location'), '/raven/?lang=en');
+    assert.equal(back.headers.get('set-cookie'), null);
+  }
 
   const privateFiles = ['studio/visual-lab/README.md', 'studio/visual-lab/assets.json',
     'studio/visual-lab/raven-visual-kit.zip', 'studio/visual-lab/scripts/render-visual-lab.py',
@@ -505,6 +507,7 @@ test('Late Night and the film preview share explicit files across Render and Pag
   for (const file of [...LATE_NIGHT_FILES, ...RAVEN17_PREVIEW_FILES]) f.write(file, file);
   f.write('raven/late-night/games/notes.js', 'UNRELEASED');
   f.write('raven/late-night/thumbs/private.webp', 'UNRELEASED');
+  f.write('raven/late-night/assets/photo/private.webp', 'UNRELEASED');
   f.write('raven/raven-17-preview/notes.html', 'UNRELEASED');
   const s = await start(t, {siteRoot:f.root});
   for (const section of ['late-night', 'raven-17-preview']) {
@@ -521,6 +524,7 @@ test('Late Night and the film preview share explicit files across Render and Pag
     ['raven/late-night/creative/reading.js', 'text/javascript'], ['raven/late-night/sims/echo.js', 'text/javascript'],
     ['raven/late-night/scenes/art.js', 'text/javascript'], ['raven/late-night/hub.css', 'text/css'],
     ['raven/late-night/thumbs/station-shadow.webp', 'image/webp'], ['raven/late-night/assets/museum-mill.wav', 'audio/wav'],
+    ['raven/late-night/assets/photo/station-shadow.webp', 'image/webp'], ['raven/late-night/assets/photo/harbour-cinema.webp', 'image/webp'],
     ['raven/raven-17-preview/index.html', 'text/html'], ['raven/raven-17-preview/home.js', 'text/javascript']
   ];
   for (const [name, type] of files) {
@@ -537,7 +541,7 @@ test('Late Night and the film preview share explicit files across Render and Pag
     }
   }
   for (const prefix of ['', '/abdulrhman']) {
-    for (const file of ['raven/late-night/games/notes.js', 'raven/late-night/thumbs/private.webp', 'raven/raven-17-preview/notes.html']) {
+    for (const file of ['raven/late-night/games/notes.js', 'raven/late-night/thumbs/private.webp', 'raven/late-night/assets/photo/private.webp', 'raven/raven-17-preview/notes.html']) {
       const unknown = await fetch(s.root + prefix + '/' + file,{redirect:'manual'});
       assert.equal(unknown.status,404);
       assert.doesNotMatch(await unknown.text(),/UNRELEASED/);

@@ -34,11 +34,14 @@ const nightActivities = [
 export const LATE_NIGHT_FILES = [
   'index.html', 'boot.js', 'catalog.js', 'hub.js', 'hub.css', 'night-store.js', 'night-shell.js', 'night-shell.css',
   'evening.js', 'connect.js', 'connect.css', 'night-tests.html', 'coast-map.html',
-  ...nightActivities.flatMap(id => [id + '.html', 'thumbs/' + id + '.webp']),
+  ...nightActivities.flatMap(id => [id + '.html', 'thumbs/' + id + '.webp', 'assets/photo/' + id + '.webp']),
+  ...['harbour-cinema', 'harbour-cinema-mobile', 'station-porter', 'auction-lots', 'lost-items', 'dome-disc',
+    'reel-board', 'echo-chart', 'scene-props', 'curtain-closed', 'museum-base',
+    'director-cinema', 'director-square', 'director-figure'].map(name => 'assets/photo/' + name + '.webp'),
   ...['time-door', 'three-evening', 'my-notebook', 'festival-chair', 'idea-to-studio',
     'dialogue-preview', 'episode-ends', 'behind-frame', 'weekend', 'screening-room'].map(id => id + '.html'),
   ...['auction.js', 'dome.js', 'echo.js', 'games.css', 'lost.js', 'reel.js', 'reel-model.js',
-    'station.js', 'station-model.js', 'tools.js'].map(name => 'games/' + name),
+    'station.js', 'station-model.js', 'station-scene.js', 'tools.js'].map(name => 'games/' + name),
   ...['camera.js', 'camera-rules.js', 'darkroom.js', 'echo.js', 'fabric.js', 'kit.js', 'main.js',
     'models.js', 'sims.css', 'tide.js'].map(name => 'sims/' + name),
   ...['creative.css', 'director.js', 'kit.js', 'puzzle-rules.js', 'puzzle.js', 'radio.js',
@@ -188,7 +191,7 @@ export function createSiteMount(directory) {
   const sameFile = (a, b) => a.dev === b.dev && a.ino === b.ino;
   return {
     redirect(pathname) {
-      if (pathname === '/abdulrhman/raven/index.html') return '/raven/';
+      if (['/abdulrhman/raven', '/abdulrhman/raven/', '/abdulrhman/raven/index.html'].includes(pathname)) return '/raven/';
       if (pathname.startsWith('/abdulrhman/')) {
         const canonical = pathname.slice('/abdulrhman'.length);
         if (pagesSections.includes(canonical)) return canonical + '/';

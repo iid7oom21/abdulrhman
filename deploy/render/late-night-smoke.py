@@ -18,11 +18,14 @@ with sync_playwright() as pw:
     page.locator('#archive-night-hub').click()
     feature = page.locator('.night-feature')
     expect(feature.locator('.night-cta')).to_be_in_viewport()
+    feature.locator('img').evaluate('image => image.decode()')
     page.evaluate('document.fonts.ready')
     page.screenshot(path=str(args.output/'lobby-mobile.png'))
     page.locator('.night-card[href*="station-shadow"]').click()
     scene = page.locator('[data-game="station-view"]')
     game = lambda key: page.locator('[data-game="'+key+'"]')
+    expect(scene).to_have_attribute('data-scenery','photo')
+    expect(scene).to_have_attribute('data-porter','photo')
     expect(game('up')).to_be_hidden()
     game('record').tap()
     expect(game('up')).to_be_visible()
@@ -35,7 +38,11 @@ with sync_playwright() as pw:
     assert 0 < opening < 10000
     game('cross').tap()
     expect(scene).to_have_attribute('data-door','open')
-    for _ in range(6):
+    for _ in range(3):
+        game('right').tap()
+    expect(scene).to_have_attribute('data-phase','play')
+    page.screenshot(path=str(args.output/'station-in-play-mobile.png'))
+    for _ in range(3):
         game('right').tap()
     expect(scene).to_have_attribute('data-phase','won')
     expect(game('up')).to_be_hidden()
@@ -56,6 +63,7 @@ with sync_playwright() as pw:
     page.locator('[data-night-language]').click()
     expect(page.locator('html')).to_have_attribute('lang','en')
     assert tool('blackout').input_value() == '3'
+    expect(page.locator('canvas[data-shot]')).to_have_attribute('data-visual', 'photograph')
     tool('play').click()
     expect(tool('play')).to_have_text('Replay my scene',timeout=16000)
     tool('save').click()
@@ -64,6 +72,10 @@ with sync_playwright() as pw:
     page.locator('.night-wing').click()
     links=page.locator('.night-card')
     expect(links).to_have_count(20)
+    for card in links.all():
+        image = card.locator('img')
+        image.scroll_into_view_if_needed()
+        image.evaluate('element => element.decode()')
     routes=links.evaluate_all('(cards) => cards.map(a => a.href)')
     assert len(set(routes)) == 20
     for route in routes:
