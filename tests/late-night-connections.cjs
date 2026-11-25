@@ -6,11 +6,26 @@ const os=require('node:os');
 const {execFileSync}=require('node:child_process');
 const {chromium}=require('playwright');
 const root=path.resolve(__dirname,'..');
-const base=process.env.RAVEN_NIGHT_SITE || 'http://127.0.0.1:7761/abdulrhman/';
+// Uses RAVEN_NIGHT_SITE when set; otherwise serves this checkout on a loopback port.
+let base=process.env.RAVEN_NIGHT_SITE;
+async function serveCheckout(t){
+ if(base)return;
+ const http=require('node:http'),prefix='/abdulrhman/';
+ const types={'.html':'text/html','.js':'text/javascript','.css':'text/css','.woff2':'font/woff2','.png':'image/png','.webp':'image/webp','.svg':'image/svg+xml','.json':'application/json','.mp4':'video/mp4','.wav':'audio/wav','.mp3':'audio/mpeg','.jpg':'image/jpeg'};
+ const server=http.createServer(async(req,res)=>{
+  const url=new URL(req.url,'http://localhost');if(!url.pathname.startsWith(prefix))return res.writeHead(404).end();
+  const name=path.resolve(root,'.'+decodeURIComponent(url.pathname).slice(prefix.length-1)+(url.pathname.endsWith('/')?'index.html':''));
+  if(!name.startsWith(root+path.sep))return res.writeHead(404).end();
+  try{res.writeHead(200,{'Content-Type':types[path.extname(name)]||'application/octet-stream'}).end(await fs.readFile(name));}catch{res.writeHead(404).end();}
+ });
+ await new Promise(ok=>server.listen(0,'127.0.0.1',ok));t.after(()=>{server.closeAllConnections?.();server.close();base=undefined;});
+ base='http://127.0.0.1:'+server.address().port+prefix;
+}
 const target=(p)=>new URL(p,base).href;
 const fit=async p=>assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'fits mobile viewport');
 
 test('night connections at 320px',async t=>{
+ await serveCheckout(t);
  const browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH||'/usr/bin/chromium',args:['--no-sandbox']});t.after(()=>browser.close());
  async function open(lang,storageFailure=false){
   const context=await browser.newContext({viewport:{width:320,height:800},acceptDownloads:true,reducedMotion:'reduce'});
