@@ -33,13 +33,17 @@ const nightActivities = [
 
 export const LATE_NIGHT_FILES = [
   'index.html', 'boot.js', 'catalog.js', 'hub.js', 'hub.css', 'night-store.js', 'night-shell.js', 'night-shell.css',
-  'evening.js', 'connect.js', 'connect.css', 'night-tests.html', 'coast-map.html',
+  'evening.js', 'evening-programme.js', 'work-file.js', 'connect.js', 'connect.css', 'night-tests.html', 'coast-map.html',
   ...nightActivities.flatMap(id => [id + '.html', 'thumbs/' + id + '.webp', 'assets/photo/' + id + '.webp']),
   ...['studio', 'beacon', 'cut', 'camera', 'ferry', 'page', 'courier', 'lines', 'letters'].map(name => 'ink-' + name + '.html'),
-  ...['catalog.js', 'programme.js', 'ink.css', 'beacon.js', 'cut.js', 'camera.js', 'ferry.js', 'page.js', 'courier.js', 'courier.css'].map(name => 'ink/' + name),
+  ...['catalog.js', 'programme.js', 'ink.css', 'beacon.js', 'cut.js', 'camera.js', 'ferry.js', 'page.js', 'courier.js', 'courier-rules.js', 'courier.css'].map(name => 'ink/' + name),
   ...['ferry-pier', 'ferry-pier-print', 'ferry-signal', 'ferry-deck', 'beacon-night', 'beacon-boats',
     'camera-cover', 'camera-window', 'camera-harbour', 'panel-press', 'panel-type', 'panel-window', 'panel-drying',
     'workshop-lines', 'workshop-letters'].map(name => 'ink/art/' + name + '.webp'),
+  'ink/art/courier/manifest.json',
+  ...['route', 'departure', 'crossing', 'letter', 'arrival', 'shelter',
+    'print-departure', 'print-crossing', 'print-letter', 'print-arrival', 'print-shelter']
+    .map(name => 'ink/art/courier/' + name + '.webp'),
   // The two drawn Ink Nights workshops: speed-line timing and speech-bubble lettering.
   ...['start.js', 'art.js', 'speed.js', 'bubbles.js', 'manga.css'].map(name => 'manga/' + name),
   ...['harbour-cinema', 'harbour-cinema-mobile', 'station-porter', 'auction-lots', 'lost-items', 'dome-disc',

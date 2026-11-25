@@ -119,12 +119,49 @@ with sync_playwright() as pw:
         page.goto(notebook)
 
     page.goto(routes['courier'])
-    for cell in (15, 10, 5, 0, 1, 2, 3, 4, 9, 14, 19, 24):
+    courier_path = [15, 10, 5, 0, 1, 2, 3, 4, 9, 14, 19, 24]
+    for cell in courier_path:
+        step_meter = page.locator('#steps-meter')
+        before_selection = step_meter.inner_text()
         page.locator(f'[data-cell="{cell}"]').tap()
-    expect(page.locator('#status')).to_contain_text('وصلت الرسالة')
+        expect(step_meter).to_have_text(before_selection)
+        page.locator('#confirm').tap()
+    expect(page.locator('#status')).to_have_attribute('data-outcome', 'delivered')
+    page.locator('#weatherTab').tap()
+    page.locator('#rain').fill('80')
+    page.locator('#wind').fill('-30')
+    with page.expect_download() as weather_download:
+        page.locator('#print').tap()
+    weather_path = args.output / 'courier-weather.png'
+    weather_download.value.save_as(weather_path)
+    weather_png = weather_path.read_bytes()
+    assert weather_png[:8] == b'\x89PNG\r\n\x1a\n' and struct.unpack('>II', weather_png[16:24]) == (800, 450)
+
     page.locator('#mangaTab').tap()
-    expect(page.locator('#panels .panel')).to_have_count(3)
+    panels = page.locator('#panels .panel')
+    expect(panels).to_have_count(3)
+    panels.first.locator('.move-later').tap()
+    order = ['middle', 'departure', 'end']
+    def panel_order():
+        return panels.evaluate_all('(cards) => cards.map(card => card.dataset.panel)')
+    assert panel_order() == order
+    for panel in panels.all():
+        panel.locator('img').evaluate('img => img.decode()')
+    page.locator('#save-manga').tap()
+    with page.expect_download() as manga_download:
+        page.locator('#export').tap()
+    manga_path = args.output / 'courier-manga.json'
+    manga_download.value.save_as(manga_path)
+    work = json.loads(manga_path.read_bytes())
+    assert work['activity'] == 'ink-courier' and work['format'] == 'raven-late-night-work'
+    assert work['data'] == {'format': 'raven-rain-manga-2', 'path': courier_path,
+                            'order': order, 'weather': {'rain': 80, 'wind': -30}}
     page.screenshot(path=args.output / 'courier-delivered.png')
+    page.goto(notebook)
+    page.locator('a[href*="ink-courier.html"][href*="piece="]').first.tap()
+    expect(panels).to_have_count(3)
+    assert panel_order() == order
+    page.screenshot(path=args.output / 'courier-reopened.png')
 
     page.goto(routes['page'])
     for panel in ('window', 'type', 'press'):
@@ -154,12 +191,13 @@ with sync_playwright() as pw:
              'speed_lines': 'twos with a smear frame inside the 18-drawing budget',
              'speech_bubbles': 'reading order and tails accepted',
              'workshop_notebook_reopened': ['ink-lines', 'ink-letters'],
-             'camera_parallax_px': 36, 'beacon': 'acknowledged', 'courier': 'delivered in 12 moves',
+             'camera_parallax_px': 36, 'beacon': 'acknowledged', 'courier': {'steps': len(courier_path), 'outcome': 'delivered',
+             'reopened_panels': order, 'weather_png_px': [800, 450]},
              'manga_panels': ['window', 'type', 'press'],
              'export_px': [880, 984], 'manga_direction_after_language_switch': 'rtl'}
     (args.output / 'journey.json').write_text(json.dumps(proof, indent=2))
     print(json.dumps(proof))
     if 'GITHUB_STEP_SUMMARY' in os.environ:
         with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
-            summary.write('Played eight Ink Nights activities at 390px, reopened both saved workshops, delivered the courier letter and exported the chosen 880 × 984 manga page.\n')
+            summary.write('Played eight Ink Nights activities at 390px, reopened both workshops and the courier manga, downloaded the rain frame and exported the chosen 880 × 984 manga page.\n')
     browser.close()

@@ -147,6 +147,8 @@ test('a partial Late Night export cannot pass with its lobby alone',t=>{
   publicFiles(publicRoot);
   for(const name of ['raven/late-night/games/station-model.js','raven/late-night/creative/scene.js',
     'raven/late-night/scenes/screening.js','raven/late-night/assets/museum-ticket.wav',
+    'raven/late-night/evening-programme.js','raven/late-night/work-file.js','raven/late-night/ink/courier-rules.js',
+    'raven/late-night/ink/art/courier/manifest.json','raven/late-night/ink/art/courier/print-arrival.webp',
     'raven/late-night/thumbs/weightless-cam.webp','raven/raven-17-preview/home.js']){
     assert.ok(CORE_FILES.includes(name),name);
     const file=path.join(publicRoot,name);
