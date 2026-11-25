@@ -534,6 +534,8 @@ test('Late Night and the film preview share explicit files across Render and Pag
     ['raven/late-night/ink-courier.html', 'text/html'], ['raven/late-night/ink/courier.css', 'text/css'],
     ['raven/late-night/ink/courier.js', 'text/javascript'],
     ['raven/late-night/ink/art/ferry-pier.webp', 'image/webp'],
+    ['raven/late-night/ink-lines.html', 'text/html'], ['raven/late-night/manga/speed.js', 'text/javascript'],
+    ['raven/late-night/manga/manga.css', 'text/css'], ['raven/late-night/ink/art/workshop-letters.webp', 'image/webp'],
     ['raven/raven-17-preview/index.html', 'text/html'], ['raven/raven-17-preview/home.js', 'text/javascript']
   ];
   for (const [name, type] of files) {
