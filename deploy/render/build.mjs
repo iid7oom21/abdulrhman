@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {AFTER_SHOW_FILES, LATE_NIGHT_FILES, RAVEN17_PREVIEW_FILES, EPISODE_GALLERY_FILES, STUDIO_ENTRY_ASSETS} from '../../server/ai-dialogue/src/site-mount.js';
+import {LATE_NIGHT_FILES, RAVEN17_PREVIEW_FILES, EPISODE_GALLERY_FILES, SITE_FILES} from '../../server/ai-dialogue/src/site-mount.js';
 
 export const SITE_COMMIT = 'c10ba978a01146f1fd86a7093e0fa8ef8a5f7480';
 export const PUBLIC_RELEASE = '2026-11-25-original-masthead-1';
@@ -19,55 +19,12 @@ const TRACKS = Array.from({length:13}, (_, index) => `${String(index + 1).padSta
 const EPISODES = ['part-1','part-2','part-3'];
 // Public runtime roots only: do not package historical review documents, tests,
 // repository metadata or any private delivery alongside the website.
-const PUBLIC_ROOTS = ['assets','fourth-signature','raven','studio','404.html','index.html',
+export const PUBLIC_ROOTS = ['assets','fourth-signature','raven','studio','404.html','index.html',
   'player-core.js','robots.txt','site-audio.js','site-bridge.js','site-entry.js','site-player.css',
   'site-player.js','sitemap.xml'];
-export const CORE_FILES = [
-  ...AFTER_SHOW_FILES, ...LATE_NIGHT_FILES, ...RAVEN17_PREVIEW_FILES, ...EPISODE_GALLERY_FILES,
-  'site-player.js','site-audio.js','site-entry.js','site-bridge.js','site-player.css',
-  'assets/texts/raven-texts.js','raven/index.html','raven/content.html',
-  'raven/dialogue/preview-room.css',
-  'raven/deleted-name/index.html','raven/deleted-name/content.html',
-  'raven/deleted-name/reading-tools.js','raven/deleted-name/case-entry.js',
-  'raven/deleted-name/play/index.html','raven/deleted-name/play/content.html',
-  'raven/deleted-name/play/app.js','raven/deleted-name/play/style.css',
-  'raven/investigation-lab/index.html','raven/investigation-lab/content.html','raven/investigation-lab/style.css',
-  'raven/investigation-lab/workbench.js',
-  // The merged interface needs its reading controls and responsive artwork in
-  // the same export; do not silently deploy a partial visual release.
-  'raven/assets/raven-visual-home.css','raven/assets/raven-visual-home.js',
-  'raven/assets/raven-i18n.js','raven/assets/raven-enhancements-v1.js','raven/assets/raven-refinement-v2.js',
-  'raven/assets/raven-home-resume.css','raven/assets/raven-home-resume.js',
-  'raven/deleted-name/opening-artwork.js',
-  'raven/deleted-name/opening-visual.css','raven/deleted-name/opening-visual.js',
-  'raven/deleted-name/reading-continuity.js',
-  'raven/deleted-name/play/play-visual.css',
-  'raven/deleted-name/play/belief-review.css','raven/deleted-name/play/belief-review.js',
-  ...['appointment-phone','case-entry','cinema-atmosphere','comparison-surface','notebook-surface']
-    .flatMap(name => ['', '-mobile'].map(size => `raven/assets/visual-20261119/${name}${size}.webp`)),
-  'raven/assets/visual-20261119/paper-grain.webp','raven/assets/visual-20261119/section-divider.webp',
-  'raven/assets/raven-homepage-v6.css','raven/assets/raven-polish-v2.css',
-  ...['archive-opening','paper-detail','over-shoulder'].flatMap(name =>
-    ['mp4','webp'].map(extension => `raven/assets/atmosphere-v1/${name}.${extension}`)),
-  'studio/index.html', ...STUDIO_ENTRY_ASSETS,
-  'raven/terminal-preview/raven-17/index.html',
-  'raven/terminal-preview/assets/hero-poster.jpg',
-  'raven/terminal-preview/assets/hero-loop.mp4',
-  'assets/raven-home-share.jpg', 'assets/intro/raven-intro-poster.jpg',
-  ...['episode-1.jpg','episode-2.jpg','episode-3.jpg','cinzel.woff2','ibm-plex-arabic.woff2']
-    .map(name => 'raven/terminal-preview/assets/'+name),
-  'raven/assets/images/deleted-name/claire.jpg',
-  'raven/assets/images/deleted-name/jonas.jpg',
-  'raven/assets/images/deleted-name/mateo.jpg',
-  'raven/assets/images/deleted-name/noah.jpg',
-  'raven/assets/images/deleted-name/elena.jpg',
-  'raven/assets/images/deleted-name/evidence_table.jpg',
-  'raven/assets/favicon.svg',
-  'raven/assets/raven-media-fallback.js','raven/assets/raven-media-fallback.css',
-  'raven/deleted-name/assets/characters/cast-portraits-v1.webp',
-  'raven/deleted-name/assets/scenes/case-investigation-v2.webp',
-  'raven/deleted-name/assets/scenes/case-tools-v1.webp',
-];
+// The export ships exactly the files the dialogue server mounts, so a content release cannot
+// drift between the runtime mount, the Render export and the Pages check.
+export const CORE_FILES = [...SITE_FILES];
 export class RenderBuildError extends Error {
   constructor(code, recoveryDirectory) { super(code); this.code = code; if (recoveryDirectory) this.recoveryDirectory = recoveryDirectory; }
 }

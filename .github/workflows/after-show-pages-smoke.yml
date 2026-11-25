@@ -22,6 +22,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 9
     steps:
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          # The pin, the release name and the file manifest come from deploy/render/build.mjs.
+          node-version: '24'
+
       - name: Read smoke sources and the pinned Pages object
         shell: bash
         run: |
@@ -29,11 +35,11 @@ jobs:
           git remote add origin "$GITHUB_SERVER_URL/$GITHUB_REPOSITORY.git"
           git fetch --no-tags --no-recurse-submodules --depth=1 origin "$GITHUB_SHA"
           test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
-          mkdir -p deploy/render
-          for source in deploy/render/build.mjs deploy/render/pages-smoke.py deploy/render/late-night-smoke.py deploy/render/ink-smoke.py deploy/render/screening-room-smoke.py; do
+          mkdir -p deploy/render server/ai-dialogue/src
+          for source in deploy/render/build.mjs server/ai-dialogue/src/site-mount.js deploy/render/pages-smoke.py deploy/render/late-night-smoke.py deploy/render/ink-smoke.py deploy/render/screening-room-smoke.py; do
             git show "$GITHUB_SHA:$source" > "$source"
           done
-          pin=$(sed -nE "s/^export const SITE_COMMIT = '([0-9a-f]{40})';$/\1/p" deploy/render/build.mjs)
+          pin=$(node --input-type=module -e "import('./deploy/render/build.mjs').then(module => process.stdout.write(module.SITE_COMMIT))")
           [[ "$pin" =~ ^[0-9a-f]{40}$ ]]
           git fetch --no-tags --no-recurse-submodules --depth=1 origin "$pin"
           test "$(git rev-parse FETCH_HEAD)" = "$pin"

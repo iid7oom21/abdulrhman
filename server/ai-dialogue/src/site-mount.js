@@ -76,7 +76,9 @@ export const EPISODE_GALLERY_FILES = ['index.html', 'content.html', 'gallery.js'
   'assets/series-wide.webp', 'assets/series-mobile.webp'].map(name => 'raven/episodes/' + name);
 
 // Reviewed public runtime files only. Never enumerate a repository or serve by extension.
-const files = [
+// The Render export and the Pages check read this list too, so one edit adds a file to the mount,
+// the export and the checks together.
+export const SITE_FILES = [
   ...AFTER_SHOW_FILES, ...LATE_NIGHT_FILES, ...RAVEN17_PREVIEW_FILES, ...EPISODE_GALLERY_FILES,
   // Local visual-review assets. No private content or new API surface.
   'raven/assets/raven-visual-home.css',
@@ -124,8 +126,7 @@ const files = [
   'raven/deleted-name/assets/scenes/case-tools-v1.png',
   'raven/deleted-name/assets/scenes/case-tools-v1.webp',
   'raven/assets/raven-scene-art.css',
-  'raven/assets/raven-studio-ident-v1.js', 'raven/assets/raven-story-card.js',
-  'raven/assets/raven-archive.js', 'raven/assets/raven-home-focus.css',
+  'raven/assets/raven-studio-ident-v1.js', 'raven/assets/raven-home-focus.css',
   'raven/assets/raven-enhancements-v1.js', 'raven/assets/raven-archive.css',
   'raven/assets/raven-deleted-name-home.js', 'raven/assets/raven-refinement-v2.js',
   'raven/assets/raven-media-fallback.js', 'raven/assets/raven-media-fallback.css',
@@ -158,14 +159,13 @@ const files = [
   ...['episode-1.jpg', 'episode-2.jpg', 'episode-3.jpg', 'cinzel.woff2',
     'ibm-plex-arabic.woff2', 'raven-intro-poster.jpg', 'hero-poster.jpg', 'hero-loop.mp4',
     'raven-intro.mp4'].map(name => 'raven/terminal-preview/assets/' + name),
-  'fourth-signature/index.html', 'fourth-signature/favicon.svg',
-  'fourth-signature/assets/fonts/NotoSansArabic.ttf',
+  'fourth-signature/index.html',
   'fourth-signature/assets/audio/raven-dark-pop-intimate-revised.mp3',
   'assets/raven-home-share.jpg', 'assets/texts/raven-texts.js',
   ...['raven-intro-wide.mp4', 'raven-intro.jpg', 'raven-intro-poster.jpg', 'raven-intro-wide.jpg', 'raven-intro.mp4'].map(name => 'assets/intro/' + name),
   ...Array.from({length:13}, (_, n) => `assets/audio/raven/${String(n + 1).padStart(2, '0')}.mp3`),
 ];
-const routes = new Map(files.map(file => ['/' + file, file]));
+const routes = new Map(SITE_FILES.map(file => ['/' + file, file]));
 const legacyCaseRoutes = new Map([
   ['/deleted-name', '/raven/deleted-name/'],
   ['/deleted-name/', '/raven/deleted-name/'],
@@ -173,7 +173,7 @@ const legacyCaseRoutes = new Map([
   ['/deleted-name/content.html', '/raven/deleted-name/content.html'],
   ['/raven/deleted-name.html', '/raven/deleted-name/'],
 ]);
-for (const file of files) if (file.endsWith('/index.html')) routes.set('/' + file.slice(0, -10), file);
+for (const file of SITE_FILES) if (file.endsWith('/index.html')) routes.set('/' + file.slice(0, -10), file);
 // Serve the same reviewed studio files at both supported mount paths.
 for (const [route, file] of [...routes]) if (route.startsWith('/studio/')) routes.set('/abdulrhman' + route, file);
 // Pages links may arrive under the repository prefix. Redirect once to the Render route

@@ -12,81 +12,109 @@ import time
 from pathlib import Path
 from urllib.parse import urlsplit
 
-from playwright.sync_api import Error, expect, sync_playwright
-
 PUBLIC_HOME = "https://iid7oom21.github.io/abdulrhman/raven/"
 ROOT = Path(__file__).resolve().parents[2]
+# Files above this size get the longer request timeout of a large media download.
+LARGE_FILE = 256 * 1024
 
 
-def setting(source, key, pattern):
-    match = re.search(rf"export const {key} = '({pattern})';", source)
-    if not match:
-        raise ValueError(f"Missing {key} in deploy/render/build.mjs")
-    return match.group(1)
+def browser_modules():
+    # Playwright is imported only for the browser steps, so --print-manifest runs without it.
+    from playwright.sync_api import Error, expect, sync_playwright
+    return Error, expect, sync_playwright
 
 
-def check_deployment(request, home, sha, release, local):
-    assets = ["index.html", "content.html", "episodes/index.html", "episodes/content.html", "episodes/gallery.js",
-              "episodes/gallery.css", "episodes/assets/series-wide.webp", "episodes/assets/series-mobile.webp",
-              "after-show/edit.js", "after-show/screencraft.js", "after-show/screencraft-glass.js",
-              "assets/raven-visual-home.css", "assets/raven-visual-home.js", "assets/raven-enhancements-v1.js",
-              "assets/raven-i18n.js", "assets/raven-refinement-v2.js", "../assets/intro/raven-intro-poster.jpg",
-              "terminal-preview/assets/hero-poster.jpg", "terminal-preview/assets/hero-loop.mp4",
-              "../site-player.css", "../site-player.js",
-              "late-night/night-shell.js", "late-night/hub.css", "late-night/ink/art/ferry-pier-print.webp",
-              "late-night/games/games.css", "late-night/games/station.js", "late-night/creative/scene.js",
-              "late-night/assets/photo/harbour-cinema.webp", "late-night/assets/photo/station-shadow.webp",
-              "late-night/ink/catalog.js", "late-night/ink/cut.js", "late-night/ink/camera.js",
-              "late-night/ink/ferry.js", "late-night/ink/page.js", "late-night/ink/beacon.js",
-              "late-night/ink-courier.html", "late-night/ink/courier.js", "late-night/ink/courier.css",
-              "late-night/ink/art/panel-press.webp", "late-night/ink-lines.html", "late-night/ink-letters.html",
-              "late-night/manga/art.js", "late-night/manga/start.js", "late-night/manga/speed.js",
-              "late-night/manga/bubbles.js", "late-night/manga/manga.css", "late-night/ink/art/workshop-lines.webp",
-              "late-night/ink/art/workshop-letters.webp", "late-night/evening-programme.js", "late-night/work-file.js",
-              "late-night/ink/courier-rules.js", "late-night/ink/art/courier/manifest.json",
-              "late-night/ink/art/courier/route.webp", "late-night/ink/art/courier/print-arrival.webp", "late-night/ink/print-panels.js", "../site-entry.js"]
-    assets.extend("late-night/nightshift-" + name + ".html" for name in ("post", "paper", "window", "seat", "mirrors"))
-    assets.extend("late-night/nightshift/" + name for name in (
-        "mirror-rules.js", "mirrors.js", "mirrors.css",
-        "post.js", "post-rules.js", "paper.js", "paper-rules.js", "window.js", "art/window-room.webp",
-        "seat-story.js", "seat-script.js", "seat-rules.js", "seat-audio.js", "art/seat-passage.ogg",
-    ))
-    assets.extend("late-night/" + name for name in (
-        "harbour-watch.html", "sims/vts.js", "sims/vts-rules.js", "sims/main.js", "sims/sims.css",
-        "thumbs/harbour-watch.webp", "assets/photo/harbour-watch.webp",
-    ))
-    assets.extend(["late-night/thumbs/nightshift-mirrors.webp", "late-night/catalog.js", "late-night/evening.js", "late-night/connect.js", "../studio/index.html"])
-    studio = subprocess.check_output(["git", "show", f"{sha}:studio/index.html"], cwd=ROOT, text=True)
-    entry = re.findall(r'(?:src|href)="\./(assets/index-[A-Za-z0-9_-]+\.(?:js|css))"', studio)
-    if sorted(Path(asset).suffix for asset in entry) != [".css", ".js"]:
+def public_manifest():
+    """Read the pin, the release name and the public file manifest from the deployed modules."""
+    program = ("import('./deploy/render/build.mjs').then(module => process.stdout.write("
+               "JSON.stringify({commit: module.SITE_COMMIT, release: module.PUBLIC_RELEASE, "
+               "roots: module.PUBLIC_ROOTS, files: module.CORE_FILES})))")
+    written = subprocess.check_output(["node", "--input-type=module", "-e", program], cwd=ROOT, text=True)
+    manifest = json.loads(written)
+    commit, release = manifest.get("commit"), manifest.get("release")
+    roots, files = manifest.get("roots") or [], manifest.get("files") or []
+    if not isinstance(commit, str) or not re.fullmatch(r"[a-f0-9]{40}", commit):
+        raise ValueError(f"deploy/render/build.mjs has no valid SITE_COMMIT: {commit!r}")
+    if not isinstance(release, str) or not re.fullmatch(r"[a-zA-Z0-9.-]+", release):
+        raise ValueError(f"deploy/render/build.mjs has no valid PUBLIC_RELEASE: {release!r}")
+    if not files or len(set(files)) != len(files):
+        raise ValueError("The public file manifest is empty or lists a file twice")
+    for name in files:
+        if posixpath.normpath(name) != name or name.startswith("/") or ".." in name.split("/"):
+            raise ValueError(f"The public file manifest has an unsafe path: {name}")
+        if name.split("/")[0] not in roots:
+            raise ValueError(f"{name} is outside the published roots of deploy/render/build.mjs")
+    return commit, release, files
+
+
+def pinned_files(commit, files):
+    """Read each file's size and blob from the pinned commit, or fail on a file the pin lacks."""
+    listing = subprocess.check_output(["git", "ls-tree", "-r", "-z", "-l", commit], cwd=ROOT)
+    tree = {}
+    for record in listing.split(b"\0"):
+        if not record:
+            continue
+        info, _, name = record.partition(b"\t")
+        fields = info.split()
+        tree[name.decode()] = (int(fields[3]), fields[2].decode())
+    sizes, blobs = {}, {}
+    for name in files:
+        if name not in tree:
+            raise ValueError(f"The pinned commit {commit} does not contain {name}")
+        sizes[name], blobs[name] = tree[name]
+    return sizes, blobs
+
+
+def pinned_bytes(blob):
+    return subprocess.run(["git", "cat-file", "blob", blob], cwd=ROOT, check=True, stdout=subprocess.PIPE).stdout
+
+
+def check_deployment(request, home, commit, release, files, local):
+    Error, _, _ = browser_modules()
+    sizes, blobs = pinned_files(commit, files)
+    entry = re.findall(rb'(?:src|href)="\./(assets/index-[A-Za-z0-9_-]+\.(?:js|css))"',
+                       pinned_bytes(blobs["studio/index.html"]))
+    studios = ["studio/" + name.decode() for name in entry]
+    if sorted(Path(name).suffix for name in studios) != [".css", ".js"]:
         raise ValueError("The pinned Studio must have one stylesheet and one script entry")
-    assets.extend("../studio/" + path for path in entry)
-    pinned = {
-        asset: subprocess.check_output(["git", "show", f"{sha}:{posixpath.normpath(posixpath.join('raven', asset))}"], cwd=ROOT)
-        for asset in assets
-    }
+    unpinned = [name for name in studios if name not in sizes]
+    if unpinned:
+        raise ValueError(f"The pinned Studio entry is missing from the public file manifest: {', '.join(unpinned)}")
     deadline = time.monotonic() + (15 if local else 240)
+    verified = {}
+    failure = None
     while True:
+        reason = "no file was verified yet"
         try:
-            tag = f"?verify={sha}&attempt={int(time.time())}"
+            tag = f"?verify={commit}&attempt={int(time.time())}"
             index = request.get(home + "release.json" + tag, timeout=8000)
             reason = f"release differs from {release} (HTTP {index.status})"
             if index.ok and index.json().get("release") == release:
-                for asset, expected in pinned.items():
-                    response = request.get(home + asset + tag, timeout=8000)
-                    if not response.ok or response.body() != expected:
-                        reason = f"{asset} differs from {sha} (HTTP {response.status})"
+                reason = "no file was verified yet"
+                for name in files:
+                    if name in verified:
+                        continue
+                    if time.monotonic() >= deadline:
+                        reason = f"{len(verified)} of {len(files)} files verified so far"
                         break
+                    response = request.get(home + posixpath.relpath(name, "raven") + tag,
+                                           timeout=60000 if sizes[name] > LARGE_FILE else 8000)
+                    expected = pinned_bytes(blobs[name])
+                    if not response.ok or response.body() != expected:
+                        failure = reason = f"{name} differs from {commit} (HTTP {response.status})"
+                        break
+                    verified[name] = hashlib.sha256(expected).hexdigest()
                 else:
-                    return {key: hashlib.sha256(data).hexdigest() for key, data in pinned.items()}
+                    return verified
         except (Error, ValueError) as exc:
             reason = str(exc)
         if time.monotonic() >= deadline:
-            raise RuntimeError(f"{home} did not serve the pinned version: {reason}")
+            raise RuntimeError(f"{home} did not serve the pinned version: {failure or reason}")
         time.sleep(3 if local else 8)
 
 
 def play_title_workshop(page, frame, output, home):
+    _, expect, _ = browser_modules()
     frame.locator("#as-all").click()
     frame.locator("[data-room=screencraft]").click()
     frame.locator("#as-room-activities [data-as-route=titles]").click()
@@ -163,7 +191,13 @@ def write_summary(evidence, path):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--local", help="run on a local project mount in a developer checkout")
+    parser.add_argument("--print-manifest", action="store_true",
+                        help="print the pin, the release and the public file manifest the checks use")
     args = parser.parse_args()
+    commit, release, files = public_manifest()
+    if args.print_manifest:
+        print(json.dumps({"commit": commit, "release": release, "files": files}, indent=2))
+        return
     if args.local:
         target = urlsplit(args.local)
         if (os.environ.get("GITHUB_ACTIONS") == "true" or target.scheme != "http" or
@@ -171,15 +205,13 @@ def main():
             target.path != "/abdulrhman/raven/" or target.query or target.fragment or target.username or target.password):
             parser.error("--local is only for the loopback project mount outside GitHub Actions")
     home = args.local or PUBLIC_HOME
-    source = (ROOT / "deploy/render/build.mjs").read_text()
-    sha = setting(source, "SITE_COMMIT", "[a-f0-9]{40}")
-    release = setting(source, "PUBLIC_RELEASE", "[a-zA-Z0-9.-]+")
     output = Path(os.environ.get("RUNNER_TEMP", tempfile.gettempdir())) / "after-show-pages"
     output.mkdir(parents=True, exist_ok=True)
+    _, expect, sync_playwright = browser_modules()
     with sync_playwright() as pw:
         browser = pw.chromium.launch(executable_path=shutil.which("google-chrome") or shutil.which("chromium"))
         ctx = browser.new_context(viewport={"width": 390, "height": 844}, has_touch=True, reduced_motion="reduce", locale="ar")
-        module_hashes = check_deployment(ctx.request, home, sha, release, bool(args.local))
+        module_hashes = check_deployment(ctx.request, home, commit, release, files, bool(args.local))
         page = ctx.new_page()
         page.goto(home + "?lang=ar", wait_until="domcontentloaded")
         frame = page.frame_locator("#site-content")
@@ -209,8 +241,8 @@ def main():
         result.scroll_into_view_if_needed()
         screenshot = page.screenshot(path=str(output / "result-ar-390.png"))
         evidence = {
-            "home": home, "played_url": page.url, "release": release, "pages_commit": sha,
-            "editor_sha256": module_hashes["after-show/edit.js"], "verified_modules": module_hashes,
+            "home": home, "played_url": page.url, "release": release, "pages_commit": commit,
+            "editor_sha256": module_hashes["raven/after-show/edit.js"], "verified_modules": module_hashes,
             "shots": order, "cut_seconds": 12, "wall_seconds": round(elapsed, 2), "result": result.inner_text(),
             "result_image_sha256": hashlib.sha256(screenshot).hexdigest(),
             "github_run": os.environ.get("GITHUB_RUN_ID"), "chrome": browser.version,
