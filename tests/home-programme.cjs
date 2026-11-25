@@ -170,3 +170,38 @@ test('a failed masthead video leaves its original poster and the episode entranc
   await episodes.tap();
   await expect(frame.locator('[data-visual-episode="1"]').first()).toBeVisible();
 });
+
+test('closing the welcome while the homepage is still loading starts the visible masthead', async t => {
+  const home = await serve(t);
+  const browser = await chromium.launch({executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium'});
+  t.after(() => browser.close());
+  const page = await browser.newPage({viewport:{width:390,height:844}, isMobile:true, hasTouch:true, reducedMotion:'no-preference'});
+  let releaseScript;
+  const scriptMayLoad = new Promise(resolve => { releaseScript = resolve; });
+  await page.route('**/*', async route => {
+    const url = new URL(route.request().url());
+    if (url.origin !== new URL(home).origin) return route.abort();
+    if (url.pathname.endsWith('/raven-home-resume.js')) await scriptMayLoad;
+    return route.continue();
+  });
+  const video = page.frameLocator('#site-content').locator('#ravenHeroMotion');
+  try {
+    await page.goto(home, {waitUntil:'domcontentloaded'});
+    // The poster is already on screen, but the deferred resume script holds the
+    // child's DOMContentLoaded handshake with the parent.
+    const state = await video.evaluate(el => new Promise(resolve => {
+      const observer = new IntersectionObserver(([entry]) => {
+        if (!entry.isIntersecting) return;
+        observer.disconnect();
+        resolve({document:document.readyState, paused:el.paused, gate:parent.RavenSite.entryOpen});
+      });
+      observer.observe(el);
+    }));
+    assert.deepEqual(state, {document:'interactive', paused:true, gate:true});
+    await page.locator('#archive-skip').tap();
+    await expect(page.locator('#archive-entry-gate')).toHaveCount(0);
+  } finally {
+    releaseScript();
+  }
+  await expect.poll(() => video.evaluate(el => el.currentTime)).toBeGreaterThan(0);
+});

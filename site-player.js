@@ -262,8 +262,9 @@ entryGate = createEntryGate({
   onEnter: soundtrack.enter,
   onClose() {
     destination.focus = true;
+    // The masthead can be visible while the document's deferred scripts are still loading.
+    frame.contentDocument?.dispatchEvent(new Event('raven:intro-complete'));
     if (!currentChild()) return;
-    frame.contentDocument.dispatchEvent(new Event('raven:intro-complete'));
     const main = frame.contentDocument.querySelector('main');
     if (main) {
       if (!main.hasAttribute('tabindex')) main.setAttribute('tabindex', '-1');
