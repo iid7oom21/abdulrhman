@@ -25,7 +25,9 @@ export function mount({id,title,intro=['',''],render}) {
   const notice=element('aside',null,'night-notice'); notice.hidden=true; notice.setAttribute('role','status');
   const foot=element('footer',null,'night-wrap night-foot'), all=link('','./'), home=link('','../');
   foot.append(all,home); shell.after(foot);
-  shell.replaceChildren(heading,lead,notice,bench);
+  const header=element('header',null,'night-heading');
+  header.append(heading,lead);
+  shell.replaceChildren(header,notice,bench);
   let lastIssue=null, clean;
   function showIssue(problem) {
     lastIssue=problem;

@@ -91,6 +91,12 @@ test('Late Night public directory, both languages, real paths, recovery and navi
       await page.goto(base + '?lang=' + lang);
       await ready(page);
       await inspect(page, lang, 'directory');
+      const featureRatio = await page.locator('.night-feature img').evaluate(async image => {
+        await image.decode();
+        const box = image.getBoundingClientRect();
+        return Math.abs(box.width / box.height - image.naturalWidth / image.naturalHeight);
+      });
+      assert.ok(featureRatio < 0.02, 'the featured still keeps its full frame');
       assert.deepEqual(await routes(page,'.night-grid a'), activities);
       assert.deepEqual(await routes(page,'.night-links a[href*=".html?"]'), extras);
       const previews = await page.locator('.night-card img').evaluateAll(async images =>
@@ -126,13 +132,20 @@ test('Late Night public directory, both languages, real paths, recovery and navi
 
   await t.test('mobile keyboard entry with missing artwork and reduced motion', async st => {
     const {page, ctx, errors} = await context(st, 390, 'ar');
-    await ctx.route('**/thumbs/station-shadow.webp', route => route.abort());
+    await ctx.route('**/thumbs/*.webp', route => route.abort());
     await page.goto(base + '?lang=ar');
+    const feature = page.locator('.night-feature');
+    await feature.locator('img[hidden]').waitFor({state:'attached'});
+    assert.equal(await feature.locator('img').isVisible(), false);
+    const box = await feature.boundingBox();
+    const copy = await feature.locator(':scope > div').boundingBox();
+    assert.ok(copy.width >= box.width - 3, 'without a preview, the feature text fills the card');
     const station = entry(page, 'station-shadow');
     const image = station.locator('img');
     await station.scrollIntoViewIfNeeded();
     await image.evaluate(img => img.decode().catch(() => {}));
     assert.equal(await image.evaluate(img => img.naturalWidth), 0);
+    assert.equal(await image.isVisible(), false, 'a failed preview does not leave a broken image in the card');
     assert.match(await station.innerText(), /المحط/);
     assert.ok(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches));
     await page.keyboard.press('Tab'); await station.focus();
@@ -163,6 +176,29 @@ test('Late Night public directory, both languages, real paths, recovery and navi
     await page.locator('[data-sim="run"]').waitFor(); await ready(page);
     assert.equal(new URL(page.url()).pathname, base.pathname+'fabric-wind.html');
     await inspect(page, 'en', 'successful retry');
+  });
+
+  await t.test('station movement buttons follow the recording and crossing phases', async st => {
+    const {page} = await context(st, 390, 'ar');
+    await page.goto(new URL('station-shadow.html', base).href);
+    const button = name => page.locator('[data-game="' + name + '"]');
+    const padKey = button('right');
+    await button('record').waitFor();
+    assert.equal(await padKey.isVisible(), false, 'movement is hidden before recording');
+    await page.clock.install();
+    await button('record').press('Enter');
+    assert.equal(await padKey.isVisible(), true);
+    await page.keyboard.press('ArrowUp');
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('ArrowRight');
+    await page.clock.fastForward(10001);
+    assert.equal(await padKey.isVisible(), false, 'the recording is ready for review');
+    await button('cross').press('Enter');
+    await page.clock.fastForward(1500);
+    assert.equal(await padKey.isVisible(), true);
+    for (let i = 0; i < 6; i++) await page.keyboard.press('ArrowRight');
+    assert.equal(await button('station-view').getAttribute('data-phase'), 'won');
+    assert.equal(await padKey.isVisible(), false, 'movement is hidden after the crossing');
   });
 
   await t.test('390px | rejected portfolio save recovers the exact editable still as a JSON download', async st => {

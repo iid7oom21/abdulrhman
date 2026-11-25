@@ -8,3 +8,29 @@
 .game-board{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));width:min(100%,510px);gap:3px;direction:ltr}
 .game-board button{min-height:42px;min-width:0;border-radius:.25rem;padding:0;font-size:.95rem}
 .game-note{background:#bc984611;padding:.55rem .8rem;border-inline-start:2px solid #d2ac68}
+
+/* The clock and input pad belong to the same play surface, in either direction. */
+#night-app[data-room="station-shadow"] {
+  max-width: 860px;
+}
+[data-room="station-shadow"] .game-clock progress {
+  max-width: none;
+}
+.station-movement {
+  justify-content: center;
+}
+.station-movement[hidden] {
+  display: none;
+}
+.station-movement button {
+  width: clamp(48px, 14vw, 64px);
+  min-height: 48px;
+  font-size: 1.25rem;
+}
+[data-game="record"]:only-child,
+[data-game="cross"] {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--night);
+  font-weight: 650;
+}

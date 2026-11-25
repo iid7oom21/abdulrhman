@@ -48,7 +48,7 @@ function render(ui){
   view.dataset.game='station-view';
   const c=view.getContext('2d'),read=output(),timer=el('output'),meter=el('progress'),clockBox=el('div',null,'game-clock');
   meter.max=LENGTH;clockBox.append(timer,meter);
-  const row=el('div',null,'game-controls'),directions=el('div',null,'game-controls'),details=el('div');
+  const row=el('div',null,'game-controls'),directions=el('div',null,'game-controls station-movement'),details=el('div');
   const positions=[['left','←',-1,0],['up','↑',0,-1],['down','↓',0,1],['right','→',1,0]];
   directions.dir='ltr';
   function step(dx,dy){
