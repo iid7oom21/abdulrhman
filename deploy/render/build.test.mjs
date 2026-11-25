@@ -31,6 +31,7 @@ function fixture(t) {
   git(repo,['init','--object-format=sha1']);publicFiles(repo);
   write(repo,'docs/review.txt','HISTORICAL_REVIEW_NOT_RUNTIME');
   write(repo,'raven/late-night/shelf-experiment.html','UNLISTED_WING_PAGE');
+  write(repo,'raven/episodes/edit-proposal.html','UNLISTED_GALLERY_PAGE');
   return {repo,sha:commit(repo)};
 }
 function previousExport(repo) {
@@ -56,6 +57,9 @@ test('export comes from the exact Git tree, ignores dirty source/untracked secre
   assert.equal(fs.existsSync(path.join(old,'.git')),false);
   assert.equal(fs.existsSync(path.join(old,'docs')),false);
   assert.equal(fs.existsSync(path.join(old,'raven/late-night/shelf-experiment.html')),false);
+  assert.equal(fs.existsSync(path.join(old,'raven/episodes/edit-proposal.html')),false);
+  for (const name of ['raven/episodes/gallery.js', 'raven/episodes/content.html', 'raven/late-night/ink/courier.js'])
+    assert.equal(fs.readFileSync(path.join(old,name),'utf8'),'PUBLIC_FILE');
   assert.equal(fs.existsSync(path.join(old,'original.txt')),false);
   assert.equal(validatePublicExport(old).musicTracks,13);
   assert.deepEqual(JSON.parse(fs.readFileSync(path.join(old,EXPORT_MARKER))),{format:'raven-render-site-v1',commit:f.sha,release:PUBLIC_RELEASE});

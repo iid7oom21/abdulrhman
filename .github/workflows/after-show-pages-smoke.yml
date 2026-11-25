@@ -8,6 +8,7 @@ on:
       - deploy/render/pages-smoke.py
       - deploy/render/late-night-smoke.py
       - deploy/render/ink-smoke.py
+      - deploy/render/screening-room-smoke.py
       - .github/workflows/after-show-pages-smoke.yml
   workflow_dispatch:
 
@@ -28,7 +29,7 @@ jobs:
           git fetch --no-tags --no-recurse-submodules --depth=1 origin "$GITHUB_SHA"
           test "$(git rev-parse FETCH_HEAD)" = "$GITHUB_SHA"
           mkdir -p deploy/render
-          for source in deploy/render/build.mjs deploy/render/pages-smoke.py deploy/render/late-night-smoke.py deploy/render/ink-smoke.py; do
+          for source in deploy/render/build.mjs deploy/render/pages-smoke.py deploy/render/late-night-smoke.py deploy/render/ink-smoke.py deploy/render/screening-room-smoke.py; do
             git show "$GITHUB_SHA:$source" > "$source"
           done
           pin=$(sed -nE "s/^export const SITE_COMMIT = '([0-9a-f]{40})';$/\1/p" deploy/render/build.mjs)
@@ -41,10 +42,20 @@ jobs:
       - run: python -m pip install --disable-pip-version-check playwright==1.56.0
       - name: Play a round on GitHub Pages in Chrome
         run: python deploy/render/pages-smoke.py
+      - name: Open the episode gallery from the published arrival and home
+        run: python deploy/render/screening-room-smoke.py
       - name: Cross with the shadow and screen an edited director scene
         run: python deploy/render/late-night-smoke.py
       - name: Play Ink Nights and export a manga page
         run: python deploy/render/ink-smoke.py
+      - name: Keep screening-room mobile evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: published-screening-room-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/screening-room/
+          if-no-files-found: warn
+          retention-days: 14
       - name: Keep Ink Nights mobile evidence
         if: always()
         uses: actions/upload-artifact@v4

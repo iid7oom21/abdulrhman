@@ -24,9 +24,9 @@ with sync_playwright() as pw:
     page.locator('#archive-night-hub').tap()
     page.locator('[data-ink-program]').tap()
     cards = page.locator('[data-ink-route]')
-    expect(cards).to_have_count(5)
+    expect(cards).to_have_count(6)
     routes = {a.get_attribute('data-ink-route'): a.get_attribute('href') for a in cards.all()}
-    assert set(routes) == {'cut', 'ferry', 'page', 'camera', 'beacon'}
+    assert set(routes) == {'cut', 'ferry', 'page', 'camera', 'beacon', 'courier'}
     for card in cards.all():
         photo = card.locator('img')
         photo.scroll_into_view_if_needed()
@@ -67,6 +67,14 @@ with sync_playwright() as pw:
     step.tap()
     expect(page.locator('[data-beacon="result"]')).to_have_attribute('data-outcome', 'acknowledged')
 
+    page.goto(routes['courier'])
+    for cell in (15, 10, 5, 0, 1, 2, 3, 4, 9, 14, 19, 24):
+        page.locator(f'[data-cell="{cell}"]').tap()
+    expect(page.locator('#status')).to_contain_text('وصلت الرسالة')
+    page.locator('#mangaTab').tap()
+    expect(page.locator('#panels .panel')).to_have_count(3)
+    page.screenshot(path=args.output / 'courier-delivered.png')
+
     page.goto(routes['page'])
     for panel in ('window', 'type', 'press'):
         page.locator('[data-page="pick-' + panel + '"]').tap()
@@ -92,11 +100,12 @@ with sync_playwright() as pw:
     sheet.scroll_into_view_if_needed()
     page.screenshot(path=args.output / 'page-on-phone.png')
     proof = {'home': args.home, 'activities': sorted(routes), 'cut_seconds': 6, 'ferry_view': 'shore',
-             'camera_parallax_px': 36, 'beacon': 'acknowledged', 'manga_panels': ['window', 'type', 'press'],
+             'camera_parallax_px': 36, 'beacon': 'acknowledged', 'courier': 'delivered in 12 moves',
+             'manga_panels': ['window', 'type', 'press'],
              'export_px': [880, 984], 'manga_direction_after_language_switch': 'rtl'}
     (args.output / 'journey.json').write_text(json.dumps(proof, indent=2))
     print(json.dumps(proof))
     if 'GITHUB_STEP_SUMMARY' in os.environ:
         with open(os.environ['GITHUB_STEP_SUMMARY'], 'a') as summary:
-            summary.write('Played the five Ink Nights activities on Pages at 390px and exported the chosen 880 × 984 manga page.\n')
+            summary.write('Played the six Ink Nights activities on Pages at 390px, delivered the courier letter and exported the chosen 880 × 984 manga page.\n')
     browser.close()

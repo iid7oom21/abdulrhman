@@ -35,8 +35,8 @@ export const LATE_NIGHT_FILES = [
   'index.html', 'boot.js', 'catalog.js', 'hub.js', 'hub.css', 'night-store.js', 'night-shell.js', 'night-shell.css',
   'evening.js', 'connect.js', 'connect.css', 'night-tests.html', 'coast-map.html',
   ...nightActivities.flatMap(id => [id + '.html', 'thumbs/' + id + '.webp', 'assets/photo/' + id + '.webp']),
-  ...['studio', 'beacon', 'cut', 'camera', 'ferry', 'page'].map(name => 'ink-' + name + '.html'),
-  ...['catalog.js', 'programme.js', 'ink.css', 'beacon.js', 'cut.js', 'camera.js', 'ferry.js', 'page.js'].map(name => 'ink/' + name),
+  ...['studio', 'beacon', 'cut', 'camera', 'ferry', 'page', 'courier'].map(name => 'ink-' + name + '.html'),
+  ...['catalog.js', 'programme.js', 'ink.css', 'beacon.js', 'cut.js', 'camera.js', 'ferry.js', 'page.js', 'courier.js', 'courier.css'].map(name => 'ink/' + name),
   ...['ferry-pier', 'ferry-pier-print', 'ferry-signal', 'ferry-deck', 'beacon-night', 'beacon-boats',
     'camera-cover', 'camera-window', 'camera-harbour', 'panel-press', 'panel-type', 'panel-window', 'panel-drying'].map(name => 'ink/art/' + name + '.webp'),
   ...['harbour-cinema', 'harbour-cinema-mobile', 'station-porter', 'auction-lots', 'lost-items', 'dome-disc',
@@ -58,10 +58,12 @@ export const LATE_NIGHT_FILES = [
 
 export const RAVEN17_PREVIEW_FILES = ['index.html', 'home.css', 'home.js']
   .map(name => 'raven/raven-17-preview/' + name);
+export const EPISODE_GALLERY_FILES = ['index.html', 'content.html', 'gallery.js', 'gallery.css',
+  'assets/series-wide.webp', 'assets/series-mobile.webp'].map(name => 'raven/episodes/' + name);
 
 // Reviewed public runtime files only. Never enumerate a repository or serve by extension.
 const files = [
-  ...AFTER_SHOW_FILES, ...LATE_NIGHT_FILES, ...RAVEN17_PREVIEW_FILES,
+  ...AFTER_SHOW_FILES, ...LATE_NIGHT_FILES, ...RAVEN17_PREVIEW_FILES, ...EPISODE_GALLERY_FILES,
   // Local visual-review assets. No private content or new API surface.
   'raven/assets/raven-visual-home.css',
   'raven/assets/raven-visual-home.js',
@@ -145,7 +147,7 @@ const files = [
   'fourth-signature/assets/fonts/NotoSansArabic.ttf',
   'fourth-signature/assets/audio/raven-dark-pop-intimate-revised.mp3',
   'assets/raven-home-share.jpg', 'assets/texts/raven-texts.js',
-  ...['raven-intro-wide.mp4', 'raven-intro.jpg', 'raven-intro-wide.jpg', 'raven-intro.mp4'].map(name => 'assets/intro/' + name),
+  ...['raven-intro-wide.mp4', 'raven-intro.jpg', 'raven-intro-poster.jpg', 'raven-intro-wide.jpg', 'raven-intro.mp4'].map(name => 'assets/intro/' + name),
   ...Array.from({length:13}, (_, n) => `assets/audio/raven/${String(n + 1).padStart(2, '0')}.mp3`),
 ];
 const routes = new Map(files.map(file => ['/' + file, file]));
@@ -161,7 +163,7 @@ for (const file of files) if (file.endsWith('/index.html')) routes.set('/' + fil
 for (const [route, file] of [...routes]) if (route.startsWith('/studio/')) routes.set('/abdulrhman' + route, file);
 // Pages links may arrive under the repository prefix. Redirect once to the Render route
 // so native links and imports resolve against the same base as a direct visit.
-const pagesSections = ['/raven/after-show', '/raven/late-night', '/raven/raven-17-preview'];
+const pagesSections = ['/raven/after-show', '/raven/late-night', '/raven/raven-17-preview', '/raven/episodes'];
 const mime = {'.html':'text/html; charset=utf-8', '.js':'text/javascript; charset=utf-8', '.json':'application/json; charset=utf-8',
   '.css':'text/css; charset=utf-8', '.txt':'text/plain; charset=utf-8', '.svg':'image/svg+xml', '.jpg':'image/jpeg', '.webp':'image/webp', '.png':'image/png',
   '.woff2':'font/woff2', '.ttf':'font/ttf', '.mp3':'audio/mpeg', '.wav':'audio/wav', '.mp4':'video/mp4'};

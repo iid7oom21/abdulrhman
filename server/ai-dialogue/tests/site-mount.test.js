@@ -5,7 +5,7 @@ import path from 'node:path';
 import os from 'node:os';
 import http from 'node:http';
 import {createPreviewServer} from '../src/server.js';
-import {LATE_NIGHT_FILES, RAVEN17_PREVIEW_FILES} from '../src/site-mount.js';
+import {LATE_NIGHT_FILES, RAVEN17_PREVIEW_FILES, EPISODE_GALLERY_FILES} from '../src/site-mount.js';
 import {createOpenAIReply} from '../src/provider.js';
 import {_reset} from '../src/dialogue.js';
 
@@ -531,6 +531,8 @@ test('Late Night and the film preview share explicit files across Render and Pag
     ['raven/late-night/thumbs/station-shadow.webp', 'image/webp'], ['raven/late-night/assets/museum-mill.wav', 'audio/wav'],
     ['raven/late-night/assets/photo/station-shadow.webp', 'image/webp'], ['raven/late-night/assets/photo/harbour-cinema.webp', 'image/webp'],
     ['raven/late-night/ink-studio.html', 'text/html'], ['raven/late-night/ink/beacon.js', 'text/javascript'],
+    ['raven/late-night/ink-courier.html', 'text/html'], ['raven/late-night/ink/courier.css', 'text/css'],
+    ['raven/late-night/ink/courier.js', 'text/javascript'],
     ['raven/late-night/ink/art/ferry-pier.webp', 'image/webp'],
     ['raven/raven-17-preview/index.html', 'text/html'], ['raven/raven-17-preview/home.js', 'text/javascript']
   ];
@@ -554,5 +556,36 @@ test('Late Night and the film preview share explicit files across Render and Pag
       assert.equal(unknown.status,404);
       assert.doesNotMatch(await unknown.text(),/UNRELEASED/);
     }
+  }
+});
+
+test('episode gallery and approved media policy survive the Pages-style redirect, player query and refresh', async t => {
+  const f=fixture(t);
+  for (const file of EPISODE_GALLERY_FILES) f.write(file, file);
+  f.write('raven/episodes/edit-proposal.html', 'UNLISTED_GALLERY_PAGE');
+  const s=await start(t,{siteRoot:f.root});
+  for (const route of ['/raven/episodes', '/abdulrhman/raven/episodes', '/abdulrhman/raven/episodes/']) {
+    const redirect=await fetch(s.root+route+'?episode=2&lang=en',{redirect:'manual'});
+    assert.equal(redirect.status,308);
+    assert.equal(redirect.headers.get('location'),'/raven/episodes/?episode=2&lang=en');
+  }
+  const gallery=await fetch(s.root+'/raven/episodes/?episode=2&lang=en');
+  assert.equal(gallery.status,200);
+  assert.equal(await gallery.text(),'raven/episodes/index.html');
+  for (const name of EPISODE_GALLERY_FILES) {
+    const response=await fetch(s.root+'/abdulrhman/'+name+'?episode=2&lang=en');
+    assert.equal(response.url,s.root+'/'+name+'?episode=2&lang=en');
+    assert.equal(response.status,200,name);
+    assert.equal(await response.text(),name);
+    const type=response.headers.get('content-type');
+    if (name.endsWith('html')) {
+      assert.match(type,/text\/html/);
+      assert.match(response.headers.get('content-security-policy'),/media-src [^;]*https:\/\/res\.cloudinary\.com/);
+    } else if (name.endsWith('.webp')) assert.equal(type,'image/webp');
+    else assert.match(type,/text\/(css|javascript)/);
+  }
+  for(const prefix of ['', '/abdulrhman']) {
+    const response=await fetch(s.root+prefix+'/raven/episodes/edit-proposal.html');
+    assert.equal(response.status,404);
   }
 });

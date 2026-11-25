@@ -3,17 +3,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-import {AFTER_SHOW_FILES, LATE_NIGHT_FILES, RAVEN17_PREVIEW_FILES, STUDIO_ENTRY_ASSETS} from '../../server/ai-dialogue/src/site-mount.js';
+import {AFTER_SHOW_FILES, LATE_NIGHT_FILES, RAVEN17_PREVIEW_FILES, EPISODE_GALLERY_FILES, STUDIO_ENTRY_ASSETS} from '../../server/ai-dialogue/src/site-mount.js';
 
-export const SITE_COMMIT = '3755c9deefb1a7e4a0e04ef3f6c36d5b731cf53b';
-export const PUBLIC_RELEASE = '2026-11-25-ink-nights-1';
+export const SITE_COMMIT = '587cea61a53d3e84a0d1144fcce39b0e11fbfc5f';
+export const PUBLIC_RELEASE = '2026-11-25-screening-room-1';
 export const EXPORT_MARKER = '.raven-render-export.json';
 // Render builds from a shallow, single-branch checkout and removes its Git
 // remote, so a missing pinned commit is fetched from here by its SHA.
 export const PUBLIC_REPOSITORY = 'https://github.com/iid7oom21/abdulrhman.git';
 const FORMAT = 'raven-render-site-v1';
-const reviewedWings = new Set([...LATE_NIGHT_FILES, ...RAVEN17_PREVIEW_FILES]);
-const withinReviewedWing = name => name.startsWith('raven/late-night/') || name.startsWith('raven/raven-17-preview/');
+const reviewedWings = new Set([...LATE_NIGHT_FILES, ...RAVEN17_PREVIEW_FILES, ...EPISODE_GALLERY_FILES]);
+const withinReviewedWing = name => name.startsWith('raven/late-night/') || name.startsWith('raven/raven-17-preview/') || name.startsWith('raven/episodes/');
 const MODULE_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const TRACKS = Array.from({length:13}, (_, index) => `${String(index + 1).padStart(2,'0')}.mp3`);
 const EPISODES = ['part-1','part-2','part-3'];
@@ -23,7 +23,7 @@ const PUBLIC_ROOTS = ['assets','fourth-signature','raven','studio','404.html','i
   'player-core.js','robots.txt','site-audio.js','site-bridge.js','site-entry.js','site-player.css',
   'site-player.js','sitemap.xml'];
 export const CORE_FILES = [
-  ...AFTER_SHOW_FILES, ...LATE_NIGHT_FILES, ...RAVEN17_PREVIEW_FILES,
+  ...AFTER_SHOW_FILES, ...LATE_NIGHT_FILES, ...RAVEN17_PREVIEW_FILES, ...EPISODE_GALLERY_FILES,
   'site-player.js','site-audio.js','site-entry.js','site-bridge.js','site-player.css',
   'assets/texts/raven-texts.js','raven/index.html','raven/content.html',
   'raven/dialogue/preview-room.css',
@@ -36,6 +36,7 @@ export const CORE_FILES = [
   // The merged interface needs its reading controls and responsive artwork in
   // the same export; do not silently deploy a partial visual release.
   'raven/assets/raven-visual-home.css','raven/assets/raven-visual-home.js',
+  'raven/assets/raven-i18n.js','raven/assets/raven-enhancements-v1.js','raven/assets/raven-refinement-v2.js',
   'raven/assets/raven-home-resume.css','raven/assets/raven-home-resume.js',
   'raven/deleted-name/opening-artwork.js',
   'raven/deleted-name/opening-visual.css','raven/deleted-name/opening-visual.js',
@@ -52,7 +53,7 @@ export const CORE_FILES = [
   'raven/terminal-preview/raven-17/index.html',
   'raven/terminal-preview/assets/hero-poster.jpg',
   'raven/terminal-preview/assets/hero-loop.mp4',
-  'assets/raven-home-share.jpg',
+  'assets/raven-home-share.jpg', 'assets/intro/raven-intro-poster.jpg',
   ...['episode-1.jpg','episode-2.jpg','episode-3.jpg','cinzel.woff2','ibm-plex-arabic.woff2']
     .map(name => 'raven/terminal-preview/assets/'+name),
   'raven/assets/images/deleted-name/claire.jpg',
