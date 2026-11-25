@@ -11,10 +11,43 @@ export function slider(id,label,min,max,step,current,fn){
   s.addEventListener('input',()=>{out.value=s.value;fn(+s.value);});row.append(s,out);l.append(element('span',label),row);return l;
 }
 export function surface(ui){
-  const box=element('section',null,'night-sim'),frame=element('figure'),canvas=element('canvas'),caption=element('figcaption'),controls=element('div',null,'sim-controls'),read=element('p',null,'sim-read'),actions=element('div',null,'sim-actions');
+  const box=element('section',null,'night-sim'),frame=element('figure'),canvas=element('canvas'),caption=element('figcaption'),controls=element('div',null,'sim-controls'),read=element('div',null,'sim-read'),actions=element('div',null,'sim-actions');
   canvas.width=640;canvas.height=320;canvas.setAttribute('role','img');frame.append(canvas,caption);
   read.setAttribute('role','status');box.append(frame,read,controls,actions);ui.root.replaceChildren(box);
   return {canvas,c:canvas.getContext('2d'),read,controls,actions,box,describe(text){if(caption.textContent!==text){caption.textContent=text;canvas.setAttribute('aria-label',text);}}};
+}
+const numberFormats = new Map();
+export function quantity(lang, value, digits, unit) {
+  const key = lang + digits;
+  if (!numberFormats.has(key)) {
+    numberFormats.set(key, new Intl.NumberFormat(lang === 'ar' ? 'ar-u-nu-arab' : 'en', {
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits
+    }));
+  }
+  return numberFormats.get(key).format(value) + '\u00a0' + unit;
+}
+export function isolate(text) { return '\u2068' + text + '\u2069'; }
+export function updateReading(read, text, playing = false) {
+  const live = playing ? 'off' : 'polite';
+  if (read.getAttribute('aria-live') !== live) read.setAttribute('aria-live', live);
+  if (!read.firstChild) read.append(text);
+  else if (read.firstChild.data !== text) read.firstChild.data = text;
+}
+export function showReadings(read, rows, note = '') {
+  const list = element('dl', null, 'sim-measures');
+  for (const [label, ...values] of rows) {
+    const field = element('div');
+    const definition = element('dd');
+    for (const value of values) {
+      if (definition.firstChild) definition.append(' ');
+      definition.append(element('bdi', value));
+    }
+    field.append(element('dt', label), definition);
+    list.append(field);
+  }
+  read.replaceChildren(list);
+  if (note) read.append(element('p', note, 'sim-outcome'));
 }
 export function shade(c,top,bottom){
   const g=c.createLinearGradient(0,0,0,320);g.addColorStop(0,top);g.addColorStop(1,bottom);c.fillStyle=g;c.fillRect(0,0,640,320);

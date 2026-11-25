@@ -41,12 +41,32 @@ test('play all five simulators at the project mount',async t=>{
         let h=2166136261;for(const n of a)h=Math.imul(h^n,16777619);return h>>>0;
       });
       const fits=async()=>assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
+      const localized = (n, decimals, arUnit, enUnit) =>
+        n.toLocaleString(lang==='ar'?'ar-u-nu-arab':'en', {
+          minimumFractionDigits:decimals, maximumFractionDigits:decimals
+        })+'\u00a0'+(lang==='ar'?arUnit:enUnit);
+      async function assertReading(label, expected) {
+        const field = p.locator('.sim-measures > div').filter({
+          has:p.getByText(label,{exact:true})
+        });
+        const values = field.locator('dd bdi');
+        assert.deepEqual(await values.allTextContents(),expected);
+        assert.ok(await values.evaluateAll(items => items.every(item => {
+          const rect = item.getBoundingClientRect();
+          const field = item.closest('dd').getBoundingClientRect();
+          return rect.left>=field.left-1 && rect.right<=field.right+1
+            && getComputedStyle(item).whiteSpace==='nowrap';
+        })));
+      }
       const download=async()=>{
         const pending=p.waitForEvent('download');await click('export');const out=await pending;
         assert.ok(out.suggestedFilename().endsWith('.png'));const bytes=await fs.readFile(await out.path());assert.equal(bytes.toString('ascii',1,4),'PNG');
       };
       broken='/echo.js';await p.goto(q+'echo-last-seat.html?lang='+lang);await control('retry').waitFor();
       broken='';await control('retry').click();await control('source').waitFor();
+      await assertReading(lang==='ar'?'المسار المباشر':'Direct path',[
+        localized(Math.sqrt(5),1,'م','m'),localized(Math.sqrt(5)/343*1000,0,'ملي ثانية','ms')
+      ]);
       await control('source').focus();await p.keyboard.press('ArrowRight');assert.equal(await control('source').inputValue(),'4');
       if(width<600)await control('sound').tap();else await control('sound').press('Enter');
       await control('sound').press('Enter');
@@ -59,17 +79,29 @@ test('play all five simulators at the project mount',async t=>{
       await click('develop');await click('pin0');await fill('time',35);await fill('mask',90);
       await click('pin1');assert.equal(await p.locator('.sim-edit canvas').count(),2);await click('see0');assert.equal(await pixels(),a);
       await click('see1');assert.notEqual(await pixels(),a);assert.notEqual(await get('win'),aw);
+      const readText=()=>p.locator('.night-sim > .sim-read').first().textContent();
+      assert.ok((await readText()).includes(lang==='ar'?' من ٢٥٥':' of 255'));
       await click('save');await download();await fits();
       await enter('weightless-cam');await click('push4');await control('step').focus();for(let i=0;i<10;i++)await p.keyboard.press('Enter');
       assert.equal(await get('x'),'10');await click('push-4');for(let i=0;i<8;i++)await click('step');
-      await click('finish');assert.equal(await get('hold'),'2');assert.ok(await p.locator('.sim-actions a[href*="replay-caller"]').isVisible());
+      await click('finish');
+      assert.ok((await readText()).includes('\u2068'+localized(2.5,2,'ث','s')+'\u2069'));
+      assert.ok((await readText()).includes('\u2068'+localized(0,0,'م/ث','m/s')+'\u2069'));
+      assert.equal(await get('hold'),'2');assert.ok(await p.locator('.sim-actions a[href*="replay-caller"]').isVisible());
       await click('save');await download();await fits();
       const run=await p.evaluate(()=>Object.keys(localStorage).filter(k=>k.includes('.event.')).map(k=>JSON.parse(localStorage[k]).value).find(e=>e.data.kind==='camera-run'));
       assert.equal(run.data.brakeAt,2.5);assert.equal(run.data.frames.length,19);assert.equal(run.data.success,true);
-      await enter('tide-harbor');assert.equal(await get('success'),'false');await fill('height',1.5);assert.equal(await get('success'),'true');
+      await enter('tide-harbor');assert.equal(await get('success'),'false');
+      const clearance=lang==='ar'?'الخلوص':'Clearance';
+      await assertReading(clearance,[localized(-.7,2,'م','m')]);
+      await assertReading(lang==='ar'?'الوصول':'Arrival',[localized(20,0,'ث','s')]);
+      await assertReading(lang==='ar'?'موعد الافتتاح':'Opening time',[localized(68,0,'ث','s')]);
+      await fill('height',1.5);assert.equal(await get('success'),'true');
+      await assertReading(clearance,[localized(.5,2,'م','m')]);
       await fill('height',2.7);await fill('departure',17);assert.equal(await get('success'),'true');await click('run');await click('save');await download();await fits();
       await enter('fabric-wind');await fill('left',235);await fill('right',337);await sel('weight',.65);await sel('fan',1.65);assert.ok(Number(await get('best'))<2);
       await click('repin');assert.equal(await control('weight').inputValue(),'0.65');await click('run');await fill('frame',4.8);
+      assert.ok((await readText()).includes('\u2068'+localized(4.8,1,'ث','s')+'\u2069'));
       const frame=await pixels();await p.locator('[data-night-language]').click();assert.equal(await canvas.getAttribute('data-time'),'4.8');
       assert.equal(await pixels(),frame);await click('save');await download();await fits();
       const pieces=await p.evaluate(()=>Object.keys(localStorage).filter(k=>k.includes('.piece.')).map(k=>JSON.parse(localStorage[k]).value));

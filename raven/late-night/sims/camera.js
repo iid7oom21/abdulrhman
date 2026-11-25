@@ -1,5 +1,5 @@
 import {cameraRun,cameraStep} from './camera-rules.js';
-import {surface,action,shade,line,dot,poly,ink,archive,output} from './kit.js';
+import {surface,action,shade,line,dot,poly,ink,archive,output,quantity,isolate,updateReading} from './kit.js';
 let pushes=[],time=0,running=false,finished=false,timer=0,latest=null;
 function stop(){running=false;clearInterval(timer);timer=0;}
 export default function camera(ui){
@@ -23,8 +23,19 @@ export default function camera(ui){
     for(let i=1;i<r.frames.length;i++)line(c,xs(r.frames[i-1]),ys(r.frames[i-1]),xs(r.frames[i]),ys(r.frames[i]),'#efc68e',2.5);
     if(r.brakeAt!==null){const b=r.frames.find(v=>v.t===r.brakeAt);dot(c,xs(b),ys(b),4,'#ef9b71');}
     w.describe(t('الكادر بين ٨ و١٢ مترًا. أقصى سرعة للاستقرار ٢ م/ث.','Target frame 8–12 m. Maximum stable speed 2 m/s.'));
-    w.read.textContent=t('الزمن ','Time ')+time.toFixed(2)+' s · x '+f.x.toFixed(2)+' m · v '+f.v+' m/s · '+t('أطول ثبات ','Longest hold ')+r.best.toFixed(2)+' s'
-      +(finished?' · '+(r.success?t('اكتمل ثبات الثانيتين','Two-second hold met'):t('لم يكتمل ثبات الثانيتين','Two-second hold missed'))+' · '+(r.brakeAt===null?t('بلا فرملة','No braking'):t('أول فرملة ','First braking ')+r.brakeAt+' s'):'');
+    const measure = (value, digits, unit) => isolate(quantity(ui.lang, value, digits, unit));
+    const seconds = value => measure(value, 2, t('ث','s'));
+    const readings = [
+      t('الزمن ', 'Time ') + seconds(time),
+      t('الموضع ', 'Position ') + measure(f.x, 2, t('م','m')),
+      t('السرعة ', 'Velocity ') + measure(f.v, 0, t('م/ث','m/s')),
+      t('أطول ثبات ', 'Longest hold ') + seconds(r.best)
+    ];
+    if (finished) readings.push(
+      r.success ? t('اكتمل ثبات الثانيتين','Two-second hold met') : t('لم يكتمل ثبات الثانيتين','Two-second hold missed'),
+      r.brakeAt===null ? t('بلا فرملة','No braking') : t('أول فرملة ','First braking ') + seconds(r.brakeAt)
+    );
+    updateReading(w.read, readings.join(' · '), running);
     w.canvas.dataset.x=f.x;w.canvas.dataset.hold=r.best;
     return r;
   }
@@ -38,7 +49,7 @@ export default function camera(ui){
     const focus=w.actions.contains(document.activeElement)?document.activeElement.dataset.sim:null;
     const add=(id,ar,en,fn,disabled=false)=>{const b=action(id,t(ar,en),fn);b.disabled=disabled;return b;};
     const replay=document.createElement('a');replay.href='./replay-caller.html?lang='+ui.lang;replay.textContent=t('فسّر لي آخر محاولة','Explain my last take');
-    w.actions.replaceChildren(add('run',running?'إيقاف مؤقت':'شغّل الكاميرا',running?'Pause':'Run camera',()=>{if(running)stop();else{running=true;timer=setInterval(step,250);}buttons();},finished),
+    w.actions.replaceChildren(add('run',running?'إيقاف مؤقت':'شغّل الكاميرا',running?'Pause':'Run camera',()=>{if(running){stop();paint();}else{running=true;timer=setInterval(step,250);}buttons();},finished),
       add('step','تقدم ٠٫٢٥ ث','Step 0.25 s',()=>{stop();step();buttons();},finished),
       ...[4,-4,1,-1].map(v=>add('push'+v,(v>0?'دفعة +':'دفعة ')+v,'Push '+(v>0?'+':'')+v,()=>pulse(v),finished)),
       add('finish','أنهِ المحاولة','Finish take',end,finished||time===0),

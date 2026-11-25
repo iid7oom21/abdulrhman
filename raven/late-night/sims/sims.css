@@ -10,3 +10,19 @@
 .sim-range input{width:100%;min-width:0;direction:ltr;height:44px;accent-color:#e5b87e}.sim-range output{direction:ltr;font-variant-numeric:tabular-nums}
 .night-sim :focus-visible{outline:3px solid #f1c986;outline-offset:3px}
 .night-sim .sim-edit{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:.5rem}
+
+.night-sim .sim-read {margin-block: 1em;}
+.sim-measures {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr));
+  gap: .65rem 1rem;
+  margin: 0;
+}
+.sim-measures dt {color: #d3c9b6; font-size: .85rem;}
+.sim-measures dd {display: flex; flex-wrap: wrap; gap: 0 .65rem; margin: 0;}
+.sim-measures bdi {white-space: nowrap; font-variant-numeric: tabular-nums;}
+.sim-outcome {margin: .65rem 0 0; border-block-start: 1px solid #59625a; padding-block-start: .4rem;}
+@media (max-width: 480px) {
+  .sim-measures {grid-template-columns: repeat(2, minmax(0, 1fr));}
+}
+.sim-comparison {white-space: pre-line;}

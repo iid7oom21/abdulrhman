@@ -1,4 +1,4 @@
-import {surface,action,select,slider,element,output,archive,playFrames} from './kit.js';
+import {surface,action,select,slider,element,output,archive,playFrames,quantity,isolate,updateReading} from './kit.js';
 const W=580,H=254,win=[42,28,188,182],face=[371,61,89,92];
 let art=null,s={exposure:13,x:73,y:45,strength:0},pins=[null,null],view='live';
 function source(){
@@ -46,12 +46,17 @@ export default function darkroom(ui){
   function readFrame(p){if(p===s)return print(s);if(!pinnedFrames.has(p))pinnedFrames.set(p,print(p));return pinnedFrames.get(p);}
   if(ui.editData?.print){s=valid(ui.editData.print)||s;view='live';}
   function display(){return view==='0'||view==='1'?(pins[+view]||s):s;}
-  const compare=element('p',null,'sim-read'),pair=element('div',null,'sim-edit');w.box.append(compare,pair);
+  const compare=element('p',null,'sim-read sim-comparison'),pair=element('div',null,'sim-edit');w.box.append(compare,pair);
+  const locale = t('ar-u-nu-arab', 'en');
+  const percentage = new Intl.NumberFormat(locale, {style:'percent'});
+  const percent = value => isolate(percentage.format(value/100));
+  const range = value => isolate(value.toLocaleString(locale) + t(' من ٢٥٥',' of 255'));
+  const exposure = value => isolate(quantity(ui.lang,value,0,t('ث','s')));
   function gallery(){
     pair.replaceChildren();
     if(!pins.every(Boolean))return;
     for(let i=0;i<2;i++){
-      const fig=element('figure'),pic=element('canvas'),tag=element('figcaption',(i?'B':'A')+' · '+pins[i].exposure+' s');
+      const fig=element('figure'),pic=element('canvas'),tag=element('figcaption',isolate(i?'B':'A')+' · '+exposure(pins[i].exposure));
       pic.width=W;pic.height=H;pic.setAttribute('role','img');pic.setAttribute('aria-label',t('النسخة ','Print ')+(i?'B':'A'));
       pic.getContext('2d').putImageData(readFrame(pins[i]).frame,0,0);fig.append(pic,tag);pair.append(fig);
     }
@@ -60,13 +65,25 @@ export default function darkroom(ui){
     const c=w.c;const f=last.frame;
     c.fillStyle='#5b332e';c.fillRect(0,0,640,320);c.fillStyle='#222c29';c.fillRect(14,13,612,293);c.fillStyle='#e7dfcd';c.fillRect(24,23,592,274);
     c.putImageData(f,30,31);if(progress<1){c.fillStyle='rgba(230,224,204,'+(1-progress)+')';c.fillRect(30,31,W,H);}
-    w.read.textContent=t('مدى النافذة ','Window tonal span ')+last.window.range+'/255 · '+t('بكسلاتها ذات تفصيل ','unclipped pixels ')+last.window.detail+'% · '+t('مدى الوجه ','Face tonal span ')+last.face.range+'/255 · '+t('بكسلاته ذات تفصيل ','unclipped pixels ')+last.face.detail+'%';
+    updateReading(w.read, [
+      t('مدى النافذة ', 'Window tonal span ') + range(last.window.range),
+      t('بكسلاتها ذات تفصيل ', 'Unclipped window pixels ') + percent(last.window.detail),
+      t('مدى الوجه ', 'Face tonal span ') + range(last.face.range),
+      t('بكسلاته ذات تفصيل ', 'Unclipped face pixels ') + percent(last.face.detail)
+    ].join(' · '));
     w.canvas.dataset.win=last.window.range;w.canvas.dataset.face=last.face.range;
     w.describe(t('طبعة تدريب لوجه دمية في الظل ونافذة ساطعة. القياس من مستطيل داخل كل منطقة.','Training print of a mannequin in shadow beside a bright window. Each region is sampled directly.'));
   }
   function refresh(){last=readFrame(display());paint();comp();}
   function comp(){
-    const parts=pins.map((p,i)=>{if(!p)return (i?'B':'A')+' —';const v=readFrame(p);return (i?'B':'A')+' · '+p.exposure+' s · '+t('نافذة ','window ')+v.window.detail+'% · '+t('وجه ','face ')+v.face.detail+'%';});compare.textContent=parts.join('    /    ');
+    const parts = pins.map((pin,i)=>{
+      const label = t('الطبعة ', 'Print ') + isolate(i?'B':'A');
+      if (!pin) return label+' —';
+      const result = readFrame(pin);
+      return [label, exposure(pin.exposure), t('النافذة ', 'Window ')+percent(result.window.detail),
+        t('الوجه ', 'Face ')+percent(result.face.detail)].join(' · ');
+    });
+    compare.textContent=parts.join('\n');
     for(let i=0;i<2;i++){const b=w.actions.querySelector('[data-sim="see'+i+'"]');if(b){b.disabled=!pins[i];b.setAttribute('aria-pressed',String(view===String(i)));}}
   }
   function adjust(k,v){cancel();s[k]=v;view='live';refresh();}
