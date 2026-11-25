@@ -59,7 +59,7 @@ test('mobile player leaves episode and case controls reachable in both orientati
       assert.ok((await page.locator('.site-player').boundingBox()).height<=46,'closed portrait dock stays compact');
     }
     assert.equal(await page.locator('#music-track-picker option').count(),13);
-    assert.equal(await frame.locator('[data-rvn-episode]').count(),3);
+    assert.equal(await frame.locator('[data-rvn-episode]').count(), 0, 'the homepage leads to the episode library');
     async function reachable(selector){
       const target=frame.locator(selector);await target.click({trial:true});
       const targetBox=await target.boundingBox(),playerBox=await page.locator('.site-player').boundingBox();
@@ -85,6 +85,8 @@ test('mobile player leaves episode and case controls reachable in both orientati
     assert.ok((await page.locator('#music-mute').boundingBox()).height>=44);
     await page.locator('#music-settings > summary').click();
     await (await reachable('.rvnHeroWatch')).click();
+    await page.waitForURL(url => url.pathname.endsWith('/raven/episodes/'));
+    await (await reachable('[data-visual-episode="1"]')).click();
     await frame.locator('#episodeModal.open').waitFor();
     await (await reachable('#rvnNextEpisode')).click();
     await frame.locator('#ravenEpisodePlayer[src$="episode-2.mp4"]').waitFor();
@@ -96,6 +98,7 @@ test('mobile player leaves episode and case controls reachable in both orientati
     await (await reachable('#rvnAfterNext')).click();
     await frame.locator('#ravenEpisodePlayer[src$="episode-2.mp4"]').waitFor();
     await (await reachable('.episodeClose')).click();
+    await (await reachable('header [data-gallery-home]')).click();
     await (await reachable('[data-dn-k="enter"]')).click();
     await (await reachable('[data-hook-action="open"]')).click();
     await (await reachable('[data-hook-action="enter"]')).click();

@@ -84,6 +84,6 @@ mount({id:slug,title:titles[slug],render:ui=>{
   if(slug==='episode-ends'){
     root.append(element('p',t('اختر حلقة. عند نهايتها تقدر ترجع للحلقات أو تدخل الكواليس أو تجرّب ورشة من أدوات الإنتاج.','Choose an episode. Its ending offers the episode list, behind the scenes and a hands-on production workshop.')));
     const labels=[['الحلقة الأولى','Episode one'],['الحلقة الثانية','Episode two'],['الحلقة الثالثة','Episode three']];
-    const links=element('div',null,'connect-sources');labels.forEach(([ar,en],i)=>links.append(usefulLink(ui,ar,en,'../?episode='+(i+1))));root.append(links);
+    const links=element('div',null,'connect-sources');labels.forEach(([ar,en],i)=>links.append(usefulLink(ui,ar,en,'../episodes/?episode='+(i+1))));root.append(links);
   }
 }});

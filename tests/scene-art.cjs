@@ -91,7 +91,8 @@ test('scene illustrations load, crop correctly and remain separate from player e
       // on the opening page. Keep checking every actual case placement below.
       await home.locator('[data-dn-k="enter"]').waitFor();
       assert.equal(await page.locator('#music-track-picker option').count(),13);
-      assert.equal(await home.locator('[data-rvn-episode]').count(),3);
+      assert.equal(await home.locator('[data-rvn-episode]').count(),0);
+      assert.match(await home.locator('.rvnHeroWatch').getAttribute('href'),/episodes\//);
       await home.locator('[data-dn-k="enter"]').click();
       const opening=page.frameLocator('#site-content');
       await opening.locator('#hook').waitFor();

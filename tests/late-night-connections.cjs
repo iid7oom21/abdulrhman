@@ -127,7 +127,7 @@ test('night connections at 320px',async t=>{
     await player.evaluate(async(v,n)=>{v.pause();const seeked=new Promise(resolve=>v.addEventListener('seeked',resolve,{once:true}));v.currentTime=n;await seeked;v.dispatchEvent(new Event('timeupdate'));},n);
    }
    for(const [n,activity] of [[1,'camera'],[2,'sound'],[3,'free']]){
-    fail=true;await go('raven/content.html?episode='+n);
+    fail=true;await go('raven/episodes/content.html?episode='+n);
     const player=p.locator('#ravenEpisodePlayer');await player.waitFor();
     const src=await player.getAttribute('src');assert.ok(src.includes('episode-'+n+'.mp4'));
     await player.evaluate(v=>{v.muted=true;v.load();});await p.locator('#rvnRetryVideo').waitFor();
@@ -146,7 +146,7 @@ test('night connections at 320px',async t=>{
    }
    await go('raven/content.html');const details=p.locator('.rvnFramingExercise'),clip=p.locator('#atmosphere-paper-detail');const before=await clip.getAttribute('src');await details.locator('summary').click();
    await p.locator('[data-frame-choice=phone]').click();assert.equal(await details.locator('figure:visible').count(),2);assert.equal(await clip.getAttribute('src'),before);
-   assert.match(before,/paper-detail\.mp4$/);assert.equal(await clip.evaluate(v=>v.paused),true);assert.equal(await details.locator('.phone img').getAttribute('src'),'./assets/atmosphere-v1/paper-detail.webp');
+   assert.match(before,/paper-detail\.mp4$/);assert.equal(await clip.evaluate(v=>v.paused),true);assert.equal(await details.locator('.phone img').evaluate(image=>image.src),new URL('./assets/atmosphere-v1/paper-detail.webp',p.url()).href);
    await go('raven/late-night/behind-frame.html');assert.ok((await p.locator('[href*="#behind-paper-phone"]').getAttribute('href')).includes('lang=en'));
   }finally{await context.close();}
  });

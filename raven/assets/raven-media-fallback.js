@@ -3,7 +3,6 @@
   'use strict';
   const gallery = document.querySelector('.rvnVaultGrid');
   const player = document.getElementById('ravenEpisodePlayer');
-  const film = document.querySelector('.film.raven');
   const records = [];
   const RETRY_TIMEOUT_MS = 20000;
   const words = {
@@ -99,7 +98,7 @@
     record.timedOut = false;
     record.controls = [];
     records.push(record);
-    controls(record, panel);
+    if (gallery) controls(record, panel);
     record.image.addEventListener('error', () => {
       clearTimeout(record.timer);
       record.timedOut = false;
@@ -115,7 +114,7 @@
       record.state = 'loaded';
       record.loaded();
       if (focusedRetry) {
-        const target = record.anchor || (player?.closest('#episodeModal.open') ? player : film);
+        const target = record.anchor || player;
         target?.focus({preventScroll: true});
       }
       render();
@@ -141,44 +140,30 @@
 
   const originalPoster = player?.getAttribute('poster');
   if (remoteArtwork(originalPoster)) {
-    // Posters and CSS backgrounds expose no error event. Probe their shared
-    // image once, then retry only after the visitor presses a retry button.
+    // Video posters have no error event. Probe once, then retry on request.
     const image = new Image();
     const screen = player.closest('.rvnScreen');
     player.addEventListener('loadedmetadata', () => screen?.classList.remove('rvnMediaPosterUnavailable'));
-    const filmUsesPoster = film && getComputedStyle(film, '::before').backgroundImage.includes(originalPoster);
     const posterPanel = element('div', 'rvnMediaPosterStatus');
     screen?.after(posterPanel);
     const posterNote = notice(posterPanel);
     posterNote.id = 'rvnPosterLoadNotice';
     player.setAttribute('aria-describedby', [player.getAttribute('aria-describedby'), posterNote.id].filter(Boolean).join(' '));
-    const notes = [posterNote];
-    if (filmUsesPoster) {
-      const filmNote = notice(film.querySelector('.filmContent') || film);
-      filmNote.id = 'rvnFilmLoadNotice';
-      film.setAttribute('aria-describedby', [film.getAttribute('aria-describedby'), filmNote.id].filter(Boolean).join(' '));
-      notes.push(filmNote);
-    }
     let removedPoster = false;
     const record = {
-      image, original: originalPoster, kind: 'poster', notices: notes,
+      image, original: originalPoster, kind: 'poster', notices: [posterNote],
       failed() {
         if (player.getAttribute('poster') === originalPoster) {
           player.removeAttribute('poster');
           removedPoster = true;
           if (player.readyState < 1) screen?.classList.add('rvnMediaPosterUnavailable');
         }
-        if (filmUsesPoster) film.classList.add('rvnMediaFilmUnavailable');
       },
       loaded() {
         if (removedPoster && !player.hasAttribute('poster')) {
           player.poster = image.src;
           removedPoster = false;
           screen?.classList.remove('rvnMediaPosterUnavailable');
-        }
-        if (filmUsesPoster) {
-          if (record.attempt) film.style.setProperty('--rvn-recovered-film', 'url("' + image.src + '")');
-          film.classList.remove('rvnMediaFilmUnavailable');
         }
       }
     };

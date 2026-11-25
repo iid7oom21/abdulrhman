@@ -5,9 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
 <title>RAVEN</title>
-<link rel="canonical" href="https://iid7oom21.github.io/abdulrhman/raven/">
-<script>location.replace(new URL('../../../' + location.search + '#films', location.href).href);</script>
-<meta http-equiv="refresh" content="0; url=../../../#films">
+<link rel="canonical" href="https://iid7oom21.github.io/abdulrhman/raven/episodes/?episode=1">
+<script>
+const target = new URL('../../../episodes/?episode=1', location.href);
+const lang = new URLSearchParams(location.search).get('lang');
+if (lang === 'en' || lang === 'ar') target.searchParams.set('lang', lang);
+location.replace(target.href);
+</script>
+<meta http-equiv="refresh" content="0; url=../../../episodes/?episode=1">
 </head>
-<body><p><a href="../../../#films">RAVEN</a></p></body>
+<body><p><a href="../../../episodes/?episode=1">RAVEN</a></p></body>
 </html>

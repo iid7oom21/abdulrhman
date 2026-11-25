@@ -1,6 +1,8 @@
 /* Read-only case availability and device-local viewing choices. */
 (() => {
   'use strict';
+  const galleryPage=document.body.hasAttribute('data-screening-gallery');
+  const ravenRoot=new URL('../',document.currentScript.src);
   const english=()=>document.documentElement.lang==='en';
   const words={
     caseKicker:['جلسة قضية متاحة','A case session is available'],caseTitle:['ارجع للقضية','Return to the case'],caseAction:['ارجع للقضية','Return to the case'],
@@ -98,7 +100,8 @@
   const images=['paper','phone'].map((name,i)=>{
     const button=document.createElement('button');button.type='button';button.dataset.frameChoice=name;
     const figure=document.createElement('figure'),crop=document.createElement('div'),image=document.createElement('img'),label=document.createElement('figcaption');
-    crop.className='rvnFrameCrop '+name;image.src='./assets/atmosphere-v1/paper-detail.webp';image.loading='lazy';image.alt='';
+    crop.className='rvnFrameCrop '+name;image.loading='lazy';image.alt='';
+    if(paperCard)image.src=new URL('assets/atmosphere-v1/paper-detail.webp',ravenRoot).href;
     crop.append(image);figure.append(crop,label);comparison.append(figure);choiceBox.append(button);
     button.setAttribute('aria-pressed','false');
     button.onclick=()=>{comparison.hidden=false;images.forEach((x,j)=>x.button.setAttribute('aria-pressed',String(i===j)));};
@@ -107,7 +110,7 @@
   exercise.append(exerciseTitle,question,choiceBox,comparison);paperCard?.append(exercise);
   function updateWorkshop(){
     const language=english()?'en':'ar',concept=concepts[currentEpisode]||concepts[1];
-    workshop.href='./after-show/?'+new URLSearchParams({activity:concept[0],lang:language});
+    workshop.href=new URL('after-show/?'+new URLSearchParams({activity:concept[0],lang:language}),ravenRoot).href;
     workshop.textContent=concept[english()?2:1];
     exerciseTitle.textContent=english()?'Try two framings':'جرّب تأطيرين';
     question.textContent=english()?'What caught your eye first, the phone or the paper?':'عينك راحت أولًا للهاتف أو للورقة؟';
@@ -128,6 +131,7 @@
     }
     controls.forEach(({id,status,resume,start})=>{
       const progress=read(id);resume.hidden=!progress.available;
+      if(galleryPage)start.hidden=!progress.available;
       resume.textContent=text('resume')+time(progress.seconds);start.textContent=text('start');
       const episode=english()?'Episode '+id:'الحلقة '+id;
       resume.setAttribute('aria-label',episode+' — '+resume.textContent);start.setAttribute('aria-label',episode+' — '+start.textContent);
@@ -175,6 +179,11 @@
     requestAnimationFrame(()=>{const target=document.querySelector('#films h2');if(target){target.tabIndex=-1;target.focus();}});
   });
   document.getElementById('rvnAfterBackstage')?.addEventListener('click',()=>{
+    if(galleryPage){
+      const home=new URL(ravenRoot);if(english())home.searchParams.set('lang','en');home.hash='studio';
+      if(!window.ravenNavigate?.(home.href))location.assign(home.href);
+      return;
+    }
     window.closeEpisodes?.();
     requestAnimationFrame(()=>{const section=document.getElementById('studio'),heading=section?.querySelector('h2');section?.scrollIntoView({behavior:'auto',block:'start'});if(heading){heading.tabIndex=-1;heading.focus({preventScroll:true});}});
   });

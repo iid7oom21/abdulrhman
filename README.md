@@ -4,7 +4,7 @@
 
 > Handoff v2 (2026-11-01): the story «التوقيع الرابع» (The Fourth Signature) and its Case 017 expansion were removed from this copy. No story replaces them. Old `/fourth-signature/` and `/raven/terminal-preview/case-017/` links redirect to the homepage. Everything below describes the remaining interface.
 >
-> 2026-11-05: the old interface under `/raven/terminal-preview/` was retired. Its pages are now redirects to the homepage (`raven-17/` to `#films`; the retired title route now returns to the homepage). Shared files in `raven/terminal-preview/assets/` stay because the homepage and `raven/dialogue/` still use the RAVEN posters, opening film and fonts. The retired title’s poster is removed from the current export.
+> 2026-11-05: the old interface under `/raven/terminal-preview/` was retired. Its pages are now redirects to the homepage (`raven-17/` to the episode library at `/raven/episodes/`; the retired title route now returns to the homepage). Shared files in `raven/terminal-preview/assets/` stay because the homepage and `raven/dialogue/` still use the RAVEN posters, opening film and fonts. The retired title’s poster is removed from the current export.
 
 Serve this directory as the web root. `/raven/` is the homepage. The root redirects to the homepage. `raven/index.html` keeps one audio element alive through `site-player.js` while `site-bridge.js` routes the content frame (`raven/content.html`).
 
@@ -44,7 +44,7 @@ On 2026-11-05 the owner had a former 14th track and its files deleted from the s
 
 ## Entry gate
 
-`site-entry.js` shows the RAVEN intro film (`assets/intro/raven-intro.mp4`, poster `raven-intro.jpg`) full screen and muted on the first visit in a session, with skip and sound buttons. If the film cannot play, or the visitor prefers reduced motion, the welcome text and the enter button are shown instead. Episode and anchor links open directly.
+On the first homepage visit in a session, `site-entry.js` opens an entrance to the RAVEN 17 episode gallery, The Deleted Name, Last Transmission and Late Night. Its studio ident plays muted where motion and data settings permit. The same links stay available over a still when the film ends or cannot play. Home dismisses the entrance. Enter home with music also starts the soundtrack. Direct episode and anchor links open their destination immediately.
 
 ## Silent atmosphere clips
 
@@ -52,7 +52,7 @@ The homepage's `#raven-atmosphere` section contains three owner-selected artisti
 
 ## RAVEN 17 episodes
 
-RAVEN 17 shows all three original episodes. Display numbers and saved media IDs remain 1, 2 and 3; `?episode=1`, `?episode=2` and `?episode=3` open their corresponding films. Saved playback and personal notes remain isolated by the original media ID.
+The bilingual episode library at `/raven/episodes/` shows all three original episodes. The homepage links to the library. Its numbered cards open the existing player at `/raven/episodes/?episode=N`. Display numbers and saved media IDs remain 1, 2 and 3; `?episode=1`, `?episode=2` and `?episode=3` open their corresponding films. Saved playback and personal notes remain isolated by the original media ID.
 
 `tests/restore-episode-one.mjs` checks the three-episode manifest and source IDs. `tests/legacy-episodes.mjs` checks navigation, playback progress, notes and language in Chromium. Run it with `node tests/legacy-episodes.mjs` after serving this directory on port 8786, or set `RAVEN_LEGACY_URL` to the served `/raven/` URL. It requires `ffmpeg` to generate a temporary playback fixture; this does not test streaming the original films in full.
 

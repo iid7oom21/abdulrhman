@@ -6,6 +6,7 @@
   const valid = value => value === 'en' || value === 'ar';
   const pages = new Set(['/', '/case', '/watch', '/privacy', '/404']);
   const homepage = new URL('../', document.currentScript.src).pathname;
+  const episodesPath = homepage + 'episodes/';
   // Handoff v2: the former /case route now resolves to the homepage.
   const casePath = homepage;
   const originalOrigin = 'https://project25762.websitepublisher.ai';
@@ -21,7 +22,8 @@
   }
   function route(path, locale) {
     const chosen = valid(locale) ? locale : current;
-    const url = new URL(path, new URL(homepage, location.origin));
+    const base = document.body?.hasAttribute('data-screening-gallery') ? episodesPath : homepage;
+    const url = new URL(path, new URL(base, location.origin));
     if (url.origin !== location.origin && url.origin !== originalOrigin) return path;
     // Forms stay on their original host, including when their link is translated.
     if (url.origin === originalOrigin && url.hash === '#raven-collaborate') return path;
@@ -32,8 +34,9 @@
       else url.searchParams.delete('lang');
       return url.pathname + url.search + url.hash;
     }
-    if (page === '/' || publicPath(url.pathname) === homepage) {
-      url.pathname = homepage;
+    const localPath = publicPath(url.pathname);
+    if (page === '/' || localPath === homepage || localPath === episodesPath) {
+      url.pathname = localPath === episodesPath ? episodesPath : homepage;
       if (chosen === 'en') url.searchParams.set('lang', 'en');
       else url.searchParams.delete('lang');
       return url.pathname + url.search + url.hash;
@@ -49,7 +52,7 @@
     const legacy = url.searchParams.get('lang');
     if (valid(legacy)) return legacy;
     if (/^\/en(?:\.html|\/|$)/.test(url.pathname)) return 'en';
-    if (pages.has(pagePath(url.pathname)) || [homepage, casePath].includes(publicPath(url.pathname))) return 'ar';
+    if (pages.has(pagePath(url.pathname)) || [homepage, episodesPath, casePath].includes(publicPath(url.pathname))) return 'ar';
     return valid(root.dataset.ravenLocale) ? root.dataset.ravenLocale : 'ar';
   }
   let current = fromUrl();

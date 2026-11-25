@@ -11,7 +11,5 @@
 .rvnMediaRetry{min-height:44px;max-width:100%;padding:8px 12px;border:1px solid #9a7d56;border-radius:2px;background:#171b1e;color:#eee9df;font:inherit;font-size:13px;cursor:pointer;overflow-wrap:anywhere}
 .rvnMediaRetry:focus-visible{outline:2px solid #e4c697;outline-offset:3px}
 .rvnMediaRetry[aria-disabled="true"]{cursor:wait;color:#b9b5ae}
-.film.raven[style*="--rvn-recovered-film"]::before{background-image:var(--rvn-recovered-film)}
-.film.raven.rvnMediaFilmUnavailable::before{background-image:none}
 .rvnScreen.rvnMediaPosterUnavailable video{aspect-ratio:16/9}
 .rvnMediaPosterStatus{width:min(100%,980px);margin-inline:auto}
