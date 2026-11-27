@@ -4,8 +4,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
 import http from 'node:http';
+import {execFileSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 import {createPreviewServer} from '../src/server.js';
-import {LATE_NIGHT_FILES, RAVEN17_PREVIEW_FILES, EPISODE_GALLERY_FILES} from '../src/site-mount.js';
+import {AFTER_SHOW_FILES, LATE_NIGHT_FILES, RAVEN17_PREVIEW_FILES, EPISODE_GALLERY_FILES, SITE_FILES} from '../src/site-mount.js';
+import {CORE_FILES, PUBLIC_ROOTS, PUBLIC_RELEASE, SITE_COMMIT} from '../../../deploy/render/build.mjs';
 import {createOpenAIReply} from '../src/provider.js';
 import {_reset} from '../src/dialogue.js';
 
@@ -617,4 +620,40 @@ test('episode gallery and approved media policy survive the Pages-style redirect
     const response=await fetch(s.root+prefix+'/raven/episodes/edit-proposal.html');
     assert.equal(response.status,404);
   }
+});
+
+test('the mount, the export allowlist and the Pages pin read one public inventory', t => {
+  const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
+  assert.deepEqual([...CORE_FILES].sort(), [...SITE_FILES].sort(),
+    'deploy/render/build.mjs must build its allowlist from the mounted manifest');
+  assert.equal(new Set(SITE_FILES).size, SITE_FILES.length, 'The mounted manifest lists a file twice');
+  for (const file of SITE_FILES) {
+    if (!PUBLIC_ROOTS.some(root => file === root || file.startsWith(root + '/'))) {
+      assert.fail(`${file} is mounted outside the published roots`);
+    }
+  }
+  for (const [wing, files] of Object.entries({AFTER_SHOW_FILES, LATE_NIGHT_FILES, RAVEN17_PREVIEW_FILES, EPISODE_GALLERY_FILES})) {
+    for (const file of files) assert.ok(SITE_FILES.includes(file), `${file} is exported by ${wing} but not mounted`);
+  }
+  let printed;
+  try {
+    printed = execFileSync('python3', [path.join(repo, 'deploy/render/pages-smoke.py'), '--print-manifest'], {cwd: repo, encoding: 'utf8'});
+  } catch (error) {
+    if (error.code === 'ENOENT') return t.skip('python3 is not installed here');
+    throw error;
+  }
+  const pageCheck = JSON.parse(printed);
+  assert.equal(pageCheck.commit, SITE_COMMIT, 'The Pages check must read the same pin');
+  assert.equal(pageCheck.release, PUBLIC_RELEASE, 'The Pages check must read the same release name');
+  assert.deepEqual(pageCheck.files, SITE_FILES, 'The Pages check must read the same file manifest');
+  try {
+    execFileSync('git', ['cat-file', '-e', `${SITE_COMMIT}^{commit}`], {cwd: repo, stdio: 'ignore'});
+  } catch {
+    return; // A shallow checkout does not hold the pinned commit; the publish workflow fetches it.
+  }
+  const tree = new Set(execFileSync('git', ['ls-tree', '-r', '--name-only', SITE_COMMIT], {cwd: repo, encoding: 'utf8'}).split('\n').filter(Boolean));
+  assert.deepEqual(SITE_FILES.filter(file => !tree.has(file)), [],
+    'The pinned commit must contain every file the mount serves');
+  const release = JSON.parse(execFileSync('git', ['cat-file', 'blob', `${SITE_COMMIT}:raven/release.json`], {cwd: repo, encoding: 'utf8'}));
+  assert.equal(release.release, PUBLIC_RELEASE, 'raven/release.json must carry the pinned release name');
 });
