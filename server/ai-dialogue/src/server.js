@@ -1,6 +1,6 @@
 import http from 'node:http';
 import fs from 'node:fs';
-import { randomBytes, createHash } from 'node:crypto';
+import { randomBytes, createHash, randomUUID } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { createMaterialStore, MaterialError } from './materials.js';
 import { submitRequest, listRequests, getRequest, forgetOwner, simulateReply, exportRequests, importRequest, markSaveStatus } from './dialogue.js';
@@ -10,6 +10,7 @@ import { validateSnapshot } from './snapshot.js';
 import {runtimeControls} from './runtime-controls.js';
 import {createSiteMount, HOSTED_DIALOGUE_PATHS, siteRequestPath, serveSiteFile} from './site-mount.js';
 import {createCaseService, DEFAULT_CASE_STORAGE_PATH} from './case-service.js';
+import {createLog, errorFields} from './log.js';
 
 // Memory bounds for the in-memory preview. All can be overridden through createPreviewServer options.
 export const SESSION_IDLE_MS = 6 * 60 * 60 * 1000;
@@ -20,6 +21,21 @@ export const DEFAULT_STORAGE_PATH = fileURLToPath(new URL('../.data/preview-stor
 export function storagePathFromEnv(env = process.env) {
   return env.RAVEN_DIALOGUE_STORAGE_PATH || env.RAVEN_STORE_FILE || DEFAULT_STORAGE_PATH;
 }
+
+// A caller-supplied id lets one client trace its own request through these lines;
+// anything outside the safe shape is replaced instead of echoed.
+const REQUEST_ID = /^[A-Za-z0-9_.:-]{1,64}$/;
+const requestIdOf = req => {
+  const given = req.headers?.['x-request-id'];
+  return typeof given === 'string' && REQUEST_ID.test(given) ? given : randomUUID();
+};
+const pathnameOf = req => {
+  const raw = typeof req.url === 'string' ? req.url.split('?')[0] : '';
+  return raw.length > 200 ? raw.slice(0, 200) : raw;
+};
+// A constant route name lets an operator group a status or a duration without the per-operation id.
+const routeOf = pathname => pathname.startsWith('/api/operations/') ? '/api/operations/:id'
+  : pathname.startsWith('/api/case/dialogue/') ? '/api/case/dialogue/:id' : pathname;
 
 // Session capability issued by the server, not an ownerId supplied in JSON/query strings.
 // Anonymous browser session, not an authenticated account. CLI uses a local disk file.
@@ -53,12 +69,14 @@ export function createPreviewServer({
   interrogationPolicy = null,
   interrogationProvider = null,
   onInterrogationTrace = null,
+  // Unset keeps embedded callers (tests, in-process harnesses) silent; an entry point passes createLog().
+  log = null,
 } = {}) {
   const site = siteRoot ? createSiteMount(siteRoot) : null;
   if (hostedRootRedirect !== null && (!site || hostedRootRedirect !== '/raven/')) throw new Error('invalid_hosted_root_redirect');
   const writtenCase = createCaseService({contentPath:caseContentPath,storagePath:caseStoragePath,
     pack:casePack,siteRoot,secureCookie,checkpointKey:caseCheckpointKey,
-    interrogationPolicy,interrogationProvider,onInterrogationTrace,
+    interrogationPolicy,interrogationProvider,onInterrogationTrace,log,
     ...(openCaseStore ? {openStore:openCaseStore} : {})});
   // owner -> { materials, touchedAt }. Map order is least-recently-used first (re-inserted on each use).
   const sessions = new Map();
@@ -91,7 +109,10 @@ export function createPreviewServer({
       });
       saveStatus = disk ? 'confirmed' : 'memory';
     } catch (error) {
-      saveStatus = 'unconfirmed'; markSaveStatus(sessions, 'unconfirmed'); throw error;
+      saveStatus = 'unconfirmed'; markSaveStatus(sessions, 'unconfirmed');
+      // Without this line a full disk only appears as unconfirmed saves in the browser.
+      log?.error('preview_store_write_failed', {storagePath: disk?.file ?? null, persistence: disk ? 'disk-file' : 'process-memory', ...errorFields(error)});
+      throw error;
     }
   };
   const persistSafely = () => { try { persist(); } catch { /* Keep the known result in memory. */ } };
@@ -142,6 +163,17 @@ export function createPreviewServer({
     res.setHeader('Referrer-Policy', 'no-referrer');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('Content-Security-Policy', `default-src 'none'; script-src 'self' ${scriptHashes}; style-src 'unsafe-inline'; connect-src 'self'; img-src 'self' data:; base-uri 'none'; frame-ancestors 'none'; form-action 'self'`);
+    // Emitted on finish, so a response that fails after this point still records its status and duration.
+    const requestId = requestIdOf(req);
+    res.setHeader('X-Request-Id', requestId);
+    const startedAt = process.hrtime.bigint();
+    const observed = {pathname: pathnameOf(req), session: null};
+    if (log) res.once('finish', () => log.info('http_request', {
+      requestId, method: req.method, path: observed.pathname, route: routeOf(observed.pathname),
+      status: res.statusCode, durationMs: Math.round(Number(process.hrtime.bigint() - startedAt) / 1e6),
+      outcome: res.statusCode >= 500 ? 'server_error' : res.statusCode >= 400 ? 'client_error' : 'ok',
+      ...(observed.session ? {session: observed.session} : {}),
+    }));
     const json = (status, data, stripPreviewInternals = true) => {
       res.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store' });
       res.end(JSON.stringify(data, stripPreviewInternals ? (key, value) => ['owner', 'fingerprint'].includes(key) ? undefined : value : undefined));
@@ -154,7 +186,7 @@ export function createPreviewServer({
         res.writeHead(307, {'Location':hostedRootRedirect + url.search,'Cache-Control':'no-store'});
         return res.end();
       }
-      if (await writtenCase.handle(req,res,url,(status,data) => json(status,data,false))) return;
+      if (await writtenCase.handle(req,res,url,(status,data) => json(status,data,false),{requestId})) return;
       if (req.method === 'GET' && url.pathname === '/texts/raven-texts.js') {
         res.writeHead(200, {'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});
         return res.end(fs.readFileSync(new URL('../public/texts/raven-texts.js',import.meta.url)));
@@ -184,10 +216,12 @@ export function createPreviewServer({
       }
       const cookie = /(?:^|;\s*)raven_preview_session=([a-f0-9]{64})(?:;|$)/.exec(req.headers.cookie || '')?.[1];
       const session = cookie ? liveSession(cookie) : null;
+      observed.session = session ? 'existing' : 'none';
       let owner = session ? cookie : null;
       if (req.method === 'GET' && (['/', '/index.html'].includes(url.pathname) || hostedDialogue)) {
         if (!owner) {
           owner = openSession();
+          observed.session = 'new';
           persist();
           res.setHeader('Set-Cookie', `raven_preview_session=${owner}; HttpOnly; SameSite=Strict; Path=/${req.socket.encrypted || secureCookie ? '; Secure' : ''}`);
         }
@@ -257,7 +291,12 @@ export function createPreviewServer({
         }
         if (!['jonas','claire'].includes(data.characterId) || Object.keys(data).some(k => !['requestId','characterId','message','sharedFacts','contentVersion'].includes(k))) return json(400, { error:'invalid_request' });
         const result = submitRequest(data.requestId, data.characterId, data.message, data.sharedFacts, data.contentVersion, owner, materials.contextFor(data.characterId), controlledGenerate,
-          {beforeGenerate:persist,onSettled:persistSafely});
+          {beforeGenerate:persist,onSettled:persistSafely,
+            // A provider failure message may repeat untrusted upstream output, so only its closed code is logged.
+            onFailed:failure => log?.error('dialogue_generation_failed', {requestId:data.requestId,characterId:data.characterId,
+              errorCode:typeof failure?.code === 'string' ? failure.code : null,
+              errorHttpStatus:typeof failure?.httpStatus === 'number' ? failure.httpStatus : null,
+              outcomeUnknown:!!failure?.outcomeUnknown})});
         const status = result.id ? (result.status === 'pending' ? 202 : 200) :
           result.status === 'conflict' ? 409 : result.error === 'forbidden' ? 403 : result.error === 'requests_limit' ? 429 : 400;
         return json(status, result);
@@ -265,6 +304,8 @@ export function createPreviewServer({
       json(404, { error: 'not_found' });
     } catch (error) {
       if (error instanceof MaterialError) return json(error.code.endsWith('_conflict') ? 409 : 400, { error:error.code });
+      // An unexpected failure answers with a closed code and nothing else, so this line is its only trace.
+      log?.error('http_request_failed', {requestId, method:req.method, path:observed.pathname, ...errorFields(error)});
       if (!res.headersSent) json(500, { error: 'server_error' });
       else res.end();
     }
@@ -278,7 +319,7 @@ export function createPreviewServer({
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const {generate,info} = providerFromEnv();
   const host = process.env.HOST || (process.env.RENDER === 'true' ? '0.0.0.0' : '127.0.0.1');
-  const server = createPreviewServer({storeFile:storagePathFromEnv(),generate,providerInfo:info,siteRoot:process.env.RAVEN_SITE_ROOT || null,
+  const server = createPreviewServer({storeFile:storagePathFromEnv(),generate,providerInfo:info,siteRoot:process.env.RAVEN_SITE_ROOT || null,log:createLog(),
     caseContentPath:process.env.RAVEN_CASE_CONTENT_PATH || null,
     caseStoragePath:process.env.RAVEN_CASE_STORAGE_PATH || (process.env.RAVEN_CASE_CONTENT_PATH ? DEFAULT_CASE_STORAGE_PATH : null)});
   server.listen(process.env.PORT || 10000, host, () => {
